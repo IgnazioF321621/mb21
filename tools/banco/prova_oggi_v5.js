@@ -119,7 +119,7 @@ prova('095: Clienti e Mappa a metà — riordini da sentire (o il prossimo; senz
   assert.equal(W.ctx.O5.gruppo, 2);   // P2 e P3 sotto P1; P9 è di un altro ramo
   W.ctx.disegna(); assert.match(testo(W.app.innerHTML), /MAPPA 2 nel tuo gruppo/);
   W.app.clic('.o5-clienti'); W.app.clic('.o5-mappa');
-  assert.deepEqual(JSON.parse(JSON.stringify(W.vai.filter(x => typeof x !== 'string'))), [['lv', 'oggi', { vaiA: 'riordini' }], ['tab', 'mappa']]);
+  assert.deepEqual(JSON.parse(JSON.stringify(W.vai.filter(x => typeof x !== 'string'))), [['lv', 'clienti', null], ['tab', 'mappa']]);
   const P = mondo({ prossimo: { contatti: { nome: 'Persona E' }, inizio: '2026-10-29T08:00:00Z' } }); P.ctx.disegna();
   assert.match(testo(P.app.innerHTML), /il prossimo: Persona, gio 29\/10/);
   const N = mondo(); N.ctx.disegna();
@@ -218,7 +218,7 @@ prova('095 seconda pagina: «Contatti del giorno» — testata arancio con «‹
   assert.match(testo(h), /Contatti del giorno Fatti 2 su 5 · ne mancano 3/);
   assert.match(h, /<button class="v5-inizia" data-lv-persona="conf\|a1">Inizia da Persona C<\/button>/);
   assert.match(testo(h), /Prima si chiude ciò che è aperto · 1 .*Poi si contatta \(nomi in coda o scelte personali\) · 2 .*Già sentiti oggi · 1/);
-  assert.match(h, /class="c5-pallino" style="background:var\(--z-clienti\)"/);   // la Conferma di un Cliente: oro
+  assert.match(h, /class="c5-pallino" style="background:var\(--cat-cliente\)"/);   // la Conferma di un Cliente: oro
   assert.match(h, /class="c5-pallino" style="background:var\(--cat-partner\)"/);
   assert.equal((h.match(/data-non-ora=/g) || []).length, 2);
   assert.ok(h.indexOf('id="finto-seguire"') > h.indexOf('Già sentiti oggi'));   // «Da seguire» in fondo, uguale a prima (Ignazio 25/10, «A»)   // «Non ora» sulle righe della coda, come adesso
@@ -248,7 +248,7 @@ prova('095 seconda pagina: la scheda nel colore della categoria; «Scegli l\'esi
   assert.deepEqual(JSON.parse(JSON.stringify(W.chiamate)), [['esito', 'c1', 2]]);
   // una conferma tiene la sua card di adesso, dentro la veste nuova (colore Cliente oro)
   const C = mondoContatti({ persona: 'conf|a1' }); C.ctx.persona();
-  assert.match(C.app.innerHTML, /--zc:var\(--z-clienti\)/); assert.match(C.app.innerHTML, /card della conferma di adesso/); assert.doesNotMatch(C.app.innerHTML, /p5-esito/);
+  assert.match(C.app.innerHTML, /--zc:var\(--cat-cliente\)/);   // Cliente oro (--cat-cliente #D99A00) assert.match(C.app.innerHTML, /card della conferma di adesso/); assert.doesNotMatch(C.app.innerHTML, /p5-esito/);
   // esito già dato: la strada di adesso (spunta e ritorno all'elenco)
   const X = mondoContatti({ persona: 'coda|zz' }); X.ctx.persona();
   assert.deepEqual(JSON.parse(JSON.stringify(X.chiamate)), [['personaLV']]);
@@ -306,6 +306,33 @@ prova('095 Traguardo: il Mese, le aree, il traguardo e i gradini con la testata 
   for (const r of [/app\.innerHTML = testaLV\('Come sto andando questo mese\?'\) \+ `<div class="avviso">/, /let html = testaLV\('Come sto andando questo mese\?', /,
     /app\.innerHTML = testaLV\(x\.etichetta, /, /let html = testaLV\(titoloTraguardo\(\)\);/, /app\.innerHTML = testaLV\(titolo, sotto\) \+ `<div class="riquadro lv-lista">/]) assert.match(DASH, r);
   assert.match(DASH, /const fb = document\.getElementById\('o5-feedback'\); if \(fb && !fb\.onclick\) fb\.onclick = \(\) => foglioSegnala\(\);/);
+});
+
+prova('095 Clienti da sentire: testata oro, «‹ Oggi», i riordini da sentire di adesso (le stesse righe), la scheda di adesso che torna con «‹ Clienti»; senza, il prossimo', () => {
+  const W = mondoContatti({ fatte: [{ tipo: 'rio', id: 'r9', nome: 'Persona F' }, { tipo: 'coda', id: 'c9', nome: 'Persona E' }] });
+  const rio = { motivo: 'rio', id: 'r1', contatto_id: 'k1', nome: 'Persona D', targhetta: 'Riordino', dato: { id: 'r1', contatto_id: 'k1', contatti: { nome: 'Persona D', categoria: 'Cliente' } } };
+  W.ctx.elencoDiOggi = () => ({ gruppi: [{ chiave: 'chiudere', titolo: 'Prima si chiude ciò che è aperto', righe: [rio] }], fatti: 0, totale: 1 });
+  W.ctx.sottoOggi = () => 'eSpring · Filtro';
+  vm.runInContext('this.clienti = disegnaClientiV5;', W.ctx);
+  W.ctx.clienti();
+  const h = W.app.innerHTML;
+  assert.match(h, /^<div class="v5-testa" style="--zc:var\(--z-clienti\)"><div class="v5-su"><button class="v5-indietro" id="lv-indietro">‹ Oggi<\/button>/);
+  assert.match(testo(h), /Clienti da sentire 1 da sentire per il riordino Da sentire · 1 Persona D Riordino · eSpring · Filtro .*Già sentiti oggi · 1 \[fatto\] Persona F fatto/);
+  assert.doesNotMatch(h, /Persona E/);   // solo i riordini
+  W.app.clic('[data-lv-persona="rio|r1"]');
+  assert.deepEqual(JSON.parse(JSON.stringify(W.chiamate.at(-1))), ['lv', 'persona', { persona: 'rio|r1', daClienti: true }]);
+  // nella scheda «‹ Clienti» e niente conto dei Contatti del giorno
+  W.ctx.LV.persona = 'rio|r1'; W.ctx.LV.daClienti = true; W.ctx.RIO.righe = [rio.dato]; W.ctx.riordiniHtml = () => '<div class="card riordino">card del riordino di adesso</div>';
+  W.ctx.persona();
+  assert.match(W.app.innerHTML, /‹ Clienti<\/button>/); assert.doesNotMatch(W.app.innerHTML, /v5-conto/); assert.match(W.app.innerHTML, /card del riordino di adesso/);
+  // nessun riordino da sentire: il prossimo
+  const P = mondoContatti(); P.ctx.elencoDiOggi = () => ({ gruppi: [], fatti: 0, totale: 0 }); P.ctx.RIO.prossimo = { contatti: { nome: 'Persona G Finta' }, inizio: '2026-10-29T08:00:00Z' };
+  vm.runInContext('this.clienti = disegnaClientiV5;', P.ctx); P.ctx.clienti();
+  assert.match(testo(P.app.innerHTML), /Nessuno da sentire oggi · il prossimo: Persona, gio 29\/10 .*Per oggi nessun cliente da sentire per il riordino\./);
+  assert.match(DASH, /const padreLV = \(\) => \(LV\.vista === 'persona' && LV\.daClienti \? 'clienti' : PADRE_LV\[LV\.vista\] \|\| 'home'\);/);
+  assert.match(DASH, /return vaiLV\(LV\.daClienti \? 'clienti' : 'oggi'\);/);
+  assert.match(DASH, /case 'clienti': if \(typeof disegnaClientiV5 === 'function'\) disegnaClientiV5\(\);/);
+  assert.match(IDX, /--cat-cliente: #D99A00; --cat-cliente-tinta: #FFF3D1;/);
 });
 
 (async () => {

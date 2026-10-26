@@ -188,7 +188,7 @@ function o5Vai(go) {
   if (go === 'avvio') { AVV.mioAperto = true; return vaiLV('avvio'); }
   if (go.startsWith('gradino:')) return vaiLV('gradino', { gradino: go.slice(8) });
   if (go === 'traguardo') return vaiLV('traguardo');
-  if (go === 'clienti') return RIO.righe.length ? vaiLV('oggi', { vaiA: 'riordini' }) : vaiLV('oggi');
+  if (go === 'clienti') return vaiLV('clienti');   // v5: la pagina «Clienti da sentire» (disegnaClientiV5)
   if (go === 'mappa') return tab('mappa');
 }
 
@@ -229,7 +229,7 @@ function esploraVai(k) {
 // (elencoDiOggi: prima ciò che è aperto da chiudere, poi chi contattare, con «Non ora»); la scheda è la stessa (disegnaPersonaLV): per una telefonata della
 // coda o un Dare Seguito l'esito si sceglie nel modulo al centro e poi parte toccaBottone, con i suoi fogli di adesso (data, appuntamento, rientro…);
 // conferme, riordini e telefonate scelte tengono la loro card di adesso, dentro la veste nuova.
-const COLORE_CAT_V5 = c => (c === 'Partner' ? 'var(--cat-partner)' : c === 'Cliente' ? 'var(--z-clienti)' : c === 'Prospect' || !c || c === 'Referral' ? 'var(--cat-prospect)' : 'var(--cat-ex)');
+const COLORE_CAT_V5 = c => (c === 'Partner' ? 'var(--cat-partner)' : c === 'Cliente' ? 'var(--cat-cliente)' : c === 'Prospect' || !c || c === 'Referral' ? 'var(--cat-prospect)' : 'var(--cat-ex)');
 const catDi = x => (x && (x.categoria || (x.contatti && x.contatti.categoria))) || '';
 const testaV5 = (colore, sinistra, destra = '') => `<div class="v5-testa" style="--zc:${colore}"><div class="v5-su">${sinistra}<div class="o5-dx">${destra}${chipPartnerSelect()}<button class="v5-fb" id="o5-feedback" aria-label="Invia Feedback">${ic('segnala')}</button></div></div>`;
 function collegaTestaV5() {
@@ -240,16 +240,19 @@ function collegaTestaV5() {
   collegaPartnerSelect();
 }
 
+// una riga dell'elenco (Contatti del giorno e Clienti da sentire): pallino della categoria, nome, la riga di adesso (sottoOggi), «Non ora» sulla coda
+function rigaElencoV5(x) {
+  const sotto = [x.targhetta, sottoOggi(x)].filter(Boolean).join(' · ');
+  const dentro = `<button class="c5-riga" data-lv-persona="${x.motivo}|${esc(x.id)}"><span class="c5-pallino" style="background:${COLORE_CAT_V5(catDi(x.dato))}"></span>
+      <span class="c5-testo"><b>${esc(x.nome)}${x.motivo === 'conf' ? '' : segnoCoach(x.contatto_id, x.nome)}</b><small>${esc(sotto)}</small></span><em>›</em></button>`;
+  return x.motivo === 'coda' && !vediTutti() && !ST.offline ? `<div class="c5-con">${dentro}<button class="lv-nonora" data-non-ora="${esc(x.id)}" title="Non ora">Non ora</button></div>` : dentro;
+}
 function disegnaContattiV5() {
+  LV.daClienti = false;   // la scheda aperta da qui torna ai Contatti del giorno
   const st = ST.stato || {}, altro = guardoAltri(), inPausa = st.contatti_al_giorno === 0, e = elencoDiOggi();
   const righe = e.gruppi.flatMap(g => g.righe.map(x => ({ ...x, titoloGruppo: g.titolo })));
   const manca = e.totale - e.fatti, primo = righe[0];
-  const riga = x => {
-    const sotto = [x.targhetta, sottoOggi(x)].filter(Boolean).join(' · ');
-    const dentro = `<button class="c5-riga" data-lv-persona="${x.motivo}|${esc(x.id)}"><span class="c5-pallino" style="background:${COLORE_CAT_V5(catDi(x.dato))}"></span>
-      <span class="c5-testo"><b>${esc(x.nome)}${x.motivo === 'conf' ? '' : segnoCoach(x.contatto_id, x.nome)}</b><small>${esc(sotto)}</small></span><em>›</em></button>`;
-    return x.motivo === 'coda' && !vediTutti() && !ST.offline ? `<div class="c5-con">${dentro}<button class="lv-nonora" data-non-ora="${esc(x.id)}" title="Non ora">Non ora</button></div>` : dentro;
-  };
+  const riga = rigaElencoV5;
   const gruppi = e.gruppi.map(g => `<div class="c5-gruppo">${esc(g.titolo)} · ${g.righe.length}</div><div class="c5-elenco">${g.righe.map(riga).join('')}</div>`).join('');
   const fatte = LV.fatte.length ? `<div class="c5-gruppo">Già sentiti oggi · ${LV.fatte.length}</div><div class="c5-elenco">${LV.fatte.map(x =>
     `<div class="c5-riga fatta"><span class="c5-spunta">${ic('fatto')}</span><span class="c5-testo"><b>${esc(x.nome)}</b><small>fatto</small></span></div>`).join('')}</div>` : '';
@@ -320,8 +323,8 @@ function disegnaPersonaV5() {
       <button class="link" data-scheda="${esc(id)}">${ic('persona')} Apri contatto</button></div></div>`;
   }
   const sotto = [cat || 'Senza categoria', sottoOggi({ motivo: tipo, dato })].filter(Boolean).join(' · ');
-  app.innerHTML = `<div class="v5-testa" style="--zc:${colore}"><div class="v5-su"><button class="v5-indietro" id="lv-indietro">‹ Contatti del giorno</button>
-      <div class="o5-dx">${conto ? `<span class="v5-conto">${esc(conto)}</span>` : ''}<button class="v5-fb" id="o5-feedback" aria-label="Invia Feedback">${ic('segnala')}</button></div></div>
+  app.innerHTML = `<div class="v5-testa" style="--zc:${colore}"><div class="v5-su"><button class="v5-indietro" id="lv-indietro">‹ ${LV.daClienti ? 'Clienti' : 'Contatti del giorno'}</button>
+      <div class="o5-dx">${conto && !LV.daClienti ? `<span class="v5-conto">${esc(conto)}</span>` : ''}<button class="v5-fb" id="o5-feedback" aria-label="Invia Feedback">${ic('segnala')}</button></div></div>
     <div class="p5-chi"><span class="p5-sigla" style="color:${colore}">${esc(iniziali(nome))}</span><div><b>${esc(nome)}${segnoCoach(chiContatto, nome)}</b><small>${esc(sotto)}</small></div></div>
     ${telefonata ? contattaHtml(dato.telefono) : ''}</div>
     <div class="c5-corpo lv-scheda">${corpo}</div>` + versione();
@@ -371,4 +374,25 @@ function testaCheckV5(titolo, sotto) {
   return `<div class="v5-testa c5t" style="--zc:var(--z-check)"><div class="v5-su"><button class="v5-indietro" id="lv-indietro">‹ ${esc(torna)}</button>
       <div class="o5-dx">${chipPartnerSelect()}<button class="v5-fb" id="o5-feedback" aria-label="Invia Feedback">${ic('segnala')}</button></div></div>
     <div class="v5-titolo"><div><h1>${esc(titolo)}</h1>${sotto ? `<span>${esc(sotto)}</span>` : ''}</div></div></div>`;
+}
+
+// ── v5, sesta pagina: «Clienti da sentire» (Regia 26/10; Ignazio: «Clienti» al posto di «Riordini»; solo la veste) ──
+// I riordini da sentire di adesso (RIO.righe, le stesse righe di «Contatti del giorno»: elencoDiOggi, motivo 'rio'), con la testata oro dei Clienti.
+// Il tocco apre la scheda di adesso (la card del riordino con i suoi esiti, collegaRiordini); dopo l'esito, e con «‹ Clienti», si torna qui (LV.daClienti).
+// Senza riordini da sentire la riga sotto il titolo dice il prossimo (RIO.prossimo, dalle vendite già lette). Nessuna lettura nuova.
+function disegnaClientiV5() {
+  const e = elencoDiOggi(), rio = e.gruppi.flatMap(g => g.righe).filter(x => x.motivo === 'rio'), fatte = LV.fatte.filter(x => x.tipo === 'rio');
+  const n = rio.length, prossimo = RIO.prossimo;
+  const sotto = n ? `${n === 1 ? '1 da sentire' : `${n} da sentire`} per il riordino`
+    : prossimo ? `Nessuno da sentire oggi · il prossimo: ${o5Primo(prossimo.contatti ? prossimo.contatti.nome : '')}, ${o5Giorno(prossimo.inizio).split(' alle ')[0]}` : 'Nessun riordino in vista';
+  app.innerHTML = `<div class="v5-testa" style="--zc:var(--z-clienti)"><div class="v5-su"><button class="v5-indietro" id="lv-indietro">‹ Oggi</button>
+      <div class="o5-dx">${chipPartnerSelect()}<button class="v5-fb" id="o5-feedback" aria-label="Invia Feedback">${ic('segnala')}</button></div></div>
+    <div class="v5-titolo"><div><h1>Clienti da sentire</h1><span>${esc(sotto)}</span></div></div></div>
+    <div class="c5-corpo">${n ? `<div class="c5-gruppo">Da sentire · ${n}</div><div class="c5-elenco">${rio.map(rigaElencoV5).join('')}</div>` : ''}
+      ${fatte.length ? `<div class="c5-gruppo">Già sentiti oggi · ${fatte.length}</div><div class="c5-elenco">${fatte.map(x =>
+        `<div class="c5-riga fatta"><span class="c5-spunta">${ic('fatto')}</span><span class="c5-testo"><b>${esc(x.nome)}</b><small>fatto</small></span></div>`).join('')}</div>` : ''}
+      ${!n && !fatte.length ? `<div class="vuoto">Per oggi nessun cliente da sentire per il riordino.</div>` : ''}</div>` + versione();
+  app.querySelectorAll('[data-lv-persona]').forEach(b => b.onclick = () => { ST.aperta = b.dataset.lvPersona.split('|')[1]; vaiLV('persona', { persona: b.dataset.lvPersona, daClienti: true }); });
+  attaccaIndietroLV();
+  collegaTestaV5();
 }

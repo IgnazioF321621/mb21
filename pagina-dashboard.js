@@ -242,7 +242,9 @@ function oraRoma() {
 const LV = { vista: 'home', area: null, persona: null, gradino: null, fatte: [], giorno: null };
 const NOMI_LV = { home: 'Oggi', oggi: 'Chi sento oggi?', mese: 'Come sto andando questo mese?', traguardo: 'Qual è il mio prossimo traguardo?', avvio: 'Il mio avvio' };
 const PADRE_LV = { persona: 'oggi', area: 'mese', gradino: 'traguardo' };
+const padreLV = () => (LV.vista === 'persona' && LV.daClienti ? 'clienti' : PADRE_LV[LV.vista] || 'home');   // v5: la scheda aperta da «Clienti da sentire» torna lì
 function vaiLV(vista, extra) {
+  if (vista !== 'persona' && vista !== 'clienti') LV.daClienti = false;
   LV.vista = vista; LV.area = null; LV.persona = null; LV.gradino = null;
   Object.assign(LV, extra || {});
   window.scrollTo(0, 0);
@@ -255,7 +257,7 @@ const testaLV = (titolo, sotto = '', colore = '') => (typeof OGGI_V5 !== 'undefi
   ? testaCheckV5(titolo, sotto)
   : indietroLV() + `<h1${colore ? ` style="color:${colore}"` : ''}>${esc(titolo)}</h1>` + (sotto ? `<div class="sotto">${esc(sotto)}</div>` : ''));
 const attaccaIndietroLV = () => {
-  const b = document.getElementById('lv-indietro'); if (b) b.onclick = () => vaiLV(PADRE_LV[LV.vista] || 'home');
+  const b = document.getElementById('lv-indietro'); if (b) b.onclick = () => vaiLV(padreLV());
   const fb = document.getElementById('o5-feedback'); if (fb && !fb.onclick) fb.onclick = () => foglioSegnala();   // v5: il feedback nella testata
 };
 const nomeProprio = () => String(nomeDi(visto()) || '').trim().split(/\s+/)[0];
@@ -464,7 +466,7 @@ function disegnaPersonaLV() {
     const nomeFatto = LV.nomePersona || '';
     if (nomeFatto && !LV.fatte.some(x => x.tipo === tipo && x.id === id)) LV.fatte.push({ tipo, id, nome: nomeFatto });
     LV.nomePersona = null;
-    return vaiLV('oggi');
+    return vaiLV(LV.daClienti ? 'clienti' : 'oggi');   // v5: da «Clienti da sentire» si torna lì
   }
   LV.nomePersona = nome;
   // nota 001: accanto al nome il segnale Coach Yes, dove c'è una telefonata da fare (non sulle conferme)
@@ -621,6 +623,7 @@ function disegnaOggi() {
     case 'traguardo': disegnaTraguardoLV(); break;
     case 'gradino': disegnaGradinoLV(); break;
     case 'avvio': disegnaAvvioLV(); break;
+    case 'clienti': if (typeof disegnaClientiV5 === 'function') disegnaClientiV5(); else { LV.vista = 'oggi'; disegnaOggiLV(); } break;   // v5: «Clienti da sentire»
     default: LV.vista = 'home'; if (typeof OGGI_V5 !== 'undefined' && OGGI_V5) disegnaOggiV5(); else disegnaHome();   // v5 (nota 095): «Oggi» a riquadri, pagina-oggi.js
   }
   // prima dei collegamenti: aperto il modulo, il riquadro degli obiettivi non si sovrappone (si apre solo senza fogli aperti)
@@ -1569,9 +1572,9 @@ function collegaRiordini() {
       b.onclick = () => chiudiAppuntamento({ ...a, categoria: a.categoria || categoria }, b.dataset.riordinoEsito, { dopo });
     });
     const nr = el.querySelector('[data-riordino-nr]');   // c'è solo nella riga aperta
-    if (nr) nr.onclick = () => { RIO.nonRisponde.add(a.id); RIO.spento.delete(a.id); ST.aperta = null; LV.vista === 'persona' ? vaiLV('oggi') : disegnaOggi(); };
+    if (nr) nr.onclick = () => { RIO.nonRisponde.add(a.id); RIO.spento.delete(a.id); ST.aperta = null; LV.vista === 'persona' ? vaiLV(LV.daClienti ? 'clienti' : 'oggi') : disegnaOggi(); };
     const sp = el.querySelector('[data-riordino-spento]');
-    if (sp) sp.onclick = () => { RIO.nonRisponde.add(a.id); RIO.spento.add(a.id); ST.aperta = null; LV.vista === 'persona' ? vaiLV('oggi') : disegnaOggi(); };
+    if (sp) sp.onclick = () => { RIO.nonRisponde.add(a.id); RIO.spento.add(a.id); ST.aperta = null; LV.vista === 'persona' ? vaiLV(LV.daClienti ? 'clienti' : 'oggi') : disegnaOggi(); };
   });
 }
 
