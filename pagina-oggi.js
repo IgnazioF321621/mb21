@@ -271,7 +271,7 @@ function disegnaContattiV5() {
       ${primo ? `<button class="v5-inizia" data-lv-persona="${primo.motivo}|${esc(primo.id)}">Inizia da ${esc(primo.nome)}</button>` : ''}</div>`
     + `<div class="c5-corpo">${ST.offline ? `<div class="avviso">Sei offline: questa è la coda salvata. Solo lettura.${percheHtml('offline')}</div>` : ''}${extra}${gruppi}${fatte}
       ${finito ? `<div class="vuoto">Per oggi hai finito. ${ic('complimenti')}</div>` : ''}
-      ${daSeguireHtml()}</div>` + versione();   // Ignazio 25/10 («A»): «Da seguire» (tracce condivise e il mio percorso) esce da Oggi e sta qui in fondo, uguale a prima
+      </div>` + versione();   // Ignazio 26/10: «Da seguire» (tracce condivise e il mio percorso) non sta più qui: è in fondo al Giorno dell'Agenda
   app.querySelectorAll('[data-lv-persona]').forEach(b => b.onclick = () => { ST.aperta = b.dataset.lvPersona.split('|')[1]; vaiLV('persona', { persona: b.dataset.lvPersona }); });
   app.querySelectorAll('[data-non-ora]').forEach(b => b.onclick = () => nonOra(b.dataset.nonOra));
   attaccaIndietroLV();

@@ -235,7 +235,7 @@ prova('095 seconda pagina: «Contatti del giorno» — testata arancio con «‹
   assert.match(h, /class="c5-pallino" style="background:var\(--cat-cliente\)"/);   // la Conferma di un Cliente: oro
   assert.match(h, /class="c5-pallino" style="background:var\(--cat-partner\)"/);
   assert.equal((h.match(/data-non-ora=/g) || []).length, 2);
-  assert.ok(h.indexOf('id="finto-seguire"') > h.indexOf('Già sentiti oggi'));   // «Da seguire» in fondo, uguale a prima (Ignazio 25/10, «A»)   // «Non ora» sulle righe della coda, come adesso
+  assert.doesNotMatch(h, /finto-seguire/);   // Ignazio 26/10: «Da seguire» è andato nell'Agenda; Contatti del giorno finisce con «Già sentiti oggi»   // «Non ora» sulle righe della coda, come adesso
   assert.equal(W.sg.hidden, true);
   W.app.clic('[data-non-ora="c1"]'); W.app.clic('[data-lv-persona="coda|c2"]'); W.app.clic('#lv-indietro');
   assert.deepEqual(JSON.parse(JSON.stringify(W.chiamate)), [['nonora', 'c1'], ['lv', 'persona', { persona: 'coda|c2' }], ['indietro']]);
@@ -476,6 +476,19 @@ prova('098 flusso dopo «PM Fissato» dalla scheda v5: niente domanda sulla trac
   assert.match(DASH, /else if \(restaV5\) riflessione\(\);[^\n]*\n\s+else tracciaDiApertura\(appuntamento, pos\.contatto, riflessione\);/);
   assert.match(DASH, /LV\.restaSu = null;/);   // cambiando pagina
   for (const f of ['pagina-lista.js', 'index.html']) assert.match(leggi(f), /tracciaDiApertura\(/, f);   // gli altri punti chiedono come prima
+});
+
+prova('098 «Da seguire» nell\'Agenda: in fondo al Giorno di oggi, stesso blocco e stessi tasti (ridisegnano l\'Agenda); «Tracce condivise» torna con «‹ Agenda»', () => {
+  const PA = leggi('pagina-agenda.js'), PS = leggi('pagina-sharing.js');
+  assert.match(PA, /html \+= foglioHtml\(oggi\);\n(\s+\/\/[^\n]*\n)+\s+if \(AG\.giorno === oggi && typeof daSeguireHtml === 'function'\) html \+= daSeguireHtml\(\);/);
+  assert.match(PA, /if \(seguire\) seguire\.onclick = \(\) => \{ DSG\.aperto = !DSG\.aperto; disegnaAgenda\(\); \};/);
+  assert.match(PA, /collegaTracce\(async \(\) => \{ await caricaTracceDaControllare\(oggi\); disegnaAgenda\(\); \}\);/);
+  assert.match(PA, /collegaMioPercorso\(disegnaAgenda\);/);
+  assert.match(PS, /function collegaMioPercorso\(ridisegna = disegnaOggi\)/);   // per tutti gli altri come prima
+  assert.match(PS, /if \(riga\) riga\.onclick = \(\) => \{ TRC\.daAgenda = ST\.tab === 'agenda'; apriPaginaTracce\(\); \};/);
+  assert.match(PS, /const da = TRC\.daAgenda \? 'Agenda' : 'Oggi';/);
+  assert.match(PS, /document\.getElementById\('tr-indietro'\)\.onclick = \(\) => \(TRC\.daAgenda \? apriAgenda\(\) : caricaOggi\(\)\);/);
+  assert.doesNotMatch(PO, /\$\{daSeguireHtml\(\)\}/);
 });
 
 (async () => {

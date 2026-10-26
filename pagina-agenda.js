@@ -573,6 +573,20 @@ function foglioCosa(c, oggi, opz = {}) {
   };
 }
 
+// «Da seguire» nell'Agenda (nota 098): si apre e si chiude sul posto; i tasti delle tracce e del mio percorso sono gli stessi di prima, ridisegnano l'Agenda.
+// Le letture sono quelle di sempre (all'apertura dell'app, con Oggi); se l'Agenda è la prima pagina aperta, si fanno qui una volta.
+function collegaDaSeguireAgenda() {
+  const seguire = document.getElementById('dash-seguire');
+  if (seguire) seguire.onclick = () => { DSG.aperto = !DSG.aperto; disegnaAgenda(); };
+  const oggi = MB21Coda.oggiRoma();
+  if (typeof collegaTracce === 'function') collegaTracce(async () => { await caricaTracceDaControllare(oggi); disegnaAgenda(); });
+  if (typeof collegaMioPercorso === 'function') collegaMioPercorso(disegnaAgenda);
+  if (typeof TRC !== 'undefined' && TRC.letteIl !== oggi && !vediTutti() && AG.giorno === oggi) {
+    TRC.letteIl = oggi;
+    Promise.all([caricaTracceDaControllare(oggi), caricaMioPercorso()]).then(() => { if (ST.tab === 'agenda' && AG.vista === 'giorno') disegnaAgenda(); });
+  }
+}
+
 function disegnaAgenda() {
   if (typeof accendiTab === 'function') accendiTab();   // nella barra «Progetti» o «MB Plan» (25/09)
   const A = MB21Agenda, oggi = MB21Coda.oggiRoma();
@@ -607,6 +621,9 @@ function disegnaAgenda() {
     // la pagina formato NotePlan (cantiere 41): gli impegni in una card, sotto il foglio del giorno, in fondo il cassetto «Timeline»
     html += impegniHtml(eventi, opz);
     html += foglioHtml(oggi);
+    // nota 098 (Ignazio 26/10: «nell'agenda… tutto ciò che riguarda una tempistica, una data»): «Da seguire» (tracce condivise e il mio percorso), lo stesso
+    // blocco che stava in Oggi e poi in Contatti del giorno, in fondo al Giorno di oggi; stessi tasti e stesse letture (fatte all'apertura dell'app)
+    if (AG.giorno === oggi && typeof daSeguireHtml === 'function') html += daSeguireHtml();
     if (!tre) html += `<button class="ag-cronologia" id="ag-cronologia">${ic('orario')} Timeline <span>${eventi.length ? `${eventi.length} ${eventi.length === 1 ? 'impegno' : 'impegni'}` : 'giornata libera'}</span>${ic('freccia')}</button>`;
   }
   // Telefono e iPad in verticale (Ignazio 22/09): due linguette a metà dei bordi, come la freccetta di NotePlan —
@@ -618,6 +635,7 @@ function disegnaAgenda() {
   app.innerHTML = html + versione();
   collegaAgenda(eventi);
   collegaCose(oggi);
+  collegaDaSeguireAgenda();
   if (!tre) {
     const sx = document.getElementById('mb-ling-sx'), dx = document.getElementById('mb-ling-dx');
     if (sx) sx.onclick = menuAgenda;
@@ -2327,3 +2345,4 @@ async function apriContattoDa(id, ritorno) {
 }
 
 // Esito di un appuntamento (decisione C: poi si chiede sempre il prossimo, con «Salta»)
+

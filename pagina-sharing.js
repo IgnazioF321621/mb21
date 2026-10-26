@@ -301,6 +301,7 @@ async function caricaTracceDaControllare(oggi) {
       if (!chiuse.error) { const via = new Set((chiuse.data || []).map(k => k.id)); aperte = aperte.filter(k => !via.has(k.id)); }
     }
     TRC.righe = MB21Sharing.daControllare(aperte, oggi);
+    TRC.letteIl = oggi;   // nota 098: lette oggi (l'Agenda non le rilegge)
     TRC.ascoltate = (data || []).filter(k => k.ascoltata).sort((a, b) => (b.chiede_prossima_il ? 1 : 0) - (a.chiede_prossima_il ? 1 : 0) || b.ascoltata_il.localeCompare(a.ascoltata_il));
   } catch (e) {
     TRC.righe = []; TRC.ascoltate = [];
@@ -343,16 +344,17 @@ function righeTracceHtml() {
 
 // La pagina «Tracce condivise» (dalla Dashboard): stessa tab, «‹ Dashboard» per tornare
 async function apriPaginaTracce() {
-  const da = typeof OGGI_V5 !== 'undefined' && OGGI_V5 && LV.vista === 'oggi' ? 'Contatti del giorno' : 'Oggi';   // v5: «Da seguire» sta in fondo a Contatti del giorno
+  // nota 098 (Ignazio 26/10): «Da seguire» sta in fondo al Giorno dell'Agenda: si torna lì
+  const da = TRC.daAgenda ? 'Agenda' : 'Oggi';
   app.innerHTML = `<button class="indietro" id="tr-indietro">‹ ${da}</button><h1>${ic('audio')} Tracce condivise</h1><div class="sotto">Le condivisioni degli ultimi 7 giorni${guardoAltri() ? ' di ' + esc(nomeDi(visto())) : ''}. Tocca un nome per aprire lo Sharing.</div>${righeTracceHtml()}${versione()}`;
   window.scrollTo(0, 0);
-  document.getElementById('tr-indietro').onclick = () => caricaOggi();
+  document.getElementById('tr-indietro').onclick = () => (TRC.daAgenda ? apriAgenda() : caricaOggi());
   collegaTracce(async () => { await caricaTracceDaControllare(ST.oggi); apriPaginaTracce(); });
 }
 
 function collegaTracce(ridisegna) {
   const riga = document.getElementById('dash-tracce');
-  if (riga) riga.onclick = () => apriPaginaTracce();
+  if (riga) riga.onclick = () => { TRC.daAgenda = ST.tab === 'agenda'; apriPaginaTracce(); };
   app.querySelectorAll('[data-traccia-non]').forEach(b => b.onclick = async () => {   // nota 039: la traccia si chiude, resta nella scheda
     if (soloGuardo()) return;
     b.disabled = true;
@@ -437,9 +439,9 @@ function mioPercorsoHtml() {
   </div>`;
 }
 
-function collegaMioPercorso() {
+function collegaMioPercorso(ridisegna = disegnaOggi) {   // ridisegna: la pagina che lo mostra (nota 098: anche l'Agenda)
   const testa = document.getElementById('mio-percorso');
-  if (testa) testa.onclick = () => { MIO.aperto = !MIO.aperto; disegnaOggi(); };
+  if (testa) testa.onclick = () => { MIO.aperto = !MIO.aperto; ridisegna(); };
   const libri = document.getElementById('mio-libri');
   if (libri) libri.onclick = () => apriLibri('oggi');
   app.querySelectorAll('[data-mia-ascoltata]').forEach(b => b.onclick = async () => {
@@ -457,7 +459,7 @@ function collegaMioPercorso() {
       mostraToast(eChiede ? `Ascoltata: conta nelle Tracce di oggi. L'avviso a ${sponsor} non è partito: riprova più tardi.` : `${sponsor} riceve l'avviso · la traccia conta nelle Tracce di oggi`);
     } else mostraToast('Ascoltata: conta nelle Tracce di oggi');
     await caricaMioPercorso();
-    disegnaOggi();
+    ridisegna();
   });
 }
 
