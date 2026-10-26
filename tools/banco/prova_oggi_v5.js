@@ -386,7 +386,20 @@ prova('095 Training: testata viola con «‹ Oggi», «Ciao …», «Training» 
   const h = W.app.innerHTML;
   assert.match(h, /^<div class="v5-testa t5" style="--zc:var\(--z-training\)"><div class="v5-su"><button class="v5-indietro" id="v5-indietro">‹ Oggi<\/button>/);
   assert.match(h, /<span class="v5-sopra">Ciao Persona<\/span><h1>\[crescita\] Training<\/h1><\/div><div class="t5-conti"><button class="trn-conto fila" data-medaglie/);
-  assert.match(h, /<div class="trn-schede"><button data-vista="impara" class="scelta">Impara<\/button><button data-vista="ripassa" class="">Ripassa<span class="trn-num">15<\/span><\/button><button data-vista="studia" class="">Studia<\/button><\/div><\/div>/);
+  // nota 098 (Ignazio 26/10, «sì»): Ripassa · Impara · Studia, e con carte da ripassare si apre su Ripassa
+  assert.match(h, /<div class="trn-schede"><button data-vista="ripassa" class="scelta">Ripassa<span class="trn-num">15<\/span><\/button><button data-vista="impara" class="">Impara<\/button><button data-vista="studia" class="">Studia<\/button><\/div><\/div>/);
+  // il riquadro grande con le parole del prototipo, e sotto «Dove sei arrivato» (dai dati già letti: nessuna lettura in più)
+  assert.match(testo(h), /15 carte da ripassare oggi circa 5 minuti · tornano quelle che stai imparando\. Poi, se ti va, altre 15 Inizia il ripasso/);
+  assert.match(h, /<button class="riquadro trn-arrivato" data-dove-arrivato><span class="trn-arr-su"><b>DOVE SEI ARRIVATO<\/b><small>Livello 1 di \d+<\/small><\/span>/);
+  assert.match(testo(h), /Nuovo · I primi passi Percorso 2 di 6 · la prossima volta continui da qui in «Impara»/);
+  assert.match(h, /<span class="trn-arr-barre"><i class="si"><\/i>(<i><\/i>)+<\/span>/);   // il primo percorso visto tutto, gli altri no
+  const letture = W.letture.length;
+  W.app.clic('[data-dove-arrivato]');   // porta a Impara, sul percorso di adesso
+  assert.equal(W.m.TRN.vista, 'impara');
+  assert.match(W.app.innerHTML, /data-vista="impara" class="scelta"/);
+  assert.equal(W.letture.length, letture);
+  // senza carte da ripassare (chi è nuovo) si apre su Impara, come prima
+  assert.match(leggi('pagina-training.js'), /if \(trnV5\(\)\) TRN\.vista = MB21Training\.daRipassare\(TRN\.mazzi, TRN\.stati, oggi, TRN\.segnali, 1\)\.length \? 'ripassa' : 'impara';/);
   assert.equal((h.match(/class="trn-schede"/g) || []).length, 1);   // una volta sola, nella testata
   assert.match(h, /data-come/);   // «Come funziona» e il resto come prima
   assert.match(leggi('pagina-training.js'), /velo\.querySelector\('\.trn-ses-n'\)\.textContent = `\$\{Math\.min\(i \+ 1, tot\)\} di \$\{tot\}`;/);   // il ripasso: «3 di 15»

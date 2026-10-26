@@ -98,11 +98,15 @@ async function apriTraining() {
   TRN.test = test.data || [];
   TRN.segnali = azioni.error ? {} : MB21Training.segnali(azioni.data || [], TRN.mazzi);
   if (!TRN.settore) TRN.settore = TRN.cat.settori[0].nome;
+  // v5, secondo giro (nota Pagine 098, Ignazio 26/10, «sì»): il Training si apre su Ripassa se oggi ci sono carte da ripassare, se no su Impara (chi è
+  // nuovo non trova una pagina vuota)
+  if (trnV5()) TRN.vista = MB21Training.daRipassare(TRN.mazzi, TRN.stati, oggi, TRN.segnali, 1).length ? 'ripassa' : 'impara';
   disegnaTraining();
   if (TRN.dopo === 'medaglie') { TRN.dopo = null; trnMedaglie(); }
   if (TRN.dopo === 'ripasso') { TRN.dopo = null; if (MB21Training.daRipassare(TRN.mazzi, TRN.stati, oggi, TRN.segnali, 1).length) trnRipassoDiOggi(); }   // v5: dal riquadro di «Oggi», dritti nel ripasso
 }
 
+const trnV5 = () => typeof OGGI_V5 !== 'undefined' && OGGI_V5 && typeof testaTrainingV5 === 'function';
 function disegnaTraining() {
   const oggi = trnOggi();
   const fila = MB21Training.giorniDiFila(TRN.giorni.map(g => g.giorno), oggi);
@@ -113,13 +117,15 @@ function disegnaTraining() {
   // nota Pagine 084, punto 6 (Ignazio 24/10, «sì»): in testata via il numero delle stelle (stanno già in «Le tue medaglie», con medaglie e record);
   // i giorni di fila aprono «Le tue medaglie», come la medaglia; «Come funziona» resta nel suo link
   // nota Pagine 084, punto 1 (Ignazio 24/10): il ripasso è di 15 carte per volta (RIPASSO), non tutto l'arretrato: anche il numero della scheda dice al massimo 15
-  const schede = [['impara', 'Impara'], ['ripassa', 'Ripassa' + (rip.length ? `<span class="trn-num">${Math.min(rip.length, MB21Training.RIPASSO)}</span>` : '')], ['studia', 'Studia']];
-  const corpo = TRN.vista === 'ripassa' ? trnRipassa(rip, oggi) : TRN.vista === 'studia' ? trnStudia() : trnScala(sc);
+  const v5 = trnV5();
+  const ripassa = ['ripassa', 'Ripassa' + (rip.length ? `<span class="trn-num">${Math.min(rip.length, MB21Training.RIPASSO)}</span>` : '')];
+  // v5 (nota 098): Ripassa per prima, poi Impara e Studia; in Ripassa, sotto il riquadro grande, «Dove sei arrivato»
+  const schede = v5 ? [ripassa, ['impara', 'Impara'], ['studia', 'Studia']] : [['impara', 'Impara'], ripassa, ['studia', 'Studia']];
+  const corpo = TRN.vista === 'ripassa' ? trnRipassa(rip, oggi) + (v5 ? trnDoveArrivato(sc) : '') : TRN.vista === 'studia' ? trnStudia() : trnScala(sc);
   const conti = `<button class="trn-conto fila${fila.oggi ? ' acceso' : ''}" data-medaglie title="Giorni di allenamento di fila: le tue medaglie">${ic('fiamma')} ${fila.n}</button>
       <button class="trn-conto medaglie" data-medaglie title="Le tue medaglie">${ic('medaglia')} ${med.totale}</button>`;
   const tabSchede = `<div class="trn-schede">${schede.map(([k, t]) => `<button data-vista="${k}" class="${TRN.vista === k ? 'scelta' : ''}">${t}</button>`).join('')}</div>`;
-  // v5 (nota 095, Regia 25/10 sera): la testata viola (testaTrainingV5, pagina-oggi.js) con dentro gli stessi tasti (giorni di fila e medaglie, Impara · Ripassa · Studia)
-  const v5 = typeof OGGI_V5 !== 'undefined' && OGGI_V5 && typeof testaTrainingV5 === 'function';
+  // v5 (nota 095, Regia 25/10 sera): la testata viola (testaTrainingV5, pagina-oggi.js) con dentro gli stessi tasti (giorni di fila e medaglie, Ripassa · Impara · Studia)
   app.innerHTML = (v5 ? testaTrainingV5(nome ? 'Ciao ' + nome : 'Allenati', conti, tabSchede) : `<h1>${ic('crescita')} Training</h1>
     <div class="trn-ciao"><b>${nome ? 'Ciao ' + esc(nome) : 'Allenati'}</b>
       ${conti}</div>`) + `
@@ -167,6 +173,7 @@ function disegnaTraining() {
   } else if (TRN.vista === 'ripassa') {
     const via = document.getElementById('trn-via-ripasso');
     if (via) via.onclick = trnRipassoDiOggi;
+    app.querySelectorAll('[data-dove-arrivato]').forEach(b => b.onclick = () => { TRN.vista = 'impara'; disegnaTraining(); });   // in Impara, sul percorso di adesso
   } else trnCollegaStudia();
 }
 
@@ -604,11 +611,30 @@ function trnRipassa(rip, oggi) {
   // nota Pagine 084, punto 1 (Ignazio 24/10): si dicono le 15 di adesso, non tutto l'arretrato; finite queste, se ce ne sono altre, ne arrivano altre 15
   const n = Math.min(rip.length, MB21Training.RIPASSO), capitate = rip.slice(0, n).filter(x => x.capitata).length, poi = Math.min(rip.length - n, MB21Training.RIPASSO);
   const minuti = Math.max(1, Math.round(n * 20 / 60));
+  // v5 (nota 098): le parole del prototipo, «carte da ripassare oggi · circa 5 minuti · tornano quelle che stai imparando»
+  if (trnV5()) return `<div class="riquadro trn-ripassa"><div class="trn-rip-n">${n}</div>
+    <b>${n === 1 ? 'carta da ripassare oggi' : 'carte da ripassare oggi'}</b>
+    <p>circa ${minuti} ${minuti === 1 ? 'minuto' : 'minuti'} · tornano quelle che stai imparando${capitate
+      ? `. ${capitate === 1 ? 'Una viene' : capitate + ' vengono'} dalle obiezioni che ti sono capitate davvero` : ''}${poi ? `. Poi, se ti va, altre ${poi}` : ''}</p>
+    <button class="primario" id="trn-via-ripasso">Inizia il ripasso</button></div>`;
   return `<div class="riquadro trn-ripassa"><div class="trn-rip-n">${n}</div>
     <b>${n === 1 ? 'carta da ripassare' : 'carte da ripassare'}</b>
     <p>Circa ${minuti} ${minuti === 1 ? 'minuto' : 'minuti'}, tutti i temi insieme.${capitate
       ? ` ${capitate === 1 ? 'Una viene' : capitate + ' vengono'} dalle obiezioni che ti sono capitate davvero nelle telefonate.` : ''}${poi ? ` Finite queste, se ti va, ne arrivano altre ${poi}.` : ''}</p>
     <button class="primario" id="trn-via-ripasso">Inizia il ripasso</button></div>`;
+}
+
+// «Dove sei arrivato» (v5, nota 098): il livello di adesso (MB21Training.scala, i dati già letti), il percorso dove sei, una barretta per percorso
+// (piena = carte viste tutte o percorso superato) e «Percorso 2 di 6 · la prossima volta continui da qui in «Impara»». Il tocco porta a Impara, sul percorso di adesso.
+function trnDoveArrivato(sc) {
+  const l = sc && sc.qui;
+  if (!l || !l.percorsi.length) return '';
+  const i = l.percorsi.findIndex(p => p.id === sc.percorso), dove = i >= 0 ? l.percorsi[i] : null;
+  const fatti = l.percorsi.filter(p => p.stato && p.stato.superato).length;
+  return `<button class="riquadro trn-arrivato" data-dove-arrivato><span class="trn-arr-su"><b>DOVE SEI ARRIVATO</b><small>Livello ${l.numero} di ${sc.livelli.length}</small></span>
+    <span class="trn-arr-tit">${esc(l.nome)}${dove ? ' · ' + esc(dove.titolo) : ''}</span>
+    <span class="trn-arr-barre">${l.percorsi.map(p => `<i${p.stato && (p.stato.superato || p.stato.tutteViste) ? ' class="si"' : ''}></i>`).join('')}</span>
+    <small>${dove ? `Percorso ${i + 1} di ${l.percorsi.length} · la prossima volta continui da qui in «Impara»` : l.superato ? 'Livello superato' : `${fatti} di ${l.percorsi.length} percorsi superati`}</small></button>`;
 }
 
 // ── La sessione: una carta alla volta ───────────────────────
