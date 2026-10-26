@@ -228,7 +228,9 @@ prova('095 seconda pagina: «Contatti del giorno» — testata arancio con «‹
   assert.match(h, /<button class="v5-indietro" id="lv-indietro">‹ Oggi<\/button>/);
   assert.match(testo(h), /Contatti del giorno Fatti 2 su 5 · ne mancano 3/);
   assert.match(h, /<button class="v5-inizia" data-lv-persona="conf\|a1">Inizia da Persona C<\/button>/);
-  assert.match(testo(h), /Prima si chiude ciò che è aperto · 1 .*Poi si contatta \(nomi in coda o scelte personali\) · 2 .*Già sentiti oggi · 1/);
+  // Ignazio 26/10: un gruppo solo «Da sentire» (niente «Prima si chiude…» / «Poi si contatta…»), nello stesso ordine: prima la conferma, poi la coda
+  assert.match(testo(h), /Da sentire · 3 Persona C .*Persona A .*Persona B .*Già sentiti oggi · 1/);
+  assert.doesNotMatch(h, /Prima si chiude|Poi si contatta/);
   assert.match(h, /class="c5-pallino" style="background:var\(--cat-cliente\)"/);   // la Conferma di un Cliente: oro
   assert.match(h, /class="c5-pallino" style="background:var\(--cat-partner\)"/);
   assert.equal((h.match(/data-non-ora=/g) || []).length, 2);

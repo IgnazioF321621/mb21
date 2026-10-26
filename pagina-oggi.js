@@ -253,7 +253,8 @@ function disegnaContattiV5() {
   const righe = e.gruppi.flatMap(g => g.righe.map(x => ({ ...x, titoloGruppo: g.titolo })));
   const manca = e.totale - e.fatti, primo = righe[0];
   const riga = rigaElencoV5;
-  const gruppi = e.gruppi.map(g => `<div class="c5-gruppo">${esc(g.titolo)} · ${g.righe.length}</div><div class="c5-elenco">${g.righe.map(riga).join('')}</div>`).join('');
+  // Ignazio 26/10: niente titoli «Prima si chiude…» / «Poi si contatta…» (non erano nel disegno): un gruppo solo «Da sentire», nello stesso ordine di prima
+  const gruppi = righe.length ? `<div class="c5-gruppo">Da sentire · ${righe.length}</div><div class="c5-elenco">${righe.map(riga).join('')}</div>` : '';
   // nota 098: tutti i sentiti di oggi con la categoria e l'esito (sentitiOggiV5); finché non arrivano, quelli chiusi da qui con «fatto», come prima
   const sentiti = sentitiOggiV5(), visti = new Set();
   const righeFatte = sentiti ? sentiti.filter(x => !visti.has(x.contatto_id) && visti.add(x.contatto_id)).map(x => ({ nome: x.contatti ? x.contatti.nome : '', sotto: [x.contatti && x.contatti.categoria, x.esito].filter(Boolean).join(' · ') }))
