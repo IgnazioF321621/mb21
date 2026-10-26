@@ -2462,6 +2462,12 @@
   .c5t .v5-titolo h1 { font-size: 26px; line-height: 1.15; }
   .c5t + * { margin-top: 14px; }
   .m5 + * { margin-top: 14px; }
+  .z5 + * { margin-top: 14px; }
+  .z5 .v5-titolo h1 { font-size: 34px; }
+  .p5t .pf-cerchio { flex: none; }
+  .p5t .pf-cerchio .cerchio { box-shadow: 0 0 0 3px rgba(255,255,255,.35); }
+  .pf-segni { border-left: 4px solid var(--z-segni); }   /* v5: dove si parla di Segni Vitali, il rosa della zona (le targhette restano blu, rosse e verdi) */
+  .pf-segni .avv-testa b { color: var(--z-segni); }
   /* v5: la parte alta ferma della Lista Nomi diventa la testata verde (resta ferma in alto, come prima) */
   .ls-testa.l5 { background: var(--zc); margin-bottom: 12px; padding-bottom: 14px; gap: 10px; border-bottom: 0; }
   .l5 .v5-titolo h1 { font-size: 34px; }
@@ -4811,14 +4817,19 @@ async function leggiAzioniMie() {
 // come il Check, ha in cima il ritorno alla Dashboard. Nota 074: aperto dalla scheda › Vendite («Le tue provvigioni, mese per mese ›», `RP.da`)
 // la freccia ha il nome della persona e torna alla sua scheda, sulla linguetta Vendite.
 function tornaInDashboard() { return `<button class="indietro" id="rp-indietro">‹ ${esc(RP.da ? RP.da.nome : 'Oggi')}</button>`; }
+// v5 (nota 095, Regia 26/10): la testata grigio scuro del Report, con lo stesso ritorno (#rp-indietro: dalla scheda il suo nome, se no «‹ Esplora»), il chip e il feedback
+const testaReport = () => (typeof veste5 === 'function' && veste5()
+  ? testaZonaV5({ colore: 'var(--z-report)', torna: RP.da ? RP.da.nome : 'Esplora', tornaId: 'rp-indietro', titolo: 'Report' })
+  : `${tornaInDashboard()}<h1>Report</h1>${partnerSelect()}`);
 function collegaTornaInDashboard() {
   const b = document.getElementById('rp-indietro');
   if (b) b.onclick = () => {
     const da = RP.da;
     RP.da = null;
     if (da) { LS.apriSezione = 'vendite'; return apriContattoDa(da.contattoId, da.ritorno); }
-    ST.tab = 'oggi'; mostraTab(); window.scrollTo(0, 0);
+    ST.tab = typeof veste5 === 'function' && veste5() ? 'esplora' : 'oggi'; mostraTab(); window.scrollTo(0, 0);   // v5: il Report si apre da Esplora
   };
+  const fb = document.getElementById('o5-feedback'); if (fb) fb.onclick = () => foglioSegnala();
 }
 
 async function apriReport(vista) {
@@ -4852,7 +4863,7 @@ function disegnaReport() {
   const R = MB21Report, oggi = MB21Coda.oggiRoma(), date = RP.wes.map(w => w.data), p = RP.periodo;
   const riga = (classe, attr, testo, n, perc, freccia) =>
     `<button class="rp-riga ${classe}" ${attr}><span>${testo}</span><span class="n">${n}</span><span class="p">${perc}</span><span class="f">${freccia}</span></button>`;
-  let html = `${tornaInDashboard()}<h1>Report</h1>${partnerSelect()}${linguetteReport()}
+  let html = `${testaReport()}${linguetteReport()}
     <div class="rp-periodi">${[['mese', 'Mese'], ['wes', 'WES'], ['anno', 'Anno']].map(([k, t]) =>
       `<button data-periodo="${k}" class="${RP.tipo === k ? 'scelto' : ''}">${t}</button>`).join('')}</div>`;
   if (!p) {
@@ -4975,7 +4986,7 @@ async function disegnaProvvigioni() {
   if (!PV.mese) PV.mese = meseOggi;
   if (!PV.anno) PV.anno = annoOggi;
   const anno = PV.vista === 'anno' ? PV.anno : Number(PV.mese.slice(0, 4)), giro = ++PV.giro;
-  const testa = `${tornaInDashboard()}<h1>Report</h1>${partnerSelect()}${linguetteReport()}
+  const testa = `${testaReport()}${linguetteReport()}
     <div class="rp-periodi">${[['mese', 'Mese'], ['anno', 'Anno']].map(([k, t]) => `<button data-pvvista="${k}" class="${PV.vista === k ? 'scelto' : ''}">${t}</button>`).join('')}</div>`;
   const collega = () => {
     collegaPartnerSelect(); collegaTornaInDashboard(); collegaLinguetteReport();

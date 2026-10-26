@@ -404,3 +404,13 @@ function testaMappaV5(quanti, mese) {
       <div class="o5-dx">${chipPartnerSelect()}<button class="v5-fb" id="o5-feedback" aria-label="Invia Feedback">${ic('segnala')}</button></div></div>
     <div class="v5-titolo"><div><span class="v5-sopra">${esc(`${quanti} nel gruppo · ${mese}`)}</span><h1>Mappa</h1></div></div></div>`;
 }
+
+// ── v5, le tessere di Esplora: Report, Profilo (con i Segni Vitali) e Admin (Regia 26/10; solo la veste) ──
+// Una testata per pagina nel colore della sua zona: il ritorno (id e nome di adesso, o «‹ Esplora»), il chip del Partner Select dove serve, il feedback,
+// il titolo, una riga sotto e, a destra del titolo, un pezzo della pagina (il Profilo ci mette la sua foto, lo stesso tasto di prima).
+function testaZonaV5({ colore, torna, tornaId, titolo, sotto = '', ps = true, destra = '', classe = '' }) {
+  return `<div class="v5-testa z5${classe ? ' ' + classe : ''}" style="--zc:${colore}"><div class="v5-su"><button class="v5-indietro" id="${tornaId}">‹ ${esc(torna)}</button>
+      <div class="o5-dx">${ps ? chipPartnerSelect() : ''}<button class="v5-fb" id="o5-feedback" aria-label="Invia Feedback">${ic('segnala')}</button></div></div>
+    <div class="v5-titolo"><div><h1>${esc(titolo)}</h1>${sotto ? `<span>${esc(sotto)}</span>` : ''}</div>${destra}</div></div>`;
+}
+const veste5 = () => typeof OGGI_V5 !== 'undefined' && OGGI_V5;

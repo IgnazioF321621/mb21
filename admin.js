@@ -345,7 +345,8 @@ function disegnaAdmin() {
   } else {
     const ultimo = l => (l.length ? MB21Lista.etichettaEvento(l[l.length - 1].data) : 'nessuno');
     const voce = (id, titolo, sotto) => `<button class="rp-apri ad-voce" id="${id}"><span>${titolo}<small>${sotto}</small></span><span>›</span></button>`;
-    html = `<h1>Admin</h1>
+    // v5 (nota 095, Regia 26/10): la testata nera dell'Admin, «‹ Esplora», il chip, il feedback, «lo vedi solo tu»
+    html = `${typeof veste5 === 'function' && veste5() ? testaZonaV5({ colore: '#111114', torna: 'Esplora', tornaId: 'v5-indietro', titolo: 'Admin', sotto: 'lo vedi solo tu' }) : '<h1>Admin</h1>'}
       <input type="file" id="ad-file" accept=".csv,text/csv" hidden>
       ${voce('ad-scegli', ic('file') + ' Carica file Amway', 'il CSV della LOS: albero, volumi, VPP/VPG')}
       ${UTENTI_ADMIN ? voce('ad-vai-utenti', ic('squadra') + " Utenti dell'app", `${AD.richieste.length ? `${ic('invito')} ${AD.richieste.length} da approvare · ` : ''}entrano ${AD.utenti.filter(u => u.accesso_attivo).length} su ${AD.utenti.length}`) : ''}
@@ -490,6 +491,9 @@ function foglioNuovoUtente(u) {
 function collegaAdmin() {
   const su = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; };
   su('ad-indietro', () => { AD.sezione = null; disegnaAdmin(); window.scrollTo(0, 0); });
+  su('v5-indietro', () => { ST.tab = 'esplora'; mostraTab(); window.scrollTo(0, 0); });   // v5: l'Admin si apre da Esplora
+  su('o5-feedback', () => foglioSegnala());
+  if (typeof collegaPartnerSelect === 'function') collegaPartnerSelect();
   [['ad-vai-utenti', 'utenti'], ['ad-vai-wes', 'wes'], ['ad-vai-bbs', 'bbs'], ['ad-vai-fc', 'fc']].forEach(([id, sez]) => su(id, () => { AD.sezione = sez; disegnaAdmin(); window.scrollTo(0, 0); }));
   su('ad-vai-messaggi', () => { AD.sezione = 'messaggi'; AD.messaggi = null; AD.messaggioAperto = null; disegnaAdmin(); window.scrollTo(0, 0); if (typeof caricaMessaggiAdmin === 'function') caricaMessaggiAdmin(); });
   if (AD.sezione === 'messaggi' && typeof collegaMessaggiAdmin === 'function') collegaMessaggiAdmin();

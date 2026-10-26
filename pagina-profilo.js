@@ -142,9 +142,12 @@ function disegnaProfilo() {
   };
   const statoAvvisi = { acceso: 'accesi', spento: 'spenti', negato: 'bloccati', da_installare: 'da attivare', computer: 'dal telefono' }[s] || '';
   const numero = (ST.stato || {}).contatti_al_giorno;
-  app.innerHTML = `<button class="indietro" id="pf-indietro">‹ Oggi</button>
-    <div class="testa-pagina"><h1>Profilo</h1><button class="pf-cerchio" id="pf-foto-apri" aria-label="Cambia la foto"><span class="cerchio grande">${dentroCerchio(u)}</span><i>${ic('foto')}</i></button></div>
-    <div class="sotto">Il tuo quadro personale</div>
+  const foto = `<button class="pf-cerchio" id="pf-foto-apri" aria-label="Cambia la foto"><span class="cerchio grande">${dentroCerchio(u)}</span><i>${ic('foto')}</i></button>`;
+  // v5 (nota 095, Regia 26/10): la testata scura del Profilo, con «‹ Oggi» (lo stesso #pf-indietro), il chip, il feedback, il titolo e la foto (lo stesso tasto)
+  app.innerHTML = `${typeof veste5 === 'function' && veste5() ? testaZonaV5({ colore: 'var(--testo)', torna: 'Oggi', tornaId: 'pf-indietro', titolo: 'Profilo', sotto: 'Il tuo quadro personale', destra: foto, classe: 'p5t' })
+    : `<button class="indietro" id="pf-indietro">‹ Oggi</button>
+    <div class="testa-pagina"><h1>Profilo</h1>${foto}</div>
+    <div class="sotto">Il tuo quadro personale</div>`}
     <div class="zona-oggi">La mia crescita</div>
     ${mioProfiloHtml()}
     ${mieiSegniHtml()}
@@ -172,6 +175,8 @@ function disegnaProfilo() {
   app.querySelectorAll('[data-voce]').forEach(t => { t.onclick = () => { const k = t.dataset.voce; PF.aperte.has(k) ? PF.aperte.delete(k) : PF.aperte.add(k); disegnaProfilo(); }; });
   su('pf-indietro', () => { ST.tab = 'oggi'; mostraTab(); });
   su('pf-foto-apri', foglioFoto);
+  su('o5-feedback', () => foglioSegnala());   // v5: il feedback nella testata
+  if (typeof collegaPartnerSelect === 'function') collegaPartnerSelect();
   collegaMieiSegni();
   su('pf-tel-salva', salvaTelefono);
   su('pf-numero', () => scegliNumero(disegnaProfilo));
@@ -259,7 +264,7 @@ function mieiSegniHtml() {
   if (!g) return '';
   const t = mieTarghe(), L = MB21Lista;
   const targa = (k, scritta) => `<button class="sv-targa pf-targa ${k} ${t[k] ? 'on' : ''}" data-mia-targa="${k}">${scritta}</button>`;
-  return voceProfilo('segni', ic('segnivitali') + ' I miei Segni Vitali', {
+  return voceProfilo('segni', ic('segnivitali') + ' I miei Segni Vitali', { classe: 'pf-segni',   // v5: il rosa dei Segni Vitali nel titolo della voce
     sempre: `<div class="pf-targhe">${targa('bbs', 'BBS' + (g.bbs ? ' ' + esc(L.etichettaEvento(g.bbs)) : ''))}${targa('wes', 'WES' + (g.wes ? ' ' + esc(L.etichettaEvento(g.wes)) : ''))}${targa('cep', 'CEP')}</div>`,
     corpo: `<small style="margin-top:0">Colorata = accesa. <b>BBS</b> e <b>WES</b>: tocca la targhetta per segnare il tuo biglietto (tu, compagno/a, ospiti) o per toglierlo, finché l'evento è in vendita. <b>CEP</b>: toccala quando ti abboni; quando l'abbonamento finisce la spegne l'Admin. Le vede anche chi ti segue, nella Mappa.</small>
       <button class="link" id="pf-12mesi">Vedi i 12 mesi ›</button>` });

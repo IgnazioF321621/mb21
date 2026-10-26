@@ -363,6 +363,24 @@ prova('095 Lista Nomi: la parte alta ferma diventa la testata verde (conto dei n
   assert.match(IDX, /\.ls-testa\.l5 \{ background: var\(--zc\);/);
 });
 
+prova('095 tessere di Esplora: Report grigio scuro («‹ Esplora»), Profilo scuro con la foto e i Segni Vitali in rosa, Admin nero «lo vedi solo tu»; stessi ritorni e tasti', () => {
+  const W = mondo({ admin: true });
+  const r = W.ctx.testaZonaV5({ colore: 'var(--z-report)', torna: 'Esplora', tornaId: 'rp-indietro', titolo: 'Report' });
+  assert.match(r, /^<div class="v5-testa z5" style="--zc:var\(--z-report\)"><div class="v5-su"><button class="v5-indietro" id="rp-indietro">‹ Esplora<\/button>\s*<div class="o5-dx"><button class="o5-ps" id="ps-scegli"/);
+  const p = W.ctx.testaZonaV5({ colore: 'var(--testo)', torna: 'Oggi', tornaId: 'pf-indietro', titolo: 'Profilo', sotto: 'Il tuo quadro personale', destra: '<button id="pf-foto-apri">foto</button>', classe: 'p5t' });
+  assert.match(p, /<h1>Profilo<\/h1><span>Il tuo quadro personale<\/span><\/div><button id="pf-foto-apri">foto<\/button><\/div><\/div>$/);
+  assert.match(IDX, /const testaReport = \(\) => \(typeof veste5 === 'function' && veste5\(\)/);
+  assert.equal((IDX.match(/\$\{testaReport\(\)\}\$\{linguetteReport\(\)\}/g) || []).length, 2);
+  assert.match(IDX, /ST\.tab = typeof veste5 === 'function' && veste5\(\) \? 'esplora' : 'oggi';/);
+  const PF = leggi('pagina-profilo.js');
+  assert.match(PF, /testaZonaV5\(\{ colore: 'var\(--testo\)', torna: 'Oggi', tornaId: 'pf-indietro', titolo: 'Profilo'/);
+  assert.match(PF, /voceProfilo\('segni', ic\('segnivitali'\) \+ ' I miei Segni Vitali', \{ classe: 'pf-segni',/);
+  assert.match(IDX, /\.pf-segni \{ border-left: 4px solid var\(--z-segni\); \}/);
+  const AD = leggi('admin.js');
+  assert.match(AD, /testaZonaV5\(\{ colore: '#111114', torna: 'Esplora', tornaId: 'v5-indietro', titolo: 'Admin', sotto: 'lo vedi solo tu' \}\)/);
+  assert.match(AD, /su\('v5-indietro', \(\) => \{ ST\.tab = 'esplora';/);
+});
+
 (async () => {
   for (const [nome, fn] of coda) { await fn(); ok++; console.log('OK  ' + nome); }
   console.log(`\n${ok} prove superate`);
