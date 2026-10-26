@@ -587,6 +587,71 @@ function collegaDaSeguireAgenda() {
   }
 }
 
+// ── v5, secondo giro (nota Pagine 098, Ignazio «sì» 26/10, proposta A): il Giorno in quattro gruppi, dalla cosa più urgente ──
+// Da chiudere (gli impegni passati senza esito: AG.passati, la lettura «senza_esito» di sempre) · In programma (gli impegni del giorno, Elenco o Timeline)
+// · Da fare (le cose del giorno, con «+ Una cosa da fare») · Da seguire (tracce e mio percorso). Ogni gruppo si apre e si chiude (chiave «g5-…»
+// in sezioniChiuse: qui vuol dire chiuso). Fogli, esiti, salvataggi e letture sono quelli di prima: cambia solo come sono messi. Solo con la veste v5.
+const giornoV5 = () => typeof OGGI_V5 !== 'undefined' && OGGI_V5;
+const CHIAVE_MODO_PROGRAMMA = 'mb21-agenda-programma';   // l'ultima scelta Elenco · Timeline, sul dispositivo
+function modoProgramma() { try { return localStorage.getItem(CHIAVE_MODO_PROGRAMMA) === 'timeline' ? 'timeline' : 'elenco'; } catch (e) { return 'elenco'; } }
+function gruppoV5(chiave, colore, titolo, n, dentro, destra = '') {
+  const chiuso = sezioniChiuse().includes('g5-' + chiave);
+  return `<section class="a5-gr a5-${chiave}${chiuso ? ' chiuso' : ''}" style="--gc:${colore}"><div class="a5-gr-testa">
+    <button class="a5-gr-apri" data-chiudi-sez="g5-${chiave}" aria-expanded="${!chiuso}"><b>${titolo} · ${n}</b><span>${chiuso ? '›' : '⌄'}</span></button>${chiuso ? '' : destra}</div>
+    ${chiuso ? '' : `<div class="a5-gr-dentro">${dentro}</div>`}</section>`;
+}
+// «ieri 18:00», «oggi 10:00», «23/10 18:00»
+function quandoChiudereV5(e, oggi) {
+  const A = MB21Agenda, g = A.partiRoma(e.inizio);
+  const giorno = g.giorno === oggi ? 'oggi' : g.giorno === A.spostaGiorno(oggi, -1) ? 'ieri' : `${Number(g.giorno.slice(8))}/${Number(g.giorno.slice(5, 7))}`;
+  return `${giorno} ${g.ora}`;
+}
+function daChiudereV5(oggi) {
+  if (AG.giorno !== oggi) return [];
+  return (AG.passati || []).filter(a => !a.esito).sort((x, y) => (x.inizio < y.inizio ? 1 : x.inizio > y.inizio ? -1 : 0));
+}
+function giornoV5Html(eventi, opz, oggi) {
+  const A = MB21Agenda, tre = largo();
+  let h = '';
+  const chiudere = daChiudereV5(oggi);
+  if (chiudere.length) {
+    const n = (AG.passati || []).length >= LIMITE_SENZA_ESITO ? `${chiudere.length}+` : chiudere.length;
+    h += gruppoV5('chiudere', '#C2410C', 'Da chiudere', n, chiudere.map(a => `<button class="ag-imp" data-chiudere="${esc(a.id)}"><i class="${classeCat((a.contatti && a.contatti.categoria) || a.categoria)}"></i><span>${esc(A.riga(a, opz).titolo)}</span><b>${esc(quandoChiudereV5(a, oggi))} ›</b></button>`).join(''));
+  }
+  // In programma: quello già in «Da chiudere» non si ripete nell'Elenco (nella Timeline sì: lì si guarda l'ora)
+  const gia = new Set(chiudere.map(a => a.id)), elenco = eventi.filter(e => !gia.has(e.id));
+  const quanti = elenco.length + spaziDelGiorno(AG.giorno).length + ricevutiDelGiornoMB(AG.giorno).length;
+  const modo = tre ? 'elenco' : modoProgramma();   // sul computer la Timeline sta già nella colonna destra
+  const interruttore = tre ? '' : `<div class="a5-modo" role="group" aria-label="Come vedere gli impegni">${[['elenco', 'Elenco'], ['timeline', 'Timeline']].map(([k, t]) => `<button data-a5-modo="${k}"${k === modo ? ' class="scelto" aria-pressed="true"' : ' aria-pressed="false"'}>${t}</button>`).join('')}</div>`;
+  h += gruppoV5('programma', 'var(--z-agenda)', 'In programma', quanti, modo === 'timeline' ? `<div class="a5-crono">${grigliaGiorno(eventi, opz)}</div>` : impegniHtml(elenco, opz), interruttore);
+  // Da fare: le cose del giorno (MB21Agenda.coseDelGiorno, come prima), la settimana ripiegata in cima e «+ Una cosa da fare» che apre il campo di sempre
+  const cose = A.coseDelGiorno(AG.cose, AG.giorno, oggi), restano = cose.filter(c => !c.fatto_il).length;
+  const gg = g => `${Number(g.slice(8))}/${Number(g.slice(5, 7))}`;
+  const piu = AG.cosaAperta === AG.giorno ? nuovaCosaHtml('giorno', 'Cosa c\'è da fare…') : '<button class="link a5-cosa-piu" id="a5-cosa-piu">+ Una cosa da fare</button>';
+  h += gruppoV5('fare', '#1F7A30', 'Da fare', restano, `<div class="ag-foglio">${scalaSopraHtml('settimana', oggi)}
+    ${cose.map(c => rigaCosaHtml(c, 'data-cosa', c.riportata ? `da ${gg(c.riportata)}` : '')).join('')}${piu}
+    ${AG.cosePiuVecchie && !AG.tutteLeCose ? '<button class="link" id="ag-vedi-tutto">Ci sono cose da fare più vecchie di un anno · Vedi tutto</button>' : ''}</div>`);
+  // Da seguire (oggi): le tracce condivise e il mio percorso, gli stessi pezzi e tasti di prima (pagina-sharing.js)
+  const tracce = AG.giorno === oggi && typeof tracceHtml === 'function' ? tracceHtml() : '', percorso = AG.giorno === oggi && typeof mioPercorsoHtml === 'function' ? mioPercorsoHtml() : '';
+  if (tracce || percorso) h += gruppoV5('seguire', '#7C3AED', 'Da seguire', TRC.righe.length + (MIO.righe || []).filter(r => !r.ascoltata).length, `<div class="da-seguire">${tracce}${percorso}</div>`);
+  return h;
+}
+function collegaGiornoV5(eventi) {
+  app.querySelectorAll('[data-chiudere]').forEach(b => { b.onclick = () => {
+    const e = (AG.passati || []).find(x => x.id === b.dataset.chiudere);
+    if (e) foglioEvento(MB21Agenda.eventiDelGiorno([e], MB21Agenda.partiRoma(e.inizio).giorno)[0] || e);   // lo stesso foglio di «Da chiudere» del Programma
+  }; });
+  app.querySelectorAll('[data-a5-modo]').forEach(b => { b.onclick = () => {
+    try { localStorage.setItem(CHIAVE_MODO_PROGRAMMA, b.dataset.a5Modo); } catch (e) {}
+    AG.portato = null; disegnaAgenda();
+  }; });
+  const piu = app.querySelector('#a5-cosa-piu');
+  if (piu) piu.onclick = () => { AG.cosaAperta = AG.giorno; disegnaAgenda(); const c = app.querySelector('.ag-cosa-nuova[data-scala="giorno"] input'); if (c) c.focus(); };
+  const vai = app.querySelector('.a5-crono #ag-vai-ora'); if (vai) vai.hidden = true;   // come nel cassetto: nella scatola che scorre il tasto «Ora» non serve
+  const crono = app.querySelector('.a5-crono'), rif = crono && (crono.querySelector('.ag-adesso') || crono.querySelector('.ag-ev'));
+  if (rif) crono.scrollTop = Math.max(0, rif.offsetTop - 120);
+}
+
 function disegnaAgenda() {
   if (typeof accendiTab === 'function') accendiTab();   // nella barra «Progetti» o «MB Plan» (25/09)
   const A = MB21Agenda, oggi = MB21Coda.oggiRoma();
@@ -617,7 +682,8 @@ function disegnaAgenda() {
     ${partnerSelectAgenda()}`;
   html += richiamiAgenda(oggi) + compleanniHtml(oggi);   // L10: chi compie gli anni oggi
   const tre = largo();   // l'Agenda a tre colonne (schermo largo); la Settimana è già uscita sopra (disegnaSettimana)
-  {
+  if (giornoV5()) html += giornoV5Html(eventi, opz, oggi);   // v5 (nota 098): i quattro gruppi; la Timeline è nel gruppo «In programma», niente cassetto
+  else {
     // la pagina formato NotePlan (cantiere 41): gli impegni in una card, sotto il foglio del giorno, in fondo il cassetto «Timeline»
     html += impegniHtml(eventi, opz);
     html += foglioHtml(oggi);
@@ -636,6 +702,7 @@ function disegnaAgenda() {
   collegaAgenda(eventi);
   collegaCose(oggi);
   collegaDaSeguireAgenda();
+  if (giornoV5()) collegaGiornoV5(eventi);
   if (!tre) {
     const sx = document.getElementById('mb-ling-sx'), dx = document.getElementById('mb-ling-dx');
     if (sx) sx.onclick = menuAgenda;

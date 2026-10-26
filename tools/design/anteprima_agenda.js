@@ -140,6 +140,18 @@ const stub = {
   window: { scrollY: 0, innerHeight: 800, scrollTo: () => {}, addEventListener: () => {} },
   localStorage: { getItem: () => null, setItem: () => {} },
 };
+// v5 (nota 098): con `globalThis.AGENDA_V5` prima del require, l'Agenda si disegna con la veste nuova (la testata vera di pagina-oggi.js, i quattro
+// gruppi del Giorno), con un localStorage che ricorda davvero (Elenco · Timeline, gruppi chiusi) e tracce finte per «Da seguire»
+if (globalThis.AGENDA_V5) {
+  const PO = fs.readFileSync(path.join(BASE, 'pagina-oggi.js'), 'utf8'), i = PO.indexOf('function testaAgendaV5');
+  const memoria = new Map();
+  Object.assign(stub, { OGGI_V5: true, chipPartnerSelect: () => '<button class="o5-ps" id="ps-scegli">Tu ▾</button>',
+    testaAgendaV5: null, TRC: { righe: [{}], ascoltate: [], letteIl: '2026-09-21' }, MIO: { righe: [] }, caricaTracceDaControllare: async () => {}, caricaMioPercorso: async () => {},
+    tracceHtml: () => '<button class="ag-blocco sezione catalogare" id="dash-tracce" aria-expanded="false"><span><span class="sez-testo"><b>Tracce condivise</b><small>1 da controllare</small></span></span><span><span class="sez-quanti">1</span>›</span></button>', mioPercorsoHtml: () => '',
+    localStorage: { getItem: k => (memoria.has(k) ? memoria.get(k) : null), setItem: (k, v) => memoria.set(k, String(v)), memoria } });
+  stub.testaAgendaV5 = new Function('ic', 'esc', 'AG', 'MB21Agenda', 'chipPartnerSelect', PO.slice(i, PO.indexOf('\n}\n', i) + 3) + '\nreturn testaAgendaV5;')(
+    n => MB21Icone.icona(n), x => String(x).replace(/&/g, '&amp;').replace(/</g, '&lt;'), AG, A, stub.chipPartnerSelect);
+}
 const nomi = Object.keys(stub);
 const { impostaLinee, CY, foglioCoachYes, caricaCoachYes, foglioAggiungi, disegnaAgenda, avvisoSovrapposti, grigliaGiorno, grigliaSettimana, menuAgendaHtml, foglioSpazio, preparaSettimana, rigaSpazioHtml, programmaSettimanaHtml, foglioCosa, collegaCose, spuntaCosa, foglioEvento, foglioRicevuto, controllaImpegniNuovi, nuovoAppuntamento } = new Function(...nomi, codice)(...nomi.map(n => stub[n]));
 
@@ -154,7 +166,7 @@ function vista(v, aperta) {
   if (v === 'settimana') return app.innerHTML + grigliaSettimana({ mioId: modo.tutti ? null : 'io', admin: modo.admin });
   return app.innerHTML;
 }
-module.exports = { impostaLinee, CY, foglioCoachYes, caricaCoachYes, foglioAggiungi, foglioCosa, collegaCose, spuntaCosa, scelta, app, A, AG, modo, vista, menuAgendaHtml, disegnaAgenda, avvisoSovrapposti, az, OGGI, foglioSpazio, foglioEvento, foglioRicevuto, controllaImpegniNuovi, nuovoAppuntamento, finto, preparaSettimana, rigaSpazioHtml, programmaSettimanaHtml, fogli, scritture, avvisi };
+module.exports = { stub, impostaLinee, CY, foglioCoachYes, caricaCoachYes, foglioAggiungi, foglioCosa, collegaCose, spuntaCosa, scelta, app, A, AG, modo, vista, menuAgendaHtml, disegnaAgenda, avvisoSovrapposti, az, OGGI, foglioSpazio, foglioEvento, foglioRicevuto, controllaImpegniNuovi, nuovoAppuntamento, finto, preparaSettimana, rigaSpazioHtml, programmaSettimanaHtml, fogli, scritture, avvisi };
 if (require.main !== module) return;
 
 // con un argomento si guarda una vista sola, grande: node tools/design/anteprima_agenda.js giorno /tmp/x.html

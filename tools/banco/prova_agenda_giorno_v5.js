@@ -1,0 +1,90 @@
+// Nota Pagine 098 (Ignazio «sì» 26/10, proposta A): il Giorno dell'Agenda v5 in quattro gruppi. Codice vero di pagina-agenda.js e la testata vera
+// di pagina-oggi.js (tools/design/anteprima_agenda.js con AGENDA_V5), dati finti, tocchi veri.
+// Uso: node tools/banco/prova_agenda_giorno_v5.js
+globalThis.AGENDA_V5 = true;
+const assert = require('node:assert/strict');
+const fs = require('node:fs'), path = require('node:path');
+const V = require('../design/anteprima_agenda.js');
+const AG = V.AG, mem = V.stub.localStorage.memoria;
+const PA = fs.readFileSync(path.join(__dirname, '..', '..', 'pagina-agenda.js'), 'utf8');
+let ok = 0;
+function prova(nome, fn) { fn(); ok++; console.log('OK  ' + nome); }
+const giorno = () => { mem.clear(); AG.cosaAperta = null; return V.vista('giorno'); };
+const pos = (h, t) => { const i = h.indexOf(t); assert.ok(i >= 0, 'manca ' + t); return i; };
+
+prova('I quattro gruppi in ordine, sotto la testata blu: Da chiudere · In programma · Da fare · Da seguire', () => {
+  const h = giorno();
+  assert.match(h, /class="v5-testa a5"/);
+  const a = pos(h, 'Da chiudere · 1'), b = pos(h, 'In programma · '), c = pos(h, 'Da fare · '), d = pos(h, 'Da seguire · 1');
+  assert.ok(pos(h, 'v5-testa') < a && a < b && b < c && c < d);
+  assert.doesNotMatch(h, /id="ag-cronologia"/);   // niente più cassetto «Timeline» in fondo: sta in «In programma»
+});
+
+prova('Da chiudere: il passato senza esito con «10/9 18:00 ›»; il tocco apre il suo foglio; niente gruppo se non c\'è niente', () => {
+  const h = giorno();
+  assert.match(h, /data-chiudere="s0"[\s\S]*?PM 1a1 · Ugo Sala[\s\S]*?10\/9 18:00 ›/);
+  const prima = AG.passati; AG.passati = [];
+  assert.doesNotMatch(V.vista('giorno'), /Da chiudere/);
+  AG.passati = prima;
+  assert.match(PA, /const e = \(AG\.passati \|\| \[\]\)\.find\(x => x\.id === b\.dataset\.chiudere\);\n\s+if \(e\) foglioEvento\(/);
+});
+
+prova('In programma: Elenco con le righe di sempre; Timeline = la griglia di sempre; la scelta resta sul dispositivo', () => {
+  let h = giorno();
+  assert.match(h, /data-a5-modo="elenco" class="scelto"/);
+  assert.match(h, /class="ag-imp[^"]*" data-evento="p1"/);
+  assert.doesNotMatch(h, /class="ag-griglia"/);
+  mem.set('mb21-agenda-programma', 'timeline');
+  h = V.vista('giorno');
+  assert.match(h, /data-a5-modo="timeline" class="scelto"/);
+  assert.match(h, /class="a5-crono"><div class="ag-doppi">|class="a5-crono"><div class="ag-griglia">/);
+  assert.match(h, /class="ag-ev [^"]*" data-evento="p1"/);
+  mem.clear();
+});
+
+prova('Da fare: le cose del giorno con la spunta, la settimana in cima, «+ Una cosa da fare» che apre il campo di sempre', () => {
+  let h = giorno();
+  assert.match(h, /Da fare · 4/);
+  assert.equal((h.match(/class="cosa[ "]/g) || []).length, 4);
+  assert.match(h, /class="ag-sopra sc-settimana/);
+  assert.match(h, /id="a5-cosa-piu">\+ Una cosa da fare</);
+  assert.doesNotMatch(h, /class="ag-cosa-nuova" data-scala="giorno"/);
+  AG.cosaAperta = AG.giorno;
+  h = V.vista('giorno');
+  assert.match(h, /class="ag-cosa-nuova" data-scala="giorno">[\s\S]*?data-tipo-cosa/);
+  AG.cosaAperta = null;
+});
+
+prova('Ogni gruppo si apre e si chiude, e si ricorda', () => {
+  mem.clear();
+  mem.set('mb21-sezioni-chiuse', JSON.stringify(['g5-fare', 'g5-programma']));
+  const h = V.vista('giorno');
+  assert.match(h, /a5-gr a5-fare chiuso/);
+  assert.doesNotMatch(h, /id="a5-cosa-piu"/);
+  assert.doesNotMatch(h, /data-a5-modo/);   // chiuso, niente interruttore
+  assert.match(h, /data-chiudi-sez="g5-programma" aria-expanded="false"/);
+  mem.clear();
+});
+
+prova('Settimana, Mese e un altro giorno: niente Da chiudere né Da seguire fuori da oggi', () => {
+  const prima = AG.giorno; AG.giorno = '2026-09-22';
+  const h = V.vista('giorno');
+  AG.giorno = prima;
+  assert.doesNotMatch(h, /Da chiudere|Da seguire/);
+  assert.match(h, /In programma · 2/);
+});
+
+prova('Tocchi veri: Timeline si ricorda, «+ Una cosa da fare» apre il campo, la testata del gruppo lo chiude', () => {
+  giorno();
+  V.app.querySelector('[data-a5-modo="timeline"]').onclick();
+  assert.equal(mem.get('mb21-agenda-programma'), 'timeline');
+  assert.match(V.app.innerHTML, /class="a5-crono"/);
+  V.app.querySelector('#a5-cosa-piu').onclick();
+  assert.equal(AG.cosaAperta, AG.giorno);
+  assert.match(V.app.innerHTML, /class="ag-cosa-nuova" data-scala="giorno"/);
+  V.app.querySelector('[data-chiudi-sez="g5-programma"]').onclick();
+  assert.match(V.app.innerHTML, /a5-gr a5-programma chiuso/);
+  mem.clear(); AG.cosaAperta = null;
+});
+
+console.log(`\n${ok} prove superate`);

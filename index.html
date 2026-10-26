@@ -2449,6 +2449,26 @@
   .a5 .ag-giorno.oggi:not(.scelto) { box-shadow: inset 0 0 0 2px rgba(255,255,255,.6); }
   .a5 .ag-punti i { box-shadow: 0 0 0 1px rgba(255,255,255,.7); }
   .a5 + * { margin-top: 14px; }
+  /* v5, il Giorno dell'Agenda in quattro gruppi (nota 098): Da chiudere · In programma · Da fare · Da seguire, ognuno col suo colore (--gc) */
+  .a5-gr { background: var(--superficie); border-radius: 18px; border-left: 5px solid var(--gc); padding: 4px 12px 8px; margin-bottom: 12px; }
+  .a5-gr.chiuso { padding-bottom: 4px; }
+  .a5-gr-testa { display: flex; align-items: center; gap: 8px; }
+  .a5-gr-apri { flex: 1; min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 8px; border: 0; background: none; font: inherit; padding: 10px 0; min-height: 44px; color: var(--gc); text-align: left; }
+  .a5-gr-apri b { font-size: 13px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; white-space: nowrap; }
+  .a5-gr-apri span { font-size: 18px; }
+  .a5-modo { display: flex; gap: 2px; background: #E6F0FB; border-radius: 10px; padding: 2px; flex: none; }
+  .a5-modo button { border: 0; background: none; font: inherit; font-size: 13px; font-weight: 700; color: var(--z-agenda); border-radius: 8px; padding: 6px 10px; min-height: 32px; }
+  .a5-modo button.scelto { background: var(--z-agenda); color: #fff; }
+  .a5-gr .ag-impegni { box-shadow: none; padding: 0; margin: 0; background: none; }
+  .a5-gr .ag-impegni.vuota { padding: 4px 0 8px; }
+  .a5-gr .ag-imp:first-child { border-top: 0; }
+  .a5-chiudere .ag-imp b { background: #FDEBDD; color: #A8380A; }
+  .a5-crono { max-height: 60vh; overflow-y: auto; border-radius: 12px; }
+  .a5-crono .ag-griglia { box-shadow: none; padding-left: 0; }
+  .a5-gr .ag-foglio { padding: 0 0 4px; }
+  .a5-gr .ag-sopra { margin-top: 0; }
+  .a5-cosa-piu { display: block; padding: 10px 0 4px; font-weight: 700; color: #1F7A30; }
+  .a5-gr .da-seguire { margin: 0; }
   .t5 .v5-titolo h1 svg.ic { width: 28px; height: 28px; vertical-align: -3px; }
   .t5-conti { display: flex; gap: 6px; flex: none; }
   .t5 .trn-conto { background: rgba(255,255,255,.22); color: #fff; border: 0; }
