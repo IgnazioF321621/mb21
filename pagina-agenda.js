@@ -1863,27 +1863,41 @@ function testoAppuntamento(e, cosa) {
   if (cosa.has('punti') && (e.punti || []).length) righe.push('✅ Punti da trattare:', ...e.punti.map(p => `• ${p.t}`));
   return righe.join('\n');
 }
-function collegaCondividi(el, e) {
+// Chi usa davvero MB21 (Ignazio 27/10: «la usano solo io e una partner»): utente_del_contatto, cioè un utente con l'accesso attivo, collegato alla scheda o con il
+// suo codice. Una lettura per persona e per sessione; «Nell'app MB21» (e «la trova nella sua Agenda e nel suo calendario») compare solo per loro.
+const USA_APP = new Map(), USA_APP_SI = new Set();
+function usaLApp(contattoId) {
+  if (!contattoId) return Promise.resolve(false);
+  if (!USA_APP.has(contattoId)) USA_APP.set(contattoId, Promise.resolve(dbq('usa l\'app', supa.rpc('utente_del_contatto', { p_contatto: contattoId })))
+    .then(r => { const si = !!(r && !r.error && r.data); if (si) USA_APP_SI.add(contattoId); return si; }, () => false));
+  return USA_APP.get(contattoId);
+}
+// `preset` (dal Salva del modulo, foglioCondividi): { come, cosa } scelti nel modulo
+function collegaCondividi(el, e, preset) {
   const posto = el.querySelector(`[data-condividi="${e.id}"]`);
   if (!posto) return;
-  const A = MB21Agenda, tel = numeroDaChiamare(e.contatti && e.contatti.telefono), app = A.puoCondividereAzione(e);
-  if (!tel && !app) { posto.innerHTML = ''; return; }   // né un Partner né un numero con il prefisso: niente da condividere
+  const A = MB21Agenda, tel = numeroDaChiamare(e.contatti && e.contatti.telefono), partner = A.puoCondividereAzione(e);
+  if (e.condiviso_con) USA_APP_SI.add(e.contatto_id);   // già condiviso nell'app: la usa
   const voci = [['dove', 'Dove', !!(e.link || e.luogo)], ['note', 'Note', !!e.note], ['punti', 'Punti da trattare', !!(e.punti || []).length]].filter(v => v[2]);
-  const st = { cosa: new Set(voci.filter(v => v[0] !== 'punti').map(v => v[0])), come: null, aperta: null, risposte: null, di: undefined };
+  const st = { cosa: preset && preset.cosa ? new Set(preset.cosa) : new Set(voci.filter(v => v[0] !== 'punti').map(v => v[0])), come: (preset && preset.come) || null, aperta: null, risposte: null, di: undefined };
+  let app = partner && USA_APP_SI.has(e.contatto_id);
+  if (partner && !app && !USA_APP.has(e.contatto_id)) usaLApp(e.contatto_id).then(si => { if (si) { app = true; if (!preset) st.come = null; disegna(); } });
+  if (!tel && !app && !partner) { posto.innerHTML = ''; return; }   // né chi usa l'app né un numero con il prefisso: niente da condividere
   const tendina = (nome, testo, righe) => `<div class="campo"><label>${nome === 'come' ? 'Come' : 'Cosa aggiungo?'}</label><button type="button" class="sel5${st.aperta === nome ? ' aperto' : ''}" data-condividi-apri="${nome}">${testo}<em>${st.aperta === nome ? '⌃' : '▾'}</em></button>
     ${st.aperta === nome ? `<div class="ag-scelte tendina5">${righe}</div>` : ''}</div>`;
   const disegna = () => {
+    if (!tel && !app) { posto.innerHTML = ''; return; }   // un Partner che non usa l'app e senza telefono: niente
     if (st.di !== e.condiviso_con) { st.di = e.condiviso_con; st.risposte = null; }   // condiviso o tolto: la risposta si rilegge
     const modi = MODI_CONDIVIDI.filter(([k]) => (k === 'app' ? app && !e.condiviso_con : !!tel));
     if (!modi.some(x => x[0] === st.come)) st.come = (modi[0] || [])[0] || null;
     const nome = esc(nomePersona(e)), modo = MODI_CONDIVIDI.find(x => x[0] === st.come);
     const sunto = voci.filter(v => st.cosa.has(v[0])).map(v => v[1]).join(' · ');
-    const stato = !app ? '' : e.condiviso_con
+    const stato = !app && !SENZA_APP.has(e.id) ? '' : e.condiviso_con
       ? `<div class="pt-testa"><b>Condiviso con ${nome}</b>${puntiCondivisi() ? `<small>${e.punti_condivisi ? 'vede anche i punti' : 'senza i punti'}</small>` : ''}</div>
         <div class="cd-risposte" data-cd-risposte>${st.risposte == null ? '…' : st.risposte}</div>
         <div class="pt-comandi">${puntiCondivisi() ? `<button type="button" class="link" data-cd-punti="${e.punti_condivisi ? '0' : '1'}">${e.punti_condivisi ? 'Nascondi i punti' : 'Fai vedere i punti'}</button>` : ''}<button type="button" class="link" data-cd-togli>Non condividere più</button></div>`
       : SENZA_APP.has(e.id) ? `<div class="pt-testa"><b>${nome} non usa ancora MB21</b></div><div class="pt-comandi"><button type="button" class="link" data-cd-invita>${ic('invito')} Invitalo nell'app</button></div>` : '';
-    posto.innerHTML = `<div class="riquadro mc-g manda5 cd"${app ? ` data-cd="${esc(e.id)}"` : ''}><b>Condividi con ${nome}</b>${stato}
+    posto.innerHTML = `<div class="riquadro mc-g manda5 cd"${partner ? ` data-cd="${esc(e.id)}"` : ''}><b>Condividi con ${nome}</b>${stato}
       ${modi.length ? tendina('come', `<b>${esc(modo[1])}</b>`, modi.map(([k, n, sotto]) => `<button type="button" data-condividi-come="${k}" class="${k === st.come ? 'scelto' : ''}"><span>${esc(n)}<small>${esc(sotto)}</small></span>${k === st.come ? '<b>✓</b>' : ''}</button>`).join('')) : ''}
       ${st.come && st.come !== 'app' && voci.length ? tendina('cosa', sunto ? `<b>${esc(sunto)}</b>` : '<small>Niente</small>', voci.map(v => `<button type="button" data-condividi-cosa="${v[0]}" class="${st.cosa.has(v[0]) ? 'scelto' : ''}"><span>${v[1]}</span>${st.cosa.has(v[0]) ? '<b>✓</b>' : ''}</button>`).join('')) : ''}
       ${st.come ? `<button type="button" class="primario" ${st.come === 'app' ? 'data-cd-con' : 'data-condividi-via'}>${ic(st.come === 'app' ? 'condividi' : st.come)} Condividi</button>` : ''}</div>`;
@@ -1896,7 +1910,7 @@ function collegaCondividi(el, e) {
       if (st.come === 'whatsapp') window.open('https://wa.me/' + tel.slice(1) + '?text=' + encodeURIComponent(testo), '_blank', 'noopener');
       else apriTelegramCon(tel, testo);
     };
-    if (app) legaCondivisioneAzione(posto, e, disegna, st);   // condiviso o tolto: si ridisegna il riquadro (la lista dell'Agenda la aggiorna «localmente»)
+    if (partner) legaCondivisioneAzione(posto, e, disegna, st);   // condiviso o tolto: si ridisegna il riquadro (la lista dell'Agenda la aggiorna «localmente»)
   };
   disegna();
 }
@@ -1923,6 +1937,23 @@ async function mostraRisposte(el, origine, id, azione) {
   const osp = A.ospitiPerChiOrganizza(data, di);
   if (osp.totale) n.ci_sono = osp.nomi;
   dove.innerHTML = `${osp.totale ? `<div class="cd-si"><b>Ospiti ${osp.totale}</b></div>` : ''}${gruppo('Partecipano', n.ci_sono, 'cd-si')}${gruppo('Non possono', n.non_ci_sono, 'cd-no')}${gruppo('Senza risposta', n.senza, 'cd-senza')}`; void c;
+}
+// Dopo il Salva del modulo (nota 107, Ignazio 27/10: «salva e poi apre subito i messaggi da mandare, uno per persona»): il foglio con lo stesso riquadro
+// «Condividi con [nome]» per ogni persona a cui va un messaggio, con «Come» e «Cosa aggiungo?» già scelti nel modulo: un tocco su «Condividi» per persona
+// (il telefono vuole un tocco per ogni chat che si apre). `azioni` = [{ ...riga dell'appuntamento, id, contatti: { nome, categoria, telefono }, come }].
+function foglioCondividi(azioni, cosa) {
+  if (!azioni || !azioni.length) return;
+  const velo = document.createElement('div');
+  velo.className = 'velo';
+  velo.innerHTML = `<div class="foglio alto mc"><div class="mc-testa"><span class="ts-pastiglia">${ic('condividi')}</span><div><small>Appuntamento salvato</small><b>Manda il messaggio</b></div><button id="fc-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
+    <p class="na5-aiuto" style="margin:12px 4px 0">${azioni.length === 1 ? 'Tocca «Condividi»: si apre la sua chat.' : 'Tocca «Condividi» per ognuno: si apre la sua chat.'}</p>
+    ${azioni.map(e => `<div data-condividi="${esc(e.id)}"></div>`).join('')}
+    <div class="mc-fondo"><button class="primario" id="fc-fatto" style="grid-column: 1 / -1; width: 100%">Fatto</button></div></div>`;
+  document.body.appendChild(velo);
+  const chiudi = () => velo.remove();
+  velo.querySelector('#fc-x').onclick = chiudi;
+  velo.querySelector('#fc-fatto').onclick = chiudi;
+  for (const e of azioni) collegaCondividi(velo, e, { come: e.come, cosa });
 }
 // i tocchi della condivisione nell'app, dentro il riquadro unico (nota 107): `st.risposte` tiene la risposta letta, così aprire una scelta non la rilegge
 function legaCondivisioneAzione(el, e, ridisegna, st) {

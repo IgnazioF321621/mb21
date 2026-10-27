@@ -336,6 +336,7 @@
   .na5-piu { display: flex; align-items: center; gap: 6px; width: 100%; border: 0; background: none; color: var(--accento); font: inherit; font-weight: 700; padding: 10px 0 4px; text-align: left; }
   .na5-aiuto { font-size: 12.5px; color: var(--testo-soft); margin: 4px 0 2px; }
   .na5-cambia { padding: 0; font-size: 12.5px; }
+  .na5-cond small { display: block; font-size: 12.5px; color: var(--testo-soft); margin: 6px 0 3px; }   /* nota 107: «Condividi con», una riga per persona */
   .na5-nuova { font-size: 11px; font-weight: 700; color: #8A6200; background: #FFF3D1; border-radius: 6px; padding: 1px 6px; margin-left: 6px; vertical-align: 2px; }   /* nota 108 */
   .na5-piu small { color: var(--testo-soft); font-weight: 400; font-size: 12.5px; }
   .na5-altro-g { margin-top: 14px; }
@@ -3983,7 +3984,7 @@ async function nuovoAppuntamento(opz = {}) {
     durata: m.fine ? Math.round((Date.parse(m.fine) - Date.parse(m.inizio)) / 60000) : null, senzaOra: !!m.senza_ora, spazio: null });
   const liberi = !opz.spazio && !m && typeof spaziLiberi === 'function' ? await spaziLiberi() : [];
   await caricaCoachYes();   // nota 001: il segnale Coach Yes accanto al nome della telefonata (di solito già in memoria)
-  if (!opz.contatto || m) {
+  {   // nota 107: anche con la persona già data, per il suo telefono («Condividi con» in «Altro»)
     try { elenco = await leggiContattiMiei(); } catch (e) { mostraToast('Contatti non caricati: riprova.'); return null; }
   }
   const st = {
@@ -4009,6 +4010,7 @@ async function nuovoAppuntamento(opz = {}) {
     st.altri = (Array.isArray(insieme) ? insieme : []).filter(x => A.stessoIncontro(x, m))
       .map(x => ({ id: x.contatto_id, nome: (x.contatti || {}).nome || '—', categoria: (x.contatti || {}).categoria || x.categoria, azione: x.id, esito: x.esito }));
     st.giaInsieme = st.altri.map(x => x.azione);
+    if (m.condiviso_con) USA_APP_SI.add(m.contatto_id);   // nota 107: già condiviso nell'app, quindi la usa
   }
   const serata = () => st.condividi === 'team' || st.condividi === 'linea';
   const puoTeam = () => puoSerataTeam() && !opz.contatto && !opz.spazio;
@@ -4075,7 +4077,16 @@ async function nuovoAppuntamento(opz = {}) {
     // «Porta qualcuno» (resta «Portato da»). La serata (Team o Linea, solo l'Admin) resta com'era, più sotto in disegna().
     const persone5 = () => [...(st.contatto ? [{ ...st.contatto, categoria: st.categoria }] : []), ...st.altri];
     const tipiDiTutti = () => (m ? [m.tipo_azione] : A.tipiPer(st.categoria)).filter(t => st.altri.every(p => A.tipiPer(p.categoria).includes(t)));   // i tipi validi per tutte le persone
-    const partnerDaCondividere = () => persone5().filter(p => p.categoria === 'Partner' && st.tipo !== 'Contatto');
+    // Nota 107 (Ignazio 27/10): «Condividi con» come nel foglio dell'appuntamento (collegaCondividi, pagina-agenda.js), per ogni persona: «Come» = Nell'app MB21
+    // (solo chi usa l'app con l'accesso attivo: usaLApp) · Telegram · WhatsApp (con il telefono col prefisso) · Non condividere; per i messaggi «Cosa aggiungo?».
+    // Al Salva: l'app con condividi_azione; i messaggi nel foglio «Manda il messaggio» che si apre subito dopo (foglioCondividi), uno per persona.
+    const NOMI_MODO = { app: 'Nell\'app MB21 · nella sua Agenda e nel suo calendario', telegram: 'Telegram', whatsapp: 'WhatsApp', '': 'Non condividere' };
+    const chiave5 = p => p.id || 'n:' + p.codice;
+    const telDi = p => numeroDaChiamare(p.telefono || (elenco.find(x => x.id === p.id) || {}).telefono || (opz.contatto && opz.contatto.id === p.id ? opz.contatto.telefono : ''));
+    const modiDi = p => [...(p.categoria === 'Partner' && st.tipo !== 'Contatto' && USA_APP_SI.has(p.id) ? ['app'] : []), ...(telDi(p) ? ['telegram', 'whatsapp'] : []), ''];
+    // si parte da «Nell'app» per chi la usa (nota 059: già condiviso), da «Non condividere» per gli altri: il messaggio si sceglie
+    const comeDi = p => { const k = st['come:' + chiave5(p)], modi = modiDi(p); return k !== undefined && modi.includes(k) ? k : modi.includes('app') ? 'app' : ''; };
+    const leggiChiUsaApp = () => persone5().filter(p => p.id && p.categoria === 'Partner' && !USA_APP.has(p.id)).forEach(p => usaLApp(p.id).then(si => { if (si && velo.isConnected !== false) disegna(); }));
     const nomiInFila = nomi => (nomi.length > 1 ? nomi.slice(0, -1).join(', ') + ' e ' + nomi.at(-1) : nomi[0] || '');
     function htmlAppuntamento(tipi) {
       const riga5 = (c, togli) => `<div class="na5-chi ${classeCat(c.categoria)}"><span class="ts-pastiglia">${esc(iniziali(c.nome))}</span><span><b>${esc(c.nome)}${c.nuova ? '<span class="na5-nuova">scheda nuova</span>' : ''}${st.tipo === 'Contatto' ? segnoCoach(c.id, c.nome) : ''}</b><small>${esc(c.categoria ? MB21Lista.nomeCategoria(c.categoria) : 'Senza categoria')}</small></span>${togli == null ? '' : `<button type="button" class="link" data-togli-persona="${esc(togli)}" aria-label="Togli">${ic('chiudi')}</button>`}</div>`;
@@ -4124,9 +4135,10 @@ async function nuovoAppuntamento(opz = {}) {
       leggiAvvio(() => disegna());
       const passi = passiOfferti();
       st.suCosa = st.suCosa.filter(x => passi.includes(x));
-      const condivisi = st.condividi === 'persona' && puoPersona() ? partnerDaCondividere().map(p => p.nome) : [];
+      leggiChiUsaApp();
+      const nellApp = persone5().filter(p => comeDi(p) === 'app').map(p => p.nome), messaggio = persone5().filter(p => ['telegram', 'whatsapp'].includes(comeDi(p))).map(p => p.nome);
       const sunto = [campi.dove.trim() && 'dove', (campi.punti.trim() || st.suCosa.length) && 'punti da trattare', campi.note.trim() && 'note',
-        st.portato && 'portato da ' + st.portato.nome, condivisi.length && 'condiviso con ' + nomiInFila(condivisi)].filter(Boolean);
+        st.portato && 'portato da ' + st.portato.nome, nellApp.length && 'nell\'app con ' + nomiInFila(nellApp), messaggio.length && 'messaggio a ' + nomiInFila(messaggio)].filter(Boolean);
       h += `<div class="riquadro mc-g na5-altro-g"><button type="button" class="na5-altro" id="na-altro-apri" aria-expanded="${st.altroAperto}"><span><b>Altro · facoltativo</b>
         <small>${esc(sunto.length ? sunto.join(' · ') : soloGiorno ? 'Note, portato da' : 'Dove, punti da trattare, note, portato da')}</small></span><em>${st.altroAperto ? '⌃' : '›'}</em></button>`;
       if (st.altroAperto) {
@@ -4140,11 +4152,18 @@ async function nuovoAppuntamento(opz = {}) {
         h += `<div class="campo"><label>Note</label><input id="na-note" maxlength="100" placeholder="Scrivi qualcosa da ricordare" value="${esc(campi.note)}"></div>`;
         h += `<div class="campo"><label>Portato da</label><div class="fa-persona"><span>${st.portato ? esc(st.portato.nome) : '<span style="color:var(--grigio)">nessuno</span>'}</span>
           ${st.portato ? '<button class="link" id="na-togli-portato" aria-label="Togli">' + ic('chiudi') + '</button>' : '<button class="link" id="na-portato">＋ Scegli</button>'}</div></div>`;
-        // «Condividi con» (nota 027; P5b): Nessuno · le persone Partner dell'appuntamento; i punti non si condividono più (PUNTI_CONDIVISI)
-        if (puoPersona()) {
-          const chi = nomiInFila(partnerDaCondividere().map(p => p.nome));
-          h += `<div class="campo"><label>Condividi con <small>lo trova nella sua Agenda e nel suo calendario</small></label>${tendina('condividi', ['', 'persona'], st.condividi, ['Nessuno', chi])}</div>`;
-          if (st.condividi && PUNTI_CONDIVISI) h += `<div class="campo"><label>Vede anche i punti da trattare?</label>${tendina('puntiCond', ['1', '0'], st.puntiCond ? '1' : '0', ['Sì', 'No'])}</div>`;
+        // «Condividi con» (nota 107): per ogni persona «Come»; per i messaggi «Cosa aggiungo?» (più di una, resta aperta); i punti nell'app solo con PUNTI_CONDIVISI
+        const conChi = persone5().filter(p => modiDi(p).length > 1);
+        if (conChi.length) {
+          h += `<div class="campo"><label>Condividi con</label>${conChi.map(p => `<div class="na5-cond"><small>${esc(p.nome)}</small>${tendina('come:' + chiave5(p), modiDi(p), comeDi(p), modiDi(p).map(x => NOMI_MODO[x]))}</div>`).join('')}</div>`;
+          const voci = [['dove', 'Dove', !!campi.dove.trim()], ['note', 'Note', !!campi.note.trim()], ['punti', 'Punti da trattare', !!campi.punti.trim()]].filter(x => x[2]);
+          if (!st.cosa5) st.cosa5 = new Set(['dove', 'note']);
+          if (messaggio.length && voci.length) {
+            const aperta = tendinaAperta() === 'cosa5', sunto5 = voci.filter(x => st.cosa5.has(x[0])).map(x => x[1]).join(' · ');
+            h += `<div class="campo"><label>Cosa aggiungo? <small>nel messaggio</small></label><button type="button" class="sel5${aperta ? ' aperto' : ''}" data-tendina="cosa5" aria-expanded="${aperta}">${sunto5 ? `<b>${esc(sunto5)}</b>` : '<small>Niente</small>'}<em>${aperta ? '⌃' : '▾'}</em></button>
+              ${aperta ? `<div class="ag-scelte tendina5">${voci.map(x => `<button type="button" data-cosa5="${x[0]}" class="${st.cosa5.has(x[0]) ? 'scelto' : ''}"><span>${x[1]}</span>${st.cosa5.has(x[0]) ? '<b>✓</b>' : ''}</button>`).join('')}</div>` : ''}</div>`;
+          }
+          if (nellApp.length && PUNTI_CONDIVISI) h += `<div class="campo"><label>Vede anche i punti da trattare?</label>${tendina('puntiCond', ['1', '0'], st.puntiCond ? '1' : '0', ['Sì', 'No'])}</div>`;
         }
         const categorie = st.categoria && !A.CATEGORIE.includes(st.categoria) ? [st.categoria, ...A.CATEGORIE] : A.CATEGORIE;   // Ex, Unlinked…: resta com'è, o si cambia
         h += `<div class="campo"><label>Categoria${st.altri.length ? ' di ' + esc(st.contatto.nome) : ''} <small>dal contatto</small></label>${tendina('categoria', categorie, st.categoria, categorie.map(MB21Lista.nomeCategoria))}</div>`;
@@ -4152,9 +4171,6 @@ async function nuovoAppuntamento(opz = {}) {
       return h + '</div>';
     }
     function disegna() {
-      // nota Pagine 059 (Ignazio 19/10/2026, «sì, già condiviso»): un appuntamento con un Partner parte già condiviso con lui (prima partiva
-      // da «Nessuno» e Valentina non vedeva l'appuntamento delle 17:15); finché non si tocca «Condividi con» segue la persona scelta
-      if (!st.condivisoAMano && !serata()) st.condividi = puoPersona() ? 'persona' : '';
       const tipi = tipiDiTutti();
       let h = '';
       if (!serata()) h = htmlAppuntamento(tipi);   // note 103 e 104
@@ -4278,6 +4294,7 @@ async function nuovoAppuntamento(opz = {}) {
         else { st.contatto = null; st.categoria = null; }
         tipoAncoraBuono(); disegna();
       }; });
+      velo.querySelectorAll('[data-cosa5]').forEach(b => { b.onclick = () => { leggiCampi(); const k = b.dataset.cosa5; if (st.cosa5.has(k)) st.cosa5.delete(k); else st.cosa5.add(k); st.tendina = 'cosa5'; disegna(); }; });   // nota 107
       const es = velo.querySelector('#na-esito');
       if (es) es.onclick = () => { chiudi(null); foglioAzione(m.id, { soloEsito: true, dopo: opz.dopo }); };
       // nota 108: «＋ Una linea»: le persone accese nella Mappa entrano tutte (la prima, se manca, diventa quella dell'appuntamento); chi c'è già non si ripete
@@ -4417,10 +4434,16 @@ async function nuovoAppuntamento(opz = {}) {
         const { data } = await dbq('aggiungi all\'incontro', supa.from('azioni').insert(nuovi.map(p => ({ ...riga, ...resto, contatto_id: p.id, categoria: p.categoria, completata: false }))).select('id'));
         nuoviIds = (Array.isArray(data) ? data : []).map(x => x.id);
       }
-      const partner = [{ id: v.contatto_id, categoria: v.categoria, azione: m.id }, ...restano, ...nuovi.map((p, i) => ({ ...p, azione: nuoviIds[i] }))].filter(p => p.categoria === 'Partner' && p.azione);
-      if (st.condividi === 'persona' && puoPersona()) {
-        for (const p of partner) if (p.azione !== m.id || !m.condiviso_con) await dbq('condividi azione', supa.rpc('condividi_azione', { p_azione: p.azione, p_con: true, p_punti: PUNTI_CONDIVISI && st.puntiCond }));
-      } else if (m.condiviso_con) await dbq('condividi azione', supa.rpc('condividi_azione', { p_azione: m.id, p_con: false, p_punti: false }));
+      // nota 107: «Condividi con» persona per persona, come nel modulo nuovo; la riga di partenza già condivisa e ora no si toglie
+      const messaggi = [];
+      for (const p of [{ ...st.contatto, id: v.contatto_id, categoria: v.categoria, azione: m.id }, ...restano, ...nuovi.map((p, i) => ({ ...p, azione: nuoviIds[i] }))]) {
+        const modo = comeDi(p);
+        if (!p.azione) continue;
+        if (modo === 'app') { if (p.azione !== m.id || !m.condiviso_con) await dbq('condividi azione', supa.rpc('condividi_azione', { p_azione: p.azione, p_con: true, p_punti: PUNTI_CONDIVISI && st.puntiCond })); continue; }
+        if (p.azione === m.id && m.condiviso_con) await dbq('condividi azione', supa.rpc('condividi_azione', { p_azione: m.id, p_con: false, p_punti: false }));
+        if (modo) messaggi.push({ ...riga, ...resto, id: p.azione, contatto_id: p.id, contatti: { nome: p.nome, categoria: p.categoria, telefono: telDi(p) }, come: modo });
+      }
+      if (messaggi.length && typeof foglioCondividi === 'function') setTimeout(() => foglioCondividi(messaggi, [...(st.cosa5 || [])]), 300);
       chiudi({ id: m.id, ids: [m.id, ...restano.map(x => x.azione), ...nuoviIds], inizio });
       if (v.contatto_id === m.contatto_id) await allineaRigaCoda(m, m.inizio, inizio);   // la riga «PM Fissato» dalla coda segue l'appuntamento spostato (nota 035)
       await Promise.all([...new Set([m.contatto_id, v.contatto_id, ...st.altri.map(x => x.id)])].map(aggiornaRiga));
@@ -4478,13 +4501,16 @@ async function nuovoAppuntamento(opz = {}) {
       // il modulo (scheda, coda, coach: `resta`/`salta`) non ricarica MB Plan
       if (!riga.senza_ora && typeof AG !== 'undefined' && Array.isArray(AG.azioni)) righe.forEach((r, i) => { if (ids[i] && !AG.azioni.some(x => x.id === ids[i])) AG.azioni.push({ id: ids[i], ...r }); });
       // «Condividi con la persona» (nota 027): subito dopo il salvataggio; se non usa l'app l'appuntamento resta, non condiviso
-      // nota 103: con più persone, ogni Partner riceve la sua riga; i punti non si condividono più (PUNTI_CONDIVISI)
+      // nota 107: com'è scelto in «Condividi con», persona per persona: l'app subito (condividi_azione); i messaggi nel foglio che si apre dopo il Salva
       let condiviso = '';
-      if (st.condividi === 'persona' && puoPersona()) {
+      const messaggi = [];
+      {
         const ok = [], fuori = [];
         let ko = false;
         for (const [i, p] of [{ ...st.contatto, categoria: v.categoria }, ...st.altri].entries()) {
-          if (p.categoria !== 'Partner' || !ids[i]) continue;
+          const modo = comeDi(p);
+          if (!ids[i] || !modo) continue;
+          if (modo !== 'app') { messaggi.push({ ...righe[i], id: ids[i], contatti: { nome: p.nome, categoria: p.categoria, telefono: telDi(p) }, come: modo }); continue; }
           const r = await dbq('condividi azione', supa.rpc('condividi_azione', { p_azione: ids[i], p_con: true, p_punti: PUNTI_CONDIVISI && st.puntiCond }));
           const esito = r.data && r.data.esito;
           if (esito === 'ok') ok.push(p.nome); else if (esito === 'non_usa_app') fuori.push(p.nome); else ko = true;
@@ -4497,6 +4523,7 @@ async function nuovoAppuntamento(opz = {}) {
         await dbq('spazio riempito', supa.from('spazi').delete().eq('id', usato.id));
         if (AG.spazi) AG.spazi = AG.spazi.filter(x => x.id !== usato.id);
       }
+      if (messaggi.length && typeof foglioCondividi === 'function') setTimeout(() => foglioCondividi(messaggi, [...st.cosa5]), 300);   // nota 107: i messaggi, subito dopo
       chiudi({ id: data.id, ids, inizio, su_cosa: riga.su_cosa, tipo_azione: v.tipo_azione, modalita: v.modalita, categoria: v.categoria, scelta_a_mano: riga.scelta_a_mano, senza_ora: riga.senza_ora });
       // Fissato un Piano Marketing a un candidato (cantiere 40, Ignazio 22/09: «tempo e denaro devono essere consigliati prima di fare il
       // piano marketing»): dal 01/10 la domanda «Hai condiviso la traccia di apertura?» (tracciaDiApertura, pagina-sharing.js). Da qui solo quando il

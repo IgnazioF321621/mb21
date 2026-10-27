@@ -105,6 +105,7 @@ prova('Agenda P7 (Ignazio 23/10): all\'apertura lo STESSO foglio dell\'Agenda, u
 prova('Chi organizza, appuntamento con un Partner: «Condividi con Fiammetta Rossi» → funzione condividi_azione; poi «Condiviso con», la risposta della persona, i punti sì/no, «Non condividere più». Con un Prospect niente', conPunti(async () => {
   pulisci();
   let v = apri('c1');   // Counseling · Fiammetta Rossi (Partner)
+  await attendi();   // nota 107: si legge se usa l'app (utente_del_contatto), poi «Nell'app MB21»
   assert.match(v.innerHTML, /data-cd="c1"><b>Condividi con Fiammetta Rossi<\/b>/); assert.match(v.innerHTML, /data-condividi-apri="come"><b>Nell(&#39;|')app MB21<\/b>/);   // nota 107: il riquadro unico, «Nell'app» già scelto
   await v.clic('[data-cd-con]');
   let c = chiamate('condividi_azione');

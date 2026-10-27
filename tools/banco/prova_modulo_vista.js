@@ -23,22 +23,22 @@ const scegli = async (v, nome, valore) => { await altro(v); if (!v.querySelector
 const apriTendina = async (v, nome) => { if (!v.querySelector(`[data-scelta="${nome}"]`)) await v.clic(`[data-tendina="${nome}"]`); };
 // note 103 e 104 (27/10): scelta una persona, il campo diventa la sua riga con ✕; per cambiarla si toglie e si riscrive. «Altro · facoltativo» (dove, punti,
 // note, portato da, condivisione, categoria) parte chiuso: `altro(v)` lo apre
-const contatto = async (v, nome) => { if (!v.querySelector('#na-contatto')) await v.clic('[data-togli-persona=""]'); const inp = v.querySelector('#na-contatto'); inp.value = nome; await inp.onchange(); await altro(v); };
+const contatto = async (v, nome) => { if (!v.querySelector('#na-contatto')) await v.clic('[data-togli-persona=""]'); const inp = v.querySelector('#na-contatto'); inp.value = nome; await inp.onchange(); await attendi(); await altro(v); };   // attendi: si legge se usa l'app (nota 107)
 const altro = async v => { const b = v.querySelector('#na-altro-apri'); if (b && /id="na-altro-apri" aria-expanded="false"/.test(v.innerHTML)) await b.onclick(); };
 
 prova('Un partner qualsiasi: con un Prospect niente «Condividi con»; con un Partner compare «Nessuno · Fiammetta Rossi» e, scelta la persona, «Vedono anche i punti?»', conPunti(async () => {
   pulisci();
   const { v } = await apri({});
-  assert.doesNotMatch(v.innerHTML, /data-(scelta|tendina)="condividi"/);
+  assert.doesNotMatch(v.innerHTML, /data-(scelta|tendina)="come:c-isa"/);
   await contatto(v, 'Tito Rovere');
-  assert.doesNotMatch(v.innerHTML, /data-(scelta|tendina)="condividi"/);
+  assert.doesNotMatch(v.innerHTML, /data-(scelta|tendina)="come:c-isa"/);
   await contatto(v, 'Fiammetta Rossi');
   await scegli(v, 'tipo', 'Appuntamento');
-  assert.match(v.innerHTML, /data-(scelta|tendina)="condividi"/); await apriTendina(v, 'condividi'); assert.match(v.innerHTML, /data-v="persona"[^>]*><span>Fiammetta Rossi</);
+  assert.match(v.innerHTML, /data-(scelta|tendina)="come:c-isa"/); await apriTendina(v, 'come:c-isa'); assert.match(v.innerHTML, /data-v="app"[^>]*><span>Nell(&#39;|')app MB21 · nella sua Agenda e nel suo calendario</);   // nota 107: solo per chi usa l'app
   assert.doesNotMatch(v.innerHTML, /data-v="team"/);   // Team e Linea solo l'Admin
   assert.doesNotMatch(v.innerHTML, /Vedono anche i punti/);
-  await scegli(v, 'condividi', 'persona');
-  assert.match(v.innerHTML, /data-tendina="condividi"[^>]*><b>Fiammetta Rossi<\/b>/); assert.match(v.innerHTML, /Vede anche i punti da trattare\?/);   // una persona sola: «Vede»
+  await scegli(v, 'come:c-isa', 'app');
+  assert.match(v.innerHTML, /data-tendina="come:c-isa"[^>]*><b>Nell(&#39;|')app MB21/); assert.match(v.innerHTML, /Vede anche i punti da trattare\?/);   // una persona sola: «Vede»
   await scegli(v, 'puntiCond', '1');
   assert.match(v.innerHTML, /data-tendina="puntiCond"[^>]*><b>Sì<\/b>/);
 }));
@@ -48,7 +48,7 @@ prova('Salvando con «Fiammetta Rossi» scelta: l\'appuntamento si salva e subit
   const { v, p } = await apri({});
   await contatto(v, 'Fiammetta Rossi');
   await scegli(v, 'tipo', 'Appuntamento'); await scegli(v, 'modalita', 'Counseling');
-  await scegli(v, 'condividi', 'persona'); await scegli(v, 'puntiCond', '1');
+  await scegli(v, 'come:c-isa', 'app'); await scegli(v, 'puntiCond', '1');
   await v.clic('#na-si');
   const esito = await p;
   assert.equal(esito.id, 'az-nuova');
@@ -59,7 +59,7 @@ prova('Salvando con «Fiammetta Rossi» scelta: l\'appuntamento si salva e subit
   // se non usa l'app: salvato lo stesso, l'avviso lo dice
   pulisci(); P.finto.condividi = { esito: 'non_usa_app' };
   const s2 = await apri({});
-  await contatto(s2.v, 'Fiammetta Rossi'); await scegli(s2.v, 'tipo', 'Appuntamento'); await scegli(s2.v, 'modalita', 'Counseling'); await scegli(s2.v, 'condividi', 'persona');
+  await contatto(s2.v, 'Fiammetta Rossi'); await scegli(s2.v, 'tipo', 'Appuntamento'); await scegli(s2.v, 'modalita', 'Counseling'); await scegli(s2.v, 'come:c-isa', 'app');
   await s2.v.clic('#na-si'); await s2.p;
   assert.match(P.avvisi.at(-1).t, /non usa ancora l'app: non condiviso/);
   P.finto.condividi = { esito: 'ok', nome: 'Fiammetta Rossi', utente: 'u-isa' };
@@ -67,13 +67,13 @@ prova('Salvando con «Fiammetta Rossi» scelta: l\'appuntamento si salva e subit
   pulisci();
   const s3 = await apri({});
   await contatto(s3.v, 'Fiammetta Rossi'); await scegli(s3.v, 'tipo', 'Appuntamento'); await scegli(s3.v, 'modalita', 'Counseling');
-  assert.match(s3.v.innerHTML, /data-tendina="condividi"[^>]*><b>Fiammetta Rossi<\/b>/);
+  assert.match(s3.v.innerHTML, /data-tendina="come:c-isa"[^>]*><b>Nell(&#39;|')app MB21/);
   await s3.v.clic('#na-si'); await s3.p;
   assert.equal(chiamate('condividi_azione').length, 1);
   // scegliendo «Nessuno» resta solo suo: nessuna chiamata
   pulisci();
   const s4 = await apri({});
-  await contatto(s4.v, 'Fiammetta Rossi'); await scegli(s4.v, 'tipo', 'Appuntamento'); await scegli(s4.v, 'modalita', 'Counseling'); await scegli(s4.v, 'condividi', '');
+  await contatto(s4.v, 'Fiammetta Rossi'); await scegli(s4.v, 'tipo', 'Appuntamento'); await scegli(s4.v, 'modalita', 'Counseling'); await scegli(s4.v, 'come:c-isa', '');
   await s4.v.clic('#na-si'); await s4.p;
   assert.equal(chiamate('condividi_azione').length, 0);
 }));
@@ -352,10 +352,10 @@ prova('P5b, il tranello: nel modulo con una persona (anche dalla Timeline) «Con
   pulisci(); P.modo.admin = true; const ramo = P.AG.ramo; P.AG.ramo = RAMO_FINTO;
   try {
     const { v } = await apri({});   // come il tocco su un'ora vuota della Timeline: nessuna persona data
-    assert.doesNotMatch(v.innerHTML, /data-(scelta|tendina)="condividi"/);   // senza persona niente condivisione
+    assert.doesNotMatch(v.innerHTML, /data-(scelta|tendina)="come:c-isa"/);   // senza persona niente condivisione
     await contatto(v, 'Fiammetta Rossi'); await scegli(v, 'tipo', 'Appuntamento');
-    await apriTendina(v, 'condividi');
-    assert.match(v.innerHTML, /data-scelta="condividi"><button data-v="" [^>]*><span>Nessuno<\/span><\/button><button data-v="persona"[^>]*><span>Fiammetta Rossi<\/span><b>✓<\/b><\/button><\/div>/);
+    await apriTendina(v, 'come:c-isa');
+    assert.deepEqual([...v.innerHTML.matchAll(/data-scelta="come:c-isa">([^]*?)<\/div>/g)][0][1].match(/data-v="[^"]*"/g), ['data-v="app"', 'data-v=""']);   // nota 107: nell'app (la usa) o non condividere
     assert.doesNotMatch(v.innerHTML, /data-v="team"|data-v="linea"|data-v="p:/);
   } finally { P.modo.admin = false; P.AG.ramo = ramo; }
 });
@@ -364,7 +364,7 @@ prova('Dalla scheda o dalla coda (persona già data) l\'Admin non vede Team e Li
   pulisci(); P.modo.admin = true;
   const { v } = await apri({ contatto: { id: 'c-isa', nome: 'Fiammetta Rossi', categoria: 'Partner' }, tipo: 'Appuntamento', modalita: 'Counseling' });
   await altro(v);   // nota 104: «Condividi con» sta in «Altro · facoltativo»
-  await apriTendina(v, 'condividi'); assert.match(v.innerHTML, /data-v="persona"/); assert.doesNotMatch(v.innerHTML, /data-v="team"/);
+  await attendi(); await altro(v); await apriTendina(v, 'come:c-isa'); assert.match(v.innerHTML, /data-v="app"/); assert.doesNotMatch(v.innerHTML, /data-v="team"/);
 });
 
 prova('Cambiando il giorno (o l\'ora) il modulo NON si ridisegna (05/10 sera, iPad: il calendario di sistema si chiudeva appena toccato l\'anno); si rifà solo l\'avviso delle sovrapposizioni', async () => {
@@ -415,7 +415,7 @@ prova('104: quattro domande in ordine — Con chi? · Che cosa? (l\'Area sotto, 
   assert.match(h, /Area: <b>Attività<\/b>/); await v.clic('#na-area'); assert.match(v.innerHTML, /Area: <b>Prodotti<\/b>/);
   // chiuso, il riquadro dice cosa c'è dentro; i valori scritti restano
   v.querySelector('#na-note').value = 'portare il libro'; await v.clic('#na-altro-apri');
-  assert.match(v.innerHTML, /id="na-altro-apri" aria-expanded="false"><span><b>Altro · facoltativo<\/b>\s*<small>note · condiviso con Fiammetta Rossi<\/small>/); assert.doesNotMatch(v.innerHTML, /id="na-note"/);
+  assert.match(v.innerHTML, /id="na-altro-apri" aria-expanded="false"><span><b>Altro · facoltativo<\/b>\s*<small>note · nell(&#39;|')app con Fiammetta Rossi<\/small>/); assert.doesNotMatch(v.innerHTML, /id="na-note"/);
   await v.clic('#na-altro-apri'); assert.equal(v.querySelector('#na-note').value, 'portare il libro');
 });
 
@@ -428,7 +428,7 @@ prova('103: più persone nello stesso appuntamento — «+ Aggiungi un\'altra pe
   assert.match(v.innerHTML, /data-togli-persona="c-due"/); assert.match(v.innerHTML, /Ognuno ha il suo esito/);
   assert.equal(v.querySelector('#na-testa b').textContent, 'Fiammetta Rossi e Persona Due');
   await scegli(v, 'tipo', 'Appuntamento'); await scegli(v, 'modalita', 'Counseling');
-  assert.match(v.innerHTML, /data-tendina="condividi"[^>]*><b>Fiammetta Rossi e Persona Due<\/b>/);
+  assert.match(v.innerHTML, /data-tendina="come:c-isa"[^>]*><b>Nell(&#39;|')app MB21/); assert.match(v.innerHTML, /data-tendina="come:c-due"[^>]*><b>Nell(&#39;|')app MB21/);   // nota 107: uno per persona
   assert.doesNotMatch(v.innerHTML, /anche i punti/);   // PUNTI_CONDIVISI spento
   v.querySelector('#na-punti').value = 'Il perché';
   await v.clic('#na-si'); const esito = await p;
@@ -597,6 +597,30 @@ prova('108: «＋ Una linea» — l\'albero della Mappa sotto di te; un tocco ac
   assert.deepEqual(righe.map(r => r.contatto_id), ['c-isa', 'c-carla', 'scheda-SOTTO1']);
   assert.equal(esito.ids.length, 3);
   P.finto.codici = undefined;
+});
+
+prova('107: in «Altro» lo stesso «Condividi con» del foglio — «Nell\'app MB21» solo per chi usa l\'app; per gli altri Telegram o WhatsApp; al Salva si apre «Manda il messaggio», uno per persona', async () => {
+  pulisci(); P.finto.usaApp = false;   // questa persona non usa MB21
+  const persona = { id: 'c-senza-app', nome: 'Persona Nove', categoria: 'Partner', telefono: '+39 333 9998888' };
+  const { v, p } = await apri({ contatto: persona, tipo: 'Appuntamento', modalita: 'Counseling' });
+  await attendi(); await altro(v);
+  assert.doesNotMatch(v.innerHTML, /Agenda e nel suo calendario|data-v="app"/);
+  assert.match(v.innerHTML, /<label>Condividi con<\/label><div class="na5-cond"><small>Persona Nove<\/small><button type="button" class="sel5" data-tendina="come:c-senza-app" aria-expanded="false"><b>Non condividere<\/b>/);   // si parte da «Non condividere»
+  await scegli(v, 'come:c-senza-app', 'telegram');
+  v.querySelector('#na-note').value = 'portare il libro'; v.querySelector('#na-dove').value = 'zoom.us/j/9';
+  await v.clic('#na-altro-apri'); await v.clic('#na-altro-apri');   // le note scritte entrano nelle scelte del messaggio
+  assert.match(v.innerHTML, /<small>dove · note · messaggio a Persona Nove<\/small>/);
+  assert.match(v.innerHTML, /data-tendina="cosa5"[^>]*><b>Dove · Note<\/b>/);
+  await v.clic('#na-si'); await p;
+  assert.equal(chiamate('condividi_azione').length, 0);
+  await new Promise(r => setTimeout(r, 350));   // il foglio dei messaggi si apre subito dopo
+  const m = P.fogli.at(-1);
+  assert.match(m.innerHTML, /<small>Appuntamento salvato<\/small><b>Manda il messaggio<\/b>/);
+  assert.match(m.innerHTML, /<b>Condividi con Persona Nove<\/b>/); assert.match(m.innerHTML, /data-condividi-apri="come"><b>Telegram<\/b>/);
+  await m.clic('[data-condividi-via]');
+  assert.equal(P.avvisi.at(-1).t, 'telegram'); assert.equal(P.avvisi.at(-1).tel, '+393339998888');
+  assert.match(P.avvisi.at(-1).testo, /📍 Dove: https:\/\/zoom\.us\/j\/9\n📝 Note: portare il libro$/);
+  P.finto.usaApp = undefined;
 });
 
 (async () => {

@@ -115,6 +115,7 @@ const stub = {
     : nome === 'nuovo appuntamento' ? { data: Array.isArray((scritture.at(-1) || { args: [] }).args[0]) ? scritture.at(-1).args[0].map((_, i) => ({ id: i ? 'az-nuova-' + i : 'az-nuova' })) : { id: 'az-nuova' }, error: null }
     : nome === 'stesso incontro' ? { data: finto.stessoIncontro || [], error: null }
     : nome === 'squadra per la linea' ? { data: finto.squadra, error: null }   // nota 108
+    : nome === 'usa l\'app' ? { data: finto.usaApp === false ? null : 'u-app', error: null }   // nota 107: chi usa l'app (utente_del_contatto); false = nessuno
     : nome === 'codici delle schede' ? { data: finto.codici || [], error: null }
     : nome === 'scheda dalla Mappa' ? { data: { id: 'scheda-' + ((scritture.at(-1) || { args: [{}] }).args[0].codice_amway || 'x') }, error: null }   // nota 105: le altre persone dello stesso incontro
     : nome === 'note Coach Yes' ? { data: finto.coachNote || [], error: null }   // nota 001
