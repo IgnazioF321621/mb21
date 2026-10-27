@@ -340,6 +340,18 @@
   .na5-altro { display: flex; justify-content: space-between; align-items: center; gap: 8px; width: 100%; border: 0; background: none; font: inherit; color: var(--testo); padding: 4px 0; text-align: left; }
   .na5-altro b { font-size: 15px; } .na5-altro small { display: block; color: var(--testo-soft); font-size: 12.5px; font-weight: 500; }
   .na5-altro em { font-style: normal; font-size: 20px; color: var(--testo-soft); }
+  /* Note 105-107 (Ignazio 27/10): la scelta che scende, al posto delle pastiglie; lo stesso stile in «Manda l'appuntamento» */
+  .sel5 { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; min-height: var(--tocco); padding: 10px 14px; border: 1px solid var(--linea);
+    border-radius: var(--raggio-riga); background: var(--superficie); color: var(--testo); font: inherit; font-size: 16px; text-align: left; }
+  .sel5 b { font-weight: 600; } .sel5 small { color: var(--testo-soft); font-size: 15px; } .sel5 em { font-style: normal; color: var(--testo-soft); }
+  .sel5.aperto { border-color: var(--accento); border-radius: var(--raggio-riga) var(--raggio-riga) 0 0; }
+  .ag-scelte.tendina5 { display: block; margin: 0; border: 1px solid var(--accento); border-top: 0; border-radius: 0 0 var(--raggio-riga) var(--raggio-riga); background: var(--superficie); overflow: hidden; }
+  .ag-scelte.tendina5 button { display: flex; justify-content: space-between; align-items: center; width: 100%; margin: 0; padding: 11px 14px; border: 0; border-top: 1px solid var(--linea);
+    border-radius: 0; background: none; color: var(--testo); font: inherit; font-size: 16px; text-align: left; }
+  .ag-scelte.tendina5 button:first-child { border-top: 0; }
+  .ag-scelte.tendina5 button.scelto { background: none; color: var(--accento); font-weight: 700; }
+  .manda5 { margin-top: 12px; } .manda5 > b { display: block; font-size: 15px; } .manda5 > small { display: block; color: var(--testo-soft); font-size: 12.5px; margin: 2px 0 8px; }
+  .manda5 .primario { width: 100%; margin-top: 4px; display: flex; align-items: center; justify-content: center; gap: 6px; }
   .na-selettore span { flex: 1; } .na-selettore svg.ic { flex: none; }
   /* «Senza l'app» nel modulo della serata (05/10): un nome per riga con «Invita» */
   .na-fuori { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--linea); font-size: 15px; }
@@ -3949,6 +3961,9 @@ const CONDIVISIONE_LINEE = false;
 // Note Pagine 103 e 104 (Ignazio 27/10: «per ora spegniamo la condivisione dei punti con l'altra persona»): con false la domanda «Vede anche i punti
 // da trattare?» non c'è (modulo, foglio dell'appuntamento, serata) e i punti non si condividono più; nel database resta tutto (punti_condivisi). Con true si riaccende.
 const PUNTI_CONDIVISI = false;
+// Nota Pagine 106 (Ignazio 27/10: «la riceve solo una persona, non serve»): con false dal «+» dell'Agenda sparisce «Serata da mandare» (solo l'Admin, con le
+// Linee spente); il codice e le serate già mandate restano. Con true torna.
+const SERATA_DA_MANDARE = false;
 function puoSerataTeam() { return typeof eAdmin === 'function' && eAdmin() && (CONDIVISIONE_LINEE || (typeof personeAppDelGruppo === 'function' && personeAppDelGruppo().length > 0)); }
 // Foglio «Nuovo appuntamento» (lavoro 4). Restituisce l'id creato o null.
 // opz: { giorno, ora, contatto:{id,nome,categoria}, categoria, tipo, modalita, area, titolo, sottotitolo, salta, resta, userId, durata, spazio }
@@ -3958,9 +3973,14 @@ function puoSerataTeam() { return typeof eAdmin === 'function' && eAdmin() && (C
 async function nuovoAppuntamento(opz = {}) {
   const A = MB21Agenda;
   let elenco = [];
-  const liberi = !opz.spazio && typeof spaziLiberi === 'function' ? await spaziLiberi() : [];
+  // Nota Pagine 105 (Ignazio 27/10, «sì così»): `modifica` = l'appuntamento da cambiare (riga di azioni, da foglioAzione): la stessa scheda, già compilata
+  const m = opz.modifica || null;
+  if (m) Object.assign(opz, { contatto: { id: m.contatto_id, nome: (m.contatti || {}).nome || '—', categoria: (m.contatti || {}).categoria || m.categoria }, categoria: m.categoria,
+    tipo: m.tipo_azione, modalita: m.modalita, area: m.area, titolo: 'Modifica appuntamento', giorno: A.partiRoma(m.inizio).giorno, ora: A.partiRoma(m.inizio).ora,
+    durata: m.fine ? Math.round((Date.parse(m.fine) - Date.parse(m.inizio)) / 60000) : null, senzaOra: !!m.senza_ora, spazio: null });
+  const liberi = !opz.spazio && !m && typeof spaziLiberi === 'function' ? await spaziLiberi() : [];
   await caricaCoachYes();   // nota 001: il segnale Coach Yes accanto al nome della telefonata (di solito già in memoria)
-  if (!opz.contatto) {
+  if (!opz.contatto || m) {
     try { elenco = await leggiContattiMiei(); } catch (e) { mostraToast('Contatti non caricati: riprova.'); return null; }
   }
   const st = {
@@ -3978,6 +3998,15 @@ async function nuovoAppuntamento(opz = {}) {
     // 'team' / 'linea' (solo l'Admin, dal «+» di MB Plan: il modulo crea la serata Team/LdS, non un appuntamento). `linea` = il codice del frontale.
     condividi: ['team', 'linea'].includes(opz.condividi) ? opz.condividi : '', linea: null, parte: null, puntiCond: false, serataTipo: 'Team',   // nota 005: «Con il Team» / «Con una Linea» dal foglio a livelli
   };
+  // nota 105: com'era salvato (condivisione, passi, portato da, durata) e le altre persone dello stesso incontro (stessa ora, stesso tipo; una lettura)
+  if (m) {
+    Object.assign(st, { condividi: m.condiviso_con ? 'persona' : '', condivisoAMano: true, suCosa: m.su_cosa || [], portato: m.portato || null, altra: !!st.durata && !A.DURATE.some(d => d[0] === st.durata) });
+    const { data: insieme } = await dbq('stesso incontro', supa.from('azioni').select('id, contatto_id, categoria, tipo_azione, modalita, esito, contatti(nome, categoria)')
+      .eq('user_id', m.user_id).eq('inizio', m.inizio).eq('tipo_azione', m.tipo_azione).neq('id', m.id));
+    st.altri = (Array.isArray(insieme) ? insieme : []).filter(x => A.stessoIncontro(x, m))
+      .map(x => ({ id: x.contatto_id, nome: (x.contatti || {}).nome || '—', categoria: (x.contatti || {}).categoria || x.categoria, azione: x.id, esito: x.esito }));
+    st.giaInsieme = st.altri.map(x => x.azione);
+  }
   const serata = () => st.condividi === 'team' || st.condividi === 'linea';
   const puoTeam = () => puoSerataTeam() && !opz.contatto && !opz.spazio;
   const puoPersona = () => !!st.contatto && st.tipo !== 'Contatto' && [{ categoria: st.categoria }, ...st.altri].some(p => p.categoria === 'Partner');   // nota 103: almeno un Partner
@@ -4020,8 +4049,19 @@ async function nuovoAppuntamento(opz = {}) {
     velo.querySelector('#na-no').onclick = () => chiudi(null);
     // `link` e `punti` (nota Pagine 026, 05/10): il link della chiamata online e i punti da trattare, uno per riga; il riquadro dei punti si apre con un tocco
     const campi = { giorno: opz.giorno || MB21Coda.oggiRoma(), ora: oraIniziale, fine: A.daMinuti(Math.min(1440, A.inMinuti(oraIniziale) + 60)), ospite: '', note: '', dove: '', punti: '', serata: '' };
+    if (m) Object.assign(campi, { fine: m.fine ? A.partiRoma(m.fine).ora : campi.fine, note: m.note || '', dove: m.link || m.luogo || '', punti: (m.punti || []).map(p => p.t).join('\n') });   // nota 105
     const scelte = (nome, voci, attuale, etichette) => `<div class="ag-scelte" data-scelta="${nome}">${voci.map((v, i) =>
       `<button data-v="${esc(v)}" class="${String(v) === String(attuale) ? 'scelto' : ''}">${esc(etichette ? etichette[i] : v)}</button>`).join('')}</div>`;
+    // Note Pagine 105-107 (Ignazio 27/10, «sì così»): al posto delle pastiglie una scelta che scende, come «Scegli i passi dell'incontro ▾». Chiusa dice la
+    // scelta fatta; toccata scende la lista (le stesse `data-scelta` e `data-v` di prima, quindi gli stessi tocchi); scelto, si richiude. Si apre da sola la
+    // prima che manca (il tipo, poi il sottotipo): per un appuntamento normale i tocchi restano quelli di prima. `st.tendina`: quella aperta a mano ('' = nessuna).
+    const daScegliere = () => (st.contatto && !st.tipo ? 'tipo' : st.tipo && !st.modalita && A.sottotipiPer(st.tipo).length ? 'modalita' : null);
+    const tendinaAperta = () => (st.tendina != null ? st.tendina : daScegliere());
+    const tendina = (nome, voci, attuale, etichette) => {
+      const i = voci.findIndex(v => String(v) === String(attuale)), nomeDi = k => (etichette ? etichette[k] : voci[k]), aperta = tendinaAperta() === nome;
+      return `<button type="button" class="sel5${aperta ? ' aperto' : ''}" data-tendina="${nome}" aria-expanded="${aperta}">${i >= 0 ? `<b>${esc(nomeDi(i))}</b>` : '<small>Scegli</small>'}<em>${aperta ? '⌃' : '▾'}</em></button>`
+        + (aperta ? `<div class="ag-scelte tendina5" data-scelta="${nome}">${voci.map((v, k) => `<button data-v="${esc(v)}" class="${k === i ? 'scelto' : ''}"><span>${esc(nomeDi(k))}</span>${k === i ? '<b>✓</b>' : ''}</button>`).join('')}</div>` : '');
+    };
     const leggiCampi = () => { for (const k of ['giorno', 'ora', 'fine', 'ospite', 'note', 'dove', 'punti', 'serata']) { const el = velo.querySelector('#na-' + k); if (el) campi[k] = el.value; } };
     // quanto dura: le pastiglie, oppure «Altra…» e allora conta l'ora di fine scritta a mano
     const durataScelta = () => (st.altra ? A.inMinuti(campi.fine) - A.inMinuti(campi.ora) : st.durata);
@@ -4031,15 +4071,16 @@ async function nuovoAppuntamento(opz = {}) {
     // facoltativo», chiuso con il riassunto (dove, punti da trattare, note, portato da, condivisione, categoria). Via «Obbligatorio» (lo dice il Salva) e
     // «Porta qualcuno» (resta «Portato da»). La serata (Team o Linea, solo l'Admin) resta com'era, più sotto in disegna().
     const persone5 = () => [...(st.contatto ? [{ ...st.contatto, categoria: st.categoria }] : []), ...st.altri];
-    const tipiDiTutti = () => A.tipiPer(st.categoria).filter(t => st.altri.every(p => A.tipiPer(p.categoria).includes(t)));   // i tipi validi per tutte le persone
+    const tipiDiTutti = () => (m ? [m.tipo_azione] : A.tipiPer(st.categoria)).filter(t => st.altri.every(p => A.tipiPer(p.categoria).includes(t)));   // i tipi validi per tutte le persone
     const partnerDaCondividere = () => persone5().filter(p => p.categoria === 'Partner' && st.tipo !== 'Contatto');
     const nomiInFila = nomi => (nomi.length > 1 ? nomi.slice(0, -1).join(', ') + ' e ' + nomi.at(-1) : nomi[0] || '');
     function htmlAppuntamento(tipi) {
       const riga5 = (c, togli) => `<div class="na5-chi ${classeCat(c.categoria)}"><span class="ts-pastiglia">${esc(iniziali(c.nome))}</span><span><b>${esc(c.nome)}${st.tipo === 'Contatto' ? segnoCoach(c.id, c.nome) : ''}</b><small>${esc(c.categoria ? MB21Lista.nomeCategoria(c.categoria) : 'Senza categoria')}</small></span>${togli == null ? '' : `<button type="button" class="link" data-togli-persona="${esc(togli)}" aria-label="Togli">${ic('chiudi')}</button>`}</div>`;
       let h = `<h4 class="mc-t">Con chi?</h4><div class="riquadro mc-g">`;
-      if (st.contatto) h += riga5({ ...st.contatto, categoria: st.categoria }, opz.contatto && !st.altri.length ? null : '');
+      // la prima persona: fissa se arriva dalla scheda o dalla coda; in Modifica si cambia (✕) solo se è sola
+      if (st.contatto) h += riga5({ ...st.contatto, categoria: st.categoria }, m ? (st.altri.length ? null : '') : opz.contatto && !st.altri.length ? null : '');
       else h += `<div class="campo"><input id="na-contatto" list="na-nomi" placeholder="Scrivi il nome" value="" autocomplete="off"><datalist id="na-nomi">${elenco.map(c => `<option value="${esc(c.nome)}">`).join('')}</datalist></div>`;
-      h += st.altri.map(c => riga5(c, c.id)).join('');
+      h += st.altri.map(c => riga5(c, c.esito ? null : c.id)).join('');   // nota 105: chi ha già il suo esito non si toglie
       // con l'interruttore delle Linee acceso (oggi spento), l'Admin dal «+» sceglie qui anche la serata: «Tutto il Team» o «Una Linea» (nota 027)
       if (CONDIVISIONE_LINEE && puoTeam() && !st.contatto) h += `<div class="campo"><label>Oppure una serata</label>${scelte('condividi', ['', 'team', 'linea'], st.condividi, ['Nessuno', 'Tutto il Team', 'Una Linea'])}</div>`;
       if (st.contatto) h += `<button type="button" class="na5-piu" id="na-piu-persona">${ic('piu')} Aggiungi un'altra persona</button>`;
@@ -4047,13 +4088,15 @@ async function nuovoAppuntamento(opz = {}) {
       h += '</div>';
       if (st.contatto && !tipi.length) {   // senza categoria (o con persone che non possono avere lo stesso tipo) si sceglie qui
         const categorie = st.categoria && !A.CATEGORIE.includes(st.categoria) ? [st.categoria, ...A.CATEGORIE] : A.CATEGORIE;
-        h += `<h4 class="mc-t">Che cosa?</h4><div class="riquadro mc-g"><div class="campo"><label>Categoria di ${esc(st.contatto.nome)}</label>${scelte('categoria', categorie, st.categoria, categorie.map(MB21Lista.nomeCategoria))}
+        h += `<h4 class="mc-t">Che cosa?</h4><div class="riquadro mc-g"><div class="campo"><label>Categoria di ${esc(st.contatto.nome)}</label>${tendina('categoria', categorie, st.categoria, categorie.map(MB21Lista.nomeCategoria))}
           <div class="errore">${st.altri.length ? 'Queste persone non possono avere lo stesso tipo di appuntamento: togline una o cambia la categoria.' : 'Il contatto non ha una categoria: scegli Prospect, Partner o Cliente.'}</div></div></div>`;
       }
       if (tipi.length) {
-        h += `<h4 class="mc-t">Che cosa?</h4><div class="riquadro mc-g"><div class="campo"><label>Tipo</label>${scelte('tipo', tipi, st.tipo)}</div>`;
-        if (st.tipo) h += `<div class="campo"><label>${esc(A.etichettaSottotipo(st.tipo))}</label>${scelte('modalita', A.sottotipiPer(st.tipo), st.modalita)}</div>`;
-        h += `<p class="na5-aiuto">Area: <b>${esc(st.area)}</b> · <button type="button" class="link na5-cambia" id="na-area">cambia</button></p></div>`;
+        h += `<h4 class="mc-t">Che cosa?</h4><div class="riquadro mc-g"><div class="campo"><label>Tipo</label>${tendina('tipo', tipi, st.tipo)}</div>`;
+        if (st.tipo) h += `<div class="campo"><label>${esc(A.etichettaSottotipo(st.tipo))}</label>${tendina('modalita', A.sottotipiPer(st.tipo), st.modalita)}</div>`;
+        h += `<p class="na5-aiuto">Area: <b>${esc(st.area)}</b> · <button type="button" class="link na5-cambia" id="na-area">cambia</button></p>`;
+        if (m && m.esito) h += `<p class="na5-aiuto">Esito: <b>${esc(m.esito)}</b> · <button type="button" class="link na5-cambia" id="na-esito">correggi</button></p>`;   // nota 105: l'esito si corregge nel suo foglio
+        h += '</div>';
       }
       if (!st.tipo) return h;
       // 3 · Quando? (come prima: spazi liberi, in coda o a un'ora per la telefonata, giorno e ora, durata, l'avviso «A quest'ora hai già…»)
@@ -4063,12 +4106,12 @@ async function nuovoAppuntamento(opz = {}) {
         const o = MB21Spazi.orario(x);
         return `<button type="button" data-libero="${esc(x.id)}" class="${st.spazio && st.spazio.id === x.id ? 'scelto' : ''}">${esc(giornoBreve(o.giorno))} · ${o.ora}</button>`; }).join('')}</div></div>`;
       const soloGiorno = inCoda();
-      if (puoInCoda()) h += `<div class="campo"><label>Quando <small>entra nei Contatti del giorno, dal giorno scelto</small></label>${scelte('quando', ['coda', 'ora'], soloGiorno ? 'coda' : 'ora', ['Senza orario · solo in coda', 'A un\'ora · anche in Agenda'])}</div>`;
+      if (puoInCoda()) h += `<div class="campo"><label>Quando <small>entra nei Contatti del giorno, dal giorno scelto</small></label>${tendina('quando', ['coda', 'ora'], soloGiorno ? 'coda' : 'ora', ['Senza orario · solo in coda', 'A un\'ora · anche in Agenda'])}</div>`;
       h += `<div class="campo"><label>${soloGiorno ? 'Giorno' : 'Giorno e ora'}</label><div class="ag-due-campi">
         <input id="na-giorno" type="date" value="${esc(campi.giorno)}">${soloGiorno ? '' : `<input id="na-ora" type="time" value="${esc(campi.ora)}">`}</div></div>`;
       if (!st.durataToccata) st.durata = A.durataPredefinita(st.tipo);
       if (!soloGiorno) {
-        h += `<div class="campo"><label>Durata</label>${scelte('durata', [...A.DURATE.map(d => d[0]), 'altra'], st.altra ? 'altra' : st.durata, [...A.DURATE.map(d => d[1]), 'Altra…'])}</div>`;
+        h += `<div class="campo"><label>Durata</label>${tendina('durata', [...A.DURATE.map(d => d[0]), 'altra'], st.altra ? 'altra' : st.durata, [...A.DURATE.map(d => d[1]), 'Altra…'])}</div>`;
         if (st.altra) h += `<div class="campo"><label>Finisce alle</label><input id="na-fine" type="time" value="${esc(campi.fine)}"></div>`;
         h += `<div id="na-avviso">${avvisoOre()}</div>`;
       }
@@ -4096,11 +4139,11 @@ async function nuovoAppuntamento(opz = {}) {
         // «Condividi con» (nota 027; P5b): Nessuno · le persone Partner dell'appuntamento; i punti non si condividono più (PUNTI_CONDIVISI)
         if (puoPersona()) {
           const chi = nomiInFila(partnerDaCondividere().map(p => p.nome));
-          h += `<div class="campo"><label>Condividi con <small>lo trova nella sua Agenda e nel suo calendario</small></label>${scelte('condividi', ['', 'persona'], st.condividi, ['Nessuno', chi])}</div>`;
-          if (st.condividi && PUNTI_CONDIVISI) h += `<div class="campo"><label>Vede anche i punti da trattare?</label>${scelte('puntiCond', ['1', '0'], st.puntiCond ? '1' : '0', ['Sì', 'No'])}</div>`;
+          h += `<div class="campo"><label>Condividi con <small>lo trova nella sua Agenda e nel suo calendario</small></label>${tendina('condividi', ['', 'persona'], st.condividi, ['Nessuno', chi])}</div>`;
+          if (st.condividi && PUNTI_CONDIVISI) h += `<div class="campo"><label>Vede anche i punti da trattare?</label>${tendina('puntiCond', ['1', '0'], st.puntiCond ? '1' : '0', ['Sì', 'No'])}</div>`;
         }
         const categorie = st.categoria && !A.CATEGORIE.includes(st.categoria) ? [st.categoria, ...A.CATEGORIE] : A.CATEGORIE;   // Ex, Unlinked…: resta com'è, o si cambia
-        h += `<div class="campo"><label>Categoria${st.altri.length ? ' di ' + esc(st.contatto.nome) : ''} <small>dal contatto</small></label>${scelte('categoria', categorie, st.categoria, categorie.map(MB21Lista.nomeCategoria))}</div>`;
+        h += `<div class="campo"><label>Categoria${st.altri.length ? ' di ' + esc(st.contatto.nome) : ''} <small>dal contatto</small></label>${tendina('categoria', categorie, st.categoria, categorie.map(MB21Lista.nomeCategoria))}</div>`;
       }
       return h + '</div>';
     }
@@ -4231,6 +4274,8 @@ async function nuovoAppuntamento(opz = {}) {
         else { st.contatto = null; st.categoria = null; }
         tipoAncoraBuono(); disegna();
       }; });
+      const es = velo.querySelector('#na-esito');
+      if (es) es.onclick = () => { chiudi(null); foglioAzione(m.id, { soloEsito: true, dopo: opz.dopo }); };
       const area = velo.querySelector('#na-area');
       if (area) area.onclick = () => { leggiCampi(); st.area = st.area === 'Prodotti' ? 'Attività' : 'Prodotti'; disegna(); };
       const altro = velo.querySelector('#na-altro-apri');
@@ -4287,9 +4332,10 @@ async function nuovoAppuntamento(opz = {}) {
         const el = velo.querySelector('#na-' + k);
         if (el) el.onchange = () => { leggiCampi(); rifaiAvviso(); };
       }
+      velo.querySelectorAll('[data-tendina]').forEach(b => { b.onclick = () => { leggiCampi(); st.tendina = tendinaAperta() === b.dataset.tendina ? '' : b.dataset.tendina; disegna(); }; });
       velo.querySelectorAll('[data-scelta]').forEach(g => g.querySelectorAll('button').forEach(b => {
         b.onclick = () => {
-          leggiCampi();
+          leggiCampi(); st.tendina = null;   // note 105-107: scelta fatta, la tendina si richiude (e si apre da sola la prossima che manca)
           const nome = g.dataset.scelta, v = b.dataset.v;
           if (nome === 'durata') {
             st.durataToccata = true;
@@ -4336,6 +4382,42 @@ async function nuovoAppuntamento(opz = {}) {
         });
       }
     };
+    // Nota 105: «Salva» di un appuntamento modificato. La sua riga con modifica_azione (come il foglio di prima: rientro in coda, «Annulla»), poi i campi che
+    // modifica_azione non tocca (area, dove, punti con le spunte di prima, passi); le altre persone dello stesso incontro prendono gli stessi cambi, chi si
+    // aggiunge ha la sua riga nuova, chi si toglie (senza esito) la sua riga cancellata; «Condividi con» si accende o si spegne. «Annulla» solo se è una persona sola.
+    const salvaModifica = async (v, riga, inizio, btn) => {
+      const spunte = new Map((m.punti || []).map(p => [p.t, !!p.fatto]));
+      const resto = { area: riga.area, link: riga.link, luogo: riga.luogo, su_cosa: riga.su_cosa, punti: riga.punti ? riga.punti.map(p => ({ ...p, fatto: spunte.get(p.t) || false })) : null };
+      const cambia = (id, contatto, esito, ospite) => dbq('modifica azione', supa.rpc('modifica_azione', { p_azione: id, p_contatto: contatto, p_portato_da: riga.portato_da,
+        p_modalita: v.modalita, p_esito: esito || null, p_inizio: inizio, p_fine: riga.fine, p_ospite: ospite || null, p_note: riga.note }));
+      const { data: prima, error } = await cambia(m.id, v.contatto_id, m.esito, m.ospite);
+      if (error) { btn.disabled = false; btn.textContent = 'Salva'; velo.querySelector('#na-errore').textContent = 'Non salvato: controlla la connessione e riprova.'; return; }
+      await dbq('modifica azione, il resto', supa.from('azioni').update(resto).eq('id', m.id));
+      const restano = st.altri.filter(x => x.azione), nuovi = st.altri.filter(x => !x.azione), via = (st.giaInsieme || []).filter(id => !restano.some(x => x.azione === id));
+      for (const x of restano) { await cambia(x.azione, x.id, x.esito, null); await dbq('modifica azione, il resto', supa.from('azioni').update(resto).eq('id', x.azione)); }
+      if (via.length) await dbq('togli dall\'incontro', supa.from('azioni').delete().in('id', via));
+      let nuoviIds = [];
+      if (nuovi.length) {
+        const { data } = await dbq('aggiungi all\'incontro', supa.from('azioni').insert(nuovi.map(p => ({ ...riga, ...resto, contatto_id: p.id, categoria: p.categoria, completata: false }))).select('id'));
+        nuoviIds = (Array.isArray(data) ? data : []).map(x => x.id);
+      }
+      const partner = [{ id: v.contatto_id, categoria: v.categoria, azione: m.id }, ...restano, ...nuovi.map((p, i) => ({ ...p, azione: nuoviIds[i] }))].filter(p => p.categoria === 'Partner' && p.azione);
+      if (st.condividi === 'persona' && puoPersona()) {
+        for (const p of partner) if (p.azione !== m.id || !m.condiviso_con) await dbq('condividi azione', supa.rpc('condividi_azione', { p_azione: p.azione, p_con: true, p_punti: PUNTI_CONDIVISI && st.puntiCond }));
+      } else if (m.condiviso_con) await dbq('condividi azione', supa.rpc('condividi_azione', { p_azione: m.id, p_con: false, p_punti: false }));
+      chiudi({ id: m.id, ids: [m.id, ...restano.map(x => x.azione), ...nuoviIds], inizio });
+      if (v.contatto_id === m.contatto_id) await allineaRigaCoda(m, m.inizio, inizio);   // la riga «PM Fissato» dalla coda segue l'appuntamento spostato (nota 035)
+      await Promise.all([...new Set([m.contatto_id, v.contatto_id, ...st.altri.map(x => x.id)])].map(aggiornaRiga));
+      if (opz.dopo) await opz.dopo();
+      const sola = !nuovi.length && !via.length && !restano.length;
+      mostraToast(`Appuntamento modificato${prima && prima.rientro_cambiato ? ' · coda aggiornata' : ''}`, sola ? async () => {
+        const { error: e3 } = await dbq('annulla modifica', supa.rpc('annulla_modifica_azione', { p_prima: prima }));
+        if (e3) return mostraToast('Annullamento non riuscito: riprova.');
+        if (v.contatto_id === m.contatto_id) await allineaRigaCoda(m, inizio, m.inizio);
+        if (opz.dopo) await opz.dopo();
+        mostraToast('Annullato');
+      } : undefined);
+    };
     velo.querySelector('#na-si').onclick = async () => {
       leggiCampi();
       if (serata()) return salvaSerata();
@@ -4364,6 +4446,7 @@ async function nuovoAppuntamento(opz = {}) {
         aggiornaRiga(v.contatto_id);   // Lista Nomi L7: solo la riga di quella persona
         if (v.categoria === 'Partner') setTimeout(() => domandaInvito({ ...st.contatto, user_id: riga.user_id }), 400);
       }
+      if (m) return salvaModifica(v, riga, inizio, btn);   // nota 105
       // nota 103 (Ignazio 27/10): più persone nello stesso appuntamento = una riga per persona, con tutto il resto uguale (ognuno ha il suo esito)
       const righe = [riga, ...st.altri.map(p => ({ ...riga, contatto_id: p.id, categoria: p.categoria, portato_da: riga.portato_da === p.id ? null : riga.portato_da }))];
       const { data: salvate, error } = await dbq('nuovo appuntamento', righe.length === 1 ? supa.from('azioni').insert(riga).select('id').single() : supa.from('azioni').insert(righe).select('id'));
@@ -4424,7 +4507,7 @@ async function nuovoAppuntamento(opz = {}) {
 async function foglioAzione(id, opz = {}) {
   if (soloGuardo()) return;
   const { data: a, error } = await dbq('azione da modificare', supa.from('azioni')
-    .select('id, contatto_id, portato_da, categoria, tipo_azione, modalita, esito, completata, su_cosa, area, inizio, fine, data_scelta, ospite, note, senza_ora, contatti(nome, categoria)').eq('id', id).maybeSingle());
+    .select('id, user_id, contatto_id, portato_da, categoria, tipo_azione, modalita, esito, completata, su_cosa, area, inizio, fine, data_scelta, ospite, note, senza_ora, link, luogo, punti, condiviso_con, contatti(nome, categoria)').eq('id', id).maybeSingle());
   if (error || !a) return mostraToast('Azione non trovata: riprova.');
   if (MB21Agenda.eConsegna(a)) return mostraToast('La consegna si sposta con «Sposta la consegna»: cambia anche la data nella vendita');   // nota 051
   let portato = null;
@@ -4432,6 +4515,9 @@ async function foglioAzione(id, opz = {}) {
     const { data } = await dbq('portato da', supa.from('contatti').select('id, nome, categoria').eq('id', a.portato_da).maybeSingle());
     portato = data || { id: a.portato_da, nome: '—' };
   }
+  // Nota Pagine 105 (Ignazio 27/10, «sì così»): un appuntamento (non una telefonata) si modifica con la stessa scheda del nuovo, già compilata, da qualunque
+  // punto si apra (Agenda, scheda della persona, Report, Griglia PM). Qui restano le telefonate e la correzione dell'esito (`soloEsito`, dal suo «correggi»).
+  if (a.tipo_azione !== 'Contatto' && !opz.soloEsito && typeof nuovoAppuntamento === 'function') return nuovoAppuntamento({ modifica: { ...a, portato }, dopo: opz.dopo, resta: true });
   const A = MB21Agenda, s = A.sceltePerModifica(a);
   // cantiere 37: qui si può cambiare anche quanto dura (prima si poteva solo quando si fissava)
   const duraOra = a.inizio && a.fine && Date.parse(a.fine) > Date.parse(a.inizio) ? Math.round((Date.parse(a.fine) - Date.parse(a.inizio)) / 60000) : 0;

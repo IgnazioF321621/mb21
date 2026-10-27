@@ -1847,30 +1847,44 @@ async function controllaImpegniNuovi() {
   } });
   if (nuovi.length) apri();
 }
-// Nota Pagine 103 (Ignazio 27/10): «+ Aggiungi una persona» a un appuntamento già fissato. Una riga nuova di azioni per la persona, con lo stesso
-// giorno, ora, tipo, dove, note e punti (ognuno ha il suo esito); se l'appuntamento è condiviso, a un Partner con l'app arriva condiviso anche il suo.
-// Stessa ora e stesso tipo = stesso incontro: niente «si accavallano» (MB21Agenda.stessoIncontro). «Annulla» la toglie.
-async function aggiungiPersona(e) {
-  const A = MB21Agenda;
-  const c = await sceltaContatto('Chi si aggiunge?', '', [e.contatto_id], 'è già nell\'appuntamento');
-  if (!c) return;
-  if (!A.tipiPer(c.categoria).includes(e.tipo_azione)) return mostraToast(`${c.nome} non può avere un ${e.tipo_azione}: cambia prima la sua categoria`);
-  const riga = { contatto_id: c.id, user_id: e.user_id, categoria: c.categoria, tipo_azione: e.tipo_azione, modalita: e.modalita, area: e.area, inizio: e.inizio, fine: e.fine,
-    completata: false, note: e.note || null, su_cosa: e.su_cosa || null, link: e.link || null, luogo: e.luogo || null, punti: e.punti || null };
-  const { data, error } = await dbq('aggiungi persona', supa.from('azioni').insert(riga).select('id').single());
-  if (error || !data) return mostraToast('Non salvato: controlla la connessione e riprova.');
-  let condiviso = '';
-  if (e.condiviso_con && c.categoria === 'Partner') {
-    const r = await dbq('condividi azione', supa.rpc('condividi_azione', { p_azione: data.id, p_con: true, p_punti: false }));
-    const esito = r.data && r.data.esito;
-    condiviso = esito === 'ok' ? ' · condiviso' : esito === 'non_usa_app' ? ' · non usa ancora l\'app' : '';
-  }
-  if (Array.isArray(AG.azioni)) AG.azioni.push({ id: data.id, ...riga, contatti: { nome: c.nome, categoria: c.categoria } });
-  await apriAgenda(A.partiRoma(e.inizio).giorno);
-  mostraToast(`${c.nome} aggiunto all'appuntamento${condiviso}`, async () => {
-    await dbqAvvisa('annulla persona', supa.from('azioni').delete().eq('id', data.id), 'Annullamento non riuscito: controlla la connessione e riprova.');
-    await apriAgenda();
-  });
+// ── Nota Pagine 107 (Ignazio 27/10, «sì così»): «Manda l'appuntamento a [nome]» ── tipo, giorno, ora e durata ci sono sempre; «Cosa aggiungo? ▾» scende e si
+// spunta anche più di una voce (Dove, Note, Punti da trattare: i punti a scelta ogni volta), «Con ▾» (Telegram o WhatsApp), poi un tasto solo, «Manda».
+// WhatsApp apre la chat della persona con il testo già scritto; Telegram non lo permette verso una persona: il testo si copia e si apre la sua chat
+// (apriTelegramCon, admin.js, come per gli inviti), dove si incolla. Solo il telefono della scheda: niente dati nuovi. Lo stile delle scelte è quello del modulo (note 105-107).
+const MANDA_CANALI = [['telegram', 'Telegram'], ['whatsapp', 'WhatsApp']];
+function testoAppuntamento(e, cosa) {
+  const A = MB21Agenda, nome = String((e.contatti && e.contatti.nome) || '').trim().split(/\s+/)[0];
+  const righe = [`Ciao${nome ? ' ' + nome : ''}! Ti confermo il nostro appuntamento:`, `📅 ${e.modalita || e.tipo_azione} · ${dataLunga(A.partiRoma(e.inizio).giorno)}, ${A.orario(e)}`];
+  if (cosa.has('dove') && (e.link || e.luogo)) righe.push(`📍 Dove: ${e.link || e.luogo}`);
+  if (cosa.has('note') && e.note) righe.push(`📝 Note: ${e.note}`);
+  if (cosa.has('punti') && (e.punti || []).length) righe.push('✅ Punti da trattare:', ...e.punti.map(p => `• ${p.t}`));
+  return righe.join('\n');
+}
+function collegaManda(el, e) {
+  const posto = el.querySelector(`[data-manda="${e.id}"]`), tel = numeroDaChiamare(e.contatti && e.contatti.telefono);
+  if (!posto) return;
+  if (!tel) { posto.innerHTML = ''; return; }   // senza un numero con il prefisso non si manda niente
+  const voci = [['dove', 'Dove', !!(e.link || e.luogo)], ['note', 'Note', !!e.note], ['punti', 'Punti da trattare', !!(e.punti || []).length]].filter(v => v[2]);
+  const st = { cosa: new Set(voci.filter(v => v[0] !== 'punti').map(v => v[0])), con: 'telegram', aperta: null };
+  const disegna = () => {
+    const sunto = voci.filter(v => st.cosa.has(v[0])).map(v => v[1]).join(' · ');
+    posto.innerHTML = `<div class="riquadro mc-g manda5"><b>Manda l'appuntamento a ${esc(nomePersona(e))}</b><small>Tipo, giorno, ora e durata ci sono sempre</small>
+      ${voci.length ? `<div class="campo"><label>Cosa aggiungo?</label><button type="button" class="sel5${st.aperta === 'cosa' ? ' aperto' : ''}" data-manda-apri="cosa">${sunto ? `<b>${esc(sunto)}</b>` : '<small>Niente</small>'}<em>${st.aperta === 'cosa' ? '⌃' : '▾'}</em></button>
+        ${st.aperta === 'cosa' ? `<div class="ag-scelte tendina5">${voci.map(v => `<button type="button" data-manda-cosa="${v[0]}" class="${st.cosa.has(v[0]) ? 'scelto' : ''}"><span>${v[1]}</span>${st.cosa.has(v[0]) ? '<b>✓</b>' : ''}</button>`).join('')}</div>` : ''}</div>` : ''}
+      <div class="campo"><label>Con</label><button type="button" class="sel5${st.aperta === 'con' ? ' aperto' : ''}" data-manda-apri="con"><b>${(MANDA_CANALI.find(c => c[0] === st.con) || [])[1]}</b><em>${st.aperta === 'con' ? '⌃' : '▾'}</em></button>
+        ${st.aperta === 'con' ? `<div class="ag-scelte tendina5">${MANDA_CANALI.map(c => `<button type="button" data-manda-con="${c[0]}" class="${st.con === c[0] ? 'scelto' : ''}"><span>${c[1]}</span>${st.con === c[0] ? '<b>✓</b>' : ''}</button>`).join('')}</div>` : ''}</div>
+      <button type="button" class="primario" data-manda-via>${ic(st.con)} Manda</button></div>`;
+    posto.querySelectorAll('[data-manda-apri]').forEach(b => { b.onclick = () => { st.aperta = st.aperta === b.dataset.mandaApri ? null : b.dataset.mandaApri; disegna(); }; });
+    posto.querySelectorAll('[data-manda-cosa]').forEach(b => { b.onclick = () => { const k = b.dataset.mandaCosa; if (st.cosa.has(k)) st.cosa.delete(k); else st.cosa.add(k); disegna(); }; });   // più di una: resta aperta
+    posto.querySelectorAll('[data-manda-con]').forEach(b => { b.onclick = () => { st.con = b.dataset.mandaCon; st.aperta = null; disegna(); }; });
+    const via = posto.querySelector('[data-manda-via]');
+    if (via) via.onclick = () => {
+      const testo = testoAppuntamento(e, st.cosa);
+      if (st.con === 'whatsapp') window.open('https://wa.me/' + tel.slice(1) + '?text=' + encodeURIComponent(testo), '_blank', 'noopener');
+      else apriTelegramCon(tel, testo);
+    };
+  };
+  disegna();
 }
 
 // ── chi organizza: il riquadro «Condividi» ──
@@ -2028,11 +2042,12 @@ function extraEvento(e) {
       ${richiamo ? `<div class="note-ev">Dalla coda: ${esc(e.esito || '')}</div>`
         : fasi.length ? bloccoEsiti(e, e.contatti ? e.contatti.categoria : null)
         : `<div class="note-ev">Nessun esito previsto per ${esc(e.categoria ? MB21Lista.nomeCategoria(e.categoria) : 'questa categoria')} · ${esc(e.tipo_azione)}</div>`}
+      ${richiamo || e.completata ? '' : `<div data-manda="${esc(e.id)}"></div>`}
       <div class="ag-comandi">
         ${MB21Agenda.eConsegna(e) ? '' /* nota 051 (Ignazio 12/10): la consegna si sposta solo con «Sposta la consegna», che cambia anche la vendita */
-          : `${richiamo && e.esito !== 'Richiamare' ? `<button data-cmd="fissa">${ic('piu')} Fissa appuntamento</button>` : `<button data-cmd="sposta">${ic('orario')} Sposta</button>`}<button data-cmd="modifica">${ic('modifica')} Modifica</button>`}
+          /* nota 105 (Ignazio 27/10): pochi comandi, Modifica per primo (dentro si aggiungono le persone e si cambia tutto) */
+          : `<button data-cmd="modifica">${ic('modifica')} Modifica</button>${richiamo && e.esito !== 'Richiamare' ? `<button data-cmd="fissa">${ic('piu')} Fissa appuntamento</button>` : `<button data-cmd="sposta">${ic('orario')} Sposta</button>`}`}
         <button data-cmd="contatto">${ic('persona')} Apri contatto</button>
-        ${!richiamo && e.tipo_azione !== 'Contatto' && !e.completata && !MB21Agenda.eConsegna(e) ? `<button data-cmd="persona">${ic('piu')} Aggiungi una persona</button>` : ''}
         ${richiamo ? '' : `<button data-cmd="elimina" class="pericolo">Elimina</button>`}
       </div>`;
 }
@@ -2093,6 +2108,7 @@ function collegaComandiEvento(el, e, dopo, ridisegna) {
   collegaEsiti(el, e, { nome: e.contatti ? e.contatti.nome : '', categoria: e.contatti ? e.contatti.categoria : e.categoria }, dopo);
   collegaPunti(el, e, 'azioni', ridisegna || disegnaAgenda);
   collegaCondivisioneAzione(el, e, ridisegna || disegnaAgenda);
+  collegaManda(el, e);   // nota 107
   el.querySelectorAll('[data-cmd]').forEach(b => {
     b.onclick = () => {
       const chiudiFoglio = () => { const v = b.closest('.velo'); if (v) v.remove(); };
@@ -2100,7 +2116,6 @@ function collegaComandiEvento(el, e, dopo, ridisegna) {
       if (b.dataset.cmd === 'modifica') { chiudiFoglio(); return foglioAzione(e.id, { ritorno: null, dopo: () => apriAgenda() }); }
       if (b.dataset.cmd === 'elimina') { chiudiFoglio(); return eliminaAppuntamento(e); }
       if (b.dataset.cmd === 'contatto') { chiudiFoglio(); return apriContattoDa(e.contatto_id); }
-      if (b.dataset.cmd === 'persona') { chiudiFoglio(); return aggiungiPersona(e); }
       if (b.dataset.cmd === 'fissa') { chiudiFoglio(); return nuovoAppuntamento({ giorno, ora: A.partiRoma(e.quando).ora, contatto: { id: e.contatto_id, ...e.contatti }, saltaId: e.id }); }   // l'avviso «a quest'ora hai già» non conta il richiamo stesso
     };
   });
@@ -2256,7 +2271,7 @@ async function foglioAggiungi() {
     { k: 'settimana', icona: 'scala-settimana', tinta: 'var(--mb-programma, #2c4a7c)', titolo: 'Programmare la settimana', sotto: 'Piani Marketing, Consulenze e incontri della settimana' },
     { k: 'persona', icona: 'persona', tinta: 'var(--cat-partner)', titolo: 'Appuntamento con una persona', sotto: 'Piano Marketing, Consulenza, Appuntamento, Telefonata… con un nome della tua lista' },
     ...(senzaLinguette() ? [{ k: 'cosa', icona: 'fatto', tinta: '#1F7A30', titolo: 'Una cosa da fare', sotto: 'Si scrive nel «Da fare» della pagina che stai guardando' }] : []),
-    ...(puoSerataTeam() ? [CONDIVISIONE_LINEE ? { k: 'team', icona: 'squadra', tinta: 'var(--gr-crescita)', titolo: 'Serata con il Team o una Linea', sotto: 'La trovano nella loro Agenda' }
+    ...(puoSerataTeam() && (CONDIVISIONE_LINEE || (typeof SERATA_DA_MANDARE !== 'undefined' && SERATA_DA_MANDARE)) ? [CONDIVISIONE_LINEE ? { k: 'team', icona: 'squadra', tinta: 'var(--gr-crescita)', titolo: 'Serata con il Team o una Linea', sotto: 'La trovano nella loro Agenda' }
       : { k: 'manda', icona: 'squadra', tinta: 'var(--gr-crescita)', titolo: 'Serata da mandare', sotto: `${persone.length === 1 ? 'La riceve' : 'La ricevono'}: ${nomi}` }] : [])]);
   if (!k) return;
   if (k === 'settimana') return preparaSettimana();

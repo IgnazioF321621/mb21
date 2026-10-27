@@ -18,7 +18,9 @@ const chiamate = nome => P.scritture.filter(x => x.tabella === 'rpc:' + nome);
 const attendi = () => new Promise(r => setTimeout(r, 0));
 // il modulo si apre (è una Promise che si chiude col salvataggio): si prende il foglio e si tocca
 const apri = async opz => { const p = P.nuovoAppuntamento({ giorno: P.OGGI, ora: '18:00', ...opz }); await attendi(); await attendi(); return { v: P.fogli.at(-1), p }; };
-const scegli = async (v, nome, valore) => { await altro(v); await v.clic(`[data-scelta="${nome}"] [data-v="${valore}"]`); await altro(v); };
+// note 105-107: le scelte scendono; se la lista non è aperta si tocca prima la tendina
+const scegli = async (v, nome, valore) => { await altro(v); if (!v.querySelector(`[data-scelta="${nome}"]`) && v.querySelector(`[data-tendina="${nome}"]`)) await v.clic(`[data-tendina="${nome}"]`); await v.clic(`[data-scelta="${nome}"] [data-v="${valore}"]`); await altro(v); };
+const apriTendina = async (v, nome) => { if (!v.querySelector(`[data-scelta="${nome}"]`)) await v.clic(`[data-tendina="${nome}"]`); };
 // note 103 e 104 (27/10): scelta una persona, il campo diventa la sua riga con ✕; per cambiarla si toglie e si riscrive. «Altro · facoltativo» (dove, punti,
 // note, portato da, condivisione, categoria) parte chiuso: `altro(v)` lo apre
 const contatto = async (v, nome) => { if (!v.querySelector('#na-contatto')) await v.clic('[data-togli-persona=""]'); const inp = v.querySelector('#na-contatto'); inp.value = nome; await inp.onchange(); await altro(v); };
@@ -27,18 +29,18 @@ const altro = async v => { const b = v.querySelector('#na-altro-apri'); if (b &&
 prova('Un partner qualsiasi: con un Prospect niente «Condividi con»; con un Partner compare «Nessuno · Fiammetta Rossi» e, scelta la persona, «Vedono anche i punti?»', conPunti(async () => {
   pulisci();
   const { v } = await apri({});
-  assert.doesNotMatch(v.innerHTML, /data-scelta="condividi"/);
+  assert.doesNotMatch(v.innerHTML, /data-(scelta|tendina)="condividi"/);
   await contatto(v, 'Tito Rovere');
-  assert.doesNotMatch(v.innerHTML, /data-scelta="condividi"/);
+  assert.doesNotMatch(v.innerHTML, /data-(scelta|tendina)="condividi"/);
   await contatto(v, 'Fiammetta Rossi');
   await scegli(v, 'tipo', 'Appuntamento');
-  assert.match(v.innerHTML, /data-scelta="condividi"/); assert.match(v.innerHTML, /data-v="persona"[^>]*>Fiammetta Rossi</);
+  assert.match(v.innerHTML, /data-(scelta|tendina)="condividi"/); await apriTendina(v, 'condividi'); assert.match(v.innerHTML, /data-v="persona"[^>]*><span>Fiammetta Rossi</);
   assert.doesNotMatch(v.innerHTML, /data-v="team"/);   // Team e Linea solo l'Admin
   assert.doesNotMatch(v.innerHTML, /Vedono anche i punti/);
   await scegli(v, 'condividi', 'persona');
-  assert.match(v.innerHTML, /data-v="persona" class="scelto"/); assert.match(v.innerHTML, /Vede anche i punti da trattare\?/);   // una persona sola: «Vede»
+  assert.match(v.innerHTML, /data-tendina="condividi"[^>]*><b>Fiammetta Rossi<\/b>/); assert.match(v.innerHTML, /Vede anche i punti da trattare\?/);   // una persona sola: «Vede»
   await scegli(v, 'puntiCond', '1');
-  assert.match(v.innerHTML, /data-scelta="puntiCond"[\s\S]*?data-v="1" class="scelto"/);
+  assert.match(v.innerHTML, /data-tendina="puntiCond"[^>]*><b>Sì<\/b>/);
 }));
 
 prova('Salvando con «Fiammetta Rossi» scelta: l\'appuntamento si salva e subito dopo si condivide (condividi_azione con i punti); l\'avviso lo dice', conPunti(async () => {
@@ -65,7 +67,7 @@ prova('Salvando con «Fiammetta Rossi» scelta: l\'appuntamento si salva e subit
   pulisci();
   const s3 = await apri({});
   await contatto(s3.v, 'Fiammetta Rossi'); await scegli(s3.v, 'tipo', 'Appuntamento'); await scegli(s3.v, 'modalita', 'Counseling');
-  assert.match(s3.v.innerHTML, /data-scelta="condividi"[\s\S]*?data-v="persona" class="scelto"/);
+  assert.match(s3.v.innerHTML, /data-tendina="condividi"[^>]*><b>Fiammetta Rossi<\/b>/);
   await s3.v.clic('#na-si'); await s3.p;
   assert.equal(chiamate('condividi_azione').length, 1);
   // scegliendo «Nessuno» resta solo suo: nessuna chiamata
@@ -311,8 +313,18 @@ prova('Nota 001: il segnale Coach Yes accanto al nome solo sulle telefonate da f
 
 // ── Agenda P5b (Ignazio 23/10): si manda solo alle persone del gruppo che usano l'app (nomi dai dati); CONDIVISIONE_LINEE spento ──
 const RAMO_FINTO = { squadra: [{ partner_id: 'X1', sponsor_id: 'IO1', nome: 'PROVA, PERSONA' }], conApp: ['X1'], utenti: [{ partner_id: 'X1', nome_cognome: 'Persona Prova' }] };
-prova('P5b: «Cosa vuoi aggiungere?» → «Serata da mandare · La riceve: [nome dai dati]»; il modulo ha «Nessuno · [nome]» già scelto; salvata va a lei (linea + codice)', conPunti(async () => {
+prova('Nota 106 (Ignazio 27/10): dal «+» niente più «Serata da mandare» (interruttore SERATA_DA_MANDARE spento)', async () => {
   pulisci(); P.modo.admin = true; const ramo = P.AG.ramo; P.AG.ramo = RAMO_FINTO;
+  try {
+    P.foglioAggiungi(); await attendi();
+    assert.doesNotMatch(P.fogli.at(-1).innerHTML, /data-strada="manda"|Serata da mandare/);
+    assert.match(P.fogli.at(-1).innerHTML, /data-strada="persona"/);
+    assert.match(require('node:fs').readFileSync(require('node:path').join(__dirname, '../../index.html'), 'utf8'), /\nconst SERATA_DA_MANDARE = false;\n/);
+  } finally { P.modo.admin = false; P.AG.ramo = ramo; }
+});
+
+prova('P5b: «Cosa vuoi aggiungere?» → «Serata da mandare · La riceve: [nome dai dati]»; il modulo ha «Nessuno · [nome]» già scelto; salvata va a lei (linea + codice)', conPunti(async () => {
+  pulisci(); P.modo.admin = true; const ramo = P.AG.ramo; P.AG.ramo = RAMO_FINTO; P.impostaSerata(true);   // nota 106: la voce con l'interruttore acceso
   const strade = f => [...f.innerHTML.matchAll(/data-strada="([^"]+)"[\s\S]*?<b>([^<]+)<\/b><small>([^<]*)<\/small>/g)].map(m => m[1] + ':' + m[2] + ':' + m[3]);
   try {
     P.foglioAggiungi(); await attendi();
@@ -333,16 +345,17 @@ prova('P5b: «Cosa vuoi aggiungere?» → «Serata da mandare · La riceve: [nom
     pulisci(); P.AG.ramo = { squadra: [], conApp: [], utenti: [] };
     P.foglioAggiungi(); await attendi();
     assert.deepEqual(strade(P.fogli.at(-1)).map(x => x.split(':')[0]), ['settimana', 'persona']);
-  } finally { P.modo.admin = false; P.AG.ramo = ramo; }
+  } finally { P.modo.admin = false; P.AG.ramo = ramo; P.impostaSerata(false); }
 }));
 
 prova('P5b, il tranello: nel modulo con una persona (anche dalla Timeline) «Condividi con» è solo «Nessuno · [la persona]»; il nome non sparisce più', async () => {
   pulisci(); P.modo.admin = true; const ramo = P.AG.ramo; P.AG.ramo = RAMO_FINTO;
   try {
     const { v } = await apri({});   // come il tocco su un'ora vuota della Timeline: nessuna persona data
-    assert.doesNotMatch(v.innerHTML, /data-scelta="condividi"/);   // senza persona niente condivisione
+    assert.doesNotMatch(v.innerHTML, /data-(scelta|tendina)="condividi"/);   // senza persona niente condivisione
     await contatto(v, 'Fiammetta Rossi'); await scegli(v, 'tipo', 'Appuntamento');
-    assert.match(v.innerHTML, /data-scelta="condividi"><button data-v="" [^>]*>Nessuno<\/button><button data-v="persona"[^>]*>Fiammetta Rossi<\/button><\/div>/);
+    await apriTendina(v, 'condividi');
+    assert.match(v.innerHTML, /data-scelta="condividi"><button data-v="" [^>]*><span>Nessuno<\/span><\/button><button data-v="persona"[^>]*><span>Fiammetta Rossi<\/span><b>✓<\/b><\/button><\/div>/);
     assert.doesNotMatch(v.innerHTML, /data-v="team"|data-v="linea"|data-v="p:/);
   } finally { P.modo.admin = false; P.AG.ramo = ramo; }
 });
@@ -351,7 +364,7 @@ prova('Dalla scheda o dalla coda (persona già data) l\'Admin non vede Team e Li
   pulisci(); P.modo.admin = true;
   const { v } = await apri({ contatto: { id: 'c-isa', nome: 'Fiammetta Rossi', categoria: 'Partner' }, tipo: 'Appuntamento', modalita: 'Counseling' });
   await altro(v);   // nota 104: «Condividi con» sta in «Altro · facoltativo»
-  assert.match(v.innerHTML, /data-v="persona"/); assert.doesNotMatch(v.innerHTML, /data-v="team"/);
+  await apriTendina(v, 'condividi'); assert.match(v.innerHTML, /data-v="persona"/); assert.doesNotMatch(v.innerHTML, /data-v="team"/);
 });
 
 prova('Cambiando il giorno (o l\'ora) il modulo NON si ridisegna (05/10 sera, iPad: il calendario di sistema si chiudeva appena toccato l\'anno); si rifà solo l\'avviso delle sovrapposizioni', async () => {
@@ -372,7 +385,7 @@ prova('Una Telefonata parte sempre «Senza orario · solo in coda», anche da un
   P.AG.azioni = P.AG.azioni.filter(x => x.id !== 'az-nuova');   // le prove di prima hanno già salvato (e messo in lista) un impegno
   const prima = P.AG.azioni.length;
   const { v, p } = await apri({ contatto: { id: 'c-tito', nome: 'Tito Rovere', categoria: 'Prospect' }, tipo: 'Contatto', modalita: 'Telefonata', ora: '18:00', resta: true });
-  assert.match(v.innerHTML, /data-scelta="quando"[\s\S]*?data-v="coda" class="scelto"/);
+  assert.match(v.innerHTML, /data-tendina="quando"[^>]*><b>Senza orario · solo in coda<\/b>/);
   assert.equal(v.querySelector('#na-ora'), null);                                 // solo il giorno
   await scegli(v, 'quando', 'ora');
   assert.equal(v.querySelector('#na-ora').value, '18:00');                        // l'ora toccata in Agenda è già lì
@@ -396,7 +409,7 @@ prova('104: quattro domande in ordine — Con chi? · Che cosa? (l\'Area sotto, 
   assert.match(v.innerHTML, /<h4 class="mc-t">Con chi\?<\/h4>/); assert.doesNotMatch(v.innerHTML, /Che cosa\?|Quando\?|Altro · facoltativo/);   // prima la persona
   await contatto(v, 'Fiammetta Rossi'); await scegli(v, 'tipo', 'Appuntamento');
   const h = v.innerHTML, pos = t => { const i = h.indexOf(t); assert.ok(i > 0, t); return i; };
-  const ordine = ['>Con chi?<', 'Fiammetta Rossi', 'id="na-piu-persona"', '>Che cosa?<', 'data-scelta="tipo"', 'data-scelta="modalita"', 'id="na-area"', '>Quando?<', 'id="na-giorno"', 'data-scelta="durata"', 'Altro · facoltativo', 'id="na-dove"', 'id="na-punti"', 'id="na-note"', 'id="na-portato"', 'data-scelta="categoria"'].map(pos);
+  const ordine = ['>Con chi?<', 'Fiammetta Rossi', 'id="na-piu-persona"', '>Che cosa?<', 'data-tendina="tipo"', 'data-tendina="modalita"', 'id="na-area"', '>Quando?<', 'id="na-giorno"', 'data-tendina="durata"', 'Altro · facoltativo', 'id="na-dove"', 'id="na-punti"', 'id="na-note"', 'id="na-portato"', 'data-tendina="categoria"'].map(pos);
   assert.deepEqual(ordine, [...ordine].sort((a, b) => a - b));
   assert.doesNotMatch(h, /Obbligatorio|id="na-porta"|Porta qualcuno|Area e tipo|Data e note/);
   assert.match(h, /Area: <b>Attività<\/b>/); await v.clic('#na-area'); assert.match(v.innerHTML, /Area: <b>Prodotti<\/b>/);
@@ -415,7 +428,7 @@ prova('103: più persone nello stesso appuntamento — «+ Aggiungi un\'altra pe
   assert.match(v.innerHTML, /data-togli-persona="c-due"/); assert.match(v.innerHTML, /Ognuno ha il suo esito/);
   assert.equal(v.querySelector('#na-testa b').textContent, 'Fiammetta Rossi e Persona Due');
   await scegli(v, 'tipo', 'Appuntamento'); await scegli(v, 'modalita', 'Counseling');
-  assert.match(v.innerHTML, /data-scelta="condividi"><button data-v="" [^>]*>Nessuno<\/button><button data-v="persona" class="scelto">Fiammetta Rossi e Persona Due<\/button>/);
+  assert.match(v.innerHTML, /data-tendina="condividi"[^>]*><b>Fiammetta Rossi e Persona Due<\/b>/);
   assert.doesNotMatch(v.innerHTML, /anche i punti/);   // PUNTI_CONDIVISI spento
   v.querySelector('#na-punti').value = 'Il perché';
   await v.clic('#na-si'); const esito = await p;
@@ -446,25 +459,105 @@ prova('103: togliere una persona; le persone devono poter avere lo stesso tipo (
   P.scelta.persona = null;
 });
 
-prova('103: dal foglio di un appuntamento già fissato «+ Aggiungi una persona»: una riga uguale per lei; se l\'appuntamento è condiviso, anche il suo (senza i punti)', async () => {
+prova('105: il foglio di un appuntamento ha Modifica · Sposta · Apri contatto · Elimina; «Modifica» è la stessa scheda a quattro domande, già compilata, con le persone dello stesso incontro', async () => {
   pulisci();
-  const e = { id: 'c1', contatto_id: 'c-isa', user_id: 'io', tipo_azione: 'Appuntamento', modalita: 'Counseling', area: 'Attività', categoria: 'Partner',
-    inizio: P.A.isoDaRoma(P.OGGI, '15:00'), fine: P.A.isoDaRoma(P.OGGI, '16:00'), completata: false, condiviso_con: 'u-isa', note: 'n', punti: [{ t: 'Il perché', fatto: false }],
-    contatti: { nome: 'Fiammetta Rossi', categoria: 'Partner' } };
+  const e = { id: 'c1', contatto_id: 'c-isa', user_id: 'io', tipo_azione: 'Appuntamento', modalita: 'Counseling', area: 'Attività', categoria: 'Partner', esito: null,
+    inizio: P.A.isoDaRoma(P.OGGI, '15:00'), fine: P.A.isoDaRoma(P.OGGI, '16:30'), completata: false, condiviso_con: 'u-isa', note: 'portare il libro', link: 'https://zoom.us/j/1', luogo: null,
+    punti: [{ t: 'Il perché', fatto: true }], su_cosa: null, contatti: { nome: 'Fiammetta Rossi', categoria: 'Partner' } };
+  P.foglioEvento({ ...e, quando: e.inizio });
+  const comandi = [...P.fogli.at(-1).innerHTML.matchAll(/data-cmd="([^"]+)"/g)].map(x => x[1]);
+  assert.deepEqual(comandi.filter(x => ['modifica', 'sposta', 'contatto', 'elimina', 'persona'].includes(x)), ['modifica', 'sposta', 'contatto', 'elimina']);
+  // «Modifica»: un'altra persona è già nello stesso incontro (stessa ora, stesso tipo), con il suo esito
+  P.finto.stessoIncontro = [{ id: 'c2', contatto_id: 'c-due', categoria: 'Partner', tipo_azione: 'Appuntamento', modalita: 'Counseling', esito: 'Fatto', contatti: { nome: 'Persona Due', categoria: 'Partner' } }];
+  const p = P.nuovoAppuntamento({ modifica: e, resta: true }); await attendi(); await attendi(); await attendi();
+  const v = P.fogli.at(-1);
+  assert.match(v.innerHTML, /<small>Modifica appuntamento<\/small>/);
+  assert.match(v.innerHTML, /<b>Fiammetta Rossi<\/b>[\s\S]*<b>Persona Due<\/b>/);
+  assert.doesNotMatch(v.innerHTML, /data-togli-persona="c-due"/);                    // ha già l'esito: non si toglie
+  assert.match(v.innerHTML, /data-tendina="modalita"[^>]*><b>Counseling<\/b>/);
+  assert.equal((v.innerHTML.match(/data-tendina="tipo"/g) || []).length, 1);
+  assert.match(v.innerHTML, /data-tendina="durata"[^>]*><b>Altra…<\/b>/);            // un'ora e mezza: «Altra…» con la fine
+  assert.equal(v.querySelector('#na-giorno').value, P.OGGI); assert.equal(v.querySelector('#na-ora').value, '15:00'); assert.equal(v.querySelector('#na-fine').value, '16:30');
+  await altro(v);
+  assert.equal(v.querySelector('#na-note').value, 'portare il libro'); assert.equal(v.querySelector('#na-dove').value, 'https://zoom.us/j/1'); assert.match(v.innerHTML, /<textarea id="na-punti"[^>]*>Il perché<\/textarea>/);
+  // si aggiunge una persona e si sposta l'ora
+  P.scelta.persona = { id: 'c-tre', nome: 'Persona Tre', categoria: 'Partner' };
+  await v.clic('#na-piu-persona'); await attendi();
+  v.querySelector('#na-ora').value = '17:00'; v.querySelector('#na-fine').value = '18:30';
+  v.querySelector('#na-punti').value = 'Il perché';   // il piccolo DOM non legge il testo dentro <textarea>: lo si rimette come farebbe il browser   // nell'app la fine slitta da sola (legaInizioFine)
+  await v.clic('#na-si'); const esito = await p;
+  const rpc = chiamate('modifica_azione').map(c => c.args[0]);
+  assert.deepEqual(rpc.map(x => [x.p_azione, x.p_contatto, x.p_esito]), [['c1', 'c-isa', null], ['c2', 'c-due', 'Fatto']]);   // la sua riga e quella dell'altra persona
+  assert.ok(rpc.every(x => x.p_inizio === P.A.isoDaRoma(P.OGGI, '17:00') && x.p_modalita === 'Counseling' && x.p_note === 'portare il libro'));
+  const resto = scritte('azioni', 'update').map(x => x.args[0]);
+  assert.equal(resto.length, 2); assert.deepEqual(resto[0].punti, [{ t: 'Il perché', fatto: true }]);   // le spunte dei punti restano
+  const ins = scritte('azioni', 'insert').at(-1).args[0];
+  assert.deepEqual(ins.map(r => [r.contatto_id, r.inizio]), [['c-tre', P.A.isoDaRoma(P.OGGI, '17:00')]]);
+  assert.deepEqual(chiamate('condividi_azione').map(c => c.args[0].p_azione), ['c2', 'nuovo-1']);   // condiviso: anche alle altre persone (la sua lo era già)
+  assert.deepEqual(esito.ids, ['c1', 'c2', 'nuovo-1']);
+  assert.match(P.avvisi.at(-1).t, /Appuntamento modificato/);
+  P.scelta.persona = null; P.finto.stessoIncontro = undefined;
+});
+
+prova('105: un appuntamento chiuso: in «Che cosa?» «Esito: … · correggi» apre il foglio dell\'esito; la prima persona da sola si cambia con ✕', async () => {
+  pulisci();
+  const e = { id: 'c1', contatto_id: 'c-isa', user_id: 'io', tipo_azione: 'Appuntamento', modalita: 'Counseling', area: 'Attività', categoria: 'Partner', esito: 'Fatto', completata: true,
+    inizio: P.A.isoDaRoma(P.OGGI, '15:00'), fine: P.A.isoDaRoma(P.OGGI, '16:00'), contatti: { nome: 'Fiammetta Rossi', categoria: 'Partner' } };
+  P.finto.stessoIncontro = [];
+  P.nuovoAppuntamento({ modifica: e, resta: true }); await attendi(); await attendi(); await attendi();
+  const v = P.fogli.at(-1);
+  assert.match(v.innerHTML, /Esito: <b>Fatto<\/b> · <button type="button" class="link na5-cambia" id="na-esito">correggi<\/button>/);
+  assert.match(v.innerHTML, /data-togli-persona=""/);
+  P.finto.stessoIncontro = undefined;
+  assert.match(require('node:fs').readFileSync(require('node:path').join(__dirname, '../../index.html'), 'utf8'),
+    /if \(a\.tipo_azione !== 'Contatto' && !opz\.soloEsito && typeof nuovoAppuntamento === 'function'\) return nuovoAppuntamento\(\{ modifica: \{ \.\.\.a, portato \}, dopo: opz\.dopo, resta: true \}\);/);
+});
+
+prova('105-107: le scelte scendono — scelta la persona si apre da sola «Tipo»; scelto il tipo si apre il suo sottotipo; scelto, si richiude; un tocco apre e richiude le altre', async () => {
+  pulisci();
+  const { v } = await apri({});
+  const inp = v.querySelector('#na-contatto'); inp.value = 'Fiammetta Rossi'; await inp.onchange();
+  assert.match(v.innerHTML, /data-tendina="tipo" aria-expanded="true"><small>Scegli<\/small>/); assert.match(v.innerHTML, /data-scelta="tipo"/);
+  await v.clic('[data-scelta="tipo"] [data-v="Appuntamento"]');
+  assert.match(v.innerHTML, /data-tendina="tipo" aria-expanded="false"><b>Appuntamento<\/b>/); assert.doesNotMatch(v.innerHTML, /data-scelta="tipo"/);
+  assert.match(v.innerHTML, /data-tendina="modalita" aria-expanded="true"/); assert.match(v.innerHTML, /data-scelta="modalita"[^]*?<span>Counseling<\/span>/);
+  await v.clic('[data-scelta="modalita"] [data-v="Counseling"]');
+  assert.doesNotMatch(v.innerHTML, /data-scelta="(tipo|modalita|durata)"/);                       // tutto scelto: nessuna lista aperta
+  await v.clic('[data-tendina="durata"]'); assert.match(v.innerHTML, /data-scelta="durata"/);
+  await v.clic('[data-tendina="durata"]'); assert.doesNotMatch(v.innerHTML, /data-scelta="durata"/);   // un secondo tocco richiude
+  await v.clic('[data-tendina="tipo"]'); assert.match(v.innerHTML, /data-scelta="tipo"[^]*?data-v="Appuntamento" class="scelto"><span>Appuntamento<\/span><b>✓<\/b>/);
+  assert.doesNotMatch(v.innerHTML, /data-scelta="modalita"/);                                      // una lista aperta per volta
+});
+
+prova('107: «Manda l\'appuntamento a [nome]»: «Cosa aggiungo?» (Dove e Note già spuntati, i punti a scelta), «Con» Telegram o WhatsApp, un tasto «Manda»', async () => {
+  pulisci();
+  const e = { id: 'c1', contatto_id: 'c-isa', user_id: 'io', tipo_azione: 'Appuntamento', modalita: 'Counseling', categoria: 'Partner', completata: false,
+    inizio: P.A.isoDaRoma(P.OGGI, '15:00'), fine: P.A.isoDaRoma(P.OGGI, '16:00'), link: 'https://zoom.us/j/1', note: 'portare il libro', punti: [{ t: 'Il perché', fatto: false }],
+    contatti: { nome: 'Fiammetta Rossi', categoria: 'Partner', telefono: '+39 333 1112222' } };
   P.foglioEvento({ ...e, quando: e.inizio });
   const f = P.fogli.at(-1);
-  assert.match(f.innerHTML, /data-cmd="persona">[^<]*<svg[^>]*>[\s\S]*?<\/svg> Aggiungi una persona/);
-  P.scelta.persona = { id: 'c-due', nome: 'Persona Due', categoria: 'Partner' };
-  await f.clic('[data-cmd="persona"]'); await attendi(); await attendi();
-  const ins = scritte('azioni', 'insert').at(-1).args[0];
-  assert.equal(ins.contatto_id, 'c-due'); assert.equal(ins.inizio, e.inizio); assert.equal(ins.fine, e.fine); assert.equal(ins.modalita, 'Counseling'); assert.deepEqual(ins.punti, e.punti);
-  assert.deepEqual(chiamate('condividi_azione').at(-1).args[0], { p_azione: 'az-persona', p_con: true, p_punti: false });
-  assert.match(P.avvisi.at(-1).t, /Persona Due aggiunto all'appuntamento · condiviso/);
-  P.scelta.persona = { id: 'c-tito', nome: 'Tito Rovere', categoria: 'Prospect' };   // un Prospect non può avere un Appuntamento
-  P.foglioEvento({ ...e, quando: e.inizio }); const n = scritte('azioni', 'insert').length;
-  await P.fogli.at(-1).clic('[data-cmd="persona"]'); await attendi();
-  assert.equal(scritte('azioni', 'insert').length, n); assert.match(P.avvisi.at(-1).t, /Tito Rovere non può avere un Appuntamento/);
-  P.scelta.persona = null;
+  assert.match(f.innerHTML, /Manda l'appuntamento a Fiammetta Rossi<\/b><small>Tipo, giorno, ora e durata ci sono sempre<\/small>/);
+  assert.match(f.innerHTML, /data-manda-apri="cosa"><b>Dove · Note<\/b>/); assert.match(f.innerHTML, /data-manda-apri="con"><b>Telegram<\/b>/);
+  assert.ok(f.innerHTML.indexOf('data-manda-via') < f.innerHTML.indexOf('data-cmd="modifica"'));   // sopra i comandi
+  await f.clic('[data-manda-apri="cosa"]'); await f.clic('[data-manda-cosa="punti"]');
+  assert.match(f.innerHTML, /data-manda-apri="cosa" ?[^>]*><b>Dove · Note · Punti da trattare<\/b>/); assert.match(f.innerHTML, /data-manda-cosa="punti"/);   // più di una: resta aperta
+  await f.clic('[data-manda-via]');
+  const t = P.avvisi.at(-1);
+  assert.equal(t.t, 'telegram'); assert.equal(t.tel, '+393331112222');
+  const righe = t.testo.split('\n');
+  assert.equal(righe[0], 'Ciao Fiammetta! Ti confermo il nostro appuntamento:');
+  assert.deepEqual(righe.slice(2), ['📍 Dove: https://zoom.us/j/1', '📝 Note: portare il libro', '✅ Punti da trattare:', '• Il perché']);
+  assert.match(t.testo.split('\n')[1], /^📅 Counseling · \S+ \d+ \S+, 15:00–16:00$/);
+  const aperti = []; P.stub.window.open = u => aperti.push(u);
+  await f.clic('[data-manda-apri="con"]'); await f.clic('[data-manda-con="whatsapp"]');
+  assert.match(f.innerHTML, /data-manda-apri="con"><b>WhatsApp<\/b>/);
+  await f.clic('[data-manda-apri="cosa"]'); await f.clic('[data-manda-cosa="punti"]');   // i punti si tolgono: a scelta ogni volta
+  await f.clic('[data-manda-via]');
+  assert.equal(aperti.length, 1); assert.match(aperti[0], /^https:\/\/wa\.me\/393331112222\?text=Ciao%20Fiammetta!/); assert.doesNotMatch(decodeURIComponent(aperti[0]), /Punti da trattare/);
+  delete P.stub.window.open;
+  // senza un numero con il prefisso non c'è
+  P.foglioEvento({ ...e, quando: e.inizio, contatti: { ...e.contatti, telefono: '' } });
+  assert.doesNotMatch(P.fogli.at(-1).innerHTML, /Manda l'appuntamento/);
 });
 
 (async () => {
