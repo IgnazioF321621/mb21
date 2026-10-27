@@ -44,7 +44,11 @@ prova('100: l\'iPhone non cambia — tutte le regole nuove (html.v5) stanno dent
   // cosa fanno: colonna a 760, Oggi a due e poi tre colonne, Esplora a tre e poi quattro, Agenda Settimana a sette colonne, Mese con gli impegni
   assert.match(dentro, /html\.v5 main \{ max-width: 760px; \}/);
   assert.match(dentro, /html\.v5 \.o5-riquadri > \.o5-coppia \{ display: contents; \}/);
-  assert.match(dentro, /html\.v5 \.o5-riquadri \{ grid-template-columns: repeat\(3, minmax\(0, 1fr\)\); \}/);
+  assert.match(dentro, /html\.v5 \.o5-riquadri \{ grid-template-columns: repeat\(6, minmax\(0, 1fr\)\); \}/);   // da 1000 px: Contatti e Agenda metà riga, le altre un terzo
+  // poi (Regia 27/10): il Check della sera sotto Contatti e Agenda, su tutta la riga e basso; tessere dispari, l'ultima su tutta la riga
+  assert.match(dentro, /html\.v5 \.o5-riquadri > \.o5-sera \{ grid-column: 1 \/ -1; order: 1; \}/);
+  assert.match(dentro, /html\.v5 \.o5-riquadri \.o5-r:not\(\.o5-sera\) \{ min-height: 170px; \}/);
+  assert.doesNotMatch(dentro, /grid-auto-rows/);
   assert.match(dentro, /html\.v5 \.ss-giorni \{ display: grid; grid-template-columns: repeat\(7, minmax\(0, 1fr\)\);/);
   assert.match(dentro, /html\.v5 \.mm-e \{ display: block; \}/);
   assert.match(dentro, /html\.v5 \.v5-testa \{ margin-left: calc\(50% - 50vw\);/);   // la testata colorata da bordo a bordo

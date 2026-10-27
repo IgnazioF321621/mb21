@@ -2678,14 +2678,22 @@
     html.v5 main { max-width: 760px; }
     html.v5 nav { left: calc(50% - 260px); right: calc(50% - 260px); }
     html.v5 .v5-testa { margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); padding-left: calc(50vw - 50% + 16px); padding-right: calc(50vw - 50% + 16px); }
-    html.v5 .o5-riquadri { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: minmax(170px, auto); align-content: start; }
+    html.v5 .o5-riquadri { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: start; }
     html.v5 .o5-riquadri > .o5-coppia { display: contents; }
-    html.v5 .o5-riquadri > .o5-sera { grid-column: 1 / -1; }
+    html.v5 .o5-riquadri .o5-r:not(.o5-sera) { min-height: 170px; }
+    /* poi (Regia 27/10, «sì» di Ignazio dopo la prova sull'iPad): in alto Contatti e Agenda affiancati, sotto «Com'è andata oggi?» su tutta la riga e basso
+       come sull'iPhone, poi le altre a coppie; con un numero dispari di tessere l'ultima va su tutta la riga */
+    html.v5 .o5-riquadri > .o5-sera { grid-column: 1 / -1; order: 1; }
+    html.v5 .o5-coppia > .o5-r { order: 2; }
+    html.v5 .o5-coppia.uno > .o5-r { grid-column: 1 / -1; }
     html.v5 .o5-tessere { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   }
   @media (min-width: 1000px) {
     html.v5 main:has(.o5), html.v5 main:has(.o5-tessere), html.v5 main:has(.ss-giorni), html.v5 main:has(.mm-griglia) { max-width: 1120px; }
-    html.v5 .o5-riquadri { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    html.v5 .o5-riquadri { grid-template-columns: repeat(6, minmax(0, 1fr)); }   /* sei parti: Contatti e Agenda metà riga ciascuno, le altre un terzo */
+    html.v5 .o5-riquadri > .o5-contatti, html.v5 .o5-riquadri > .o5-agenda { grid-column: span 3; }
+    html.v5 .o5-coppia > .o5-r, html.v5 .o5-coppia.uno > .o5-r { grid-column: span 2; }
+    html.v5 .o5-coppia:last-child:not(.uno) > .o5-r:last-child { grid-column: 1 / -1; }   /* quattro tessere: l'ultima su tutta la riga */
     html.v5 .o5-tessere { grid-template-columns: repeat(4, minmax(0, 1fr)); }
     html.v5 .ss-giorni { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; background: none; box-shadow: none; padding: 0; }
     html.v5 .ss-g { flex-direction: column; gap: 6px; border-top: 0; background: var(--superficie); border-radius: 14px; box-shadow: var(--ombra-card); min-height: 200px; padding: 10px 8px; }
