@@ -1847,7 +1847,35 @@ async function controllaImpegniNuovi() {
   } });
   if (nuovi.length) apri();
 }
+// Nota Pagine 103 (Ignazio 27/10): «+ Aggiungi una persona» a un appuntamento già fissato. Una riga nuova di azioni per la persona, con lo stesso
+// giorno, ora, tipo, dove, note e punti (ognuno ha il suo esito); se l'appuntamento è condiviso, a un Partner con l'app arriva condiviso anche il suo.
+// Stessa ora e stesso tipo = stesso incontro: niente «si accavallano» (MB21Agenda.stessoIncontro). «Annulla» la toglie.
+async function aggiungiPersona(e) {
+  const A = MB21Agenda;
+  const c = await sceltaContatto('Chi si aggiunge?', '', [e.contatto_id], 'è già nell\'appuntamento');
+  if (!c) return;
+  if (!A.tipiPer(c.categoria).includes(e.tipo_azione)) return mostraToast(`${c.nome} non può avere un ${e.tipo_azione}: cambia prima la sua categoria`);
+  const riga = { contatto_id: c.id, user_id: e.user_id, categoria: c.categoria, tipo_azione: e.tipo_azione, modalita: e.modalita, area: e.area, inizio: e.inizio, fine: e.fine,
+    completata: false, note: e.note || null, su_cosa: e.su_cosa || null, link: e.link || null, luogo: e.luogo || null, punti: e.punti || null };
+  const { data, error } = await dbq('aggiungi persona', supa.from('azioni').insert(riga).select('id').single());
+  if (error || !data) return mostraToast('Non salvato: controlla la connessione e riprova.');
+  let condiviso = '';
+  if (e.condiviso_con && c.categoria === 'Partner') {
+    const r = await dbq('condividi azione', supa.rpc('condividi_azione', { p_azione: data.id, p_con: true, p_punti: false }));
+    const esito = r.data && r.data.esito;
+    condiviso = esito === 'ok' ? ' · condiviso' : esito === 'non_usa_app' ? ' · non usa ancora l\'app' : '';
+  }
+  if (Array.isArray(AG.azioni)) AG.azioni.push({ id: data.id, ...riga, contatti: { nome: c.nome, categoria: c.categoria } });
+  await apriAgenda(A.partiRoma(e.inizio).giorno);
+  mostraToast(`${c.nome} aggiunto all'appuntamento${condiviso}`, async () => {
+    await dbqAvvisa('annulla persona', supa.from('azioni').delete().eq('id', data.id), 'Annullamento non riuscito: controlla la connessione e riprova.');
+    await apriAgenda();
+  });
+}
+
 // ── chi organizza: il riquadro «Condividi» ──
+// Note 103 e 104 (Ignazio 27/10): i punti non si condividono più (PUNTI_CONDIVISI in index.html): via «Vede anche i punti?» e «Fai vedere i punti»
+const puntiCondivisi = () => typeof PUNTI_CONDIVISI !== 'undefined' && PUNTI_CONDIVISI;
 const nomePersona = e => (e.contatti && e.contatti.nome) || 'la persona';
 const SENZA_APP = new Set();   // le azioni la cui persona non usa ancora MB21 (lo dice `condividi_azione`): si scrive e si offre l'invito (Ignazio 05/10)
 function condivisioneAzioneHtml(e) {
@@ -1856,9 +1884,9 @@ function condivisioneAzioneHtml(e) {
   if (!e.condiviso_con && SENZA_APP.has(e.id)) return `<div class="cd" data-cd="${esc(e.id)}"><div class="pt-testa"><b>${esc(nomePersona(e))} non usa ancora MB21</b></div>
     <div class="pt-comandi"><button type="button" class="link" data-cd-invita>${ic('invito')} Invitalo nell'app</button><button type="button" class="link" data-cd-con>Riprova</button></div></div>`;
   if (!e.condiviso_con) return `<div class="cd chiuso" data-cd="${esc(e.id)}"><button type="button" class="link" data-cd-con>${ic('condividi')} Condividi con ${esc(nomePersona(e))}</button></div>`;
-  return `<div class="cd" data-cd="${esc(e.id)}"><div class="pt-testa"><b>Condiviso con ${esc(nomePersona(e))}</b><small>${e.punti_condivisi ? 'vede anche i punti' : 'senza i punti'}</small></div>
+  return `<div class="cd" data-cd="${esc(e.id)}"><div class="pt-testa"><b>Condiviso con ${esc(nomePersona(e))}</b>${puntiCondivisi() ? `<small>${e.punti_condivisi ? 'vede anche i punti' : 'senza i punti'}</small>` : ''}</div>
     <div class="cd-risposte" data-cd-risposte>…</div>
-    <div class="pt-comandi"><button type="button" class="link" data-cd-punti="${e.punti_condivisi ? '0' : '1'}">${e.punti_condivisi ? 'Nascondi i punti' : 'Fai vedere i punti'}</button><button type="button" class="link" data-cd-togli>Non condividere più</button></div></div>`;
+    <div class="pt-comandi">${puntiCondivisi() ? `<button type="button" class="link" data-cd-punti="${e.punti_condivisi ? '0' : '1'}">${e.punti_condivisi ? 'Nascondi i punti' : 'Fai vedere i punti'}</button>` : ''}<button type="button" class="link" data-cd-togli>Non condividere più</button></div></div>`;
 }
 // le risposte di chi riceve, scritte a parole con i nomi (si leggono dopo, senza fermare il disegno)
 // `azione` (nota 077): l'appuntamento, per la stessa regola delle Conferme (rispostaValida): «Non può» data prima dell'ultimo «Sposta» è da ridare
@@ -1914,18 +1942,18 @@ function condivisioneSpazioHtml(s) {
     const nomeDi = c => (persone.find(p => p.partner_id === c) || {}).nome
       || (AG.ramo && typeof MB21Mappa !== 'undefined' ? MB21Mappa.nomeLeggibile((AG.ramo.squadra.find(x => x.partner_id === c) || {}).nome || '') : '') || 'una persona';
     const chi = con === 'team' ? persone.map(p => p.nome).join(', ') || 'chi usa l\'app' : con === 'linea' ? nomeDi(s.linea_codice) : '';
-    return `<div class="cd" data-cd="${esc(s.id)}"><div class="pt-testa"><b>Condividi con</b>${con ? `<small>la riceve: ${esc(chi)}${s.punti_condivisi ? ' · vede i punti' : ''}</small>` : ''}</div>
+    return `<div class="cd" data-cd="${esc(s.id)}"><div class="pt-testa"><b>Condividi con</b>${con ? `<small>la riceve: ${esc(chi)}${s.punti_condivisi && puntiCondivisi() ? ' · vede i punti' : ''}</small>` : ''}</div>
     <div class="ag-scelte"><button type="button" data-cd-con="" class="${con ? '' : 'scelto'}">Nessuno</button>${persone.map(p => `<button type="button" data-cd-persona="${esc(p.partner_id)}" class="${con === 'linea' && s.linea_codice === p.partner_id ? 'scelto' : ''}">${esc(p.nome)}</button>`).join('')}</div>
-    ${con ? `<div class="campo"><label>Vede anche i punti?</label><div class="ag-scelte"><button type="button" data-cd-punti="1" class="${s.punti_condivisi ? 'scelto' : ''}">Sì</button><button type="button" data-cd-punti="0" class="${s.punti_condivisi ? '' : 'scelto'}">No</button></div></div><div class="cd-risposte" data-cd-risposte>…</div>` : ''}</div>`;
+    ${con && puntiCondivisi() ? `<div class="campo"><label>Vede anche i punti?</label><div class="ag-scelte"><button type="button" data-cd-punti="1" class="${s.punti_condivisi ? 'scelto' : ''}">Sì</button><button type="button" data-cd-punti="0" class="${s.punti_condivisi ? '' : 'scelto'}">No</button></div></div><div class="cd-risposte" data-cd-risposte>…</div>` : ''}</div>`;
   }
   const frontali = AG.frontali || [];
   // nota 005: il codice salvato può essere di una persona dentro la Linea: la Linea è il suo frontale
   const frontale = !s.linea_codice || frontali.some(f => f.partner_id === s.linea_codice) || !AG.ramo ? s.linea_codice
     : A.frontaleDi(AG.ramo.squadra, s.linea_codice, ST.utente.partner_id) || s.linea_codice;
-  return `<div class="cd" data-cd="${esc(s.id)}"><div class="pt-testa"><b>Condividi con</b>${con ? `<small>${con === 'team' ? 'tutto il Team' : 'una Linea'}${s.punti_condivisi ? ' · vedono i punti' : ''}</small>` : ''}</div>
+  return `<div class="cd" data-cd="${esc(s.id)}"><div class="pt-testa"><b>Condividi con</b>${con ? `<small>${con === 'team' ? 'tutto il Team' : 'una Linea'}${s.punti_condivisi && puntiCondivisi() ? ' · vedono i punti' : ''}</small>` : ''}</div>
     <div class="ag-scelte">${A.CONDIVISIONI_SPAZIO.map(([k, n]) => `<button type="button" data-cd-con="${k}" class="${con === k ? 'scelto' : ''}">${esc(n)}</button>`).join('')}</div>
     ${con === 'linea' ? `<div class="campo"><label>Quale Linea? <small>una delle tue Prime Linee</small></label><div class="ag-scelte">${frontali.length ? frontali.map(f => `<button type="button" data-cd-linea="${esc(f.partner_id)}" class="${frontale === f.partner_id ? 'scelto' : ''}">${esc(f.nome)}</button>`).join('') : '<span class="vn-aiuto">Nessuna Prima Linea nella Mappa.</span>'}</div></div>${frontale && AG.ramo ? parteLineaHtml(frontale, s.linea_codice, AG.ramo.squadra) : ''}` : ''}
-    ${con ? `<div class="campo"><label>Vedono anche i punti?</label><div class="ag-scelte"><button type="button" data-cd-punti="1" class="${s.punti_condivisi ? 'scelto' : ''}">Sì</button><button type="button" data-cd-punti="0" class="${s.punti_condivisi ? '' : 'scelto'}">No</button></div></div><div class="cd-risposte" data-cd-risposte>…</div>` : ''}</div>`;
+    ${con && puntiCondivisi() ? `<div class="campo"><label>Vedono anche i punti?</label><div class="ag-scelte"><button type="button" data-cd-punti="1" class="${s.punti_condivisi ? 'scelto' : ''}">Sì</button><button type="button" data-cd-punti="0" class="${s.punti_condivisi ? '' : 'scelto'}">No</button></div></div><div class="cd-risposte" data-cd-risposte>…</div>` : ''}</div>`;
 }
 function collegaCondivisioneSpazio(el, s, ridisegna) {
   const blocco = el.querySelector(`[data-cd="${s.id}"]`);
@@ -1938,9 +1966,9 @@ function collegaCondivisioneSpazio(el, s, ridisegna) {
     ridisegna();
   };
   const su = (sel, fn) => blocco.querySelectorAll(sel).forEach(b => { b.onclick = () => fn(b); });
-  su('[data-cd-con]', b => { const k = b.dataset.cdCon || null; if (k !== (s.condiviso_con || null)) salva({ condiviso_con: k, linea_codice: k === 'linea' ? s.linea_codice || null : null, punti_condivisi: k ? !!s.punti_condivisi : false }); });
+  su('[data-cd-con]', b => { const k = b.dataset.cdCon || null; if (k !== (s.condiviso_con || null)) salva({ condiviso_con: k, linea_codice: k === 'linea' ? s.linea_codice || null : null, punti_condivisi: k && puntiCondivisi() ? !!s.punti_condivisi : false }); });
   su('[data-cd-linea]', b => salva({ linea_codice: b.dataset.cdLinea }));
-  su('[data-cd-persona]', b => salva({ condiviso_con: 'linea', linea_codice: b.dataset.cdPersona, punti_condivisi: !!s.punti_condivisi }));   // P5b: a una persona con l'app
+  su('[data-cd-persona]', b => salva({ condiviso_con: 'linea', linea_codice: b.dataset.cdPersona, punti_condivisi: puntiCondivisi() && !!s.punti_condivisi }));   // P5b: a una persona con l'app
   // nota 005: una persona dentro la Linea (lei e chi sta sotto); di nuovo, o il frontale, per tutta la Linea
   su('[data-parte]', b => {
     const frontale = (AG.frontali || []).some(f => f.partner_id === s.linea_codice) ? s.linea_codice : MB21Agenda.frontaleDi(AG.ramo.squadra, s.linea_codice, ST.utente.partner_id) || s.linea_codice;
@@ -2004,6 +2032,7 @@ function extraEvento(e) {
         ${MB21Agenda.eConsegna(e) ? '' /* nota 051 (Ignazio 12/10): la consegna si sposta solo con «Sposta la consegna», che cambia anche la vendita */
           : `${richiamo && e.esito !== 'Richiamare' ? `<button data-cmd="fissa">${ic('piu')} Fissa appuntamento</button>` : `<button data-cmd="sposta">${ic('orario')} Sposta</button>`}<button data-cmd="modifica">${ic('modifica')} Modifica</button>`}
         <button data-cmd="contatto">${ic('persona')} Apri contatto</button>
+        ${!richiamo && e.tipo_azione !== 'Contatto' && !e.completata && !MB21Agenda.eConsegna(e) ? `<button data-cmd="persona">${ic('piu')} Aggiungi una persona</button>` : ''}
         ${richiamo ? '' : `<button data-cmd="elimina" class="pericolo">Elimina</button>`}
       </div>`;
 }
@@ -2071,6 +2100,7 @@ function collegaComandiEvento(el, e, dopo, ridisegna) {
       if (b.dataset.cmd === 'modifica') { chiudiFoglio(); return foglioAzione(e.id, { ritorno: null, dopo: () => apriAgenda() }); }
       if (b.dataset.cmd === 'elimina') { chiudiFoglio(); return eliminaAppuntamento(e); }
       if (b.dataset.cmd === 'contatto') { chiudiFoglio(); return apriContattoDa(e.contatto_id); }
+      if (b.dataset.cmd === 'persona') { chiudiFoglio(); return aggiungiPersona(e); }
       if (b.dataset.cmd === 'fissa') { chiudiFoglio(); return nuovoAppuntamento({ giorno, ora: A.partiRoma(e.quando).ora, contatto: { id: e.contatto_id, ...e.contatti }, saltaId: e.id }); }   // l'avviso «a quest'ora hai già» non conta il richiamo stesso
     };
   });

@@ -326,6 +326,20 @@
   .scelte-multiple .sm-segno svg.ic { margin: 0; width: 14px; height: 14px; }
   /* il selettore dei passi nel modulo «+»: un bottone largo che si apre */
   .na-selettore { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; margin-bottom: 8px; padding: 10px 12px; border: 1px solid var(--linea); border-radius: var(--raggio-riga); background: var(--superficie); color: var(--testo); font-size: 15px; text-align: left; min-height: var(--tocco); }
+  /* Note Pagine 103 e 104 (Ignazio 27/10): il modulo «Nuovo appuntamento» a quattro domande — le persone (una o più), «+ Aggiungi un'altra persona»,
+     l'Area sotto il tipo con «cambia», «Altro · facoltativo» chiuso con il riassunto */
+  .na5-chi { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-top: 1px solid var(--linea); }
+  .na5-chi:first-child { border-top: 0; }
+  .na5-chi .ts-pastiglia { width: 34px; height: 34px; font-size: 13px; flex: none; background: var(--cat, var(--grigio)); color: #fff; }
+  .na5-chi > span:nth-child(2) { flex: 1; min-width: 0; }
+  .na5-chi b { display: block; font-size: 16px; } .na5-chi small { color: var(--testo-soft); font-size: 12.5px; }
+  .na5-piu { display: flex; align-items: center; gap: 6px; width: 100%; border: 0; background: none; color: var(--accento); font: inherit; font-weight: 700; padding: 10px 0 4px; text-align: left; }
+  .na5-aiuto { font-size: 12.5px; color: var(--testo-soft); margin: 4px 0 2px; }
+  .na5-cambia { padding: 0; font-size: 12.5px; }
+  .na5-altro-g { margin-top: 14px; }
+  .na5-altro { display: flex; justify-content: space-between; align-items: center; gap: 8px; width: 100%; border: 0; background: none; font: inherit; color: var(--testo); padding: 4px 0; text-align: left; }
+  .na5-altro b { font-size: 15px; } .na5-altro small { display: block; color: var(--testo-soft); font-size: 12.5px; font-weight: 500; }
+  .na5-altro em { font-style: normal; font-size: 20px; color: var(--testo-soft); }
   .na-selettore span { flex: 1; } .na-selettore svg.ic { flex: none; }
   /* «Senza l'app» nel modulo della serata (05/10): un nome per riga con «Invita» */
   .na-fuori { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--linea); font-size: 15px; }
@@ -3772,14 +3786,15 @@ async function chiudiAppuntamento(e, esito, opz = {}) {
 // «A quest'ora hai già…» (cantiere 37): lo stesso avviso nel modulo Nuovo appuntamento e nel foglio Sposta,
 // con le prime ore libere da toccare. Si vede solo se l'Agenda ha in mano quel giorno (la settimana caricata):
 // se i dati non ci sono non si dice niente, invece di dire una cosa non vera. `salta`: l'impegno che si sta spostando.
-function avvisoSovrapposti(giorno, ora, durata, salta, diChi) {
+// Nota 103: `stesso` = { tipo, modalita } dell'appuntamento che si sta scrivendo: un impegno alla stessa ora con lo stesso tipo è lo stesso incontro, non un «già».
+function avvisoSovrapposti(giorno, ora, durata, salta, diChi, stesso) {
   const A = MB21Agenda;
   if (!AG.settimana.includes(giorno) || !(durata > 0) || !/^\d\d:\d\d$/.test(ora || '')) return '';
   const suo = diChi || (vediTutti() ? null : visto().id);   // con «Tutti» l'Admin ha in mano più agende: si guarda solo la sua
   // nota 049: anche le serate ricevute (SdS/OPEN, Team, LdS) occupano l'ora; sono di chi è entrato, quindi contano solo nella sua agenda
   const ricevuti = !vediTutti() && suo && ST.utente && suo === ST.utente.id ? A.ricevutiComeEventi(AG.ricevuti, giorno, suo) : [];
   const delGiorno = [...A.eventiDelGiorno(AG.azioni, giorno), ...ricevuti];
-  const scontri = A.sovrapposti(delGiorno, A.isoDaRoma(giorno, ora), durata, salta, suo);
+  const scontri = A.sovrapposti(delGiorno, A.isoDaRoma(giorno, ora), durata, salta, suo, stesso);
   if (!scontri.length) return '';
   const oggi = MB21Coda.oggiRoma();
   const vicino = { vicinoA: A.inMinuti(ora), soloDi: suo };
@@ -3931,6 +3946,9 @@ async function leggiContattiMiei() {
 // (personeAppDelGruppo, nomi dai dati). L'interruttore spegne «Tutto il Team / Una Linea», «Quale Linea?», «Solo una parte?», «Senza l'app» e la
 // lettura dei frontali; il codice resta. Con true torna com'era (nota 005).
 const CONDIVISIONE_LINEE = false;
+// Note Pagine 103 e 104 (Ignazio 27/10: «per ora spegniamo la condivisione dei punti con l'altra persona»): con false la domanda «Vede anche i punti
+// da trattare?» non c'è (modulo, foglio dell'appuntamento, serata) e i punti non si condividono più; nel database resta tutto (punti_condivisi). Con true si riaccende.
+const PUNTI_CONDIVISI = false;
 function puoSerataTeam() { return typeof eAdmin === 'function' && eAdmin() && (CONDIVISIONE_LINEE || (typeof personeAppDelGruppo === 'function' && personeAppDelGruppo().length > 0)); }
 // Foglio «Nuovo appuntamento» (lavoro 4). Restituisce l'id creato o null.
 // opz: { giorno, ora, contatto:{id,nome,categoria}, categoria, tipo, modalita, area, titolo, sottotitolo, salta, resta, userId, durata, spazio }
@@ -3949,7 +3967,8 @@ async function nuovoAppuntamento(opz = {}) {
     contatto: opz.contatto || null, categoria: opz.categoria || (opz.contatto ? opz.contatto.categoria : null), categoriaToccata: false,
     area: opz.area && ['Attività', 'Prodotti'].includes(opz.area) ? opz.area : 'Attività',
     tipo: opz.tipo || null, modalita: opz.tipo ? opz.modalita : null, durata: opz.durata || 60, durataToccata: !!opz.durata, altra: false, portato: null,
-    spazio: opz.spazio || null, suCosa: [],   // «Su cosa lavorate?» (cantiere 48): i passi dell'incontro con un Partner, anche più d'uno
+    spazio: opz.spazio || null, suCosa: [], altri: [], altroAperto: false,   // note 103 e 104: le altre persone dello stesso appuntamento; «Altro · facoltativo» aperto
+      // «Su cosa lavorate?» (cantiere 48): i passi dell'incontro con un Partner, anche più d'uno
     avvio: null,   // la riga dell'Avvio della persona (letta quando serve: Partner + Appuntamento), per i passi suggeriti (nota Azioni 055)
     // Una telefonata scelta a mano (nota 012, Ignazio 04/10): entra in coda dal giorno scelto, l'orario è facoltativo. Si parte SEMPRE «senza
     // orario» (nota 014, 06/10: 12 telefonate di domani salvate tutte alle 18:00 toccando l'ora in Agenda), anche da un'ora dell'Agenda: chi la
@@ -3961,7 +3980,7 @@ async function nuovoAppuntamento(opz = {}) {
   };
   const serata = () => st.condividi === 'team' || st.condividi === 'linea';
   const puoTeam = () => puoSerataTeam() && !opz.contatto && !opz.spazio;
-  const puoPersona = () => !!st.contatto && st.categoria === 'Partner' && st.tipo !== 'Contatto';
+  const puoPersona = () => !!st.contatto && st.tipo !== 'Contatto' && [{ categoria: st.categoria }, ...st.altri].some(p => p.categoria === 'Partner');   // nota 103: almeno un Partner
   const frontali = () => (typeof AG !== 'undefined' && Array.isArray(AG.frontali) ? AG.frontali : []);
   if (st.condividi === 'linea' && !st.linea && frontali().length === 1) st.linea = frontali()[0].partner_id;   // una sola Prima Linea: già scelta
   const persone = () => (typeof personeAppDelGruppo === 'function' ? personeAppDelGruppo() : []);   // P5b: a chi si può mandare (dai dati)
@@ -4006,13 +4025,94 @@ async function nuovoAppuntamento(opz = {}) {
     const leggiCampi = () => { for (const k of ['giorno', 'ora', 'fine', 'ospite', 'note', 'dove', 'punti', 'serata']) { const el = velo.querySelector('#na-' + k); if (el) campi[k] = el.value; } };
     // quanto dura: le pastiglie, oppure «Altra…» e allora conta l'ora di fine scritta a mano
     const durataScelta = () => (st.altra ? A.inMinuti(campi.fine) - A.inMinuti(campi.ora) : st.durata);
-    const avvisoOre = () => avvisoSovrapposti(campi.giorno, campi.ora, durataScelta(), opz.saltaId, opz.userId || (visto() && visto().id));
+    const avvisoOre = () => avvisoSovrapposti(campi.giorno, campi.ora, durataScelta(), opz.saltaId, opz.userId || (visto() && visto().id), { tipo: st.tipo, modalita: st.modalita });   // nota 103: lo stesso incontro non è un «già un impegno»
+    // Note Pagine 103 e 104 (Ignazio 27/10, «sì» sul disegno docs/prototipi/schizzo_appuntamento_103_104.png): quattro domande in ordine, con gli stessi campi
+    // e gli stessi salvataggi di prima — 1 Con chi? (una o più persone) · 2 Che cosa? (tipo, sottotipo, sotto l'Area già scelta) · 3 Quando? · 4 «Altro ·
+    // facoltativo», chiuso con il riassunto (dove, punti da trattare, note, portato da, condivisione, categoria). Via «Obbligatorio» (lo dice il Salva) e
+    // «Porta qualcuno» (resta «Portato da»). La serata (Team o Linea, solo l'Admin) resta com'era, più sotto in disegna().
+    const persone5 = () => [...(st.contatto ? [{ ...st.contatto, categoria: st.categoria }] : []), ...st.altri];
+    const tipiDiTutti = () => A.tipiPer(st.categoria).filter(t => st.altri.every(p => A.tipiPer(p.categoria).includes(t)));   // i tipi validi per tutte le persone
+    const partnerDaCondividere = () => persone5().filter(p => p.categoria === 'Partner' && st.tipo !== 'Contatto');
+    const nomiInFila = nomi => (nomi.length > 1 ? nomi.slice(0, -1).join(', ') + ' e ' + nomi.at(-1) : nomi[0] || '');
+    function htmlAppuntamento(tipi) {
+      const riga5 = (c, togli) => `<div class="na5-chi ${classeCat(c.categoria)}"><span class="ts-pastiglia">${esc(iniziali(c.nome))}</span><span><b>${esc(c.nome)}${st.tipo === 'Contatto' ? segnoCoach(c.id, c.nome) : ''}</b><small>${esc(c.categoria ? MB21Lista.nomeCategoria(c.categoria) : 'Senza categoria')}</small></span>${togli == null ? '' : `<button type="button" class="link" data-togli-persona="${esc(togli)}" aria-label="Togli">${ic('chiudi')}</button>`}</div>`;
+      let h = `<h4 class="mc-t">Con chi?</h4><div class="riquadro mc-g">`;
+      if (st.contatto) h += riga5({ ...st.contatto, categoria: st.categoria }, opz.contatto && !st.altri.length ? null : '');
+      else h += `<div class="campo"><input id="na-contatto" list="na-nomi" placeholder="Scrivi il nome" value="" autocomplete="off"><datalist id="na-nomi">${elenco.map(c => `<option value="${esc(c.nome)}">`).join('')}</datalist></div>`;
+      h += st.altri.map(c => riga5(c, c.id)).join('');
+      // con l'interruttore delle Linee acceso (oggi spento), l'Admin dal «+» sceglie qui anche la serata: «Tutto il Team» o «Una Linea» (nota 027)
+      if (CONDIVISIONE_LINEE && puoTeam() && !st.contatto) h += `<div class="campo"><label>Oppure una serata</label>${scelte('condividi', ['', 'team', 'linea'], st.condividi, ['Nessuno', 'Tutto il Team', 'Una Linea'])}</div>`;
+      if (st.contatto) h += `<button type="button" class="na5-piu" id="na-piu-persona">${ic('piu')} Aggiungi un'altra persona</button>`;
+      if (st.altri.length) h += `<p class="na5-aiuto">Ognuno ha il suo esito. Chi usa l'app lo trova nella sua Agenda.</p>`;
+      h += '</div>';
+      if (st.contatto && !tipi.length) {   // senza categoria (o con persone che non possono avere lo stesso tipo) si sceglie qui
+        const categorie = st.categoria && !A.CATEGORIE.includes(st.categoria) ? [st.categoria, ...A.CATEGORIE] : A.CATEGORIE;
+        h += `<h4 class="mc-t">Che cosa?</h4><div class="riquadro mc-g"><div class="campo"><label>Categoria di ${esc(st.contatto.nome)}</label>${scelte('categoria', categorie, st.categoria, categorie.map(MB21Lista.nomeCategoria))}
+          <div class="errore">${st.altri.length ? 'Queste persone non possono avere lo stesso tipo di appuntamento: togline una o cambia la categoria.' : 'Il contatto non ha una categoria: scegli Prospect, Partner o Cliente.'}</div></div></div>`;
+      }
+      if (tipi.length) {
+        h += `<h4 class="mc-t">Che cosa?</h4><div class="riquadro mc-g"><div class="campo"><label>Tipo</label>${scelte('tipo', tipi, st.tipo)}</div>`;
+        if (st.tipo) h += `<div class="campo"><label>${esc(A.etichettaSottotipo(st.tipo))}</label>${scelte('modalita', A.sottotipiPer(st.tipo), st.modalita)}</div>`;
+        h += `<p class="na5-aiuto">Area: <b>${esc(st.area)}</b> · <button type="button" class="link na5-cambia" id="na-area">cambia</button></p></div>`;
+      }
+      if (!st.tipo) return h;
+      // 3 · Quando? (come prima: spazi liberi, in coda o a un'ora per la telefonata, giorno e ora, durata, l'avviso «A quest'ora hai già…»)
+      h += `<h4 class="mc-t">Quando?</h4><div class="riquadro mc-g">`;
+      const suoi = liberi.filter(x => x.tipo === st.tipo);
+      if (suoi.length) h += `<div class="campo"><label>I tuoi spazi liberi <small>tocca per usarne uno</small></label><div class="ag-scelte" id="na-liberi">${suoi.map(x => {
+        const o = MB21Spazi.orario(x);
+        return `<button type="button" data-libero="${esc(x.id)}" class="${st.spazio && st.spazio.id === x.id ? 'scelto' : ''}">${esc(giornoBreve(o.giorno))} · ${o.ora}</button>`; }).join('')}</div></div>`;
+      const soloGiorno = inCoda();
+      if (puoInCoda()) h += `<div class="campo"><label>Quando <small>entra nei Contatti del giorno, dal giorno scelto</small></label>${scelte('quando', ['coda', 'ora'], soloGiorno ? 'coda' : 'ora', ['Senza orario · solo in coda', 'A un\'ora · anche in Agenda'])}</div>`;
+      h += `<div class="campo"><label>${soloGiorno ? 'Giorno' : 'Giorno e ora'}</label><div class="ag-due-campi">
+        <input id="na-giorno" type="date" value="${esc(campi.giorno)}">${soloGiorno ? '' : `<input id="na-ora" type="time" value="${esc(campi.ora)}">`}</div></div>`;
+      if (!st.durataToccata) st.durata = A.durataPredefinita(st.tipo);
+      if (!soloGiorno) {
+        h += `<div class="campo"><label>Durata</label>${scelte('durata', [...A.DURATE.map(d => d[0]), 'altra'], st.altra ? 'altra' : st.durata, [...A.DURATE.map(d => d[1]), 'Altra…'])}</div>`;
+        if (st.altra) h += `<div class="campo"><label>Finisce alle</label><input id="na-fine" type="time" value="${esc(campi.fine)}"></div>`;
+        h += `<div id="na-avviso">${avvisoOre()}</div>`;
+      }
+      h += '</div>';
+      // 4 · Altro · facoltativo: chiuso, con scritto cosa c'è dentro; i valori restano anche chiuso (campi)
+      leggiAvvio(() => disegna());
+      const passi = passiOfferti();
+      st.suCosa = st.suCosa.filter(x => passi.includes(x));
+      const condivisi = st.condividi === 'persona' && puoPersona() ? partnerDaCondividere().map(p => p.nome) : [];
+      const sunto = [campi.dove.trim() && 'dove', (campi.punti.trim() || st.suCosa.length) && 'punti da trattare', campi.note.trim() && 'note',
+        st.portato && 'portato da ' + st.portato.nome, condivisi.length && 'condiviso con ' + nomiInFila(condivisi)].filter(Boolean);
+      h += `<div class="riquadro mc-g na5-altro-g"><button type="button" class="na5-altro" id="na-altro-apri" aria-expanded="${st.altroAperto}"><span><b>Altro · facoltativo</b>
+        <small>${esc(sunto.length ? sunto.join(' · ') : soloGiorno ? 'Note, portato da' : 'Dove, punti da trattare, note, portato da')}</small></span><em>${st.altroAperto ? '⌃' : '›'}</em></button>`;
+      if (st.altroAperto) {
+        if (!soloGiorno) {
+          h += `<div class="campo"><label>Dove <small>il link se è online, il posto se dal vivo</small></label><input id="na-dove" maxlength="${A.MAX_LINK}" autocomplete="off" placeholder="Link di Zoom/Meet, oppure hotel, sala, indirizzo" value="${esc(campi.dove)}"></div>`;
+          const scelti = passi.filter(x => st.suCosa.includes(x)).map(A.nomePasso);
+          h += `<div class="campo"><label>Punti da trattare <small>${passi.length ? 'i passi dell\'incontro, o scrivi: uno per riga' : 'uno per riga'}</small></label>
+            ${passi.length ? `<button type="button" class="na-selettore" id="na-passi"><span>${scelti.length ? esc(scelti.join(' · ')) : 'Scegli i passi dell\'incontro'}</span><b>▾</b></button>` : ''}
+            <textarea id="na-punti" rows="3" placeholder="Scrivi un punto per riga">${esc(campi.punti)}</textarea></div>`;
+        }
+        h += `<div class="campo"><label>Note</label><input id="na-note" maxlength="100" placeholder="Scrivi qualcosa da ricordare" value="${esc(campi.note)}"></div>`;
+        h += `<div class="campo"><label>Portato da</label><div class="fa-persona"><span>${st.portato ? esc(st.portato.nome) : '<span style="color:var(--grigio)">nessuno</span>'}</span>
+          ${st.portato ? '<button class="link" id="na-togli-portato" aria-label="Togli">' + ic('chiudi') + '</button>' : '<button class="link" id="na-portato">＋ Scegli</button>'}</div></div>`;
+        // «Condividi con» (nota 027; P5b): Nessuno · le persone Partner dell'appuntamento; i punti non si condividono più (PUNTI_CONDIVISI)
+        if (puoPersona()) {
+          const chi = nomiInFila(partnerDaCondividere().map(p => p.nome));
+          h += `<div class="campo"><label>Condividi con <small>lo trova nella sua Agenda e nel suo calendario</small></label>${scelte('condividi', ['', 'persona'], st.condividi, ['Nessuno', chi])}</div>`;
+          if (st.condividi && PUNTI_CONDIVISI) h += `<div class="campo"><label>Vede anche i punti da trattare?</label>${scelte('puntiCond', ['1', '0'], st.puntiCond ? '1' : '0', ['Sì', 'No'])}</div>`;
+        }
+        const categorie = st.categoria && !A.CATEGORIE.includes(st.categoria) ? [st.categoria, ...A.CATEGORIE] : A.CATEGORIE;   // Ex, Unlinked…: resta com'è, o si cambia
+        h += `<div class="campo"><label>Categoria${st.altri.length ? ' di ' + esc(st.contatto.nome) : ''} <small>dal contatto</small></label>${scelte('categoria', categorie, st.categoria, categorie.map(MB21Lista.nomeCategoria))}</div>`;
+      }
+      return h + '</div>';
+    }
     function disegna() {
       // nota Pagine 059 (Ignazio 19/10/2026, «sì, già condiviso»): un appuntamento con un Partner parte già condiviso con lui (prima partiva
       // da «Nessuno» e Valentina non vedeva l'appuntamento delle 17:15); finché non si tocca «Condividi con» segue la persona scelta
       if (!st.condivisoAMano && !serata()) st.condividi = puoPersona() ? 'persona' : '';
-      const tipi = A.tipiPer(st.categoria);
-      let h = '<div class="riquadro mc-g" style="margin-top:14px">';
+      const tipi = tipiDiTutti();
+      let h = '';
+      if (!serata()) h = htmlAppuntamento(tipi);   // note 103 e 104
+      else {   // la serata (Team o Linea, solo l'Admin) com'era: da qui fino a «#na-corpo» il codice di prima
+      h = '<div class="riquadro mc-g" style="margin-top:14px">';
       if (serata()) {   // Team o Linea (solo l'Admin): il modulo crea la serata, senza persona
         // la serata è sempre Team (Ignazio 06/10, nota 005: «da me in poi è soltanto Team», la LdS viene dall'alto)
         h += `<div class="campo"><label>Nome della serata <small>facoltativo</small></label><input id="na-serata" maxlength="${MB21Spazi.NOME_MAX}" autocomplete="off" placeholder="Il nome, la tipologia, la linea o la squadra" value="${esc(campi.serata)}"></div>`;
@@ -4046,7 +4146,7 @@ async function nuovoAppuntamento(opz = {}) {
           if (fuori.length) h += `<div class="campo na-senza-app"><label>Senza l'app <small>${fuori.length === 1 ? 'non la troverà nella sua Agenda: puoi invitarlo adesso' : `${fuori.length} non la troveranno nella loro Agenda: puoi invitarli adesso`}</small></label>
             ${fuori.slice(0, 30).map(f => `<div class="na-fuori"><span>${esc(f.nome)}</span><button type="button" class="link" data-invita="${esc(f.partner_id)}">Invita</button></div>`).join('')}</div>`;
         }
-        if (st.condividi) h += `<div class="campo"><label>${st.condividi === 'persona' || !CONDIVISIONE_LINEE ? 'Vede' : 'Vedono'} anche i punti da trattare?</label>${scelte('puntiCond', ['1', '0'], st.puntiCond ? '1' : '0', ['Sì', 'No'])}</div>`;
+        if (st.condividi && PUNTI_CONDIVISI) h += `<div class="campo"><label>${st.condividi === 'persona' || !CONDIVISIONE_LINEE ? 'Vede' : 'Vedono'} anche i punti da trattare?</label>${scelte('puntiCond', ['1', '0'], st.puntiCond ? '1' : '0', ['Sì', 'No'])}</div>`;
       }
       if (st.contatto && !serata()) {
         const categorie = st.categoria && !A.CATEGORIE.includes(st.categoria) ? [st.categoria, ...A.CATEGORIE] : A.CATEGORIE;   // Ex, Unlinked…: resta com'è, o si cambia
@@ -4100,34 +4200,47 @@ async function nuovoAppuntamento(opz = {}) {
             <textarea id="na-punti" rows="3" placeholder="Scrivi un punto per riga">${esc(campi.punti)}</textarea></div>`;
         }
       }
-      velo.querySelector('#na-corpo').innerHTML = h + '</div>';
+      h += '</div>';
+      }
+      velo.querySelector('#na-corpo').innerHTML = h;
       // la testa segue il contatto e la categoria scelti nel foglio (visto da Ignazio 19/09: restava «Con chi?» con il nome già scritto)
       const testa = velo.querySelector('#na-testa');
       testa.className = 'mc-testa ' + (serata() ? '' : classeCat(st.categoria));
       testa.querySelector('small').textContent = serata() ? 'Nuova serata' : (opz.titolo || 'Nuovo appuntamento');
       testa.querySelector('.ts-pastiglia').innerHTML = serata() ? ic('squadra') : st.contatto ? esc(iniziali(st.contatto.nome)) : ic('agenda');
-      testa.querySelector('b').textContent = serata() ? (MB21Spazi.pulisciNome(campi.serata) || MB21Spazi.nome(st.serataTipo)) : st.contatto ? st.contatto.nome : 'Con chi?';
+      testa.querySelector('b').textContent = serata() ? (MB21Spazi.pulisciNome(campi.serata) || MB21Spazi.nome(st.serataTipo)) : st.contatto ? nomiInFila(persone5().map(p => p.nome)) : 'Con chi?';
       const ns = velo.querySelector('#na-serata');
       if (ns) ns.onchange = () => { leggiCampi(); testa.querySelector('b').textContent = MB21Spazi.pulisciNome(campi.serata) || MB21Spazi.nome(st.serataTipo); };
       const bp = velo.querySelector('#na-portato'), tp = velo.querySelector('#na-togli-portato');
       if (bp) bp.onclick = async () => { leggiCampi(); const c = await sceltaContatto('Portato da', '', st.contatto ? [st.contatto.id] : []); if (c) { st.portato = c; disegna(); } };
       if (tp) tp.onclick = () => { leggiCampi(); st.portato = null; disegna(); };
-      // Dalla scheda o dall'Agenda (Ignazio 17/09, in entrambe le direzioni): è questa persona che porta qualcuno → l'azione va sull'ospite, lei diventa «Portato da»
-      const porta = velo.querySelector('#na-porta');
-      if (porta) porta.onclick = async () => {
+      // note 103 e 104: un'altra persona nello stesso appuntamento (dallo stesso foglio di «Portato da»), togliere una persona, l'Area, «Altro»
+      const tipoAncoraBuono = () => { if (st.tipo && !tipiDiTutti().includes(st.tipo)) { st.tipo = null; st.modalita = null; } };
+      const piu = velo.querySelector('#na-piu-persona');
+      if (piu) piu.onclick = async () => {
         leggiCampi();
-        const g = await sceltaContatto(`Chi porta ${st.contatto.nome}?`, '', [st.contatto.id]);
-        if (!g) return;
-        st.portato = st.contatto; st.contatto = g; st.categoria = g.categoria; st.categoriaToccata = false;
-        if (!A.tipiPer(st.categoria).includes(st.tipo)) { st.tipo = null; st.modalita = null; }
-        disegna();
+        const c = await sceltaContatto('Con chi altro?', '', persone5().map(p => p.id), 'è già nell\'appuntamento');
+        if (!c) return;
+        st.altri.push(c); tipoAncoraBuono(); disegna();
       };
+      velo.querySelectorAll('[data-togli-persona]').forEach(b => { b.onclick = () => {
+        leggiCampi();
+        const id = b.dataset.togliPersona;
+        if (id) st.altri = st.altri.filter(p => p.id !== id);
+        else if (st.altri.length) { const p = st.altri.shift(); st.contatto = p; st.categoria = p.categoria; st.categoriaToccata = false; }
+        else { st.contatto = null; st.categoria = null; }
+        tipoAncoraBuono(); disegna();
+      }; });
+      const area = velo.querySelector('#na-area');
+      if (area) area.onclick = () => { leggiCampi(); st.area = st.area === 'Prodotti' ? 'Attività' : 'Prodotti'; disegna(); };
+      const altro = velo.querySelector('#na-altro-apri');
+      if (altro) altro.onclick = () => { leggiCampi(); st.altroAperto = !st.altroAperto; disegna(); };
       const inp = velo.querySelector('#na-contatto');
       if (inp) inp.onchange = () => {
         const trovato = elenco.find(c => c.nome.toLowerCase() === inp.value.trim().toLowerCase());
         st.contatto = trovato || null; st.categoria = trovato ? trovato.categoria : null;
         if (!A.tipiPer(st.categoria).includes(st.tipo)) { st.tipo = tipoPer(st.categoria); st.modalita = null; }
-        leggiCampi(); disegna();
+        leggiCampi(); tipoAncoraBuono(); disegna();
       };
       velo.querySelectorAll('[data-parte]').forEach(b => { b.onclick = () => { leggiCampi(); st.parte = parteDopoTocco(st.linea, st.parte, b.dataset.parte); disegna(); }; });   // nota 005
       velo.querySelectorAll('[data-invita]').forEach(b => { b.onclick = () => {
@@ -4189,7 +4302,7 @@ async function nuovoAppuntamento(opz = {}) {
           else st[nome] = v;
           if (nome === 'linea') st.parte = null;   // un'altra Linea: di nuovo tutta
           if (nome === 'categoria') st.categoriaToccata = true;
-          if (nome === 'categoria' && !A.tipiPer(v).includes(st.tipo)) { st.tipo = null; st.modalita = null; }
+          if (nome === 'categoria' && !tipiDiTutti().includes(st.tipo)) { st.tipo = null; st.modalita = null; }
           if (nome === 'tipo') st.modalita = null;
           disegna();
         };
@@ -4205,7 +4318,7 @@ async function nuovoAppuntamento(opz = {}) {
       if (st.condividi === 'linea' && !st.linea) { errore.textContent = CONDIVISIONE_LINEE ? 'Scegli la Linea.' : 'Scegli a chi mandarla.'; return; }
       const inizio = A.isoDaRoma(campi.giorno, campi.ora);
       const riga = { user_id: opz.userId || visto().id, tipo: st.serataTipo, inizio, durata, nome: MB21Spazi.pulisciNome(campi.serata),
-        ...A.doveDa(campi.dove), punti: A.puntiDaRighe(campi.punti), condiviso_con: st.condividi, linea_codice: st.condividi === 'linea' ? st.parte || st.linea : null, punti_condivisi: st.puntiCond };
+        ...A.doveDa(campi.dove), punti: A.puntiDaRighe(campi.punti), condiviso_con: st.condividi, linea_codice: st.condividi === 'linea' ? st.parte || st.linea : null, punti_condivisi: PUNTI_CONDIVISI && st.puntiCond };
       const btn = velo.querySelector('#na-si');
       btn.disabled = true; btn.textContent = 'Salvo…';
       const { data, error } = await dbq('nuova serata', supa.from('spazi').insert(riga).select('*').single());
@@ -4251,17 +4364,27 @@ async function nuovoAppuntamento(opz = {}) {
         aggiornaRiga(v.contatto_id);   // Lista Nomi L7: solo la riga di quella persona
         if (v.categoria === 'Partner') setTimeout(() => domandaInvito({ ...st.contatto, user_id: riga.user_id }), 400);
       }
-      const { data, error } = await dbq('nuovo appuntamento', supa.from('azioni').insert(riga).select('id').single());
+      // nota 103 (Ignazio 27/10): più persone nello stesso appuntamento = una riga per persona, con tutto il resto uguale (ognuno ha il suo esito)
+      const righe = [riga, ...st.altri.map(p => ({ ...riga, contatto_id: p.id, categoria: p.categoria, portato_da: riga.portato_da === p.id ? null : riga.portato_da }))];
+      const { data: salvate, error } = await dbq('nuovo appuntamento', righe.length === 1 ? supa.from('azioni').insert(riga).select('id').single() : supa.from('azioni').insert(righe).select('id'));
       if (error) { btn.disabled = false; btn.textContent = 'Salva'; velo.querySelector('#na-errore').textContent = 'Non salvato: controlla la connessione e riprova.'; return; }
+      const ids = righe.length === 1 ? [salvate.id] : (salvate || []).map(x => x.id), data = { id: ids[0] };
       // la lista dell'Agenda sa subito del nuovo impegno con l'ora (nota 014): così la prossima ora proposta viene dopo, anche se chi ha aperto
       // il modulo (scheda, coda, coach: `resta`/`salta`) non ricarica MB Plan
-      if (!riga.senza_ora && typeof AG !== 'undefined' && Array.isArray(AG.azioni) && !AG.azioni.some(x => x.id === data.id)) AG.azioni.push({ id: data.id, ...riga });
+      if (!riga.senza_ora && typeof AG !== 'undefined' && Array.isArray(AG.azioni)) righe.forEach((r, i) => { if (ids[i] && !AG.azioni.some(x => x.id === ids[i])) AG.azioni.push({ id: ids[i], ...r }); });
       // «Condividi con la persona» (nota 027): subito dopo il salvataggio; se non usa l'app l'appuntamento resta, non condiviso
+      // nota 103: con più persone, ogni Partner riceve la sua riga; i punti non si condividono più (PUNTI_CONDIVISI)
       let condiviso = '';
       if (st.condividi === 'persona' && puoPersona()) {
-        const r = await dbq('condividi azione', supa.rpc('condividi_azione', { p_azione: data.id, p_con: true, p_punti: st.puntiCond }));
-        const esito = r.data && r.data.esito;
-        condiviso = esito === 'ok' ? ` · condiviso con ${st.contatto.nome}` : esito === 'non_usa_app' ? ` · ${st.contatto.nome} non usa ancora l'app: non condiviso` : ' · non condiviso: riprova dal foglio';
+        const ok = [], fuori = [];
+        let ko = false;
+        for (const [i, p] of [{ ...st.contatto, categoria: v.categoria }, ...st.altri].entries()) {
+          if (p.categoria !== 'Partner' || !ids[i]) continue;
+          const r = await dbq('condividi azione', supa.rpc('condividi_azione', { p_azione: ids[i], p_con: true, p_punti: PUNTI_CONDIVISI && st.puntiCond }));
+          const esito = r.data && r.data.esito;
+          if (esito === 'ok') ok.push(p.nome); else if (esito === 'non_usa_app') fuori.push(p.nome); else ko = true;
+        }
+        condiviso = (ok.length ? ` · condiviso con ${nomiInFila(ok)}` : '') + (fuori.length ? ` · ${nomiInFila(fuori)} ${fuori.length === 1 ? 'non usa' : 'non usano'} ancora l'app: non condiviso` : '') + (ko ? ' · non condiviso: riprova dal foglio' : '');
       }
       // lo spazio riempito è diventato questo appuntamento: si toglie (con «Annulla» torna com'era)
       const usato = st.spazio;
@@ -4269,7 +4392,7 @@ async function nuovoAppuntamento(opz = {}) {
         await dbq('spazio riempito', supa.from('spazi').delete().eq('id', usato.id));
         if (AG.spazi) AG.spazi = AG.spazi.filter(x => x.id !== usato.id);
       }
-      chiudi({ id: data.id, inizio, su_cosa: riga.su_cosa, tipo_azione: v.tipo_azione, modalita: v.modalita, categoria: v.categoria, scelta_a_mano: riga.scelta_a_mano, senza_ora: riga.senza_ora });
+      chiudi({ id: data.id, ids, inizio, su_cosa: riga.su_cosa, tipo_azione: v.tipo_azione, modalita: v.modalita, categoria: v.categoria, scelta_a_mano: riga.scelta_a_mano, senza_ora: riga.senza_ora });
       // Fissato un Piano Marketing a un candidato (cantiere 40, Ignazio 22/09: «tempo e denaro devono essere consigliati prima di fare il
       // piano marketing»): dal 01/10 la domanda «Hai condiviso la traccia di apertura?» (tracciaDiApertura, pagina-sharing.js). Da qui solo quando il
       // foglio si apre da MB Plan; chi lo chiama con `resta` o `salta` (coda, scheda, esito) la fa da sé, a processo finito, perché dopo c'è la chat del coach.
@@ -4279,7 +4402,7 @@ async function nuovoAppuntamento(opz = {}) {
         AG.aperta = data.id;
         await apriAgenda(v.giorno);
         mostraToast(A.avvisoFissato(riga) + condiviso, async () => {   // una telefonata scelta a mano (nota 012): «in coda», non «fissato»
-          const { error: eNuovo } = await dbqAvvisa('annulla nuovo', supa.from('azioni').delete().eq('id', data.id), 'Annullamento non riuscito: controlla la connessione e riprova.');
+          const { error: eNuovo } = await dbqAvvisa('annulla nuovo', ids.length === 1 ? supa.from('azioni').delete().eq('id', data.id) : supa.from('azioni').delete().in('id', ids), 'Annullamento non riuscito: controlla la connessione e riprova.');
           if (usato && !eNuovo) await dbqAvvisa('rimetti spazio', supa.from('spazi').insert({ id: usato.id, user_id: usato.user_id, tipo: usato.tipo, inizio: usato.inizio, durata: usato.durata }));
           await apriAgenda();
         });

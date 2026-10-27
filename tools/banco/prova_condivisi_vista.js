@@ -11,6 +11,8 @@ const coda = [];
 function prova(nome, fn) { coda.push([nome, fn]); }
 // P5b (23/10): le prove del funzionamento con Team e Linea girano con l'interruttore CONDIVISIONE_LINEE acceso (il codice resta, spento nell'app)
 const conLinee = fn => async () => { P.impostaLinee(true); try { return await fn(); } finally { P.impostaLinee(false); } };
+// note 103 e 104 (27/10): i punti non si condividono più (PUNTI_CONDIVISI spento); le prove di quando si condividevano girano con l'interruttore acceso
+const conPunti = fn => async () => { P.impostaPunti(true); try { return await fn(); } finally { P.impostaPunti(false); } };
 const pulisci = () => { P.fogli.length = 0; P.scritture.length = 0; P.avvisi.length = 0; P.modo.admin = false; P.modo.tutti = false; };
 const scritte = (tab, op) => P.scritture.filter(x => x.tabella === tab && (!op || x.op === op));
 const chiamate = nome => P.scritture.filter(x => x.tabella === 'rpc:' + nome);
@@ -100,7 +102,7 @@ prova('Agenda P7 (Ignazio 23/10): all\'apertura lo STESSO foglio dell\'Agenda, u
   P.finto.ricevuti = [ricevuto()];
 });
 
-prova('Chi organizza, appuntamento con un Partner: «Condividi con Fiammetta Rossi» → funzione condividi_azione; poi «Condiviso con», la risposta della persona, i punti sì/no, «Non condividere più». Con un Prospect niente', async () => {
+prova('Chi organizza, appuntamento con un Partner: «Condividi con Fiammetta Rossi» → funzione condividi_azione; poi «Condiviso con», la risposta della persona, i punti sì/no, «Non condividere più». Con un Prospect niente', conPunti(async () => {
   pulisci();
   let v = apri('c1');   // Counseling · Fiammetta Rossi (Partner)
   assert.match(v.innerHTML, /class="cd chiuso" data-cd="c1"/); assert.match(v.innerHTML, /Condividi con Fiammetta Rossi/);
@@ -135,7 +137,7 @@ prova('Chi organizza, appuntamento con un Partner: «Condividi con Fiammetta Ros
   pulisci();
   v = apri('p1');
   assert.doesNotMatch(v.innerHTML, /data-cd=/);
-});
+}));
 
 prova('P5b (23/10): il foglio della serata — «Condividi con» = «Nessuno · [persona con l\'app]»; una mandata a «tutto il Team» si legge «la riceve: [nome]»', async () => {
   pulisci(); P.modo.admin = true; const ramo = P.AG.ramo;
@@ -155,7 +157,7 @@ prova('P5b (23/10): il foglio della serata — «Condividi con» = «Nessuno · 
   } finally { P.modo.admin = false; P.AG.ramo = ramo; P.AG.spazi = P.AG.spazi.filter(x => x.id !== 's9'); }
 });
 
-prova('La serata di Team (solo Admin): «Nessuno · Tutto il Team · Una Linea», i frontali per la Linea, «Vedono anche i punti?», le risposte con i nomi e il conto', conLinee(async () => {
+prova('La serata di Team (solo Admin): «Nessuno · Tutto il Team · Una Linea», i frontali per la Linea, «Vedono anche i punti?», le risposte con i nomi e il conto', conPunti(conLinee(async () => {
   pulisci();
   P.AG.spazi.push({ id: 's5', user_id: 'io', tipo: 'Team', inizio: P.A.isoDaRoma(P.OGGI, '20:30'), durata: 90, nome: 'Serata di Team' });
   P.foglioSpazio('s5');
@@ -184,7 +186,7 @@ prova('La serata di Team (solo Admin): «Nessuno · Tutto il Team · Una Linea»
   await P.fogli.at(-1).clic('[data-cd-con=""]');
   assert.deepEqual(scritte('spazi', 'update').at(-1).args[0], { condiviso_con: null, linea_codice: null, punti_condivisi: false });
   P.modo.admin = false;
-}));
+})));
 
 prova('Nota 047: la SdS/OPEN ricevuta: «Conferma della presenza»; con «Partecipo» il foglio resta aperto con la frase sugli ospiti; un nome si salva nella propria riga', async () => {
   pulisci();
@@ -223,6 +225,17 @@ prova('Nota 049: «A quest\'ora hai già…» conta anche la serata ricevuta (co
     assert.equal(P.avvisoSovrapposti(g, '21:00', 60, null, 'altro'), '');   // l'agenda di un altro partner: i ricevuti sono di chi è entrato
     P.modo.tutti = true; assert.doesNotMatch(P.avvisoSovrapposti(g, '21:00', 60, null, null), /SdS\/OPEN/); P.modo.tutti = false;
   } finally { P.AG.ricevuti = prima; P.modo.tutti = false; }
+});
+
+prova('Note 103 e 104 (Ignazio 27/10): con i punti spenti niente «Vede anche i punti?» né «Fai vedere i punti»; condividere manda sempre p_punti false', async () => {
+  pulisci();
+  const v = apri('c1');
+  await v.clic('[data-cd-con]');
+  assert.deepEqual(chiamate('condividi_azione').at(-1).args[0], { p_azione: 'c1', p_con: true, p_punti: false });
+  assert.match(v.innerHTML, /Condiviso con Fiammetta Rossi<\/b><\/div>/);
+  assert.doesNotMatch(v.innerHTML, /data-cd-punti|vede anche i punti|senza i punti/);
+  await v.clic('[data-cd-togli]');
+  assert.match(require('node:fs').readFileSync(require('node:path').join(__dirname, '../../index.html'), 'utf8'), /\nconst PUNTI_CONDIVISI = false;\n/);   // l'interruttore nell'app
 });
 
 (async () => {

@@ -81,10 +81,14 @@ prova('Giornata libera: nessun blocco e l\'invito a toccare il vuoto', () => {
 
 prova('Quattro alla stessa ora: quattro colonne, nessuno sopra l\'altro', () => {
   const quattro = conAzioni(['a', 'b', 'c', 'd'].map((x, i) =>
-    V.az(x, OGGI, '18:00', 60, 'Piano Marketing', 'PM 1a1', 'Tizio ' + x, 'Prospect')));
+    V.az(x, OGGI, '18:00', 60, 'Piano Marketing', ['PM 1a1', 'PM Open', 'Seminario', 'Altro'][i], 'Tizio ' + x, 'Prospect')));   // nota 103: sottotipi diversi
   assert.equal(blocchi(quattro).length, 4);
   assert.equal([...quattro.matchAll(/width:calc\(25% - 6px\)/g)].length, 4);
   assert.match(quattro, /4 impegni si accavallano/);
+  // nota 103 (Ignazio 27/10): quattro persone nello stesso PM 1a1 delle 18:00 sono lo stesso incontro: affiancate, senza l'avviso
+  const insieme = conAzioni(['a', 'b', 'c', 'd'].map(x => V.az(x, OGGI, '18:00', 60, 'Piano Marketing', 'PM 1a1', 'Tizio ' + x, 'Prospect')));
+  assert.equal(blocchi(insieme).length, 4);
+  assert.doesNotMatch(insieme, /si accavallano/);
 });
 
 prova('Un richiamo dalla coda si vede diverso da un appuntamento fissato', () => {

@@ -832,9 +832,10 @@
     // Due impegni alla stessa ora si disegnano sempre affiancati (se no si coprirebbero), ma «si accavallano»
     // si dice solo quando sono **della stessa persona**: con «Tutti» l'Admin vede più agende insieme e
     // Fiammetta alle 18:30 non è un doppione di Ignazio alle 18:30 (visto sui dati veri il 21/09).
+    // Nota 103: due persone nello stesso incontro (stessa ora d'inizio, stesso tipo e sottotipo) non sono un doppione
     for (const b of blocchi) {
       b.doppio = blocchi.some(x => x !== b && (x.ev.user_id || null) === (b.ev.user_id || null)
-        && x.da < b.fine && x.fine > b.da);
+        && x.da < b.fine && x.fine > b.da && !(x.da === b.da && stessoIncontro(x.ev, b.ev)));
     }
     const estremi = estremiGriglia(blocchi, opz);
     return { ...estremi, blocchi, sovrapposti: blocchi.filter(b => b.doppio).length };
@@ -867,10 +868,14 @@
     return { da, a };
   }
 
+  // Nota Pagine 103: lo stesso incontro con più persone = stesso tipo e stesso sottotipo (l'ora la guarda chi chiama). Solo gli appuntamenti, non le telefonate.
+  const stessoIncontro = (x, y) => !!x.tipo_azione && x.tipo_azione !== 'Contatto' && x.tipo_azione === y.tipo_azione && (x.modalita || null) === (y.modalita || null);
   // Impegni che si accavallano con la fascia scelta (un minuto in comune basta). `salta`: l'id di quello
   // che si sta spostando, che non fa conflitto con sé stesso. Serve all'avviso «a quest'ora hai già…».
   // `soloDi`: guarda solo gli impegni di quel partner (con «Tutti» l'Admin ha in mano più agende)
-  function sovrapposti(eventi, inizioIso, durataMin, salta, soloDi) {
+  // Nota Pagine 103 (Ignazio 27/10): `stesso` = { tipo, modalita }: un impegno che comincia alla stessa ora con lo stesso tipo e sottotipo è lo stesso
+  // incontro (più persone nello stesso appuntamento), non un «già un impegno»
+  function sovrapposti(eventi, inizioIso, durataMin, salta, soloDi, stesso) {
     const da = Date.parse(inizioIso), a = da + (durataMin || DURATA_NORMALE) * 60000;
     return (eventi || []).filter(e => {
       if (salta && e.id === salta) return false;
@@ -878,6 +883,7 @@
       const q = quandoDi(e);
       if (!q) return false;
       const eDa = Date.parse(q);
+      if (stesso && stesso.tipo && eDa === da && stessoIncontro(e, { tipo_azione: stesso.tipo, modalita: stesso.modalita })) return false;
       const dur = e.fine && Date.parse(e.fine) > eDa ? Date.parse(e.fine) - eDa : durataPredefinita(e.tipo_azione) * 60000;
       return eDa < a && (eDa + dur) > da;
     }).sort((x, y) => Date.parse(quandoDi(x)) - Date.parse(quandoDi(y)));
@@ -925,7 +931,7 @@
     partiRoma, isoDaRoma, spostaGiorno, settimana, titoloMese, eventiDelGiorno, riga, orario,
     oraProposta, passatiSenzaEsito, validaAppuntamento, tipoDaCoda, senzaDoppioniCoda, ORE_CONFERMA, confermeDaFare, testoConferma, rispostaValida, confermeConRisposte, quandoBreve, risposteNuove, riordiniDaSentire, INIZIO_RIORDINI_GLIDE, ESITO_ATTESA_ORDINE,
     ORA_DA, ORA_A, PASSO_MIN, MINIMO_VISTA, DURATA_CONTATTO, DURATA_NORMALE, durataPredefinita, avvisoFissato, inMinuti, daMinuti, alQuarto,
-    fascia, disposizioneGiorno, estremiGriglia, oreUtili, puntiGiorni, contaPerTipo, ORDINE_TIPI, sovrapposti, fasceLibere, oreProposte,
+    fascia, disposizioneGiorno, estremiGriglia, oreUtili, puntiGiorni, contaPerTipo, ORDINE_TIPI, sovrapposti, stessoIncontro, fasceLibere, oreProposte,
     AVVENUTO, RISULTATI, daChiudere, passiEsito, passiIncontro, vociIncontro, esitoDaVoci, ESITO_ALTRO, passiFatti, esitoDaiPassi, senzaApp, ramoDellaLinea, parteDi, frontaleDi, personeConApp, domandaEsito, dopoTelefonata, fattoDi, ESITI_CHIUSURA, GIORNI_CHIUSURA, GIORNI_RELAZIONE, GIORNI_NO_RISPOSTA, GIORNI_TELEFONO_SPENTO, GIORNI_STORICO, nelPassato, chiudeRelazione, giorniRisentire, proponeVendita, ICONE_TIPO, controllaGiorno,
     coseDelGiorno, LEGAMI, legameDi, campiLegame, coseDelMese, coseDellaScala, senzaPeriodo, numeroSettimana, meseAccanto, mesiTra, giorniTra, testoCosa, testoTroppoLungo, MAX_COSA, MAX_VOCE, daMBPlan, MAX_PUNTO, MAX_PUNTI, MAX_LINK, puntiDi, aggiungiPunto, puntiDaRighe, spuntaPunto, togliPunto, contoPunti, linkChiamata, legamePunti, conPunti, MAX_LUOGO, doveDa, testoDove, linkMappa,
     RISPOSTE, nomeRisposta, nomeRispostaDiLui, CONDIVISIONI_SPAZIO, SDS_DEL_TEAM, FRASE_OSPITI, conOspiti, eConsegna, aggiungiOspite, ospitiPerChiOrganizza, chiaveRicevuto, ricevutiDelGiorno, ricevutiComeEventi, titoloRicevuto, eRichiamo, azioniAgenda, passatoSenzaEsito, programmaDelGiorno, ricevutiNuovi, contoRisposte, nomiPerRisposta, puoCondividereAzione, puoCondividereSpazio, RIPETIZIONI, ripetizioniPer, prossimaRipetizione, SCALE, inizioScala, GIORNI_SETTIMANA, giornoSettimana };

@@ -248,7 +248,7 @@ prova('Fascia di un impegno: con la fine sua, senza fine la durata del tipo, fin
 });
 
 prova('Disposizione del giorno: chi si accavalla va in colonne affiancate, gli altri larghi tutta la riga', () => {
-  const eventi = [ev('pm', '2026-09-21', '11:00', 60), ev('pino', '2026-09-21', '18:30', 60), ev('anna', '2026-09-21', '18:30', 30)];
+  const eventi = [ev('pm', '2026-09-21', '11:00', 60), { ...ev('pino', '2026-09-21', '18:30', 60), modalita: 'PM 1a1' }, { ...ev('anna', '2026-09-21', '18:30', 30), modalita: 'PM Open' }];   // nota 103: sottotipi diversi, due impegni
   const d = A.disposizioneGiorno(eventi);
   const b = id => d.blocchi.find(x => x.ev.id === id);
   assert.equal(b('pm').colonne, 1);
@@ -257,6 +257,12 @@ prova('Disposizione del giorno: chi si accavalla va in colonne affiancate, gli a
   assert.equal(b('anna').colonne, 2);
   assert.notEqual(b('pino').col, b('anna').col);
   assert.equal(d.sovrapposti, 2);
+  // nota 103 (Ignazio 27/10): stessa ora, stesso tipo e sottotipo = più persone nello stesso incontro: affiancati, ma nessun doppione
+  const insieme = A.disposizioneGiorno([{ ...ev('p1', '2026-09-21', '18:30', 60), modalita: 'PM 1a1' }, { ...ev('p2', '2026-09-21', '18:30', 60), modalita: 'PM 1a1' }]);
+  assert.equal(insieme.sovrapposti, 0); assert.deepEqual(insieme.blocchi.map(x => x.colonne), [2, 2]);
+  assert.deepEqual(A.sovrapposti(insieme.blocchi.map(x => x.ev), A.isoDaRoma('2026-09-21', '18:30'), 60, null, null, { tipo: 'Piano Marketing', modalita: 'PM 1a1' }), []);
+  assert.equal(A.sovrapposti(insieme.blocchi.map(x => x.ev), A.isoDaRoma('2026-09-21', '18:30'), 60, null, null, { tipo: 'Piano Marketing', modalita: 'PM Open' }).length, 2);   // un altro sottotipo: è un «già»
+  assert.equal(A.sovrapposti(insieme.blocchi.map(x => x.ev), A.isoDaRoma('2026-09-21', '18:45'), 60, null, null, { tipo: 'Piano Marketing', modalita: 'PM 1a1' }).length, 2);   // un'altra ora: è un «già»
   // tre alla stessa ora: tre colonne
   const tre = A.disposizioneGiorno([ev('x', '2026-09-21', '10:00', 60), ev('y', '2026-09-21', '10:15', 60), ev('z', '2026-09-21', '10:30', 60)]);
   assert.deepEqual(tre.blocchi.map(x => x.colonne), [3, 3, 3]);
