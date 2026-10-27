@@ -58,7 +58,7 @@ function vendita(id, contatto, nome, categoria, dal, v) {
     contatti: { nome, categoria, account_cliente_dal: dal } };
 }
 const VENDITE = [
-  vendita('v1', 'c1', 'Persona A', 'Cliente', null, { data: '2026-10-21', brand: 'Nutrilite/XS', vp: 48.2, incassato: 95, prezzo: 99, sconto: 4, pagato_con: 'Contanti' }),
+  vendita('v1', 'c1', 'Persona A', 'Cliente', null, { data: '2026-10-21', brand: 'Nutrilite/XS', prodotto: 'Double X, Vitamina C', vp: 48.2, incassato: 95, prezzo: 99, sconto: 4, pagato_con: 'Contanti' }),
   vendita('v2', 'c2', 'Persona B', 'Cliente', '2026-06-01', { data: '2026-10-15', brand: 'Artistry', vp: 30 }),   // cliente con account: pagata sul sito
   vendita('v3', 'c3', 'Persona C', 'Prospect', null, { data: '2026-10-05', brand: 'Home', vp: 22.5, incassato: 40, prezzo: 40, pagato_con: 'Bonifico' }),
   vendita('v4', 'c1', 'Persona A', 'Cliente', null, { data: '2026-10-10', brand: 'eSpring', vp: 300, consegna: '2026-11-20', incassato: 600, prezzo: 600, pagato_con: 'Bonifico' }),   // da consegnare

@@ -1050,6 +1050,7 @@
   .mc-altri { margin-top: 12px; }
   .vn5-schede { grid-template-columns: repeat(2, minmax(0, 1fr)); }   /* nota 098: Vendite, le schede Mese · Anno nella testata oro */
   .vn5-sconti { font-weight: 700; color: #8A6200; background: #FFF3D1; }
+  .vn5-riga .rp-chi, .vn5-riga .rp-chi > span { min-width: 0; } .vn5-riga .pv-nome, .vn5-riga .vn-sotto { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }   /* nota 098: si tagliano nome e prodotto, mai le cifre */
   .mc-basta { margin: 8px 4px 0; font-size: 14px; }   /* nota 098: «bastano nome, telefono e categoria: il resto quando vuoi» */
   .mc-altri > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 6px; background: var(--superficie); border-radius: 14px; padding: 13px 14px; font-weight: 600; box-shadow: var(--ombra-card); }
   .mc-altri > summary::-webkit-details-marker { display: none; }
@@ -5191,8 +5192,11 @@ async function disegnaProvvigioni() {
 // nella scheda del cliente, dove ci sono «Ordine fatto» e «Incassato» (qui nessun tasto che scrive)
 function gruppiVendite(m, oggi) {
   const L = MB21Lista, n = L.numero, sc = L.scontiMese(m), dc = m.vendite.filter(v => L.daConsegnare(v));
-  const riga = (v, sotto, destra) => `<button class="vn-riga pv-vendita ${classeCat(v.categoria)}" data-pvcontatto="${esc(v.contatto_id)}">
-      <span class="rp-chi"><i class="rp-tondo">${esc(iniziali(v.nome))}</i><span><span class="pv-nome">${esc(v.nome)} · ${esc(v.brand)}</span><span class="vn-sotto">${sotto}</span></span></span>
+  // poi (Ignazio 27/10): prima del nome la targhetta del brand (la stessa della scheda › Vendite), sotto il prodotto (con più prodotti il primo e «…»);
+  // se la riga è lunga si tagliano nome e prodotto, mai le cifre
+  const prodotto = p => { const parti = String(p || '').split(/\s*[,;+\/]\s*/).filter(Boolean); return parti.length > 1 ? parti[0] + '…' : parti[0] || ''; };
+  const riga = (v, sotto, destra) => `<button class="vn-riga pv-vendita vn5-riga ${classeCat(v.categoria)}" data-pvcontatto="${esc(v.contatto_id)}">
+      <span class="rp-chi"><i class="rp-tondo">${esc(iniziali(v.nome))}</i><span><span class="pv-nome">${v.brand ? `<span class="vn-brand" style="background:${L.coloreBrand(v.brand)}">${esc(v.brand)}</span>` : ''}${esc(v.nome)}</span><span class="vn-sotto">${esc(prodotto(v.prodotto))}${prodotto(v.prodotto) && sotto ? ' · ' : ''}${sotto}</span></span></span>
       <span class="vn-numeri"><b>${destra}</b></span></button>`;
   return (dc.length ? `<h2 class="ck-sezione">Da consegnare · ${dc.length}</h2><div class="riquadro vn-elenco">${dc.map(v => riga(v,
       `consegna prevista il ${esc(L.data(v.consegna))}${L.daConfermare(v, oggi) ? ' · da confermare' : ''} · ${n(v.vp)} VP`, '')).join('')}</div>` : '')
