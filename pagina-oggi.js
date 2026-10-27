@@ -204,7 +204,6 @@ function disegnaOggiV5() {
       <div class="o5-coppia">${o5Training()}${o5Traguardo()}</div>
       <div class="o5-coppia${clienti ? '' : ' uno'}">${clienti}${o5Mappa()}</div></div></div>`;   // Ignazio 25/10: «Da seguire» non sta più in Oggi (solo i riquadri)
   app.innerHTML = html + versione();
-  if (sg) sg.hidden = true;   // v5: il feedback sta in alto nella testata, non più il tondo in basso
   document.getElementById('o5-feedback').onclick = () => foglioSegnala();
   app.querySelectorAll('[data-o5]').forEach(b => b.onclick = () => o5Vai(b.dataset.o5));
 }
@@ -240,10 +239,13 @@ const ZONE_V5 = [
 ];
 function apriEsplora() {
   const zone = ZONE_V5.filter(z => (!z.soloAdmin || eAdmin()) && (z.k !== 'training' || typeof TRAINING_VISIBILE === 'undefined' || TRAINING_VISIBILE));
-  app.innerHTML = `<div class="o5-testa"><div><h1>Esplora</h1></div><div class="o5-dx">${cerchiettoProfilo()}</div></div>
+  // nota 102 (Ignazio 27/10): il feedback anche qui nella testata, accanto al profilo, come in Oggi (con il puntino della risposta)
+  const sg = document.getElementById('segnala'), risposta = !!(sg && sg.classList && sg.classList.contains('con-risposta'));
+  app.innerHTML = `<div class="o5-testa"><div><h1>Esplora</h1></div><div class="o5-dx"><button class="o5-feedback${risposta ? ' con-risposta' : ''}" id="o5-feedback" aria-label="Invia Feedback">${ic('segnala')}</button>${cerchiettoProfilo()}</div></div>
     <div class="o5-tessere">${zone.map(z => `<button class="o5-tessera" data-zona="${z.k}" style="background:${z.colore}">${ic(z.icona)}<b>${esc(z.nome)}</b>${z.soloAdmin ? '<small>solo tu</small>' : ''}</button>`).join('')}</div>` + versione();
   const su = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; };
   su('ds-profilo', () => { PF.aperte.clear(); ST.tab = 'profilo'; mostraTab(); window.scrollTo(0, 0); });
+  su('o5-feedback', () => foglioSegnala());
   app.querySelectorAll('[data-zona]').forEach(b => b.onclick = () => esploraVai(b.dataset.zona));
 }
 function esploraVai(k) {
@@ -267,9 +269,7 @@ const COLORE_CAT_V5 = c => (c === 'Partner' ? 'var(--cat-partner)' : c === 'Clie
 const catDi = x => (x && (x.categoria || (x.contatti && x.contatti.categoria))) || '';
 const testaV5 = (colore, sinistra, destra = '') => `<div class="v5-testa" style="--zc:${colore}"><div class="v5-su">${sinistra}<div class="o5-dx">${destra}${chipPartnerSelect()}<button class="v5-fb" id="o5-feedback" aria-label="Invia Feedback">${ic('segnala')}</button></div></div>`;
 function collegaTestaV5() {
-  const sg = document.getElementById('segnala');
-  if (sg) sg.hidden = true;   // il feedback sta nella testata
-  const fb = document.getElementById('o5-feedback');
+  const fb = document.getElementById('o5-feedback');   // il feedback sta nella testata; il tondo si nasconde da solo (nota 102, index.html)
   if (fb) fb.onclick = () => foglioSegnala();
   collegaPartnerSelect();
 }

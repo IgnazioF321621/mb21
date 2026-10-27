@@ -677,7 +677,7 @@ function disegnaOggi() {
   if (vai === 'giorno') { LV.vista = checkV5() ? 'ckgiorno' : 'home'; LV.ckData = null; }   // dall'avviso della sera (nota 045): «Il mio giorno» (v5: la scheda Giorno del Check)
   if (ST.oggi && LV.giorno !== ST.oggi) { LV.giorno = ST.oggi; LV.fatte = []; }   // le spunte dell'elenco valgono per oggi
   const sg = document.getElementById('segnala');
-  if (sg) sg.hidden = false;   // v5: in «Oggi» il feedback sta nella testata (disegnaOggiV5 lo nasconde); nelle altre pagine della Dashboard resta il tondo
+  if (sg) sg.hidden = false;   // il tondo c'è sempre; dove la pagina ha il tasto nella testata lo nasconde lo stile (nota 102, index.html)
   if (vediTutti()) {   // Partner Select «Tutti»: solo i numeri, ogni coda è di un partner
     app.innerHTML = `${testataDashboard()}<div class="sotto">${esc(dataEstesa(ST.oggi))}</div>` + dashboardTesta()
       + `<div class="vuoto">I contatti del giorno, le conferme e i riordini sono di ogni partner: sceglilo nel Partner Select per vederle.</div>` + dashboardBasso() + versione();

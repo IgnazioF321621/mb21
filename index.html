@@ -198,6 +198,15 @@
   .segnala-bottone { position: fixed; bottom: calc(env(safe-area-inset-bottom) + 66px); right: 8px; z-index: 25; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--linea);
     background: var(--superficie); color: var(--testo-soft); display: flex; align-items: center; justify-content: center; padding: 0; box-shadow: 0 2px 8px rgba(16,21,31,.14); opacity: .88; }
   .segnala-bottone.in-foglio { bottom: auto; top: calc(env(safe-area-inset-top) + 8px); }
+  /* Nota Pagine 102 (Ignazio 27/10, «sì perfetto»): il feedback in un posto solo, sempre in alto a destra. Le pagine con la testata nuova hanno il loro tasto
+     (#o5-feedback) e il tondo non si vede (una regola sola, niente più «hidden» a mano); nelle altre il tondo sta in alto a destra, allineato alla colonna,
+     e scorre con la pagina. Nei fogli resta in alto (in-foglio, nota 088). Le misure seguono la colonna: 520, da 700 px 760, le pagine larghe 1120 (nota 100). */
+  .segnala-bottone:not(.in-foglio) { position: absolute; bottom: auto; top: calc(env(safe-area-inset-top) + 14px); right: max(16px, calc(50% - 244px)); opacity: 1; box-shadow: none; }
+  body:has(#o5-feedback) .segnala-bottone:not(.in-foglio) { display: none; }
+  /* Nota Pagine 101 (Ignazio 27/10, «sì perfetto»): «Novità · Versione …» sempre in fondo, su ogni dispositivo: la pagina è alta almeno quanto lo schermo e la
+     riga (l'ultima della pagina, versione() in pagina-novita.js) sta nell'ultima striscia sopra la barra; con una pagina lunga resta dopo il contenuto */
+  main { position: relative; min-height: 100dvh; padding-bottom: calc(env(safe-area-inset-bottom) + 130px); }
+  main > .versione:last-child { position: absolute; left: 16px; right: 16px; bottom: calc(env(safe-area-inset-bottom) + 70px); margin: 0; }
   .segnala-bottone[hidden] { display: none; }
   /* nota Pagine 001: il segnale «Coach Yes» accanto al nome, dove c'è una telefonata da fare */
   .segno-coach { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; margin: 0 0 0 6px; border-radius: 50%; background: var(--cat-partner-tinta); color: var(--cat-partner); vertical-align: -5px; cursor: pointer; flex: none; }
@@ -2687,6 +2696,7 @@
     html.v5 .o5-coppia > .o5-r { order: 2; }
     html.v5 .o5-coppia.uno > .o5-r { grid-column: 1 / -1; }
     html.v5 .o5-tessere { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    html.v5 .segnala-bottone:not(.in-foglio) { right: calc(50% - 364px); }   /* nota 102: allineato alla colonna da 760 */
   }
   @media (min-width: 1000px) {
     html.v5 main:has(.o5), html.v5 main:has(.o5-tessere), html.v5 main:has(.ss-giorni), html.v5 main:has(.mm-griglia) { max-width: 1120px; }
@@ -2695,6 +2705,7 @@
     html.v5 .o5-coppia > .o5-r, html.v5 .o5-coppia.uno > .o5-r { grid-column: span 2; }
     html.v5 .o5-coppia:last-child:not(.uno) > .o5-r:last-child { grid-column: 1 / -1; }   /* quattro tessere: l'ultima su tutta la riga */
     html.v5 .o5-tessere { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    html.v5 body:has(main .o5, main .o5-tessere, main .ss-giorni, main .mm-griglia) .segnala-bottone:not(.in-foglio) { right: calc(50% - 544px); }   /* nota 102: le pagine larghe 1120 */
     html.v5 .ss-giorni { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; background: none; box-shadow: none; padding: 0; }
     html.v5 .ss-g { flex-direction: column; gap: 6px; border-top: 0; background: var(--superficie); border-radius: 14px; box-shadow: var(--ombra-card); min-height: 200px; padding: 10px 8px; }
     html.v5 .ss-data { width: auto; text-align: left; }

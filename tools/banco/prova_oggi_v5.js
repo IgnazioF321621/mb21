@@ -43,7 +43,7 @@ prova('095/098: «Oggi» — testata con data, titolo, feedback e foto; Contatti
   const h = W.app.innerHTML;
   assert.match(h, /<span class="o5-data">DOMENICA 25 OTTOBRE<\/span><h1>Oggi<\/h1>/);
   assert.match(h, /id="o5-feedback" aria-label="Invia Feedback">\[segnala\]<\/button><button id="ds-profilo">IF<\/button>/);
-  assert.equal(W.sg.hidden, true);
+  assert.equal(W.sg.hidden, false);   // nota 102 (27/10): il tondo non si nasconde più a mano: lo nasconde lo stile quando la pagina ha il suo tasto (#o5-feedback)
   assert.ok(h.indexOf('o5-contatti') < h.indexOf('o5-agenda') && h.indexOf('o5-agenda') < h.indexOf('o5-training') && h.indexOf('o5-traguardo') < h.indexOf('o5-mappa'));
   assert.match(testo(h), /Contatti del giorno 2 DA SENTIRE Persona A Persona B/);
   assert.equal((h.match(/class="o5-pw-r o5-pr"><i><\/i>/g) || []).length, 2);   // il cerchietto vuoto davanti a ogni nome
@@ -323,7 +323,7 @@ prova('095 seconda pagina: «Contatti del giorno» — testata arancio con «‹
   assert.match(h, /class="c5-pallino" style="background:var\(--cat-partner\)"/);
   assert.equal((h.match(/data-non-ora=/g) || []).length, 2);
   assert.doesNotMatch(h, /finto-seguire/);   // Ignazio 26/10: «Da seguire» è andato nell'Agenda; Contatti del giorno finisce con «Già sentiti oggi»   // «Non ora» sulle righe della coda, come adesso
-  assert.equal(W.sg.hidden, true);
+  assert.equal(W.sg.hidden, false);   // nota 102 (27/10): il tondo non si nasconde più a mano: lo nasconde lo stile quando la pagina ha il suo tasto (#o5-feedback)
   W.app.clic('[data-non-ora="c1"]'); W.app.clic('[data-lv-persona="coda|c2"]'); W.app.clic('#lv-indietro');
   assert.deepEqual(JSON.parse(JSON.stringify(W.chiamate)), [['nonora', 'c1'], ['lv', 'persona', { persona: 'coda|c2' }], ['indietro']]);
 });
