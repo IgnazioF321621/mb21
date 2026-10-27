@@ -7,6 +7,8 @@
 
 // Per tornare alla Dashboard di prima (disegnaHome) basta false.
 const OGGI_V5 = true;
+// Nota Pagine 100 (Ignazio 27/10): la classe «v5» su <html> accende lo stile per iPad e computer (index.html, @media da 700 px: l'iPhone non cambia)
+if (OGGI_V5 && typeof document !== 'undefined' && document.documentElement && document.documentElement.classList) document.documentElement.classList.add('v5');
 // I dati in più dei riquadri: gli impegni di oggi e di domani (`oggi`, `domani`: le voci di MB21Agenda.programmaDelGiorno) e il ripasso del Training.
 // `di`/`giorno` dicono di chi e di quando sono.
 const O5 = { di: null, giorno: null, oggi: null, domani: null, richiami: null, training: null };

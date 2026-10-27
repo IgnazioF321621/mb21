@@ -1317,7 +1317,9 @@ function menuAgenda() {
 
 // Schermo largo (Mac, iPad orizzontale): MB Plan a tre colonne come NotePlan — menu · foglio del giorno · mese e Timeline
 // sempre aperta. Sul telefono resta una colonna (menu nel ☰, Timeline nel cassetto).
-function largo() { return typeof window !== 'undefined' && !!window.matchMedia && window.matchMedia('(min-width: 1000px)').matches; }   // function, non const: la usa anche il codice che parte al caricamento (pagina bianca del 22/09)
+// Nota Pagine 100 (Ignazio 27/10, «sì perfetto»): con la veste v5 l'Agenda è quella nuova a tutte le larghezze (su iPad in orizzontale una partner
+// vedeva quella vecchia: «Non ho l'agenda aggiornata»); le tre colonne restano solo senza la v5. Lo spazio in più lo usa lo stile (index.html, nota 100).
+function largo() { return !(typeof OGGI_V5 !== 'undefined' && OGGI_V5) && typeof window !== 'undefined' && !!window.matchMedia && window.matchMedia('(min-width: 1000px)').matches; }   // function, non const: la usa anche il codice che parte al caricamento (pagina bianca del 22/09)
 // Il mese a griglia per la colonna destra: si tocca un giorno per aprirlo (i pallini della settimana stanno nella striscia)
 // I giorni con cose da fare ancora aperte (Ignazio 23/09: «sul giorno non vedo nessun riferimento»): un cerchietto verde
 // vuoto accanto al numero, uguale ovunque — striscia della settimana, mese grande, mese piccolo, mesi dell'Anno.

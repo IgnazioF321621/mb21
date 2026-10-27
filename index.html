@@ -2670,6 +2670,31 @@
     display: flex; flex-direction: column; justify-content: space-between; align-items: flex-start; text-align: left; }
   .o5-tessera svg.ic { width: 26px; height: 26px; }
   .o5-tessera b { font-size: 16px; font-weight: 800; }
+  /* ── Nota Pagine 100 (Ignazio 27/10, «sì perfetto»): iPad e computer con la veste v5 (html.v5, pagina-oggi.js). Sotto i 700 px (iPhone) non cambia
+     niente: tutto sta in queste due @media. Da 700 px la colonna a 760, la testata colorata da bordo a bordo, Oggi con i riquadri affiancati, Esplora
+     a tre; da 1000 px Oggi, Esplora e l'Agenda (Settimana e Mese) a 1120 con più colonne. Elenchi, schede e moduli restano a 760; i fogli a 440. ── */
+  @media (min-width: 700px) {
+    html.v5 body { overflow-x: clip; }
+    html.v5 main { max-width: 760px; }
+    html.v5 nav { left: calc(50% - 260px); right: calc(50% - 260px); }
+    html.v5 .v5-testa { margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); padding-left: calc(50vw - 50% + 16px); padding-right: calc(50vw - 50% + 16px); }
+    html.v5 .o5-riquadri { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: minmax(170px, auto); align-content: start; }
+    html.v5 .o5-riquadri > .o5-coppia { display: contents; }
+    html.v5 .o5-riquadri > .o5-sera { grid-column: 1 / -1; }
+    html.v5 .o5-tessere { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  }
+  @media (min-width: 1000px) {
+    html.v5 main:has(.o5), html.v5 main:has(.o5-tessere), html.v5 main:has(.ss-giorni), html.v5 main:has(.mm-griglia) { max-width: 1120px; }
+    html.v5 .o5-riquadri { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    html.v5 .o5-tessere { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    html.v5 .ss-giorni { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; background: none; box-shadow: none; padding: 0; }
+    html.v5 .ss-g { flex-direction: column; gap: 6px; border-top: 0; background: var(--superficie); border-radius: 14px; box-shadow: var(--ombra-card); min-height: 200px; padding: 10px 8px; }
+    html.v5 .ss-data { width: auto; text-align: left; }
+    html.v5 .ss-riga { white-space: normal; align-items: flex-start; font-size: 13px; }
+    html.v5 .mm-g { min-height: 92px; align-items: stretch; }
+    html.v5 .mm-g .mm-n, html.v5 .mm-g .ag-punti { align-self: flex-start; }
+    html.v5 .mm-e { display: block; }
+  }
   .o5-tessera small { font-size: 12px; opacity: .75; margin-top: -6px; }
 </style>
 </head>
