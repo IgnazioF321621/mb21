@@ -570,6 +570,35 @@ prova('107: un solo «Condividi con [nome]»: «Come» (Nell\'app MB21 · Telegr
   assert.doesNotMatch(P.fogli.at(-1).innerHTML, /Condividi con/);
 });
 
+prova('108: «＋ Una linea» — l\'albero della Mappa sotto di te; un tocco accende la persona e chi sta sotto, un altro li spegne; chi non ha la scheda l\'avrà nuova al Salva', async () => {
+  pulisci();
+  P.finto.codici = [{ id: 'c-carla', nome: 'Carla Rossi', categoria: 'Partner', codice_amway: 'FR1' }];   // Carla ha già la sua scheda, Dario no
+  const { v, p } = await apri({});
+  await contatto(v, 'Fiammetta Rossi');
+  assert.match(v.innerHTML, /id="na-linea">[\s\S]*?Una linea <small>una persona della Mappa e chi sta sotto<\/small>/);
+  v.querySelector('#na-linea').onclick(); await attendi(); await attendi();
+  const l = P.fogli.at(-1);
+  assert.match(l.innerHTML, /<small>Scegli dalla Mappa<\/small><b>Una linea<\/b>/);
+  assert.deepEqual([...l.innerHTML.matchAll(/data-linea="([^"]+)"/g)].map(x => x[1]), ['FR2', 'FR1', 'SOTTO1']);   // senza di te, in ordine di nome, chi sta sotto subito dopo
+  assert.match(l.innerHTML, /id="sl-si" disabled>Tocca una persona/);
+  await l.clic('[data-linea="FR1"]');
+  assert.match(l.innerHTML, /data-linea="FR1" class="acceso"/); assert.match(l.innerHTML, /data-linea="SOTTO1" class="acceso"/); assert.match(l.innerHTML, /data-linea="FR2" class="spento"/);
+  assert.match(l.innerHTML, /<b>2 persone<\/b> · Dario Verdi non ha ancora una scheda nella tua Lista: la creo io/);
+  await l.clic('[data-linea="SOTTO1"]'); assert.match(l.innerHTML, /data-linea="SOTTO1" class="spento"/); assert.match(l.innerHTML, /data-linea="FR1" class="acceso"/);   // spenta solo lei (e chi sta sotto)
+  await l.clic('[data-linea="SOTTO1"]');
+  await l.clic('#sl-si'); await attendi(); await attendi();
+  assert.match(v.innerHTML, /<b>Carla Rossi<\/b>/); assert.match(v.innerHTML, /<b>Dario Verdi<span class="na5-nuova">scheda nuova<\/span><\/b>/);
+  assert.match(v.innerHTML, /data-togli-persona="n:SOTTO1"/);
+  await scegli(v, 'tipo', 'Appuntamento'); await scegli(v, 'modalita', 'Counseling');
+  await v.clic('#na-si'); const esito = await p;
+  const nuova = scritte('contatti', 'insert').at(-1).args[0];
+  assert.deepEqual(nuova, { user_id: 'io', nome: 'Dario Verdi', categoria: 'Partner', codice_amway: 'SOTTO1', telefono: '+393334445555' });
+  const righe = scritte('azioni', 'insert').at(-1).args[0];
+  assert.deepEqual(righe.map(r => r.contatto_id), ['c-isa', 'c-carla', 'scheda-SOTTO1']);
+  assert.equal(esito.ids.length, 3);
+  P.finto.codici = undefined;
+});
+
 (async () => {
   for (const [nome, fn] of coda) { await fn(); ok++; console.log('OK  ' + nome); }
   console.log(`\n${ok} prove superate`);

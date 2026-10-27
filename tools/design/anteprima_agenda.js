@@ -35,7 +35,8 @@ const codice = [
   // P5b: l'interruttore, qui cambiabile dalle prove (impostaLinee)
   'let CONDIVISIONE_LINEE = false; let PUNTI_CONDIVISI = false; let SERATA_DA_MANDARE = false;',   // nota 106: «Serata da mandare» spenta (impostaSerata)
     // note 103 e 104: i punti non si condividono (impostaPunti per provarli accesi)
-  funzione('puoSerataTeam'), funzione('nuovoAppuntamento'), funzione('parteLineaHtml'), riga('const parteDopoTocco'),   // nota 005: una persona dentro la Linea   // il modulo «+» vero (dal 05/10, nota 027: «Condividi con», la serata Team/Linea)
+  funzione('puoSerataTeam'), funzione('nuovoAppuntamento'), funzione('sceltaLinea'), funzione('creaSchedeNuove'),   // nota 108: la linea dalla Mappa
+  funzione('parteLineaHtml'), riga('const parteDopoTocco'),   // nota 005: una persona dentro la Linea   // il modulo «+» vero (dal 05/10, nota 027: «Condividi con», la serata Team/Linea)
   fra("// ── Come si guarda l'Agenda (cantiere 37)", '// Prima si cerca la persona'),
   'return { impostaLinee: v => { CONDIVISIONE_LINEE = v; }, impostaPunti: v => { PUNTI_CONDIVISI = v; }, impostaSerata: v => { SERATA_DA_MANDARE = v; }, impostaCoachYes: v => { COACH_YES = v; }, CY, foglioCoachYes, caricaCoachYes, foglioAggiungi, disegnaAgenda, avvisoSovrapposti, grigliaGiorno, grigliaSettimana, menuAgendaHtml, foglioSpazio, preparaSettimana, rigaSpazioHtml, programmaSettimanaHtml, foglioCosa, collegaCose, spuntaCosa, foglioEvento, foglioRicevuto, controllaImpegniNuovi, nuovoAppuntamento, foglioCercaAgenda: typeof foglioCercaAgenda === \'function\' ? foglioCercaAgenda : null, apriCampoCosa: typeof apriCampoCosa === \'function\' ? apriCampoCosa : null };',
 ].join('\n');
@@ -112,7 +113,10 @@ const stub = {
     : nome === 'condividi azione' ? { data: finto.condividi, error: null }
     // nota 103: con più persone il modulo scrive un elenco di righe e riceve un elenco di id
     : nome === 'nuovo appuntamento' ? { data: Array.isArray((scritture.at(-1) || { args: [] }).args[0]) ? scritture.at(-1).args[0].map((_, i) => ({ id: i ? 'az-nuova-' + i : 'az-nuova' })) : { id: 'az-nuova' }, error: null }
-    : nome === 'stesso incontro' ? { data: finto.stessoIncontro || [], error: null }   // nota 105: le altre persone dello stesso incontro
+    : nome === 'stesso incontro' ? { data: finto.stessoIncontro || [], error: null }
+    : nome === 'squadra per la linea' ? { data: finto.squadra, error: null }   // nota 108
+    : nome === 'codici delle schede' ? { data: finto.codici || [], error: null }
+    : nome === 'scheda dalla Mappa' ? { data: { id: 'scheda-' + ((scritture.at(-1) || { args: [{}] }).args[0].codice_amway || 'x') }, error: null }   // nota 105: le altre persone dello stesso incontro
     : nome === 'note Coach Yes' ? { data: finto.coachNote || [], error: null }   // nota 001
     : nome === 'chi ha una nota Coach Yes' ? { data: [], error: null }
     : nome === 'squadra per l\'invito' ? { data: finto.squadra, error: null }

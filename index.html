@@ -336,6 +336,8 @@
   .na5-piu { display: flex; align-items: center; gap: 6px; width: 100%; border: 0; background: none; color: var(--accento); font: inherit; font-weight: 700; padding: 10px 0 4px; text-align: left; }
   .na5-aiuto { font-size: 12.5px; color: var(--testo-soft); margin: 4px 0 2px; }
   .na5-cambia { padding: 0; font-size: 12.5px; }
+  .na5-nuova { font-size: 11px; font-weight: 700; color: #8A6200; background: #FFF3D1; border-radius: 6px; padding: 1px 6px; margin-left: 6px; vertical-align: 2px; }   /* nota 108 */
+  .na5-piu small { color: var(--testo-soft); font-weight: 400; font-size: 12.5px; }
   .na5-altro-g { margin-top: 14px; }
   .na5-altro { display: flex; justify-content: space-between; align-items: center; gap: 8px; width: 100%; border: 0; background: none; font: inherit; color: var(--testo); padding: 4px 0; text-align: left; }
   .na5-altro b { font-size: 15px; } .na5-altro small { display: block; color: var(--testo-soft); font-size: 12.5px; font-weight: 500; }
@@ -4076,15 +4078,16 @@ async function nuovoAppuntamento(opz = {}) {
     const partnerDaCondividere = () => persone5().filter(p => p.categoria === 'Partner' && st.tipo !== 'Contatto');
     const nomiInFila = nomi => (nomi.length > 1 ? nomi.slice(0, -1).join(', ') + ' e ' + nomi.at(-1) : nomi[0] || '');
     function htmlAppuntamento(tipi) {
-      const riga5 = (c, togli) => `<div class="na5-chi ${classeCat(c.categoria)}"><span class="ts-pastiglia">${esc(iniziali(c.nome))}</span><span><b>${esc(c.nome)}${st.tipo === 'Contatto' ? segnoCoach(c.id, c.nome) : ''}</b><small>${esc(c.categoria ? MB21Lista.nomeCategoria(c.categoria) : 'Senza categoria')}</small></span>${togli == null ? '' : `<button type="button" class="link" data-togli-persona="${esc(togli)}" aria-label="Togli">${ic('chiudi')}</button>`}</div>`;
+      const riga5 = (c, togli) => `<div class="na5-chi ${classeCat(c.categoria)}"><span class="ts-pastiglia">${esc(iniziali(c.nome))}</span><span><b>${esc(c.nome)}${c.nuova ? '<span class="na5-nuova">scheda nuova</span>' : ''}${st.tipo === 'Contatto' ? segnoCoach(c.id, c.nome) : ''}</b><small>${esc(c.categoria ? MB21Lista.nomeCategoria(c.categoria) : 'Senza categoria')}</small></span>${togli == null ? '' : `<button type="button" class="link" data-togli-persona="${esc(togli)}" aria-label="Togli">${ic('chiudi')}</button>`}</div>`;
       let h = `<h4 class="mc-t">Con chi?</h4><div class="riquadro mc-g">`;
       // la prima persona: fissa se arriva dalla scheda o dalla coda; in Modifica si cambia (✕) solo se è sola
       if (st.contatto) h += riga5({ ...st.contatto, categoria: st.categoria }, m ? (st.altri.length ? null : '') : opz.contatto && !st.altri.length ? null : '');
       else h += `<div class="campo"><input id="na-contatto" list="na-nomi" placeholder="Scrivi il nome" value="" autocomplete="off"><datalist id="na-nomi">${elenco.map(c => `<option value="${esc(c.nome)}">`).join('')}</datalist></div>`;
-      h += st.altri.map(c => riga5(c, c.esito ? null : c.id)).join('');   // nota 105: chi ha già il suo esito non si toglie
+      h += st.altri.map(c => riga5(c, c.esito ? null : c.id || 'n:' + c.codice)).join('');   // nota 108: chi non ha ancora la scheda si riconosce dal codice   // nota 105: chi ha già il suo esito non si toglie
       // con l'interruttore delle Linee acceso (oggi spento), l'Admin dal «+» sceglie qui anche la serata: «Tutto il Team» o «Una Linea» (nota 027)
       if (CONDIVISIONE_LINEE && puoTeam() && !st.contatto) h += `<div class="campo"><label>Oppure una serata</label>${scelte('condividi', ['', 'team', 'linea'], st.condividi, ['Nessuno', 'Tutto il Team', 'Una Linea'])}</div>`;
       if (st.contatto) h += `<button type="button" class="na5-piu" id="na-piu-persona">${ic('piu')} Aggiungi un'altra persona</button>`;
+      if (st.tipo !== 'Contatto') h += `<button type="button" class="na5-piu" id="na-linea">${ic('mappa')} Una linea <small>una persona della Mappa e chi sta sotto</small></button>`;   // nota 108
       if (st.altri.length) h += `<p class="na5-aiuto">Ognuno ha il suo esito. Chi usa l'app lo trova nella sua Agenda.</p>`;
       h += '</div>';
       if (st.contatto && !tipi.length) {   // senza categoria (o con persone che non possono avere lo stesso tipo) si sceglie qui
@@ -4270,13 +4273,25 @@ async function nuovoAppuntamento(opz = {}) {
       velo.querySelectorAll('[data-togli-persona]').forEach(b => { b.onclick = () => {
         leggiCampi();
         const id = b.dataset.togliPersona;
-        if (id) st.altri = st.altri.filter(p => p.id !== id);
+        if (id) st.altri = st.altri.filter(p => (p.id || 'n:' + p.codice) !== id);
         else if (st.altri.length) { const p = st.altri.shift(); st.contatto = p; st.categoria = p.categoria; st.categoriaToccata = false; }
         else { st.contatto = null; st.categoria = null; }
         tipoAncoraBuono(); disegna();
       }; });
       const es = velo.querySelector('#na-esito');
       if (es) es.onclick = () => { chiudi(null); foglioAzione(m.id, { soloEsito: true, dopo: opz.dopo }); };
+      // nota 108: «＋ Una linea»: le persone accese nella Mappa entrano tutte (la prima, se manca, diventa quella dell'appuntamento); chi c'è già non si ripete
+      const lin = velo.querySelector('#na-linea');
+      if (lin) lin.onclick = async () => {
+        leggiCampi();
+        const scelte = await sceltaLinea(persone5().map(p => p.id).filter(Boolean));
+        if (!scelte || !scelte.length) return;
+        for (const p of scelte) {
+          if (persone5().some(x => (p.id && x.id === p.id) || (x.codice && x.codice === p.codice))) continue;
+          if (!st.contatto) { st.contatto = p; st.categoria = p.categoria; } else st.altri.push(p);
+        }
+        tipoAncoraBuono(); disegna();
+      };
       const area = velo.querySelector('#na-area');
       if (area) area.onclick = () => { leggiCampi(); st.area = st.area === 'Prodotti' ? 'Attività' : 'Prodotti'; disegna(); };
       const altro = velo.querySelector('#na-altro-apri');
@@ -4422,6 +4437,12 @@ async function nuovoAppuntamento(opz = {}) {
     velo.querySelector('#na-si').onclick = async () => {
       leggiCampi();
       if (serata()) return salvaSerata();
+      // nota 108: prima le schede nuove della linea (Partner, dalla Mappa), così ognuno ha la sua riga
+      if (persone5().some(p => p.nuova)) {
+        const tutte = [st.contatto, ...st.altri];
+        if (!await creaSchedeNuove(tutte, opz.userId || visto().id)) { velo.querySelector('#na-errore').textContent = 'Le schede nuove non si sono salvate: controlla la connessione e riprova.'; return; }
+        st.contatto = { ...st.contatto };
+      }
       // senza orario (nota 012) la telefonata sta sul giorno, alla mezzanotte di Roma: in Agenda non si vede, in coda sì; chiusa, prende l'ora di adesso se è di oggi, altrimenti resta sul suo giorno alle 12:00 (chiudi_azione, note 012 e 013)
       const soloGiorno = inCoda();
       const v = { contatto_id: st.contatto && st.contatto.id, categoria: st.categoria, area: st.area, tipo_azione: st.tipo, modalita: st.modalita,
@@ -4689,6 +4710,66 @@ async function foglioAzione(id, opz = {}) {
       mostraToast('Annullato');
     });
   };
+}
+
+// ── Nota Pagine 108 (Ignazio 27/10, «sì così»): «＋ Una linea» nello stesso appuntamento ── l'albero della Mappa sotto di te (squadra, come la nota 005:
+// MB21Agenda.ramoDellaLinea); un tocco su una persona accende lei e chi sta sotto (MB21Agenda.parteDi), un altro tocco li spegne. Restituisce le persone accese,
+// ognuna con la sua scheda della Lista (contatti.codice_amway, se no lo stesso nome) oppure `nuova: true` (Ignazio: «preferisco creare una nuova scheda in
+// automatico»: si crea al Salva del modulo, creaSchedeNuove). `gia` = le schede già nell'appuntamento. null se si annulla.
+async function sceltaLinea(gia = []) {
+  const A = MB21Agenda, chi = visto() || {}, io = chi.partner_id || (ST.utente && ST.utente.partner_id);
+  if (!io) { mostraToast('Per scegliere una linea serve il tuo codice nella Mappa'); return null; }
+  const [sq, cod, lista] = await Promise.all([
+    dbq('squadra per la linea', supa.from('squadra').select('partner_id, sponsor_id, nome, telefono')),
+    dbq('codici delle schede', supa.from('contatti').select('id, nome, categoria, codice_amway').eq('user_id', chi.id).not('codice_amway', 'is', null).is('eliminato_il', null)),
+    leggiContattiMiei().catch(() => []),
+  ]);
+  if (sq.error || !Array.isArray(sq.data)) { mostraToast('Mappa non caricata: riprova.'); return null; }
+  const righe = A.ramoDellaLinea(sq.data, io).slice(1);   // senza di te
+  if (!righe.length) { mostraToast('Nella Mappa non c\'è nessuno sotto di te'); return null; }
+  const leggibile = n => (typeof MB21Mappa !== 'undefined' ? MB21Mappa.nomeLeggibile(n) : n), piega = MB21Lista.piega;
+  const persona = r => {
+    const s = sq.data.find(x => x.partner_id === r.partner_id) || {}, nome = leggibile(r.nome);
+    const c = (cod.data || []).find(x => x.codice_amway === r.partner_id) || lista.find(x => !x.codice_amway && piega(x.nome) === piega(nome));
+    const tel = String(s.telefono || '').replace(/\s+/g, '');
+    return c ? { id: c.id, nome: c.nome, categoria: c.categoria || 'Partner', codice: r.partner_id }
+      : { id: null, nome, categoria: 'Partner', codice: r.partner_id, nuova: true, telefono: /^\+/.test(tel) ? tel : tel ? '+39' + tel.replace(/^0+/, '') : null };
+  };
+  const accesi = new Set();
+  return new Promise(risolvi => {
+    const velo = document.createElement('div');
+    velo.className = 'velo';
+    velo.style.zIndex = 25;   // sopra il modulo
+    document.body.appendChild(velo);
+    const fine = v => { velo.remove(); risolvi(v); };
+    const disegna = () => {
+      const scelte = righe.filter(r => accesi.has(r.partner_id)).map(persona).filter(p => !p.id || !gia.includes(p.id)), nuove = scelte.filter(p => p.nuova);
+      velo.innerHTML = `<div class="foglio alto mc"><div class="mc-testa"><span class="ts-pastiglia">${ic('mappa')}</span><div><small>Scegli dalla Mappa</small><b>Una linea</b></div><button id="sl-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
+        <p class="na5-aiuto" style="margin:12px 4px 6px">Tocca una persona: si accendono lei e chi sta sotto. Un altro tocco li spegne.</p>
+        <div class="na-albero">${righe.map(r => `<button type="button" data-linea="${esc(r.partner_id)}" class="${accesi.has(r.partner_id) ? 'acceso' : 'spento'}" style="--l:${Math.min(r.livello - 1, 8)}">${r.livello > 1 ? '<i>↳</i>' : ''}<b>${esc(leggibile(r.nome))}</b>${r.livello === 1 ? '<small>prima linea</small>' : ''}</button>`).join('')}</div>
+        ${scelte.length ? `<p class="na5-aiuto" style="margin:10px 4px"><b>${scelte.length === 1 ? '1 persona' : scelte.length + ' persone'}</b>${nuove.length ? ` · ${esc(nuove.map(p => p.nome).join(', '))} ${nuove.length === 1 ? 'non ha' : 'non hanno'} ancora una scheda nella tua Lista: la creo io (Partner, dalla Mappa)` : ''}</p>` : ''}
+        <div class="mc-fondo"><button class="link" id="sl-no">Annulla</button><button class="primario" id="sl-si" ${scelte.length ? '' : 'disabled'}>${scelte.length ? `Aggiungi ${scelte.length === 1 ? '1 persona' : scelte.length + ' persone'}` : 'Tocca una persona'}</button></div></div>`;
+      velo.querySelector('#sl-x').onclick = () => fine(null);
+      velo.querySelector('#sl-no').onclick = () => fine(null);
+      velo.querySelector('#sl-si').onclick = () => fine(scelte);
+      velo.querySelectorAll('[data-linea]').forEach(b => { b.onclick = () => {
+        const parte = A.parteDi(righe, b.dataset.linea), via = accesi.has(b.dataset.linea);
+        parte.forEach(k => (via ? accesi.delete(k) : accesi.add(k)));
+        disegna();
+      }; });
+    };
+    disegna();
+  });
+}
+// Le schede nuove della linea (nota 108), al Salva del modulo: una riga di contatti per persona (Partner, nome, codice e telefono dalla Mappa). false se una non si salva.
+async function creaSchedeNuove(persone, utenteId) {
+  for (const p of persone.filter(x => x && x.nuova)) {
+    const { data, error } = await dbq('scheda dalla Mappa', supa.from('contatti').insert({ user_id: utenteId, nome: p.nome, categoria: 'Partner', codice_amway: p.codice, telefono: p.telefono || null }).select('id').single());
+    if (error || !data) return false;
+    Object.assign(p, { id: data.id, nuova: false });
+    if (typeof aggiornaRiga === 'function') aggiornaRiga(data.id);   // compare subito nella Lista
+  }
+  return true;
 }
 
 // Scelta di un contatto tra i propri (ricerca come la Lista) o «＋ Aggiungi» come Prospect. Restituisce {id, nome, categoria} o null.
