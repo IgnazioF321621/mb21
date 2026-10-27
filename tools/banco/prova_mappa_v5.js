@@ -130,9 +130,10 @@ prova('«Quanto rende il lavoro» (Ignazio 26/10, «A»): con la v5 non sta più
   const W = mondo(); W.ctx.disegna();
   assert.doesNotMatch(W.app.innerHTML, /mp-stat|Quanto rende/);
   const IDX = leggi('index.html'), PD = leggi('pagina-dashboard.js');
-  assert.match(IDX, /if \(typeof OGGI_V5 !== 'undefined' && OGGI_V5 && typeof statisticheHtml === 'function'\) html \+= statisticheHtml\(\);/);
-  assert.match(IDX, /su\('mp-stat', \(\) => apriStatistiche\('report'\)\);/);
-  assert.match(IDX, /leggiEfficacia\(\)\.then\(\(\) => \{ if \(ST\.tab === 'report'/);
+  // poi (Ignazio 27/10): non più una riga in fondo al Report ma la linguetta «Efficacia»
+  assert.match(IDX, /\[\['azioni', 'Azioni'\], \.\.\.\(typeof haStatistiche === 'function' && haStatistiche\(\) \? \[\['efficacia', 'Efficacia'\]\] : \[\]\)\]/);
+  assert.match(IDX, /if \(RP\.linguetta === 'efficacia'\) return apriStatistiche\('report'\);/);
+  assert.match(IDX, /leggiEfficacia\(\)\.then\(\(\) => \{ if \(ST\.tab === 'report' && RP\.vista === 'report' && RP\.linguetta === 'azioni'/);
   assert.match(PM, /if \(!ST\.offline && !mappaV5\(\)\) leggiEfficacia\(\)/);   // la Mappa v5 non la legge più
   assert.match(PM, /ST\.tornaA = da === 'report' \? 'report' : 'mappa';/);
   assert.match(PD, /if \(ST\.tornaA === 'report'\) \{ ST\.tornaA = null; ST\.tab = 'report'; return mostraTab\(\); \}/);

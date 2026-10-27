@@ -84,6 +84,14 @@ function avvia(opz = {}) {
     ST: { tab: 'report', utente: { id: 'io' } }, LS: {}, mostraTab: () => ritorni.push('mostraTab'), apriContattoDa: (id, rit) => aperti.push([id, rit]),
     impostaGriglia() {}, soloGuardo: () => false, Date, JSON, Math, console, Promise, Map, Set,
   };
+  // nota 098: con `opz.v5` la veste nuova (la testata vera di pagina-oggi.js, testaZonaV5), con `opz.tab` 'vendite' la pagina Vendite, con `opz.efficacia` la linguetta «Efficacia»
+  if (opz.v5) {
+    const PO = fs.readFileSync(path.join(BASE, 'pagina-oggi.js'), 'utf8'), i = PO.indexOf('function testaZonaV5');
+    const chip = () => '<button class="o5-ps" id="ps-scegli">Tu ▾</button>';
+    Object.assign(stub, { veste5: () => true, chipPartnerSelect: chip, haStatistiche: () => !!opz.efficacia, apriStatistiche: da => aperti.push(['statistiche', da]),
+      testaZonaV5: new Function('esc', 'ic', 'chipPartnerSelect', PO.slice(i, PO.indexOf('\n}\n', i) + 3) + '\nreturn testaZonaV5;')(x => String(x == null ? '' : x).replace(/&/g, '&amp;').replace(/</g, '&lt;'), n => `[${n}]`, chip) });
+    if (opz.tab) stub.ST.tab = opz.tab;
+  }
   const codice = [
     fra('const CLASSI_CAT = {', '\nfunction classeCat'), riga('function classeCat'), riga('function ic('), riga('function escIcone'), funzione('esc'), riga('function iniziali('),
     dashboard.split('\n').find(x => x.startsWith('const testoGriglia = ')),

@@ -232,6 +232,7 @@ const ZONE_V5 = [
   { k: 'segni', nome: 'Segni Vitali', icona: 'segnivitali', colore: 'var(--z-segni)' },
   { k: 'training', nome: 'Training', icona: 'crescita', colore: 'var(--z-training)' },
   { k: 'check', nome: 'Check e traguardi', icona: 'traguardo', colore: 'var(--z-check)' },
+  { k: 'vendite', nome: 'Vendite', icona: 'vendite', colore: 'var(--z-clienti)' },   // nota 098 (Ignazio 27/10): le provvigioni escono dal Report
   { k: 'report', nome: 'Report', icona: 'report', colore: 'var(--z-report)' },
   { k: 'admin', nome: 'Admin', icona: 'admin', colore: 'var(--testo)', soloAdmin: true },
 ];
@@ -249,6 +250,7 @@ function esploraVai(k) {
   if (k === 'segni') { PF.aperte.clear(); PF.aperte.add('segni'); return tab('profilo'); }   // «I miei Segni Vitali» del Profilo, aperti
   if (k === 'check') { vaiAlPrimoLivello(); ST.vaiA = 'mese'; return tab('oggi'); }   // il Mese («Come sto andando questo mese?»): da lì le aree portano al Check
   if (k === 'report') { RP.vista = 'report'; RP.da = null; }
+  if (k === 'vendite') { RP.da = null; PV.vista = 'mese'; }
   if (k === 'admin') AD.sezione = null;
   if (k === 'agenda' && typeof AG !== 'undefined') AG.giorno = null;
   tab(k);
@@ -453,7 +455,8 @@ function disegnaClientiV5() {
     <div class="c5-corpo">${n ? `<div class="c5-gruppo">Da sentire oggi · ${n}</div><div class="c5-elenco">${rio.map(rigaElencoV5).join('')}</div>` : ''}
       ${fatte.length ? `<div class="c5-gruppo">Già sentiti oggi · ${fatte.length}</div><div class="c5-elenco">${fatte.map(x =>
         `<div class="c5-riga fatta"><span class="c5-spunta">${ic('fatto')}</span><span class="c5-testo"><b>${esc(x.nome)}</b><small>fatto</small></span></div>`).join('')}</div>` : ''}
-      ${clientiFuturiV5()}</div>` + versione();   // nota 098: senza clienti oggi lo dice già la testata
+      ${clientiFuturiV5()}<button class="mese-riga" id="cl5-vendite">${ic('vendite')}<span><b>Vendite</b><small>le vendite del mese e dell'anno, VP e provvigioni</small></span><em>›</em></button></div>` + versione();   // nota 098: senza clienti oggi lo dice già la testata; in fondo la pagina Vendite
+  const cv = document.getElementById('cl5-vendite'); if (cv) cv.onclick = () => { RP.da = null; PV.vista = 'mese'; ST.tab = 'vendite'; LS.ritorno = null; mostraTab(); window.scrollTo(0, 0); };
   app.querySelectorAll('[data-cliente-futuro]').forEach(b => b.onclick = () => apriContattoDa(b.dataset.clienteFuturo, 'oggi'));   // nota 098: il contatto
   app.querySelectorAll('[data-lv-persona]').forEach(b => b.onclick = () => { ST.aperta = b.dataset.lvPersona.split('|')[1]; vaiLV('persona', { persona: b.dataset.lvPersona, daClienti: true }); });
   attaccaIndietroLV();
@@ -472,10 +475,11 @@ function testaMappaV5(quanti, mese, dentro = '') {
 // ── v5, le tessere di Esplora: Report, Profilo (con i Segni Vitali) e Admin (Regia 26/10; solo la veste) ──
 // Una testata per pagina nel colore della sua zona: il ritorno (id e nome di adesso, o «‹ Esplora»), il chip del Partner Select dove serve, il feedback,
 // il titolo, una riga sotto e, a destra del titolo, un pezzo della pagina (il Profilo ci mette la sua foto, lo stesso tasto di prima).
-function testaZonaV5({ colore, torna, tornaId, titolo, sotto = '', ps = true, destra = '', classe = '' }) {
+// `dopo` (nota 098): quello che sta in fondo alla testata, sotto il titolo (le schede Mese · Anno di Vendite)
+function testaZonaV5({ colore, torna, tornaId, titolo, sotto = '', ps = true, destra = '', classe = '', dopo = '' }) {
   return `<div class="v5-testa z5${classe ? ' ' + classe : ''}" style="--zc:${colore}"><div class="v5-su"><button class="v5-indietro" id="${tornaId}">‹ ${esc(torna)}</button>
       <div class="o5-dx">${ps ? chipPartnerSelect() : ''}<button class="v5-fb" id="o5-feedback" aria-label="Invia Feedback">${ic('segnala')}</button></div></div>
-    <div class="v5-titolo"><div><h1>${esc(titolo)}</h1>${sotto ? `<span>${esc(sotto)}</span>` : ''}</div>${destra}</div></div>`;
+    <div class="v5-titolo"><div><h1>${esc(titolo)}</h1>${sotto ? `<span>${esc(sotto)}</span>` : ''}</div>${destra}</div>${dopo}</div>`;
 }
 const veste5 = () => typeof OGGI_V5 !== 'undefined' && OGGI_V5;
 

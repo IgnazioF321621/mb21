@@ -232,7 +232,7 @@ prova('098: il «Richiamare» di oggi in cima a «Da sentire», in più ai posti
 prova('095: Esplora — tessere a due colonne con colore, icona e nome, nell\'ordine deciso; Admin nera per ultima solo per l\'Admin; ogni tessera apre la sua pagina', () => {
   const W = mondo(); W.ctx.esplora();
   const nomi = [...W.app.innerHTML.matchAll(/<b>([^<]+)<\/b>/g)].map(m => m[1]);
-  assert.deepEqual(nomi, ['Contatti', 'Agenda', 'Lista Nomi', 'Mappa', 'Segni Vitali', 'Training', 'Check e traguardi', 'Report']);
+  assert.deepEqual(nomi, ['Contatti', 'Agenda', 'Lista Nomi', 'Mappa', 'Segni Vitali', 'Training', 'Check e traguardi', 'Vendite', 'Report']);
   assert.match(W.app.innerHTML, /data-zona="mappa" style="background:var\(--z-mappa\)">\[mappa\]<b>Mappa<\/b>/);
   const A = mondo({ admin: true }); A.ctx.esplora();
   assert.match(A.app.innerHTML, /data-zona="admin" style="background:var\(--testo\)">\[admin\]<b>Admin<\/b><small>solo tu<\/small><\/button><\/div>/);

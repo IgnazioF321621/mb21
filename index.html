@@ -1048,6 +1048,8 @@
   .banner-grande.check .ico { background: rgba(255,255,255,.16); border-radius: 50%; }
   /* Lista Nomi L4: nel nuovo contatto «Altri dati (facoltativi)» è una riga chiusa; dentro, i gruppi di sempre */
   .mc-altri { margin-top: 12px; }
+  .vn5-schede { grid-template-columns: repeat(2, minmax(0, 1fr)); }   /* nota 098: Vendite, le schede Mese · Anno nella testata oro */
+  .vn5-sconti { font-weight: 700; color: #8A6200; background: #FFF3D1; }
   .mc-basta { margin: 8px 4px 0; font-size: 14px; }   /* nota 098: «bastano nome, telefono e categoria: il resto quando vuoi» */
   .mc-altri > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 6px; background: var(--superficie); border-radius: 14px; padding: 13px 14px; font-weight: 600; box-shadow: var(--ombra-card); }
   .mc-altri > summary::-webkit-details-marker { display: none; }
@@ -3242,6 +3244,7 @@ function mostraTab() {
   if (ST.tab === 'lista') return apriLista();
   if (ST.tab === 'agenda') return apriAgenda();
   if (ST.tab === 'report') return apriReport();
+  if (ST.tab === 'vendite') return disegnaProvvigioni();   // nota 098: la pagina Vendite (le provvigioni di prima, fuori dal Report)
   if (ST.tab === 'mappa') return apriMappa();
   if (ST.tab === 'check') return apriPaginaCheck();
   if (ST.tab === 'admin') return apriAdmin();
@@ -4953,7 +4956,9 @@ function collegaTornaInDashboard() {
 
 async function apriReport(vista) {
   RP.vista = vista || RP.vista;
+  if (veste5Report() && RP.linguetta === 'provvigioni') RP.linguetta = 'azioni';   // nota 098: con la v5 le provvigioni stanno in Vendite
   if (RP.vista === 'report' && RP.linguetta === 'provvigioni') return disegnaProvvigioni();   // nota 074: legge solo le vendite, non le azioni
+  if (RP.vista === 'report' && RP.linguetta === 'efficacia') return apriStatistiche('report');   // nota 098: la linguetta «Efficacia»
   // Come il Check (nota 017): le azioni di tutta la storia si rileggono solo dopo 5 minuti, se si guarda un'altra persona o dopo una scrittura
   const chiaveRp = vediTutti() ? 'tutti' : visto().id;
   const fresco = !!RP.azioni && RP.chiave === chiaveRp && !!RP.letta && SCRITTURE.ultima < RP.letta && Date.now() - RP.letta < 5 * 60000;
@@ -4977,11 +4982,12 @@ async function apriReport(vista) {
   RP.vista === 'griglia' ? disegnaGriglia() : disegnaReport();
   // nota 098: «Quanto rende il lavoro» si legge qui (prima all'apertura della Mappa): per un upline la riga c'è solo se sotto di lui c'è qualcuno con uno storico
   if (typeof OGGI_V5 !== 'undefined' && OGGI_V5 && typeof leggiEfficacia === 'function' && !ST.offline && !eAdmin() && !(typeof MP !== 'undefined' && MP.efficacia))
-    leggiEfficacia().then(() => { if (ST.tab === 'report' && RP.vista === 'report' && RP.linguetta !== 'provvigioni' && haStatistiche()) disegnaReport(); }).catch(() => {});
+    leggiEfficacia().then(() => { if (ST.tab === 'report' && RP.vista === 'report' && RP.linguetta === 'azioni' && haStatistiche()) disegnaReport(); }).catch(() => {});   // compare la linguetta «Efficacia»
 }
 
 function disegnaReport() {
   if (RP.linguetta === 'provvigioni') return disegnaProvvigioni();   // nota 074: la seconda linguetta
+  if (RP.linguetta === 'efficacia') return apriStatistiche('report');   // nota 098: con la v5 la seconda linguetta è «Efficacia»
   const R = MB21Report, oggi = MB21Coda.oggiRoma(), date = RP.wes.map(w => w.data), p = RP.periodo;
   const riga = (classe, attr, testo, n, perc, freccia) =>
     `<button class="rp-riga ${classe}" ${attr}><span>${testo}</span><span class="n">${n}</span><span class="p">${perc}</span><span class="f">${freccia}</span></button>`;
@@ -5026,8 +5032,7 @@ function disegnaReport() {
   }
   const gp = RP.griglia ? R.griglia(RP.azioni.filter(a => a.tipo_azione === 'Piano Marketing'), RP.griglia, oggi) : null;
   if (!vediTutti()) html += `<button class="rp-apri" id="rp-griglia"><span>${ic('pianomarketing')} ${esc(testoGriglia(gp))}</span><span>›</span></button>`;   // la scritta della Dashboard (nota 081, punto 9)
-  // nota Pagine 098 (Ignazio 26/10, «A»): con la veste v5 «Quanto rende il lavoro» sta qui, non più in cima alla Mappa (le stesse pagine, «‹ Report»)
-  if (typeof OGGI_V5 !== 'undefined' && OGGI_V5 && typeof statisticheHtml === 'function') html += statisticheHtml();
+  // nota Pagine 098 (Ignazio 27/10): con la veste v5 «Quanto rende il lavoro» è la linguetta «Efficacia» (prima una riga qui in fondo)
   app.innerHTML = html + versione();
   collegaReport();
 }
@@ -5049,7 +5054,6 @@ function collegaReport() {
   app.querySelectorAll('[data-esito]').forEach(b => b.onclick = () => { RP.esito = RP.esito === b.dataset.esito ? null : b.dataset.esito; disegnaReport(); });
   app.querySelectorAll('[data-azione]').forEach(b => b.onclick = () => foglioAzione(b.dataset.azione, { ritorno: 'report', dopo: () => apriReport('report') }));
   su('rp-griglia', () => { RP.vista = 'griglia'; RP.cella = null; RP.grigliaDa = null; window.scrollTo(0, 0); disegnaGriglia(); });
-  su('mp-stat', () => apriStatistiche('report'));   // nota 098: «Quanto rende il lavoro», ora nel Report
   collegaLinguetteReport();
 }
 
@@ -5060,12 +5064,17 @@ function collegaReport() {
 // provvigioniAnno). Dati: vendite_conti (la provvigione si calcola solo lì) più incasso e cliente da vendite, letti per anno solo quando la linguetta
 // si apre (costo zero), tenuti 5 minuti come il Report e riletti dopo una scrittura. Niente database nuovo.
 const PV = { vista: 'mese', mese: null, anno: null, anni: {}, primo: {}, giro: 0 };
-const linguetteReport = () => `<div class="sezioni rp-linguette">${[['azioni', 'Azioni'], ['provvigioni', 'Provvigioni']].map(([k, t]) =>
+// Nota 098 (Ignazio 27/10): con la veste v5 le provvigioni stanno nella pagina Vendite e la seconda linguetta è «Efficacia» (prima «Quanto rende il lavoro»,
+// in fondo al Report): per l'Admin sempre, per un upline solo se sotto di lui c'è qualcuno con uno storico (haStatistiche, pagina-mappa.js)
+const veste5Report = () => typeof veste5 === 'function' && veste5();
+const linguetteReport = () => `<div class="sezioni rp-linguette">${(veste5Report() ? [['azioni', 'Azioni'], ...(typeof haStatistiche === 'function' && haStatistiche() ? [['efficacia', 'Efficacia']] : [])]
+  : [['azioni', 'Azioni'], ['provvigioni', 'Provvigioni']]).map(([k, t]) =>
   `<button data-rplinguetta="${k}" class="${(RP.linguetta || 'azioni') === k ? 'scelto' : ''}">${t}</button>`).join('')}</div>`;
 function collegaLinguetteReport() {
   app.querySelectorAll('[data-rplinguetta]').forEach(b => b.onclick = () => {
     if ((RP.linguetta || 'azioni') === b.dataset.rplinguetta) return;
     RP.linguetta = b.dataset.rplinguetta;
+    if (RP.linguetta === 'efficacia') return apriStatistiche('report');
     if (RP.linguetta === 'azioni' && !RP.azioni) return apriReport('report');   // aperto dalla scheda › Vendite: le azioni non sono ancora lette
     disegnaReport();
   });
@@ -5111,7 +5120,13 @@ async function disegnaProvvigioni() {
   if (!PV.mese) PV.mese = meseOggi;
   if (!PV.anno) PV.anno = annoOggi;
   const anno = PV.vista === 'anno' ? PV.anno : Number(PV.mese.slice(0, 4)), giro = ++PV.giro;
-  const testa = `${testaReport()}${linguetteReport()}
+  // nota 098 (Ignazio 27/10): con la veste v5 è la pagina Vendite (ST.tab 'vendite'), testata oro con le schede Mese · Anno; i conti e le letture sono gli stessi
+  const vendite = ST.tab === 'vendite';
+  const qui = () => (vendite ? ST.tab === 'vendite' : ST.tab === 'report' && RP.vista === 'report' && RP.linguetta === 'provvigioni');
+  const testa = vendite && veste5Report()
+    ? testaZonaV5({ colore: 'var(--z-clienti)', torna: RP.da ? RP.da.nome : 'Esplora', tornaId: 'rp-indietro', titolo: 'Vendite',
+      dopo: `<div class="v5-scale vn5-schede">${[['mese', 'Mese'], ['anno', 'Anno']].map(([k, t]) => `<button data-pvvista="${k}"${PV.vista === k ? ' class="scelta"' : ''}>${t}</button>`).join('')}</div>` })
+    : `${testaReport()}${linguetteReport()}
     <div class="rp-periodi">${[['mese', 'Mese'], ['anno', 'Anno']].map(([k, t]) => `<button data-pvvista="${k}" class="${PV.vista === k ? 'scelto' : ''}">${t}</button>`).join('')}</div>`;
   const collega = () => {
     collegaPartnerSelect(); collegaTornaInDashboard(); collegaLinguetteReport();
@@ -5129,7 +5144,7 @@ async function disegnaProvvigioni() {
     app.innerHTML = testa + `<div class="avviso">Non riesco a caricare le vendite. Controlla la connessione e riprova.</div>${versione()}`;
     return collega();
   }
-  if (giro !== PV.giro || ST.tab !== 'report' || RP.vista !== 'report' || RP.linguetta !== 'provvigioni') return;   // nel frattempo si è cambiato
+  if (giro !== PV.giro || !qui()) return;   // nel frattempo si è cambiato
   const primo = PV.primo[idVisti().join(',')], n = L.numero;
   const totali = t => `<div class="vn-totali">
       <div class="vn-tot blu"><span>VP Totali</span><b>${n(t.vp)}</b></div>
@@ -5150,6 +5165,7 @@ async function disegnaProvvigioni() {
       <b>${esc(R.testoPeriodo(R.periodoMese(PV.mese)))}</b><button id="pv-dopo" aria-label="Mese dopo" ${PV.mese < meseOggi ? '' : 'disabled'}>›</button></div>
       ${totali(t)}<div class="vn-riga-info pv-info">${esc(info)}</div>
       ${t.attesaVp ? `<div class="vn-riga-info">${ic('consegna')} Da consegnare: ${n(t.attesaVp)} VP · contano quando tocchi «Ordine fatto»</div>` : ''}
+      ${vendite ? gruppiVendite(m, oggi) : ''}
       <h2 class="ck-sezione">Le vendite del mese</h2>
       ${m.vendite.length ? `<div class="riquadro vn-elenco">${m.vendite.map(v => `<button class="vn-riga pv-vendita ${classeCat(v.categoria)}" data-pvcontatto="${esc(v.contatto_id)}">
         <span class="rp-chi"><i class="rp-tondo">${esc(iniziali(v.nome))}</i><span><span class="pv-nome">${esc(v.nome)}${v.sulSito ? ' <span class="sv-targa account">sul sito</span>' : ''}</span>
@@ -5169,13 +5185,26 @@ async function disegnaProvvigioni() {
   su('pv-dopo', () => sposta(1));
   app.querySelectorAll('[data-pvmese]').forEach(b => b.onclick = () => { PV.vista = 'mese'; PV.mese = b.dataset.pvmese; window.scrollTo(0, 0); disegnaProvvigioni(); });
   // un tocco su una vendita apre la scheda della persona sulla linguetta Vendite; la sua freccia («‹ Report») torna qui
-  app.querySelectorAll('[data-pvcontatto]').forEach(b => b.onclick = () => { LS.apriSezione = 'vendite'; apriContattoDa(b.dataset.pvcontatto, 'provvigioni'); });
+  app.querySelectorAll('[data-pvcontatto]').forEach(b => b.onclick = () => { LS.apriSezione = 'vendite'; apriContattoDa(b.dataset.pvcontatto, vendite ? 'vendite' : 'provvigioni'); });
+}
+// Nota 098 (Ignazio 27/10, «A»): in cima alla pagina Vendite (il mese) «Da consegnare» e «Sconti», dalle stesse vendite del mese; il tocco apre la vendita
+// nella scheda del cliente, dove ci sono «Ordine fatto» e «Incassato» (qui nessun tasto che scrive)
+function gruppiVendite(m, oggi) {
+  const L = MB21Lista, n = L.numero, sc = L.scontiMese(m), dc = m.vendite.filter(v => L.daConsegnare(v));
+  const riga = (v, sotto, destra) => `<button class="vn-riga pv-vendita ${classeCat(v.categoria)}" data-pvcontatto="${esc(v.contatto_id)}">
+      <span class="rp-chi"><i class="rp-tondo">${esc(iniziali(v.nome))}</i><span><span class="pv-nome">${esc(v.nome)} · ${esc(v.brand)}</span><span class="vn-sotto">${sotto}</span></span></span>
+      <span class="vn-numeri"><b>${destra}</b></span></button>`;
+  return (dc.length ? `<h2 class="ck-sezione">Da consegnare · ${dc.length}</h2><div class="riquadro vn-elenco">${dc.map(v => riga(v,
+      `consegna prevista il ${esc(L.data(v.consegna))}${L.daConfermare(v, oggi) ? ' · da confermare' : ''} · ${n(v.vp)} VP`, '')).join('')}</div>` : '')
+    + (sc.righe.length ? `<h2 class="ck-sezione">Sconti · ${sc.righe.length}</h2>
+      <div class="vn-riga-info vn5-sconti">Sconti del mese ${n(sc.sconto, true)} su ${n(sc.totale, true)}${sc.percentuale == null ? '' : ` · ${sc.percentuale}%`}</div>
+      <div class="riquadro vn-elenco">${sc.righe.map(x => riga(x.v, `sconti ${n(x.sconto, true)} su ${n(x.totale, true)}`, x.percentuale == null ? '' : x.percentuale + '%')).join('')}</div>` : '');
 }
 // Dalla scheda › Vendite (nota 074): «Le tue provvigioni, mese per mese ›» apre la linguetta sul mese di oggi; la freccia del Report torna alla scheda
 function apriProvvigioniDa(c) {
   RP.da = { contattoId: c.id, nome: c.nome, ritorno: LS.ritorno };
   RP.linguetta = 'provvigioni'; RP.vista = 'report'; PV.vista = 'mese'; PV.mese = MB21Coda.oggiRoma().slice(0, 8) + '01';
-  ST.tab = 'report'; mostraTab(); window.scrollTo(0, 0);
+  ST.tab = veste5Report() ? 'vendite' : 'report'; mostraTab(); window.scrollTo(0, 0);   // nota 098: con la v5 la pagina Vendite
 }
 
 // ── «Segnala» (nota Pagine 009, Ignazio 05/10/2026) ── da ogni schermata e foglio: «Invia il tuo feedback» (nota 006, prima «Cosa non va, o cosa proponi?»), tre scelte e un testo.

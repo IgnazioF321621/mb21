@@ -492,6 +492,16 @@
     const somma = k => contate.reduce((t, v) => t + Number(v[k] || 0), 0);
     return { vendite, totali: totaliVendite(vendite), incassato: somma('incassato'), sconti: somma('sconto'), sulSito: contate.filter(v => v.sulSito).length };
   }
+  // Nota Pagine 098 (Ignazio 27/10, «A»): gli sconti del mese in Vendite. `m` = provvigioniMese(...). Le vendite che contano con uno sconto: per ognuna
+  // lo sconto, il totale (prezzo al pubblico, se no incassato + sconto) e la percentuale; il mese: sconti su incassato + sconti di tutte le vendite che contano.
+  function scontiMese(m) {
+    const righe = (m.vendite || []).filter(v => !daConsegnare(v) && Number(v.sconto) > 0).map(v => {
+      const sconto = Number(v.sconto), totale = Number(v.prezzo_pubblico) || Number(v.incassato || 0) + sconto;
+      return { v, sconto, totale, percentuale: totale ? Math.round(sconto / totale * 100) : null };
+    });
+    const totale = Number(m.incassato || 0) + Number(m.sconti || 0);
+    return { righe, sconto: Number(m.sconti || 0), totale, percentuale: totale ? Math.round(Number(m.sconti || 0) / totale * 100) : null };
+  }
   // L'anno SOLARE (gennaio-dicembre: sono soldi, si confrontano con il conto e la dichiarazione): i totali delle vendite che contano nell'anno e dodici
   // righe, una per mese, con VP e provvigione; `futuro` = il mese non è ancora cominciato. `oggi` = 'AAAA-MM-GG'.
   const MESI_ANNO = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno', 'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'];
@@ -640,7 +650,7 @@
   const nomeCategoria = c => NOMI_CATEGORIA[c] || c;
 
   const api = { cepPerCodice, importo, rigaPrezzo, QUOTA_PROVVIGIONE, IVA, contiVendita, contiStimati, scontoCalcolato, scontoAMano, NOMI_CATEGORIA, SPIEGA_CATEGORIA, nomeCategoria, CATEGORIE, FASCE_ETA, AREE, QUALI_PRODOTTI, interesseDa, areaDa, testoInteresse, PREFISSI, PASSI_ONBOARDING, AVVIO_DA_INCONTRO, passoAvvioDa, situazioneAvvio, FILTRI, GIORNI_NEW, eNuovo, piega, corrisponde, filtraContatti,
-    contaFiltri, cercaNomi, compieOggi, azioniENote, MESI_RIORDINO, riordinoFra, mesiFra, modoRiordino, propostaRiordino, sezioneIniziale, giorniFermo, SENZA_PARLARE, fraseCard, ORDINI, componiTelefono, separaTelefono, trovaDoppioni, archiviatiUguali, contatoreOnboarding, prossimoPasso, entratoDa, partnerDaAvviare, partnerInPausa, proposteAvvio, pausaLunga, PASSI_SPENTI, postiBiglietto, postoSuo, momento, meseEvento, etichettaEvento, eventoAttivo, eventoDaMostrare, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, cepDaTogliere, cepDaAccendere, descrizioneCep, data, DATI_PERSONA, SESSI, LAVORI, nomeScelta, BRAND, coloreBrand, brandComprati, haVendite, daConsegnare, daConfermare, GIORNI_CONSEGNA_LONTANA, consegnaLontana, totaliVendite, pagataSulSito, provvigioniMese, MESI_ANNO, provvigioniAnno, prossimoRiordino, rigaVendita, rigaFattore, numeroFattore, numero };
+    contaFiltri, cercaNomi, compieOggi, azioniENote, MESI_RIORDINO, riordinoFra, mesiFra, modoRiordino, propostaRiordino, sezioneIniziale, giorniFermo, SENZA_PARLARE, fraseCard, ORDINI, componiTelefono, separaTelefono, trovaDoppioni, archiviatiUguali, contatoreOnboarding, prossimoPasso, entratoDa, partnerDaAvviare, partnerInPausa, proposteAvvio, pausaLunga, PASSI_SPENTI, postiBiglietto, postoSuo, momento, meseEvento, etichettaEvento, eventoAttivo, eventoDaMostrare, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, cepDaTogliere, cepDaAccendere, descrizioneCep, data, DATI_PERSONA, SESSI, LAVORI, nomeScelta, BRAND, coloreBrand, brandComprati, haVendite, daConsegnare, daConfermare, GIORNI_CONSEGNA_LONTANA, consegnaLontana, totaliVendite, pagataSulSito, provvigioniMese, scontiMese, MESI_ANNO, provvigioniAnno, prossimoRiordino, rigaVendita, rigaFattore, numeroFattore, numero };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Lista = api;
 })(this);

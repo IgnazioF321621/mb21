@@ -636,7 +636,7 @@ async function avvioDellaScheda(c) {
 function disegnaScheda() {
   const c = LS.contatto;
   app.innerHTML = `
-    <button class="indietro" id="indietro">‹ ${LS.ritorno === 'oggi' ? 'Oggi' : LS.ritorno === 'mappa' ? 'Mappa' : LS.ritorno === 'catalogo' ? 'Da catalogare' : LS.ritorno === 'check' ? 'Check' : LS.ritorno === 'agenda' ? 'Agenda' : LS.ritorno ? 'Report' : 'Lista Nomi'}</button>
+    <button class="indietro" id="indietro">‹ ${LS.ritorno === 'oggi' ? 'Oggi' : LS.ritorno === 'mappa' ? 'Mappa' : LS.ritorno === 'catalogo' ? 'Da catalogare' : LS.ritorno === 'check' ? 'Check' : LS.ritorno === 'agenda' ? 'Agenda' : LS.ritorno === 'vendite' ? 'Vendite' : LS.ritorno ? 'Report' : 'Lista Nomi'}</button>
     <div class="testata ${classeCat(c.categoria)}">
       <div class="corpo">
         <div class="alto">
@@ -668,7 +668,8 @@ function disegnaScheda() {
     // torna a «Da catalogare» dalla copia in memoria, con quella persona com'è adesso (L5: prima si ricaricava tutta la Dashboard)
     if (LS.ritorno === 'catalogo') { LS.ritorno = null; ST.vistaCatalogo = true; allineaCatalogo(daId); window.scrollTo(0, 0); return disegnaCatalogo(); }
     if (LS.ritorno === 'check') { LS.ritorno = null; ST.tab = 'check'; return mostraTab(); }   // dai «prossimi passi» del Check (27/09)
-    if (LS.ritorno === 'agenda') { LS.ritorno = null; ST.tab = 'agenda'; return mostraTab(); }   // dallo Sharing dopo un Piano Marketing fissato da MB Plan (01/10)
+    if (LS.ritorno === 'agenda') { LS.ritorno = null; ST.tab = 'agenda'; return mostraTab(); }
+    if (LS.ritorno === 'vendite') { LS.ritorno = null; ST.tab = 'vendite'; return mostraTab(); }   // nota 098: dalla pagina Vendite   // dallo Sharing dopo un Piano Marketing fissato da MB Plan (01/10)
     if (LS.ritorno === 'oggi') {   // torna alla Dashboard, ricaricata (coda e Da catalogare)
       LS.ritorno = null; ST.tab = 'oggi'; ST.aperta = null;
       document.querySelectorAll('#tab button').forEach(b => b.classList.toggle('attiva', b.dataset.tab === 'oggi'));

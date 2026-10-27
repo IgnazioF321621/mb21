@@ -325,11 +325,21 @@ const statisticheHtml = () => (haStatistiche()
   ? rigaApribile('mp-stat', 'catalogare', 'crescita', TITOLO_STAT, `quanti contatti per un PM e quanti PM per un iscritto ${eAdmin() ? 'di ognuno' : soloLei() ? 'tuoi' : 'tuoi e di chi ti sta sotto'}`, false, 0) : '');
 // `da` (nota 098): 'report' quando si apre dal Report (v5), se no dalla Mappa come prima; il «‹» torna lì
 const tornaStat = () => (ST.tornaA === 'report' ? 'Report' : 'Mappa');
+// Nota 098 (Ignazio 27/10): con la veste v5 dal Report è la linguetta «Efficacia»: in cima la testata del Report con le linguette, al posto del «‹ Report» e del titolo
+const inLinguetta = () => ST.tornaA === 'report' && ST.tab === 'report' && typeof veste5Report === 'function' && veste5Report();
+const testaStatHtml = () => (inLinguetta() ? testaReport() + linguetteReport() : `<button class="indietro" id="indietro">‹ ${tornaStat()}</button>
+    <h1>${ic('crescita')} ${TITOLO_STAT}</h1>`);
+function collegaTestaStat(indietro) {
+  if (inLinguetta()) { collegaTornaInDashboard(); collegaLinguetteReport(); collegaPartnerSelect(); return; }
+  document.getElementById('indietro').onclick = indietro;
+}
 async function apriStatistiche(da) {
   ST.tornaA = da === 'report' ? 'report' : 'mappa'; MP.statPid = null; window.scrollTo(0, 0);
-  app.innerHTML = `<button class="indietro" id="indietro">‹ ${tornaStat()}</button><h1>${ic('crescita')} ${TITOLO_STAT}</h1><div class="vuoto">Carico il Check…</div>`;
-  document.getElementById('indietro').onclick = tornaDaTeam;
+  if (inLinguetta()) RP.linguetta = 'efficacia';
+  app.innerHTML = `${testaStatHtml()}<div class="vuoto">Carico il Check…</div>`;
+  collegaTestaStat(tornaDaTeam);
   await leggiEfficacia();
+  if (inLinguetta() && RP.linguetta !== 'efficacia') return;   // nel frattempo si è tornati ad «Azioni»
   if (soloLei()) MP.statPid = ST.utente.partner_id;   // solo il suo storico: apre direttamente la sua scheda
   disegnaStatistiche();
 }
@@ -399,12 +409,13 @@ function disegnaSchedaStat(pid) {
   const canvas = immagineStat(r, MB21Dashboard.efficaciaDi(E.righe, E.mese), periodoStat(E.mese), dataOggi, soloLei() ? null : eAdmin() ? 'media di tutti' : 'media del gruppo');
   canvas.style.cssText = 'width:100%;height:auto;border-radius:16px;display:block';
   const sola = soloLei();
-  app.innerHTML = `<button class="indietro" id="indietro">‹ ${sola ? tornaStat() : TITOLO_STAT}</button>
+  // nella linguetta «Efficacia» (v5): la scheda di una persona torna all'elenco con «‹ Efficacia»; la propria (sola) sta sotto la testata del Report
+  app.innerHTML = `${inLinguetta() && sola ? testaStatHtml() : `<button class="indietro" id="indietro">‹ ${sola ? tornaStat() : inLinguetta() ? 'Efficacia' : TITOLO_STAT}</button>`}
     <div id="stat-img"></div>
     <button class="primario" id="stat-invia" style="margin-top:12px">${ic('condividi')} Invia l'immagine</button>
     <div class="sotto">${sola ? 'Questa è la tua scheda: puoi tenerla o mandarla a chi vuoi.' : `L'immagine è pulita, pronta da mandare a ${esc(r.nome)}.`} Se il telefono non apre il menu per inviarla, si scarica.</div>${versione()}`;
   document.getElementById('stat-img').appendChild(canvas);
-  document.getElementById('indietro').onclick = sola ? tornaDaTeam : () => { MP.statPid = null; disegnaStatistiche(); };
+  if (inLinguetta() && sola) collegaTestaStat(); else document.getElementById('indietro').onclick = sola ? tornaDaTeam : () => { MP.statPid = null; disegnaStatistiche(); };
   document.getElementById('stat-invia').onclick = () => canvas.toBlob(async blob => {
     if (!blob) return mostraToast('Non riesco a preparare l\'immagine: riprova.');
     const nomeFile = nomeFileStat(r.nome), file = new File([blob], nomeFile, { type: 'image/png' });
@@ -435,11 +446,10 @@ function disegnaStatistiche() {
           <span style="text-align:right"><b>${unoStat(r.contattiPerPm)}</b> contatti per PM<small style="display:block;color:var(--grigio-chiaro)"><b>${unoStat(r.pmPerIscritto)}</b> PM per iscritto ›</small></span></button>`).join('')}
       <div class="sotto">Ultimi 6 mesi dal Check. Le righe più chiare hanno meno di 10 Piani Marketing: i numeri sono ancora indicativi. Tocca un nome per vedere la scheda da inviargli.</div>`;
   }
-  app.innerHTML = `<button class="indietro" id="indietro">‹ ${tornaStat()}</button>
-    <h1>${ic('crescita')} ${TITOLO_STAT}</h1>
+  app.innerHTML = `${testaStatHtml()}
     <div class="sotto" style="margin-bottom:8px">Quanti contatti servono per un Piano Marketing e quanti Piani Marketing per un iscritto personale, ${eAdmin() ? 'persona per persona' : 'tuoi e di chi ti sta sotto nella tua linea'}: aiutano a capire dove una mano serve di più. Qui si legge soltanto.</div>
     ${corpo}${versione()}`;
-  document.getElementById('indietro').onclick = tornaDaTeam;
+  collegaTestaStat(tornaDaTeam);
   app.querySelectorAll('[data-stat]').forEach(b => b.onclick = () => { window.scrollTo(0, 0); disegnaSchedaStat(b.dataset.stat); });
 }
 
