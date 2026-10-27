@@ -346,6 +346,29 @@ function disegnaAdmin() {
     const ultimo = l => (l.length ? MB21Lista.etichettaEvento(l[l.length - 1].data) : 'nessuno');
     const voce = (id, titolo, sotto) => `<button class="rp-apri ad-voce" id="${id}"><span>${titolo}<small>${sotto}</small></span><span>›</span></button>`;
     // v5 (nota 095, Regia 26/10): la testata nera dell'Admin, «‹ Esplora», il chip, il feedback, «lo vedi solo tu»
+    // poi (nota 098, Ignazio 27/10, «sì»): a gruppi, a righe come il Profilo — «Dati di Amway», «I partner» (in cima chi può entrare, con l'ultimo uso:
+    // la stessa riga di «Utenti dell'app», che si apre sul posto), «Eventi». Stessi id e stessi tocchi: si aprono le sottopagine di prima.
+    if (typeof veste5 === 'function' && veste5()) {
+      const riga = (id, icona, colore, titolo, sotto, destra = '') => `<button class="ad6-riga" id="${id}"><i style="background:${colore}">${ic(icona)}</i>
+        <span class="ad6-t"><span class="ad6-su"><b>${titolo}</b><span>${destra} ›</span></span>${sotto ? `<small>${sotto}</small>` : ''}</span></button>`;
+      const fc = AD.fc && AD.fc.length ? MB21Lista.numeroFattore(AD.fc[AD.fc.length - 1].valore) : '';
+      html = `${testaZonaV5({ colore: '#111114', torna: 'Esplora', tornaId: 'v5-indietro', titolo: 'Admin', sotto: 'lo vedi solo tu' })}
+      <input type="file" id="ad-file" accept=".csv,text/csv" hidden>
+      <div class="zona-oggi">Dati di Amway</div><div class="ad6-gruppo">
+        ${riga('ad-scegli', 'file', '#F26B00', 'Carica file Amway', 'il CSV della LOS: albero, volumi, VPP/VPG')}
+        ${riga('ad-vai-fc', 'vendite', '#2E9E3E', 'Fattore di conversione', 'per la provvigione delle vendite', fc)}</div>
+      <div class="zona-oggi">I partner</div><div class="ad6-gruppo">
+        ${AD.utenti.filter(u => u.accesso_attivo).map(u => `<div class="ad-utente">${rigaUtenteAdmin(u)}</div>`).join('')}
+        ${UTENTI_ADMIN ? riga('ad-vai-utenti', 'squadra', '#0866D6', "Utenti dell'app", `entrano ${AD.utenti.filter(u => u.accesso_attivo).length} su ${AD.utenti.length}`, AD.richieste.length ? `${AD.richieste.length} da approvare` : '') : ''}
+        ${SCHEDE_PARTNER_ADMIN ? riga('ad-vai-schede', 'collega', '#0866D6', 'Schede dei partner', 'ogni partner della Mappa nella lista di chi gli sta sopra') : ''}
+        ${messaggiAccesi() ? riga('ad-vai-messaggi', 'messaggio', '#0866D6', 'Messaggi', 'si aprono da soli a chi li riceve, vedi chi ha letto') : ''}
+        ${typeof chiusuraAdminHtml === 'function' && !chiusuraAvvenuta() ? riga('ad-vai-chiusura', 'whatsapp', '#2E9E3E', 'Avvisa della chiusura', 'manda il messaggio a ogni partner', `${daAvvisare().filter(u => mandati().has(u.id)).length} su ${daAvvisare().length}`) : ''}
+        ${riga('ad-vai-segnalazioni', 'segnala', '#E11D48', 'Segnalazioni', 'feedback dei partner, rispondi anche su Telegram', AD.segnAperte ? `<b class="ad-scad">${AD.segnAperte} aperte</b>` : '')}
+        ${riga('ad-vai-training', 'medaglia', '#9333EA', 'Training', 'chi si allena e dove è arrivato')}</div>
+      <div class="zona-oggi">Eventi</div><div class="ad6-gruppo">
+        ${riga('ad-vai-wes', 'biglietto', '#E11D48', 'WES', '', `ultimo ${ultimo(AD.wes)}`)}
+        ${riga('ad-vai-bbs', 'biglietto', '#0866D6', 'BBS', '', `ultimo ${ultimo(AD.bbs)}`)}</div>`;
+    } else
     html = `${typeof veste5 === 'function' && veste5() ? testaZonaV5({ colore: '#111114', torna: 'Esplora', tornaId: 'v5-indietro', titolo: 'Admin', sotto: 'lo vedi solo tu' }) : '<h1>Admin</h1>'}
       <input type="file" id="ad-file" accept=".csv,text/csv" hidden>
       ${voce('ad-scegli', ic('file') + ' Carica file Amway', 'il CSV della LOS: albero, volumi, VPP/VPG')}

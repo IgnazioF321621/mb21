@@ -2588,6 +2588,14 @@
   .p6 [data-voce="perche"] { --p6c: #F59E0B; } .p6 [data-voce="segni"] { --p6c: var(--z-segni); } .p6 #pf-training { --p6c: #9333EA; } .p6 #pf-libri { --p6c: #2E9E3E; }
   .p6 #pf-messaggi { --p6c: #0866D6; } .p6 #pf-password { --p6c: #0866D6; } .p6 #pf-numero { --p6c: #F26B00; } .p6 [data-voce="avvisi"] { --p6c: #E11D48; }
   .p6 [data-voce="calendario"] { --p6c: #0866D6; } .p6 #pf-scarica-lista { --p6c: #2E9E3E; }
+  /* nota 098 (Ignazio 27/10, «sì»): il menu Admin a gruppi, a righe come il Profilo */
+  .ad6-gruppo { background: var(--superficie); border-radius: 14px; overflow: hidden; margin-bottom: 6px; }
+  .ad6-gruppo > *:not(:first-child) { background: linear-gradient(var(--linea), var(--linea)) right top / calc(100% - 56px) 1px no-repeat; }
+  .ad6-riga { width: 100%; display: flex; gap: 12px; align-items: center; border: 0; background: none; padding: 11px 14px; text-align: left; font-family: inherit; color: var(--testo); }
+  .ad6-riga > i { flex: none; width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #fff; } .ad6-riga > i svg { width: 18px; height: 18px; }
+  .ad6-t { flex: 1; min-width: 0; } .ad6-su { display: flex; justify-content: space-between; gap: 8px; font-size: 16px; } .ad6-su b { font-weight: 500; } .ad6-su > span { flex: none; color: var(--grigio); }
+  .ad6-t small { display: block; color: var(--grigio); font-size: 13px; margin-top: 2px; } .ad6-su .ad-scad { color: var(--proposta); font-weight: 600; }
+  .ad6-gruppo .ad-utente { border-top: 0; padding: 0 14px; } .ad6-gruppo .ad-riga .cerchio.piccolo { width: 30px; height: 30px; }
   .p6-esci { display: block; width: 100%; border: 0; background: none; padding: 13px; font-family: inherit; font-size: 16px; color: var(--rosso); text-align: center; }
   /* v5: la parte alta ferma della Lista Nomi diventa la testata verde (resta ferma in alto, come prima) */
   .ls-testa.l5 { background: var(--zc); margin-bottom: 12px; padding-bottom: 14px; gap: 10px; border-bottom: 0; }
