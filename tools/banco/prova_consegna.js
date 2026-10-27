@@ -38,9 +38,9 @@ prova('la carta «Consegna» ha due scelte sole; fatta, niente; le altre azioni 
 });
 
 prova('«Ordine fatto» dalla carta = «Ordine fatto» della vendita (ordinata_il), poi si ridisegna', async () => {
-  const b = banco({ vendita: { id: 'v1', data: '2026-10-11', prodotto: 'Filtro', consegna: '2027-05-20' }, modulo: { giorno: '2026-10-12' } });
+  const b = banco({ vendita: { id: 'v1', data: '2026-10-11', prodotto: 'Filtro', vp: 300, consegna: '2027-05-20' }, modulo: { giorno: '2026-10-12', vp: '280,5' } });
   await b.ctx.consegnaDaCarta(consegna, 'fatta', b.dopo);
-  assert.deepEqual(JSON.parse(JSON.stringify(b.scritte)), [{ ordinata_il: '2026-10-12' }]);
+  assert.deepEqual(JSON.parse(JSON.stringify(b.scritte)), [{ ordinata_il: '2026-10-12', vp: 280.5 }]);   // nota 099: anche i VP dell'ordine, corretti
   assert.equal(b.ridisegni(), 1); assert.match(b.avvisi.at(-1), /Ordine segnato/);
 });
 

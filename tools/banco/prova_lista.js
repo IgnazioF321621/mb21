@@ -368,7 +368,8 @@ prova('Vendite: la promo differita conta solo con «Ordine fatto»; prima è «d
     { vp: 20, provvigione: 9, guadagno_netto: 9, data: '2026-05-01', consegna: '2026-08-01', ordinata_il: '2026-08-20', riordino: '2027-08-01' },   // ordine fatto
   ];
   const t = L.totaliVendite(v);
-  assert.equal(t.vp, 170); assert.equal(t.provvigione, 76); assert.equal(L.numero(t.attesaVp), '206,94');
+  // nota 099 (Ignazio 27/10): i VP solo con l'ordine fatto; provvigione e guadagno netto di tutte (sono già pagate)
+  assert.equal(t.vp, 170); assert.equal(t.provvigione, 169); assert.equal(t.netto, 109); assert.equal(L.numero(t.attesaVp), '206,94');
   assert.equal(L.daConsegnare(v[1]), true); assert.equal(L.daConfermare(v[1], oggi), false);
   assert.equal(L.daConsegnare(v[3]), true); assert.equal(L.daConfermare(v[3], oggi), true);
   assert.equal(L.daConsegnare(v[4]), false); assert.equal(L.daConsegnare(v[0]), false);
@@ -853,7 +854,7 @@ prova('Nota 052: gli importi scritti a mano (prezzo al pubblico, incassato): vuo
   assert.ok(Number.isNaN(L.importo('-3'))); assert.ok(Number.isNaN(L.importo('abc')));
   const ven = require('node:fs').readFileSync(require('node:path').join(__dirname, '../../pagina-vendite.js'), 'utf8');
   assert.match(ven, /<label>Prezzo al pubblico \(€\)<\/label>/);
-  assert.match(ven, /<h4 class="mc-t">Importi<\/h4>/); assert.doesNotMatch(ven, /eAdmin\(\) \? `<h4 class="mc-t">Incasso|Per ora lo vedi solo tu/);   // aperto a tutti (Ignazio 13/10)
+  assert.match(ven, /<h4 class="mc-t">💶 Pagamento<\/h4>/); assert.doesNotMatch(ven, /eAdmin\(\) \? `<h4 class="mc-t">Incasso|Per ora lo vedi solo tu/);   // aperto a tutti (Ignazio 13/10)
   assert.match(ven, /select\('pagato_con, incassato, prezzo_pubblico'\)/); assert.doesNotMatch(ven, /select\('[^']*wallet|riga\.wallet/);   // i dati di Wallet non compaiono
 });
 
@@ -870,9 +871,9 @@ prova('Nota 052 (Ignazio 13/10, «A e B»): la riga del prezzo, nel modulo e sot
 prova('Nota 053 e V3 (Ignazio 14/10 e 22/10): il modulo vendita — che cosa (con la data) · i soldi · consegna e riordino chiusi, con i campi al loro posto', () => {
   const ven = require('node:fs').readFileSync(require('node:path').join(__dirname, '../../pagina-vendite.js'), 'utf8');
   const pos = t => { const i = ven.indexOf(t); assert.ok(i > 0, t); return i; };
-  const ordine = ['>Che cosa hai venduto<', 'data-brand=', 'id="v-prodotto"', '>Importi<', 'id="v-vp"', 'id="v-prezzo"', 'id="v-incassato"', 'id="v-sconto"', 'id="v-sconto-come"', 'id="v-riga-prezzo"', 'data-pagato="Contanti"',   // nota 067 (Ignazio 20/10): prezzo → incassato → sconto, «Come ha pagato» in fondo
-    'data-apri="consegna"', 'data-quando="subito"', 'id="v-consegna"', 'data-apri="riordino"', 'id="v-riordino"', 'id="elimina"', 'id="invia"'].map(pos);
-  assert.ok(pos('id="v-data"') > pos('id="v-prodotto"') && pos('id="v-data"') < pos('>Importi<'));   // V3: la data con «Che cosa hai venduto»
+  // nota 099 (Ignazio 27/10): «💶 Pagamento» (la data, i soldi, la provvigione stimata) e «📦 Ordine» (subito o più avanti, i VP); stessi campi
+  const ordine = ['>Che cosa hai venduto<', 'data-brand=', 'id="v-prodotto"', '>💶 Pagamento<', 'id="v-data"', 'id="v-prezzo"', 'id="v-incassato"', 'id="v-sconto"', 'id="v-sconto-come"', 'id="v-riga-prezzo"', 'data-pagato="Contanti"',   // nota 067 (Ignazio 20/10): prezzo → incassato → sconto, «Come ha pagato» in fondo
+    'id="v-provv"', '>📦 Ordine<', 'data-quando="subito"', 'id="v-consegna"', 'id="v-vp"', 'data-apri="riordino"', 'id="v-riordino"', 'id="elimina"', 'id="invia"'].map(pos);
   assert.deepEqual(ordine, [...ordine].sort((x, y) => x - y));
   assert.doesNotMatch(ven, />Quando<\/h4>|>Incasso<\/h4>|>Il prossimo riordino<\/h4>|>I tempi<\/h4>/);
 });

@@ -131,18 +131,18 @@ prova('V2: riaprendo una vendita «Fra 2 mesi» si ritrova «Fra 2 mesi»; una v
 });
 
 // ── V3 (Verifica Vendite, Ignazio 22/10): modulo più corto, le voci per il calcolo sempre in vista, consegna e riordino chiusi con la scelta messa ──
-prova('V3: brand, prodotti, data, VP, prezzo, incassato e sconto fuori dai gruppi chiusi; consegna chiusa su «Subito»; riordino da scegliere aperto', async () => {
+prova('V3 e 099: brand, prodotti, data, VP, prezzo, incassato e sconto fuori dai gruppi chiusi; l\'ordine sempre in vista su «Subito»; riordino da scegliere aperto', async () => {
   const s = await apri(null, true); base(s);
   const h = s.f.innerHTML, gruppi = h.indexOf('vn-gruppi');
   for (const id of ['v-prodotto', 'v-data', 'v-vp', 'v-prezzo', 'v-incassato', 'v-sconto']) assert.ok(h.indexOf(`id="${id}"`) > 0 && h.indexOf(`id="${id}"`) < gruppi, id);
   assert.ok(h.indexOf('data-brand') < gruppi);
   await new Promise(r => setTimeout(r, 0));
-  assert.equal(s.$('v-dentro-consegna').style.display, 'none'); assert.equal(s.$('v-sunto-consegna').textContent, 'Subito');
+  assert.equal(s.$('v-consegna-campo').style.display, 'none'); assert.doesNotMatch(h, /data-apri="consegna"|v-sunto-consegna/);   // nota 099: «📦 Ordine» sempre aperto, su «Subito»
   assert.equal(s.$('v-dentro-riordino').style.display, ''); assert.equal(s.$('v-sunto-riordino').textContent, 'Facoltativo');
   scegli(s.f, 'riordino', 'fra'); scegli(s.f, 'mesi', 3);
   assert.equal(s.$('v-sunto-riordino').textContent, 'Fra 3 mesi · il 20/01/2027');
 });
-prova('V3: con la proposta il riordino è già chiuso con la scelta in vista; «Più avanti» senza data riapre la consegna', async () => {
+prova('V3: con la proposta il riordino è già chiuso con la scelta in vista; «Più avanti» senza data lo dice', async () => {
   const s = await apri(null, true, [{ prodotto: 'filtro di ricambio', brand: L.BRAND[0][0], data: '2025-03-01', riordino: '2026-03-01' }]); base(s);
   await new Promise(r => setTimeout(r, 0));
   assert.equal(s.$('v-dentro-riordino').style.display, 'none'); assert.equal(s.$('v-sunto-riordino').textContent, 'Fra 12 mesi · il 20/10/2027');
@@ -150,7 +150,7 @@ prova('V3: con la proposta il riordino è già chiuso con la scelta in vista; «
   assert.equal(s.$('v-dentro-riordino').style.display, ''); assert.equal(s.$('v-freccia-riordino').textContent, '⌃');
   s.f.querySelectorAll('[data-quando]').find(b => b.dataset.quando === 'dopo').onclick();
   await s.$('invia').onclick();
-  assert.equal(s.avvisi.at(-1), 'Scrivi quando consegni'); assert.equal(s.$('v-dentro-consegna').style.display, '');
+  assert.equal(s.avvisi.at(-1), 'Scrivi quando consegni'); assert.equal(s.$('v-consegna-campo').style.display, '');
 });
 
 prova('V4 (Ignazio 22/10): un cliente con l\'account cliente parte su «Nessun riordino», anche con lo storico; si può cambiare', async () => {
@@ -210,11 +210,11 @@ prova('082: la vista vendite_conti ha la stessa regola (migrazione con la defini
   assert.doesNotMatch(crea, /drop |grant |revoke /i);
 });
 
-prova('078: «Importi», campi affiancati, niente «Obbligatorio» né spiegazioni lunghe, la riga grigia dei brand, la riga del riordino è la domanda', async () => {
+prova('078 e 099: «💶 Pagamento» e «📦 Ordine», campi affiancati, niente «Obbligatorio» né spiegazioni lunghe, la riga grigia dei brand, la riga del riordino è la domanda', async () => {
   const s = await apri(null, true), h = s.f.innerHTML;
-  assert.match(h, /<h4 class="mc-t">Importi<\/h4>/); assert.doesNotMatch(h, /I soldi|Obbligatorio|Quanto costava al pubblico|Quanto ha pagato il cliente|vn-avviso/);
+  assert.match(h, /<h4 class="mc-t">💶 Pagamento<\/h4>/); assert.match(h, /<h4 class="mc-t">📦 Ordine<\/h4>/); assert.doesNotMatch(h, /Importi|I soldi|Obbligatorio|Quanto costava al pubblico|Quanto ha pagato il cliente|vn-avviso/);
   assert.match(h, /<div class="vn-aiuto">Un brand per vendita: Nutrilite \+ Artistry = 2 vendite<\/div>/);
-  assert.match(h, /<div class="vn-due"><div class="campo"><label>Prodotto\/i<\/label><input id="v-prodotto"[\s\S]*?<label>Data<\/label><input id="v-data"/);
+  assert.match(h, /<label>Prodotto\/i<\/label><input id="v-prodotto"[\s\S]*?💶 Pagamento<\/h4><div class="riquadro mc-g">\s*<div class="campo"><label>Quando ha pagato<\/label><input id="v-data"/);   // nota 099: la data è quella del pagamento
   assert.match(h, /<div class="vn-due meta"><div class="campo"><label>Prezzo al pubblico \(€\)<\/label><input id="v-prezzo"[\s\S]*?<label>Incassato \(€\)<\/label><input id="v-incassato"/);
   assert.match(h, /data-apri="riordino"><span>Quando lo risento\?<\/span>/); assert.doesNotMatch(h, /<span>Riordino<\/span>/);
   assert.match(h, /data-pagato="Contanti">Contanti<\/button><button type="button" data-pagato="Bonifico">/); assert.doesNotMatch(h, /data-pagato="Contanti" class="scelto"/);   // nessun modo già scelto
@@ -333,6 +333,26 @@ prova('078: nella linguetta Vendite il tasto sta subito sotto «Nuova vendita»,
   ctx.LS.stessoOrdine = { contattoId: 'altro', data: '2026-10-15' }; await ctx.sez();
   assert.doesNotMatch(box.querySelector('#sezione').innerHTML, /vendita-stesso/);
   assert.match(fs.readFileSync(path.join(__dirname, '../../pagina-lista.js'), 'utf8'), /LS\.accountLettura = null; LS\.stessoOrdine = null;/);   // apriScheda lo chiude
+});
+
+prova('099: nella scheda ogni vendita ha due righe, «💶 Pagata il …» e «📦 Ordine del …» (o «Ordine previsto il …»); provvigione di tutte, VP degli ordini fatti', async () => {
+  const box = new Nodo(); box.innerHTML = '<div id="sezione"></div>';
+  const c = { id: 'c1', nome: 'Cliente A', categoria: 'Cliente' };
+  const vendite = [
+    { id: 'v2', data: '2026-10-20', brand: 'Nutrilite/XS', prodotto: 'Prodotto B', vp: 42.5, sconto: 0, consegna: '2026-11-15', ordinata_il: null, conta_il: null, provvigione: 9, guadagno_netto: 9, incassato: 90 },
+    { id: 'v1', data: '2026-01-12', brand: 'eSpring', prodotto: 'Prodotto A', vp: 45, sconto: 0, consegna: '2026-10-20', ordinata_il: '2026-10-27', conta_il: '2026-10-27', provvigione: 18, guadagno_netto: 12, incassato: 120 },
+  ];
+  const ctx = { MB21Lista: L, MB21Coda: { oggiRoma: () => '2026-10-24' }, esc, ic: n => `[${n}]`, LS: { contatto: c, sezione: 'vendite' },
+    venditeDellaScheda: async () => vendite, moduloVendita() {}, ordineFatto() {}, document: { getElementById: id => box.querySelector('#' + id) },
+    guardoAltri: () => false, vediTutti: () => false, nomeVisto: () => '', apriProvvigioniDa() {} };
+  vm.createContext(ctx);
+  const da = src.indexOf('async function sezioneVendite'); vm.runInContext(src.slice(da, src.indexOf('\n}\n', da) + 3) + ';this.sez = sezioneVendite;', ctx);
+  await ctx.sez();
+  const h = box.querySelector('#sezione').innerHTML;
+  assert.match(h, /<span>VP Totali<\/span><b>45,00<\/b>[\s\S]*?<span>Provvigione<\/span><b>27,00 €<\/b>/);   // i VP solo dell'ordine fatto; la provvigione di tutte e due (pagate)
+  assert.match(h, /<div class="vn-momento">💶 Pagata il 12\/01\/2026 · incassato 120,00 € · provvigione 18,00 €<\/div>\s*<div class="vn-momento">📦 Ordine del 27\/10\/2026 · 45,00 VP<\/div>/);
+  assert.match(h, /<div class="vn-momento">💶 Pagata il 20\/10\/2026 · incassato 90,00 € · provvigione 9,00 €<\/div>\s*<div class="vn-momento vn-attesa">📦 Ordine previsto il 15\/11\/2026 · VP all'ordine<\/div>/);
+  assert.equal((h.match(/data-ordine="/g) || []).length, 1);   // «Ordine fatto» solo sulla promo da ordinare
 });
 
 // ── Nota Pagine 079 (Ignazio 24/10): il cliente che ordina da solo dal suo account ──

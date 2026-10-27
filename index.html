@@ -464,6 +464,9 @@
   .vn-due.meta { grid-template-columns: 1fr 1fr; }
   .vn-due > .campo { min-width: 0; }
   .vn-provv { margin-top: 4px; font-weight: 600; }
+  /* nota 099: i due momenti di una vendita nella scheda (💶 pagamento, 📦 ordine) */
+  .vn-momento { font-size: 13px; color: var(--testo-soft); margin-top: 3px; line-height: 1.35; }
+  .vn-prodotto .vn-brand { vertical-align: 2px; }
   .vn-netto { margin-top: 6px; font-weight: 600; }
   .vn-netto small { display: block; font-weight: 400; color: var(--testo-tenue); }
   .vn-sito { padding: 10px 2px 4px; }
@@ -3469,7 +3472,7 @@ function collegaEsiti(el, a, contatto, dopo) {
 // lo segue da solo (trigger mb21_vendita_agenda), quindi la scheda Vendite, MB Plan e gli avvisi dicono la data nuova.
 async function consegnaDaCarta(a, cosa, dopo) {
   if (soloGuardo()) return;
-  const { data: v, error } = await dbq('vendita della consegna', supa.from('vendite').select('id, data, prodotto, consegna, ordinata_il').eq('azione_consegna_id', a.id).maybeSingle());
+  const { data: v, error } = await dbq('vendita della consegna', supa.from('vendite').select('id, data, prodotto, vp, consegna, ordinata_il').eq('azione_consegna_id', a.id).maybeSingle());
   if (error || !v) return mostraToast('Vendita non trovata: si cambia dalla scheda, in Vendite.');
   const persona = a.contatti ? { nome: a.contatti.nome, categoria: a.contatti.categoria } : null;   // nota 094 M3: chi, in testa al modulo
   if (cosa === 'fatta') return segnaOrdineFatto(v, dopo, persona);
@@ -5088,6 +5091,7 @@ function collegaReport() {
 // ── Linguetta «Provvigioni» del Report (nota Pagine 074, Ignazio 22-24/10) ── il Report ha due linguette: «Azioni» (com'è, anno settembre-agosto) e
 // «Provvigioni». La vedono tutti, ognuno le sue; l'Admin col Partner Select quelle della persona scelta. Mese con ‹ ›: i tre totali della scheda › Vendite
 // (MB21Lista.totaliVendite), la riga «Incassato · Sconti · N pagate sul sito», poi «Le vendite del mese» (un tocco apre la scheda › Vendite).
+// Nota 099 (Ignazio 27/10): VP nel mese dell'ordine, soldi e provvigione nel mese del pagamento (MB21Lista.provvigioniMese, momentoNelMese).
 // Anno solare (gennaio-dicembre), in cima «2026»: i totali e dodici righe, una per mese (un tocco apre il mese). I conti in lista.js (provvigioniMese,
 // provvigioniAnno). Dati: vendite_conti (la provvigione si calcola solo lì) più incasso e cliente da vendite, letti per anno solo quando la linguetta
 // si apre (costo zero), tenuti 5 minuti come il Report e riletti dopo una scrittura. Niente database nuovo.
@@ -5117,14 +5121,14 @@ async function tutteLeRighe(cosa, fai) {
     if (data.length < 1000) return righe;
   }
 }
-// Le vendite di un anno di chi si guarda: quelle che contano nell'anno (conta_il: la data della vendita o, per la consegna differita, quella
-// dell'«Ordine fatto») e quelle ancora da consegnare vendute nell'anno. In più il giorno della prima vendita, per sapere fin dove si torna indietro.
+// Le vendite di un anno di chi si guarda: quelle pagate nell'anno (data) e quelle ordinate nell'anno (ordinata_il, la consegna differita; nota 099:
+// una promo pagata a dicembre e ordinata a gennaio sta in tutti e due gli anni). In più il giorno della prima vendita, per sapere fin dove si torna indietro.
 async function venditeAnno(anno) {
   const chi = idVisti(), chiave = chi.join(',') + '|' + anno;
   const c = PV.anni[chiave];
   if (c && SCRITTURE.ultima < c.letta && Date.now() - c.letta < 5 * 60000) return c.righe;
   const da = `${anno}-01-01`, a = `${anno + 1}-01-01`;
-  const filtro = `and(consegna.is.null,data.gte.${da},data.lt.${a}),and(ordinata_il.gte.${da},ordinata_il.lt.${a}),and(consegna.not.is.null,ordinata_il.is.null,data.gte.${da},data.lt.${a})`;
+  const filtro = `and(data.gte.${da},data.lt.${a}),and(ordinata_il.gte.${da},ordinata_il.lt.${a})`;
   const [conti, incassi, primo] = await Promise.all([
     tutteLeRighe('provvigioni dell\'anno', () => supa.from('vendite_conti').select('id, contatto_id, data, brand, prodotto, vp, sconto, consegna, ordinata_il, conta_il, provvigione, guadagno_netto')
       .in('user_id', chi).or(filtro)),
@@ -5195,11 +5199,17 @@ async function disegnaProvvigioni() {
       ${t.attesaVp ? `<div class="vn-riga-info">${ic('consegna')} Da consegnare: ${n(t.attesaVp)} VP · contano quando tocchi «Ordine fatto»</div>` : ''}
       ${vendite ? gruppiVendite(m, oggi) : ''}
       <h2 class="ck-sezione">Le vendite del mese</h2>
-      ${m.vendite.length ? `<div class="riquadro vn-elenco">${m.vendite.map(v => `<button class="vn-riga pv-vendita ${classeCat(v.categoria)}" data-pvcontatto="${esc(v.contatto_id)}">
+      ${m.vendite.length ? `<div class="riquadro vn-elenco">${m.vendite.map(v => { const mo = L.momentoNelMese(v, m.ym);
+        // nota 099: nel mese del pagamento i soldi e «VP all'ordine»; nel mese dell'ordine solo i VP («già pagata»); tutti e due nel mese: la riga di prima
+        const quando = mo === 'pagamento' ? `💶 pagata il ${esc(L.data(v.data))}${v.conta_il ? ` · 📦 ordine il ${esc(L.data(v.conta_il))}` : ''}`
+          : mo === 'ordine' ? `📦 ordine del ${esc(L.data(v.conta_il))} · pagata il ${esc(L.data(v.data))}`
+          : `${esc(L.data(v.data))}${v.ordinata_il ? ' · ordine del ' + esc(L.data(v.ordinata_il)) : ''}`;
+        const numeri = mo === 'pagamento' ? `<b>${n(v.provvigione, true)}</b><span>VP all'ordine</span>` : mo === 'ordine' ? `<b>${n(v.vp)} VP</b><span>già pagata</span>` : `<b>${n(v.vp)} VP</b><span>${n(v.provvigione, true)}</span>`;
+        return `<button class="vn-riga pv-vendita ${classeCat(v.categoria)}" data-pvcontatto="${esc(v.contatto_id)}">
         <span class="rp-chi"><i class="rp-tondo">${esc(iniziali(v.nome))}</i><span><span class="pv-nome">${esc(v.nome)}${v.sulSito ? ' <span class="sv-targa account">sul sito</span>' : ''}</span>
-          <span class="vn-sotto"><span class="vn-brand" style="background:${L.coloreBrand(v.brand)}">${esc(v.brand)}</span>${esc(L.data(v.data))}${v.ordinata_il ? ' · ordine del ' + esc(L.data(v.ordinata_il)) : ''}</span>
+          <span class="vn-sotto"><span class="vn-brand" style="background:${L.coloreBrand(v.brand)}">${esc(v.brand)}</span>${quando}</span>
           ${L.daConsegnare(v) ? `<span class="vn-attesa ${L.daConfermare(v, oggi) ? 'tardi' : ''}">${ic('consegna')} consegna prevista il ${esc(L.data(v.consegna))}${L.daConfermare(v, oggi) ? ' · da confermare' : ''}</span>` : ''}</span></span>
-        <span class="vn-numeri"><b>${n(v.vp)} VP</b><span>${n(v.provvigione, true)}</span></span></button>`).join('')}</div>`
+        <span class="vn-numeri">${numeri}</span></button>`; }).join('')}</div>`
       : `<div class="vuoto">Nessuna vendita in ${esc(R.testoPeriodo(R.periodoMese(PV.mese)).toLowerCase())}.</div>`}`;
   }
   app.innerHTML = html + versione();

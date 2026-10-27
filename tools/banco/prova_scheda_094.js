@@ -168,7 +168,7 @@ prova('M3 e M4: moduloSemplice mostra la persona solo se chi lo apre la passa; Â
   assert.equal(f.querySelector('#si').textContent, 'Scegli la traccia');
   // chi apre un modulo che riguarda una persona la passa; gli altri no
   for (const [file, testo] of [['pagina-lista.js', "{ persona: c });"], ['pagina-lista.js', "], { persona: LS.contatto, ...(n ? { elimina: 'Elimina nota' } : {}) });"],
-    ['pagina-sharing.js', "], { persona: c, elimina: 'Elimina questa condivisione' });"], ['pagina-vendite.js', "manca: 'Scegli il giorno' }], { persona });"], ['index.html', "manca: 'Scegli il giorno' }], { persona });"]]) assert.ok(leggi(file).includes(testo), file + ' ' + testo);
+    ['pagina-sharing.js', "], { persona: c, elimina: 'Elimina questa condivisione' });"], ['pagina-vendite.js', "manca: 'Scrivi i VP dell\\'ordine' }], { persona });"], ['index.html', "manca: 'Scegli il giorno' }], { persona });"]]) assert.ok(leggi(file).includes(testo), file + ' ' + testo);
   assert.match(leggi('pagina-libri.js'), /moduloSemplice\('Un libro giÃ  letto', \[\n[^\n]*vuoto: 'Scegli il libro', manca: 'Scegli il libro' \},/);
   assert.doesNotMatch(PL, /const p = LS\.contatto;\n    velo\.innerHTML = `<div class="foglio alto mc">/);
 });

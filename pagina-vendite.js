@@ -27,9 +27,10 @@ async function venditeDellaScheda(c) {
   // il prezzo al pubblico (nota 052) sta sulla vendita, non nella vista vendite_conti: una lettura piccola, solo le vendite che lo hanno;
   // se non va (campo non ancora nel database) le vendite si vedono come prima
   // (con la nota 054 anche «a rottura» e «di solito dura»: dalla V2b si leggono solo per riaprire la vendita come «nessun riordino»)
-  const pz = await dbq('prezzi al pubblico', supa.from('vendite').select('id, prezzo_pubblico, riordino_a_rottura, durata_mesi').eq('contatto_id', c.id)
-    .or('prezzo_pubblico.not.is.null,riordino_a_rottura.eq.true,durata_mesi.not.is.null'));   // V2: anche «Fra N mesi» (durata_mesi)
-  if (!pz.error && Array.isArray(pz.data)) { const di = new Map(pz.data.map(x => [x.id, x])); data.forEach(v => { const x = di.get(v.id); if (x) Object.assign(v, { prezzo_pubblico: x.prezzo_pubblico, riordino_a_rottura: x.riordino_a_rottura, durata_mesi: x.durata_mesi }); }); }
+  // nota 099: anche l'incassato, per la riga «💶 Pagata il … · incassato …»
+  const pz = await dbq('prezzi al pubblico', supa.from('vendite').select('id, prezzo_pubblico, riordino_a_rottura, durata_mesi, incassato').eq('contatto_id', c.id)
+    .or('prezzo_pubblico.not.is.null,riordino_a_rottura.eq.true,durata_mesi.not.is.null,incassato.not.is.null'));   // V2: anche «Fra N mesi» (durata_mesi)
+  if (!pz.error && Array.isArray(pz.data)) { const di = new Map(pz.data.map(x => [x.id, x])); data.forEach(v => { const x = di.get(v.id); if (x) Object.assign(v, { prezzo_pubblico: x.prezzo_pubblico, riordino_a_rottura: x.riordino_a_rottura, durata_mesi: x.durata_mesi, incassato: x.incassato }); }); }
   if (LS.contatto === c) LS.vendite = data;
   return data;
 }
@@ -42,6 +43,8 @@ async function sezioneVendite() {
   if (LS.contatto !== c || LS.sezione !== 'vendite') return;
   if (!vendite) { box.innerHTML = '<div class="avviso">Non riesco a caricare le vendite.</div>'; return; }
   const oggi = MB21Coda.oggiRoma();
+  // Nota Pagine 099 (Ignazio 27/10): ogni vendita con i suoi due momenti, «💶 Pagata il … · incassato … · provvigione …» e «📦 Ordine del … · N VP» (o «Ordine
+  // previsto il …»), con la stessa funzione della pagina Vendite (MB21Lista.momentiVendita); provvigione e guadagno netto di tutte, i VP solo degli ordini fatti
   const t = MB21Lista.totaliVendite(vendite), n = MB21Lista.numero, prossimo = MB21Lista.prossimoRiordino(vendite, oggi);
   // Un archiviato si lavora come gli altri (Ignazio 05/10 sera: «si possono servire»): è solo fuori dalla Lista senza ricerca e dalla coda.
   // Nota Pagine 078 (Ignazio 24/10): dopo il «Salva» di una vendita nuova, subito sotto «Nuova vendita», «Stesso ordine: aggiungi un altro brand»:
@@ -59,12 +62,11 @@ async function sezioneVendite() {
     ${prossimo ? `<div class="vn-riga-info">${ic('riordini')} Prossimo riordino · ${esc(prossimo.brand)} · ${esc(MB21Lista.data(prossimo.riordino))}</div>` : ''}` + (vendite.length ? `<div class="riquadro vn-elenco">${vendite.map(v => `
       <button class="vn-riga" data-vendita="${v.id}">
         <div>
-          <div class="vn-prodotto">${esc(v.prodotto)}</div>
-          <div class="vn-sotto"><span class="vn-brand" style="background:${MB21Lista.coloreBrand(v.brand)}">${esc(v.brand)}</span>${esc(MB21Lista.data(v.data))}${Number(v.sconto) && !MB21Lista.rigaPrezzo(v.prezzo_pubblico, v.sconto) ? ' · sconto ' + n(v.sconto, true) : ''}${v.ordinata_il ? ' · ordine del ' + esc(MB21Lista.data(v.ordinata_il)) : ''}</div>
-          ${MB21Lista.rigaPrezzo(v.prezzo_pubblico, v.sconto) ? `<div class="vn-prezzo">${esc(MB21Lista.rigaPrezzo(v.prezzo_pubblico, v.sconto))}</div>` : ''}
-          ${MB21Lista.daConsegnare(v) ? `<div class="vn-attesa ${MB21Lista.daConfermare(v, oggi) ? 'tardi' : ''}">${ic('consegna')} consegna prevista il ${esc(MB21Lista.data(v.consegna))}${MB21Lista.daConfermare(v, oggi) ? ' · da confermare' : ''}</div>` : ''}
+          <div class="vn-prodotto"><span class="vn-brand" style="background:${MB21Lista.coloreBrand(v.brand)}">${esc(v.brand)}</span>${esc(v.prodotto)}</div>
+          ${(m => `<div class="vn-momento">💶 ${esc(m.pagamento)}</div>
+          <div class="vn-momento${MB21Lista.daConsegnare(v) ? ` vn-attesa${MB21Lista.daConfermare(v, oggi) ? ' tardi' : ''}` : ''}">📦 ${esc(m.ordine)}${MB21Lista.daConfermare(v, oggi) ? ' · da confermare' : ''}</div>`)(MB21Lista.momentiVendita(v))}
+          ${MB21Lista.rigaPrezzo(v.prezzo_pubblico, v.sconto) ? `<div class="vn-prezzo">${esc(MB21Lista.rigaPrezzo(v.prezzo_pubblico, v.sconto))}</div>` : Number(v.sconto) ? `<div class="vn-prezzo">Sconto ${n(v.sconto, true)}</div>` : ''}
         </div>
-        <div class="vn-numeri"><b>${n(v.vp)} VP</b><span>${n(v.provvigione, true)}</span></div>
       </button>${MB21Lista.daConsegnare(v) ? `<button class="vn-fatto" data-ordine="${v.id}">${ic('consegna')} Ordine fatto</button>` : ''}`).join('')}</div>` : '<div class="vuoto">Nessuna vendita registrata.</div>');
   const p = document.getElementById('vendita-piu');
   if (p) p.onclick = () => moduloVendita(null);
@@ -78,14 +80,18 @@ async function sezioneVendite() {
 }
 
 // «📦 Ordine fatto»: la promo differita conta da QUESTO giorno (quello vero, non quello previsto). Si propone oggi, si può correggere.
+// Nota 099 (Ignazio 27/10): anche «Quanti VP ha l'ordine?», già scritto con i VP della vendita: se l'ordine è diverso si corregge (vendite.vp).
 async function ordineFatto(v) { return segnaOrdineFatto(v, disegnaScheda, LS.contatto); }
 // «Ordine fatto» dalla riga della vendita o dalla carta «Consegna» in Azioni (nota 051; V1 22/10: lo stesso nome in tutti e due): un modulo solo; `dopo` ridisegna chi l'ha aperto
 async function segnaOrdineFatto(v, dopo, persona) {   // persona: chi ha comprato, in testa al modulo (nota 094 M3)
   if (soloGuardo()) return;
-  const valori = await moduloSemplice('Quando hai fatto l\'ordine?', [{ k: 'giorno', etichetta: `${v.prodotto} · i VP contano da questo giorno`, tipo: 'date', valore: MB21Coda.oggiRoma(), obbligatorio: true, manca: 'Scegli il giorno' }], { persona });
+  const valori = await moduloSemplice('Quando hai fatto l\'ordine?', [{ k: 'giorno', etichetta: `${v.prodotto} · i VP contano da questo giorno`, tipo: 'date', valore: MB21Coda.oggiRoma(), obbligatorio: true, manca: 'Scegli il giorno' },
+    { k: 'vp', etichetta: 'Quanti VP ha l\'ordine?', tipo: 'text', valore: v.vp == null ? '' : MB21Lista.numero(v.vp).replace(/\./g, ''), obbligatorio: true, manca: 'Scrivi i VP dell\'ordine' }], { persona });
   if (!valori) return;
   if (valori.giorno < v.data) return mostraToast('L\'ordine è prima della vendita');
-  const { error } = await dbq('ordine fatto', supa.from('vendite').update({ ordinata_il: valori.giorno }).eq('id', v.id));
+  const vp = MB21Lista.importo(valori.vp);
+  if (vp == null || !isFinite(vp) || vp < 0) return mostraToast('Scrivi i VP dell\'ordine');
+  const { error } = await dbq('ordine fatto', supa.from('vendite').update({ ordinata_il: valori.giorno, vp: Math.round(vp * 100) / 100 }).eq('id', v.id));
   if (error) return mostraToast('Non salvato: riprova.');
   LS.vendite = null; LS.azioni = null; CK.giorni = null;   // i VP Clienti del Check vengono dalle vendite
   mostraToast('Ordine segnato: i VP ora contano');
@@ -140,12 +146,13 @@ async function moduloVendita(v, proposta) {
       <div class="campo"><label>Brand</label>
         <div class="vn-brand-scelta">${MB21Lista.BRAND.map(([b, col]) => `<button type="button" data-brand="${esc(b)}" style="--col:${col}">${esc(b)}</button>`).join('')}</div>
         ${v ? '' : '<div class="vn-aiuto">Un brand per vendita: Nutrilite + Artistry = 2 vendite</div>'}</div>
-      <div class="vn-due"><div class="campo"><label>Prodotto/i</label><input id="v-prodotto" maxlength="50" value="${esc(v ? v.prodotto : (proposta && proposta.prodotto) || '')}"><div class="conta" id="v-conta"></div></div>
-        <div class="campo"><label>Data</label><input id="v-data" type="date" value="${esc(v ? v.data : (proposta && proposta.data) || MB21Coda.oggiRoma())}"></div></div>
+      <div class="campo"><label>Prodotto/i</label><input id="v-prodotto" maxlength="50" value="${esc(v ? v.prodotto : (proposta && proposta.prodotto) || '')}"><div class="conta" id="v-conta"></div></div>
     </div>
 
-    <h4 class="mc-t">Importi</h4><div class="riquadro mc-g">
-      <div class="campo"><label>VP di vendita${!v && proposta && proposta.vpDi ? ` <small>come l'ordine del ${esc(MB21Lista.data(proposta.vpDi))}</small>` : ''}</label><input id="v-vp" inputmode="decimal" placeholder="0,00" value="${v ? MB21Lista.numero(v.vp).replace(/\./g, '') : proposta && proposta.vp != null ? MB21Lista.numero(proposta.vp).replace(/\./g, '') : ''}"><div class="vn-aiuto vn-provv" id="v-provv" hidden></div></div>
+    <!-- Nota Pagine 099 (Ignazio 27/10): due gruppi, «💶 Pagamento» (quando ha pagato = la data della vendita, i soldi, la provvigione stimata) e
+         «📦 Ordine» (subito o più avanti, i VP, ordine fatto il): gli stessi campi e gli stessi id di prima, solo raccolti così -->
+    <h4 class="mc-t">💶 Pagamento</h4><div class="riquadro mc-g">
+      <div class="campo"><label>Quando ha pagato</label><input id="v-data" type="date" value="${esc(v ? v.data : (proposta && proposta.data) || MB21Coda.oggiRoma())}"></div>
       <div id="v-soldi"${sulSito ? ' hidden' : ''}>
       <div class="vn-due meta"><div class="campo"><label>Prezzo al pubblico (€)</label><input id="v-prezzo" inputmode="decimal" placeholder="0,00"></div>
         <div class="campo"><label>Incassato (€)</label><input id="v-incassato" inputmode="decimal" placeholder="0,00"></div></div>
@@ -157,17 +164,18 @@ async function moduloVendita(v, proposta) {
         <div class="vn-quando"><button type="button" data-pagato="Contanti">Contanti</button><button type="button" data-pagato="Bonifico">Bonifico</button></div></div>
       </div>
       <div class="vn-sito" id="v-sito"${sulSito ? '' : ' hidden'}><b>Ordine pagato sul sito</b><small>Il cliente paga dal suo account: a te va la provvigione.</small></div>
+      <div class="vn-aiuto vn-provv" id="v-provv" hidden></div>
     </div>
 
-    <!-- V3 (Verifica Vendite, Ignazio 22/10): consegna e riordino chiusi, con la scelta già messa in vista; si aprono al tocco -->
-    <div class="riquadro mc-g vn-gruppi">
-      <button type="button" class="vn-apri" data-apri="consegna"><span>Consegna</span><b id="v-sunto-consegna"></b><em id="v-freccia-consegna">›</em></button>
-      <div id="v-dentro-consegna">
-      <div class="campo"><label>Quando consegni?</label>
-        <div class="vn-quando"><button type="button" data-quando="subito">Subito</button><button type="button" data-quando="dopo">Più avanti</button></div></div>
+    <h4 class="mc-t">📦 Ordine</h4><div class="riquadro mc-g">
+      <div class="campo"><label>Quando fai l'ordine?</label>
+        <div class="vn-quando"><button type="button" data-quando="subito">Subito</button><button type="button" data-quando="dopo">Più avanti il…</button></div></div>
       <div class="campo" id="v-consegna-campo"><label>Quando fai l'ordine e consegni?</label><div class="vn-aiuto">I VP si contano quando fai l'ordine, non oggi. Scrivi quando pensi di farlo: l'Agenda te lo ricorda.</div><input id="v-consegna" type="date" value="${esc(v && v.consegna ? v.consegna : '')}">
         ${v && v.consegna ? `<label style="margin-top:8px">Ordine fatto il</label><div class="vn-aiuto">Vuoto = ancora da consegnare.</div><input id="v-ordinata" type="date" value="${esc(v.ordinata_il || '')}">` : ''}</div>
-      </div>
+      <div class="campo"><label>VP di vendita${!v && proposta && proposta.vpDi ? ` <small>come l'ordine del ${esc(MB21Lista.data(proposta.vpDi))}</small>` : ''}</label><input id="v-vp" inputmode="decimal" placeholder="0,00" value="${v ? MB21Lista.numero(v.vp).replace(/\./g, '') : proposta && proposta.vp != null ? MB21Lista.numero(proposta.vp).replace(/\./g, '') : ''}"></div>
+    </div>
+
+    <div class="riquadro mc-g vn-gruppi">
       <button type="button" class="vn-apri" data-apri="riordino"><span>Quando lo risento?</span><b id="v-sunto-riordino"></b><em id="v-freccia-riordino">›</em></button>
       <div id="v-dentro-riordino">
       <div class="campo" id="v-riordino-campo">
@@ -205,11 +213,9 @@ async function moduloVendita(v, proposta) {
   // V4 (Ignazio 22/10): un cliente con l'account cliente ordina da solo: la vendita nuova parte su «Nessun riordino» (si può cambiare)
   const conAccount = !v && !!dalAccount;
   let modoR = conAccount ? 'nessuno' : prima.modo, mesiR = prima.mesi, toccatoR = !!v || conAccount;
-  const aperti = { consegna: false, riordino: !modoR, aMano: false };   // in una vendita nuova senza proposta il riordino parte aperto
+  const aperti = { riordino: !modoR, aMano: false };   // in una vendita nuova senza proposta il riordino parte aperto (nota 099: l'ordine è sempre in vista)
   const segnaGruppi = () => {
-    for (const k of ['consegna', 'riordino']) { $(`v-dentro-${k}`).style.display = aperti[k] ? '' : 'none'; $(`v-freccia-${k}`).textContent = aperti[k] ? '⌃' : '›'; }
-    const cons = $('v-consegna').value, ord = $('v-ordinata') && $('v-ordinata').value;
-    $('v-sunto-consegna').textContent = dopo ? ['Più avanti', cons ? MB21Lista.data(cons) : '', ord ? 'ordine fatto' : ''].filter(Boolean).join(' · ') : 'Subito';
+    $('v-dentro-riordino').style.display = aperti.riordino ? '' : 'none'; $('v-freccia-riordino').textContent = aperti.riordino ? '⌃' : '›';
     const quando = modoR === 'fra' && mesiR && baseR() ? MB21Lista.riordinoFra(baseR(), mesiR) : '';
     $('v-sunto-riordino').textContent = modoR === 'fra' ? (mesiR ? `Fra ${mesiR} ${mesiR === 1 ? 'mese' : 'mesi'}${quando ? ' · il ' + MB21Lista.data(quando) : ''}` : 'Fra … mesi')
       : modoR === 'data' ? ($('v-riordino').value ? 'Il ' + MB21Lista.data($('v-riordino').value) : 'Scegli la data') : modoR === 'nessuno' ? 'Nessun riordino' : 'Facoltativo';
@@ -326,7 +332,7 @@ async function moduloVendita(v, proposta) {
     chiudi(); LS.vendite = null; LS.azioni = null; CK.giorni = null; mostraToast(messaggio); disegnaScheda(); if (!v && proposta && proposta.salvata) proposta.salvata();
   };   // anche le azioni: la vendita scrive in Agenda
   $('invia').onclick = async () => {
-    if (dopo && !$('v-consegna').value) { apriGruppo('consegna'); return mostraToast('Scrivi quando consegni'); }
+    if (dopo && !$('v-consegna').value) { $('v-consegna').focus(); return mostraToast('Scrivi quando consegni'); }
     if (modoR === 'fra' && !mesiR) { apriGruppo('riordino'); return mostraToast('Scegli fra quanti mesi lo risenti'); }
     const riordino = modoR === 'fra' ? MB21Lista.riordinoFra(baseR(), mesiR) : modoR === 'data' ? $('v-riordino').value : '';
     const esito = MB21Lista.rigaVendita({ data: $('v-data').value, brand, prodotto: $('v-prodotto').value, vp: $('v-vp').value,

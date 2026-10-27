@@ -29,7 +29,7 @@ prova('074: «pagata sul sito» è una regola sola, uguale a quella di prima del
   assert.match(VEN, /const sulSito = MB21Lista\.pagataSulSito\(dalAccount, !v \? null : incasso \? \{ \.\.\.incasso, data: v\.data \} : undefined\);/);   // il modulo usa questa
 });
 
-prova('074: il mese conta le vendite che contano nel mese; quelle da consegnare stanno nell\'elenco ma fuori dai totali, come nella scheda', () => {
+prova('074 e 099: il mese ha le vendite che lo toccano; VP degli ordini del mese, provvigione e soldi delle vendite pagate nel mese', () => {
   const righe = [
     { id: 'a', data: '2026-10-21', conta_il: '2026-10-21', vp: 10, provvigione: 4.52, guadagno_netto: 3.52, sconto: 1, incassato: 20 },
     { id: 'b', data: '2026-10-15', conta_il: '2026-10-15', vp: 30, provvigione: 13.57, guadagno_netto: 13.57, sconto: 0, incassato: null, sulSito: true },
@@ -38,10 +38,14 @@ prova('074: il mese conta le vendite che contano nel mese; quelle da consegnare 
     { id: 'e', data: '2026-09-12', conta_il: '2026-09-12', vp: 7, provvigione: 3, guadagno_netto: 3, sconto: 0 },
   ];
   const m = L.provvigioniMese(righe, '2026-10-01');
-  uguale(m.vendite.map(v => v.id), ['a', 'b', 'c', 'd']);   // dalla più nuova (il giorno in cui conta, o quello della vendita)
-  assert.equal(m.totali.vp, 45); assert.equal(Math.round(m.totali.provvigione * 100), 2035); assert.equal(m.totali.attesaVp, 300);
-  uguale(m.totali, L.totaliVendite(m.vendite));   // la stessa funzione della scheda › Vendite
-  uguale([m.incassato, m.sconti, m.sulSito], [30, 1, 1]);   // l'incasso della vendita da consegnare non entra
+  uguale(m.vendite.map(v => v.id), ['a', 'b', 'c', 'd']);   // dalla più nuova (il giorno che conta nel mese: l'ordine per «d», il pagamento per gli altri)
+  uguale(m.vendite.map(v => L.momentoNelMese(v, m.ym)), ['tutto', 'tutto', 'pagamento', 'ordine']);
+  // nota 099 (Ignazio 27/10): VP = a + b + d (ordinata a ottobre); provvigione = a + b + c (pagate a ottobre, «c» anche se l'ordine non è fatto), non «d» (pagata a settembre)
+  assert.equal(m.totali.vp, 45); assert.equal(Math.round(m.totali.provvigione * 100), 15381); assert.equal(m.totali.attesaVp, 300);
+  uguale([m.incassato, m.sconti, m.sulSito], [620, 1, 1]);   // l'incasso della promo pagata a ottobre entra; quello di «d» è di settembre
+  const set = L.provvigioniMese(righe, '2026-09-01');   // settembre: «d» con i soldi, senza i VP
+  uguale(set.vendite.map(v => [v.id, L.momentoNelMese(v, set.ym)]), [['d', 'pagamento'], ['e', 'tutto']]);
+  uguale([set.totali.vp, Math.round(set.totali.provvigione * 100), set.incassato], [7, 526, 10]);
   assert.equal(L.provvigioniMese(righe, '2026-08-01').vendite.length, 0);
 });
 
@@ -50,9 +54,9 @@ prova('074: l\'anno è solare, gennaio-dicembre: dodici mesi con VP e provvigion
     { id: 'z', conta_il: '2025-12-30', data: '2025-12-30', vp: 99, provvigione: 40, guadagno_netto: 40 }, { id: 'w', conta_il: null, data: '2026-10-01', consegna: '2026-12-01', vp: 50, provvigione: 20, guadagno_netto: 20 }];
   const a = L.provvigioniAnno(righe, 2026, '2026-10-24');
   uguale(a.mesi.map(m => m.nome), L.MESI_ANNO);
-  uguale([a.mesi[0].vp, a.mesi[9].vp, a.mesi[9].vendite, a.mesi[1].vendite], [10, 20, 1, 0]);
+  uguale([a.mesi[0].vp, a.mesi[9].vp, a.mesi[9].vendite, a.mesi[1].vendite, a.mesi[9].provvigione], [10, 20, 2, 0, 29]);   // nota 099: la promo pagata a ottobre porta la provvigione, non i VP
   uguale(a.mesi.map(m => m.futuro), [false, false, false, false, false, false, false, false, false, false, true, true]);
-  uguale([a.totali.vp, a.totali.provvigione, a.totali.netto], [30, 13, 12]);   // il 2025 e la vendita da consegnare fuori
+  uguale([a.totali.vp, a.totali.provvigione, a.totali.netto], [30, 33, 32]);   // il 2025 fuori; della promo da consegnare la provvigione sì, i VP no
 });
 
 // ── la linguetta, con il codice vero ──
@@ -77,8 +81,8 @@ prova('074: il mese ‹ ›: i tre totali della scheda, «Incassato · Sconti ·
   const h = app.innerHTML;
   assert.match(h, /<button id="pv-prima" aria-label="Mese prima" >‹<\/button>/);   // c'è una vendita a marzo: si torna indietro
   assert.match(h, /<button id="pv-dopo" aria-label="Mese dopo" disabled>›<\/button>/);   // mai oltre il mese di oggi
-  assert.match(h, /<span>VP Totali<\/span><b>100,70<\/b>[\s\S]*?<span>Provvigione<\/span><b>45,56 €<\/b>[\s\S]*?<span>Guadagno netto<\/span><b>41,56 €<\/b>/);
-  assert.match(h, /Incassato 135,00 € · Sconti 4,00 € · 1 pagata sul sito/);
+  assert.match(h, /<span>VP Totali<\/span><b>100,70<\/b>[\s\S]*?<span>Provvigione<\/span><b>181,28 €<\/b>[\s\S]*?<span>Guadagno netto<\/span><b>177,28 €<\/b>/);   // nota 099: con la promo eSpring pagata a ottobre (135,72 €), ordine non ancora fatto
+  assert.match(h, /Incassato 735,00 € · Sconti 4,00 € · 1 pagata sul sito/);
   assert.match(h, /Da consegnare: 300,00 VP · contano quando tocchi «Ordine fatto»/);
   assert.equal((h.match(/data-pvcontatto=/g) || []).length, 4);
   assert.equal((h.match(/sv-targa account">sul sito</g) || []).length, 1);
@@ -123,7 +127,7 @@ prova('074: l\'anno, in cima «2026»: i totali e dodici righe; i mesi che devon
   assert.match(h, /<span>VP Totali<\/span><b>142,70<\/b>/);
   assert.equal((h.match(/data-pvmese=/g) || []).length, 12);
   assert.match(h, /data-pvmese="2026-11-01" disabled>\s*<span>Novembre<\/span><span class="p"><\/span><span class="n">—<\/span>/);
-  assert.match(h, /<span>Ottobre<\/span><span class="p">100,70 VP<\/span><span class="n">45,56 €<\/span><span class="f">›<\/span>/);
+  assert.match(h, /<span>Ottobre<\/span><span class="p">100,70 VP<\/span><span class="n">181,28 €<\/span><span class="f">›<\/span>/);
   assert.match(h, /<button id="pv-prima" aria-label="Anno prima" disabled>/);   // la prima vendita è del 2026
   clic('[data-pvmese="2026-03-01"]');
   for (let i = 0; i < 5; i++) await P.aspetta();
