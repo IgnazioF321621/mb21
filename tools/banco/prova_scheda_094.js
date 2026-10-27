@@ -50,7 +50,7 @@ function modulo({ esiti = {}, lettura = new Promise(() => {}), righe = [], tab =
     contaLettere() {}, ripristina() {}, elimina() {},
     document: { createElement: () => { const n = new Nodo(); n.isConnected = true; n.remove = () => { n.rimosso = true; n.isConnected = false; }; fogli.push(n); return n; }, body: { appendChild() {} } } };
   vm.createContext(ctx);
-  vm.runInContext([PL.match(/^const testoDoppioni = .*$/m)[0], pezzo(PL, 'async function doppioniDi'), pezzo(PL, 'async function salvaNomeNuovo'), pezzo(PL, 'function apriModulo'),
+  vm.runInContext([PL.match(/^const testoDoppioni = .*$/m)[0], pezzo(PL, 'async function doppioniDi'), pezzo(PL, 'async function salvaNomeNuovo'), pezzo(PL, 'function campoInteresse'), pezzo(PL, 'function collegaInteresse'), pezzo(PL, 'function apriModulo'),
     'this.apri = apriModulo;'].join('\n'), ctx);
   const apri = (c, poi) => { ctx.apri(c, poi); const f = fogli[fogli.length - 1]; return { f, $: id => f.querySelector('#' + id) }; };
   return { ctx, F, toast, aperte, apri, fogli };
@@ -137,16 +137,16 @@ prova('M5: salvato un nome nuovo si apre subito la sua scheda; M7: dall\'Agenda 
   assert.doesNotMatch(IDX, /salvaNomeNuovo\(\{ nome: t, categoria: 'Prospect'/);
 });
 
-prova('M8: Età, «Dipendente o autonomo?» con la riga sulla traccia, Interesse; l\'avviso della categoria più chiaro; «Contatto e/o Incaricato di» resta', () => {
+prova('M8: Età, «Tipo di lavoro» (nota 098, prima «Dipendente o autonomo?») con la riga sulla traccia, Interesse; l\'avviso della categoria più chiaro; «Contatto e/o Incaricato di» resta', () => {
   const A = modulo(), { f } = A.apri({ id: 'w', user_id: 'io', nome: 'Persona W', categoria: 'Prospect' });
   assert.match(f.innerHTML, /<label>Età<\/label><select id="f-eta">/);
-  assert.match(f.innerHTML, /<label>Dipendente o autonomo\? <small class="sotto" style="margin:0">\(serve per la traccia dopo il Piano Marketing\)<\/small><\/label>/);
-  assert.match(f.innerHTML, /<label>Interesse<\/label><select id="f-area">/);
+  assert.match(f.innerHTML, /<label>Tipo di lavoro <small class="sotto" style="margin:0">\(serve per la traccia dopo il Piano Marketing\)<\/small><\/label>/);
+  assert.match(f.innerHTML, /<label>Interesse<\/label><select id="f-area" hidden>[\s\S]*?<\/select>\s*<select id="f-int">/);   // nota 098: due scelte, il menu di prima nascosto
   assert.match(f.innerHTML, /<label>Contatto e\/o Incaricato di<\/label>/);
   assert.doesNotMatch(f.innerHTML, /Fascia Età|per la prima traccia dopo il PM|<label>Area<\/label>/);
   const B = modulo(), b = B.apri({ id: 'w', user_id: 'io', nome: 'Persona W', categoria: null }, { poiAzione: true });
   assert.match(b.f.innerHTML, /Per segnare un'azione serve la categoria: sceglila qui sotto e tocca «Salva», poi si apre «Nuova azione»\./);
-  assert.match(PL, /const resto = \[\['Interesse', c\.area\],/);   // anche nella sezione Dati
+  assert.match(PL, /const resto = \[\['Interesse', MB21Lista\.testoInteresse\(c\.area\)\],/);   // anche nella sezione Dati, a parole («Prodotti · eSpring»)
 });
 
 prova('M3 e M4: moduloSemplice mostra la persona solo se chi lo apre la passa; «Salva» spento dice cosa manca (anche la voce «Scegli …» di un menu)', () => {
@@ -260,5 +260,25 @@ prova('S3: dalla Mappa lettura fresca al tocco; dopo, i conti si rifanno con que
 
 (async () => {
   for (const [nome, fn] of coda) { await fn(); ok++; console.log('OK  ' + nome); }
-  console.log(`\n${ok} prove superate`);
+  prova('098 Interesse in due scelte (Ignazio 27/10, «sì»): Attività oppure Prodotti, con Prodotti «Quali prodotti?»; si salva come prima nel campo area', () => {
+  const L = require('../../lista.js');
+  assert.deepEqual(L.interesseDa('eSpring'), { interesse: 'Prodotti', quali: 'eSpring' });
+  assert.deepEqual(L.interesseDa('Mix Prodotti'), { interesse: 'Prodotti', quali: 'Mix Prodotti' });
+  assert.deepEqual(L.interesseDa('Attività'), { interesse: 'Attività', quali: '' });
+  assert.deepEqual(L.interesseDa('Prodotti'), { interesse: 'Prodotti', quali: '' });
+  assert.equal(L.areaDa('Prodotti', 'Nutrilite'), 'Nutrilite'); assert.equal(L.areaDa('Prodotti', ''), 'Prodotti'); assert.equal(L.areaDa('Attività', 'eSpring'), 'Attività'); assert.equal(L.areaDa('', ''), '');
+  assert.equal(L.corrisponde({ nome: 'Persona Z', citta: 'Roma (RM)' }, 'roma'), true);   // la ricerca trova anche la località
+  assert.equal(L.testoInteresse('Mix Prodotti'), 'Prodotti · più di uno'); assert.equal(L.testoInteresse('eSpring'), 'Prodotti · eSpring'); assert.equal(L.testoInteresse('Attività'), 'Attività');
+  // nel modulo: un contatto con «eSpring» si apre su Prodotti · eSpring; scegliendo Attività il menu nascosto (quello che si salva) dice «Attività» e «Quali prodotti?» sparisce
+  const A = modulo(), { f } = A.apri({ id: 'w', user_id: 'io', nome: 'Persona W', categoria: 'Prospect', area: 'eSpring' });
+  assert.match(f.innerHTML, /<option selected>Prodotti<\/option>/);
+  assert.match(f.innerHTML, /<div class="campo" id="f-quali-campo"><label>Quali prodotti\?<\/label><select id="f-quali">[\s\S]*<option value="eSpring" selected>eSpring<\/option>[\s\S]*<option value="Mix Prodotti">Più di uno<\/option>/);
+  const int = f.querySelector('#f-int'), area = f.querySelector('#f-area'), campo = f.querySelector('#f-quali-campo');
+  int.value = 'Attività'; int.onchange();
+  assert.equal(area.value, 'Attività'); assert.equal(campo.hidden, true);
+  int.value = 'Prodotti'; f.querySelector('#f-quali').value = 'Mix Prodotti'; f.querySelector('#f-quali').onchange();
+  assert.equal(area.value, 'Mix Prodotti'); assert.equal(campo.hidden, false);
+});
+
+console.log(`\n${ok} prove superate`);
 })().catch(e => { console.error(e); process.exit(1); });

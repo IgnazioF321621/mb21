@@ -9,6 +9,22 @@
   const CATEGORIE = ['Prospect', 'Partner', 'Cliente', 'Ex Partner/Cliente', 'Unlinked', 'Archiviato'];
   const FASCE_ETA = ['18-20', '21-30', '31-40', '41-50', '51-60', '61+'];
   const AREE = ['Attività', 'Prodotti', 'eSpring', 'Nutrilite', 'Mix Prodotti', 'Artistry', 'Home', 'Persona'];
+  // Nota Pagine 098 (Ignazio 27/10, «sì»): «Interesse» in due scelte, Attività oppure Prodotti, e con Prodotti «Quali prodotti?». Si salva come prima, nel
+  // campo `area` con gli stessi valori (Attività · Prodotti · il brand · «Mix Prodotti» per «Più di uno»): nessun cambio nel database, i vecchi si leggono uguali.
+  const QUALI_PRODOTTI = [['Nutrilite', 'Nutrilite'], ['eSpring', 'eSpring'], ['Artistry', 'Artistry'], ['Home', 'Home'], ['Persona', 'Persona'], ['Mix Prodotti', 'Più di uno']];
+  function interesseDa(area) {
+    if (!area) return { interesse: '', quali: '' };
+    if (area === 'Attività' || area === 'Prodotti') return { interesse: area, quali: '' };
+    return QUALI_PRODOTTI.some(q => q[0] === area) ? { interesse: 'Prodotti', quali: area } : { interesse: '', quali: '', altro: area };
+  }
+  const areaDa = (interesse, quali) => (interesse === 'Prodotti' ? quali || 'Prodotti' : interesse || '');
+  // come si legge nella scheda: «Prodotti · eSpring», «Prodotti · più di uno», «Attività»
+  function testoInteresse(area) {
+    const x = interesseDa(area);
+    if (x.altro) return x.altro;
+    const q = QUALI_PRODOTTI.find(y => y[0] === x.quali);
+    return [x.interesse, q ? (q[0] === 'Mix Prodotti' ? 'più di uno' : q[1]) : ''].filter(Boolean).join(' · ');
+  }
   const PREFISSI = [
     ['+39', 'Italia'], ['+41', 'Svizzera'], ['+44', 'Regno Unito'], ['+49', 'Germania'], ['+33', 'Francia'],
     ['+34', 'Spagna'], ['+43', 'Austria'], ['+31', 'Olanda'], ['+32', 'Belgio'], ['+40', 'Romania'],
@@ -62,7 +78,7 @@
   function corrisponde(r, testo) {
     const t = piega(testo);
     if (!t) return true;
-    if (piega(r.nome).includes(t) || piega(r.professione).includes(t)) return true;
+    if (piega(r.nome).includes(t) || piega(r.professione).includes(t) || piega(r.citta).includes(t)) return true;   // nota 098: anche la località
     const cifre = soloCifre(t);
     return cifre.length >= 3 && /^[+\d\s]+$/.test(t) && soloCifre(r.telefono).includes(cifre);
   }
@@ -623,7 +639,7 @@
   const SPIEGA_CATEGORIA = { 'Unlinked': 'Conosciuto/a, nessun recapito' };
   const nomeCategoria = c => NOMI_CATEGORIA[c] || c;
 
-  const api = { cepPerCodice, importo, rigaPrezzo, QUOTA_PROVVIGIONE, IVA, contiVendita, contiStimati, scontoCalcolato, scontoAMano, NOMI_CATEGORIA, SPIEGA_CATEGORIA, nomeCategoria, CATEGORIE, FASCE_ETA, AREE, PREFISSI, PASSI_ONBOARDING, AVVIO_DA_INCONTRO, passoAvvioDa, situazioneAvvio, FILTRI, GIORNI_NEW, eNuovo, piega, corrisponde, filtraContatti,
+  const api = { cepPerCodice, importo, rigaPrezzo, QUOTA_PROVVIGIONE, IVA, contiVendita, contiStimati, scontoCalcolato, scontoAMano, NOMI_CATEGORIA, SPIEGA_CATEGORIA, nomeCategoria, CATEGORIE, FASCE_ETA, AREE, QUALI_PRODOTTI, interesseDa, areaDa, testoInteresse, PREFISSI, PASSI_ONBOARDING, AVVIO_DA_INCONTRO, passoAvvioDa, situazioneAvvio, FILTRI, GIORNI_NEW, eNuovo, piega, corrisponde, filtraContatti,
     contaFiltri, cercaNomi, compieOggi, azioniENote, MESI_RIORDINO, riordinoFra, mesiFra, modoRiordino, propostaRiordino, sezioneIniziale, giorniFermo, SENZA_PARLARE, fraseCard, ORDINI, componiTelefono, separaTelefono, trovaDoppioni, archiviatiUguali, contatoreOnboarding, prossimoPasso, entratoDa, partnerDaAvviare, partnerInPausa, proposteAvvio, pausaLunga, PASSI_SPENTI, postiBiglietto, postoSuo, momento, meseEvento, etichettaEvento, eventoAttivo, eventoDaMostrare, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, cepDaTogliere, cepDaAccendere, descrizioneCep, data, DATI_PERSONA, SESSI, LAVORI, nomeScelta, BRAND, coloreBrand, brandComprati, haVendite, daConsegnare, daConfermare, GIORNI_CONSEGNA_LONTANA, consegnaLontana, totaliVendite, pagataSulSito, provvigioniMese, MESI_ANNO, provvigioniAnno, prossimoRiordino, rigaVendita, rigaFattore, numeroFattore, numero };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Lista = api;

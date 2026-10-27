@@ -235,7 +235,7 @@ function disegnaLista() {
         <button class="ag-piu" id="nuovo" aria-label="Nuovo contatto">+</button></div>
       ${partnerSelect()}`}
       <div class="cerca">
-        <input id="cerca" type="search" placeholder="Cerca un nome, una professione o un numero" value="${esc(LS.testo)}" autocomplete="off">
+        <input id="cerca" type="search" placeholder="Nome, numero, professione o località" value="${esc(LS.testo)}" autocomplete="off">
         <button id="svuota" ${LS.testo ? '' : 'hidden'} aria-label="Svuota">${ic('chiudi')}</button>
       </div>
       <div class="chips">
@@ -838,7 +838,7 @@ function disegnaDati(c, extra) {
   }).filter(Boolean);
   // «Contatti fatti» (nota 091 b): arriva con la seconda passata, contato solo per questa persona; finché non c'è la riga non si vede (niente «0» di passaggio)
   const fatti = valore('contatti_fatti');
-  const resto = [['Interesse', c.area], ['Contatto e/o Incaricato di', c.referral_di], ['Note', c.note], ['Contatti fatti', fatti == null ? '' : String(fatti)]]
+  const resto = [['Interesse', MB21Lista.testoInteresse(c.area)], ['Contatto e/o Incaricato di', c.referral_di], ['Note', c.note], ['Contatti fatti', fatti == null ? '' : String(fatti)]]
     .filter(([, v]) => v).map(([k, v]) => [k, esc(v)]);
   // nota Pagine 031 (Ignazio 06/10): il codice Amway, si copia con un tocco; arriva con `datiPersonaExtra` (la stessa lettura di compleanno e lavoro)
   const codice = valore('codice_amway');
@@ -1659,6 +1659,26 @@ function moduloSemplice(titolo, campi, opz = {}) {
   });
 }
 
+// Nota 098 (Ignazio 27/10, «sì»): «Interesse» in due scelte (Attività oppure Prodotti; con Prodotti «Quali prodotti?»). Scrivono nel menu nascosto #f-area,
+// lo stesso di prima: il salvataggio non cambia (MB21Lista.areaDa). Un valore vecchio fuori elenco resta nel menu nascosto finché non si cambia.
+function campoInteresse(area, opz, conStorico) {
+  const L = MB21Lista, x = L.interesseDa(area);
+  return `<div class="campo"><label>Interesse</label><select id="f-area" hidden>${opz(conStorico(L.AREE, area), area, '—')}</select>
+      <select id="f-int"><option value="">—</option>${['Attività', 'Prodotti'].map(v => `<option${x.interesse === v ? ' selected' : ''}>${v}</option>`).join('')}</select></div>
+    <div class="campo" id="f-quali-campo"${x.interesse === 'Prodotti' ? '' : ' hidden'}><label>Quali prodotti?</label><select id="f-quali"><option value="">—</option>${L.QUALI_PRODOTTI.map(([v, t]) => `<option value="${esc(v)}"${x.quali === v ? ' selected' : ''}>${esc(t)}</option>`).join('')}</select></div>`;
+}
+function collegaInteresse(radice) {
+  const q = s => radice.querySelector(s), int = q('#f-int'), quali = q('#f-quali'), area = q('#f-area'), campo = q('#f-quali-campo');
+  if (!int || !quali || !area) return;
+  const scrivi = () => {
+    campo.hidden = int.value !== 'Prodotti';
+    const v = MB21Lista.areaDa(int.value, quali.value);
+    if (v && ![...area.options].some(o => o.value === v)) area.appendChild(new Option(v, v));
+    area.value = v;
+  };
+  int.onchange = scrivi; quali.onchange = scrivi;
+}
+
 // ── Nuovo Contatto / Modifica (stessi 9 campi di Glide, stesso ordine) ──
 // poi.poiAzione (S5c): salvato con una categoria, si apre «Nuova azione»; poi.nome (L1): il nome già scritto, da Cerca; poi.categoria: quella già scelta;
 // poi.salvato(riga) / poi.chiuso(): per chi apre il modulo da fuori la Lista (nota 094 M7, l'appuntamento dell'Agenda) e ci torna
@@ -1680,7 +1700,7 @@ function apriModulo(c, poi = {}) {
     // nota 094 M8: nomi a parole semplici (Età, Dipendente o autonomo?, Interesse); i campi e i valori salvati sono gli stessi
     fascia_eta: `<div class="campo"><label>Età</label><select id="f-eta">${opz(conStorico(MB21Lista.FASCE_ETA, c && c.fascia_eta), c && c.fascia_eta, '—')}</select></div>`,
     sesso: `<div class="campo"><label>Sesso <small class="sotto" style="margin:0">(per le tracce da condividere)</small></label><select id="f-sesso"><option value="">—</option>${MB21Lista.SESSI.map(([v, t]) => `<option value="${v}">${t}</option>`).join('')}</select></div>`,
-    lavoro: `<div class="campo"><label>Dipendente o autonomo? <small class="sotto" style="margin:0">(serve per la traccia dopo il Piano Marketing)</small></label><select id="f-lavoro"><option value="">—</option>${MB21Lista.LAVORI.map(([v, t]) => `<option value="${v}">${t}</option>`).join('')}</select></div>`,
+    lavoro: `<div class="campo"><label>Tipo di lavoro <small class="sotto" style="margin:0">(serve per la traccia dopo il Piano Marketing)</small></label><select id="f-lavoro"><option value="">—</option>${MB21Lista.LAVORI.map(([v, t]) => `<option value="${v}">${t}</option>`).join('')}</select></div>`,
     compleanno: `<div class="campo"><label>Compleanno <small class="sotto" style="margin:0">(l'anno se lo sai)</small></label><div class="f-comp">
       <select id="f-cg"><option value="">Giorno</option>${Array.from({ length: 31 }, (_, i) => `<option>${i + 1}</option>`).join('')}</select>
       <select id="f-cm"><option value="">Mese</option>${MB21Rubrica.MESI.map((m, i) => `<option value="${i + 1}">${m}</option>`).join('')}</select>
@@ -1714,18 +1734,19 @@ function apriModulo(c, poi = {}) {
     </div>`;
   const altriAttivita = `<div class="campo"><label>Contatto e/o Incaricato di</label><input id="f-ref" list="f-ref-nomi" placeholder="—" value="${esc(c ? c.referral_di || '' : '')}">
       <datalist id="f-ref-nomi">${miei.map(r => `<option value="${esc(r.nome)}">`).join('')}</datalist></div>
-    <div class="campo"><label>Interesse</label><select id="f-area">${opz(conStorico(MB21Lista.AREE, c && c.area), c && c.area, '—')}</select></div>
+    ${campoInteresse(c && c.area, opz, conStorico)}
     <div class="campo"><label>Note</label><input id="f-note" maxlength="${max(50, c && c.note)}" value="${esc(c ? c.note || '' : '')}"><div class="conta" data-conta="f-note"></div></div>`;
   // Lista Nomi L4 (Ignazio 23/10): un contatto NUOVO mostra subito nome, telefono e categoria (con «Ha un account cliente», che si vede solo per un Cliente);
   // il resto sta nella riga chiusa «Altri dati (facoltativi)». In Modifica i tre gruppi restano com'erano. Campi e id sono gli stessi: il salvataggio non cambia.
   const corpo = nuovo
     ? `<div class="riquadro mc-g" style="margin-top:14px">${campoNome}${campoTel}${campoCat}${campoAccount}</div>
-    <details class="mc-altri"><summary>Altri dati <small>(facoltativi)</small></summary>${datiPersona}<h4 class="mc-t">Per l'attività</h4><div class="riquadro mc-g">${altriAttivita}</div></details>`
+    <details class="mc-altri"><summary>Altre informazioni</summary>${datiPersona}<h4 class="mc-t">Per l'attività</h4><div class="riquadro mc-g">${altriAttivita}</div></details>`
     : `<h4 class="mc-t">Chi è</h4><div class="riquadro mc-g">${campoNome}${campoTel}</div>${datiPersona}
     <h4 class="mc-t">Per l'attività</h4><div class="riquadro mc-g">${campoCat}${campoAccount}${altriAttivita}</div>`;
   velo.innerHTML = `<div class="foglio alto mc">
     <div class="mc-testa ${classeCat(c ? c.categoria : poi.categoria)}" id="mc-testa"><span class="ts-pastiglia">${c ? esc(iniziali(c.nome)) : ic('persona')}</span>
       <div><small>${nuovo ? 'Aggiungi un nuovo contatto' + esc(aNome()) : 'Modifica contatto'}</small><b>${c ? esc(c.nome) : 'Nuovo nome'}</b></div><button id="chiudi" aria-label="Chiudi">${ic('chiudi')}</button></div>
+    ${nuovo ? '<p class="sotto mc-basta">bastano nome, telefono e categoria: il resto quando vuoi</p>' : ''}
     ${corpo}
     ${c ? `<button class="link elimina-qui" id="elimina-qui">${ic('elimina')} Elimina dalla lista</button>` : ''}
     <div class="mc-fondo"><button class="link" id="annulla">Annulla</button><button class="primario" id="invia" disabled>Salva</button></div>
@@ -1736,6 +1757,7 @@ function apriModulo(c, poi = {}) {
   const lascia = () => { chiudi(); if (poi.chiuso) poi.chiuso(); };
   $('chiudi').onclick = lascia;
   $('annulla').onclick = lascia;
+  collegaInteresse(velo);   // nota 098: Interesse in due scelte
   if (poi.poiAzione && $('f-cat-prima') && $('f-cat-prima').scrollIntoView) $('f-cat-prima').scrollIntoView({ block: 'center' });   // S5c: la categoria in evidenza
   // le pastiglie della categoria scrivono nel menu nascosto e avvisano il modulo, come se si fosse scelto dal menu
   velo.querySelectorAll('.mc-cat').forEach(b => b.onclick = () => {

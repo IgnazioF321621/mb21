@@ -21,7 +21,7 @@ prova('L1: la prima pillola si chiama «Tutti», «Ex» ha le parole del modulo;
   assert.equal(L.FILTRI.lista.etichetta, 'Tutti');
   assert.equal(L.FILTRI.ex.etichetta, 'Ex Partner/Cliente');
   assert.equal(L.FILTRI.unlinked.etichetta, 'Non collegato');
-  assert.match(PL, /<input id="cerca" type="search" placeholder="Cerca un nome, una professione o un numero"/);
+  assert.match(PL, /<input id="cerca" type="search" placeholder="Nome, numero, professione o località"/);   // nota 098: anche la località
   assert.match(IDX, /\.ls-testa \.cerca input::placeholder \{ font-size: 14px; \}/);   // la scritta entra in un telefono da 375 (solo la Lista: il Training ha la sua)
 });
 
@@ -253,14 +253,14 @@ function apriModuloVero(c, poi) {
     dbq: () => new Promise(() => {}), supa: { from: () => ({ select: () => ({ eq: () => ({ maybeSingle: () => null }) }) }) }, leggiAccountCliente: () => new Promise(() => {}),
     document: { createElement: () => { const n = new Nodo(); fogli.push(n); return n; }, body: { appendChild() {} } } };
   vm.createContext(ctx);
-  vm.runInContext(CONTA[0] + pezzo(PL, 'function apriModulo') + ';this.apri = apriModulo;', ctx);
+  vm.runInContext(CONTA[0] + pezzo(PL, 'function campoInteresse') + '\n' + pezzo(PL, 'function collegaInteresse') + '\n' + pezzo(PL, 'function apriModulo') + ';this.apri = apriModulo;', ctx);
   ctx.apri(c, poi || {});
   return fogli[0];
 }
 
-prova('L4: un contatto nuovo mostra subito nome, telefono e categoria; il resto in «Altri dati (facoltativi)», chiusa; niente «Archiviato»', () => {
+prova('L4: un contatto nuovo mostra subito nome, telefono e categoria; il resto in «Altre informazioni ▾» (prima «Altri dati»), chiusa; niente «Archiviato»', () => {
   const f = apriModuloVero(null), h = f.innerHTML;
-  const altri = h.indexOf('<details class="mc-altri"><summary>Altri dati <small>(facoltativi)</small></summary>');
+  const altri = h.indexOf('<details class="mc-altri"><summary>Altre informazioni</summary>');   // nota 098: «Altre informazioni» (la freccia la disegna lo stile)
   assert.ok(altri > 0, 'la riga chiusa');
   for (const id of ['f-nome', 'f-tel', 'f-cat', 'f-account-campo']) assert.ok(h.indexOf(`id="${id}"`) > 0 && h.indexOf(`id="${id}"`) < altri, id + ' sopra');
   for (const id of ['f-eta', 'f-cg', 'f-sesso', 'f-prof', 'f-citta', 'f-lavoro', 'f-ref', 'f-area', 'f-note']) assert.ok(h.indexOf(`id="${id}"`) > altri, id + ' dentro');
@@ -461,7 +461,7 @@ prova('L7: nome nuovo dal «+» e «Modifica» dai tre puntini: si rilegge solo 
     aggiornaRiga: async id => { letture.push(id); }, ricaricaERidisegna: () => Promise.resolve(), mostraToast() {}, chiediConferma: async () => true, domandaInvito() {}, azionePiu() {},
     document: { createElement: () => { const n = new Nodo(); fogli.push(n); return n; }, body: { appendChild() {} } } };
   vm.createContext(ctx);
-  vm.runInContext([CONTA[0], PL.match(/^const testoDoppioni = .*$/m)[0], pezzo(PL, 'async function doppioniDi'), pezzo(PL, 'async function salvaNomeNuovo'), pezzo(PL, 'function apriModulo'), 'this.apri = apriModulo;'].join('\n'), ctx);   // L9: il nome nuovo passa da salvaNomeNuovo
+  vm.runInContext([CONTA[0], PL.match(/^const testoDoppioni = .*$/m)[0], pezzo(PL, 'async function doppioniDi'), pezzo(PL, 'async function salvaNomeNuovo'), pezzo(PL, 'function campoInteresse') + '\n' + pezzo(PL, 'function collegaInteresse') + '\n' + pezzo(PL, 'function apriModulo'), 'this.apri = apriModulo;'].join('\n'), ctx);   // L9: il nome nuovo passa da salvaNomeNuovo
   // nuovo
   ctx.apri(null, {}); let f = fogli.pop(), $ = id => f.querySelector('#' + id);
   $('f-nome').value = 'Persona Nuova'; $('f-cat').value = 'Prospect'; $('f-cat').onchange();
@@ -700,7 +700,7 @@ prova('Nota 080 (Ignazio 24/10): «Cliente con account» — con «Sì» la data
     aggiornaRiga: async () => {}, ricaricaERidisegna: () => Promise.resolve(), mostraToast: t => avvisi.push(t), chiediConferma: async () => true, domandaInvito() {}, azionePiu() {},
     document: { createElement: () => { const n = new Nodo(); n.isConnected = true; fogli.push(n); return n; }, body: { appendChild() {} } } };
   vm.createContext(ctx);
-  vm.runInContext([CONTA[0], PL.match(/^const testoDoppioni = .*$/m)[0], pezzo(PL, 'async function doppioniDi'), pezzo(PL, 'async function salvaNomeNuovo'), pezzo(PL, 'function apriModulo'), 'this.apri = apriModulo;'].join('\n'), ctx);
+  vm.runInContext([CONTA[0], PL.match(/^const testoDoppioni = .*$/m)[0], pezzo(PL, 'async function doppioniDi'), pezzo(PL, 'async function salvaNomeNuovo'), pezzo(PL, 'function campoInteresse') + '\n' + pezzo(PL, 'function collegaInteresse') + '\n' + pezzo(PL, 'function apriModulo'), 'this.apri = apriModulo;'].join('\n'), ctx);
   // (nel finto DOM il menu della categoria non prende l'opzione «selected»: si mette a mano, come la vede il telefono)
   const apri = () => { ctx.apri(c); const f = fogli.pop(); f.querySelector('#f-cat').value = 'Cliente'; return { f, $: id => f.querySelector('#' + id) }; };
   // cliente da anni: la data salvata, che si cambia
