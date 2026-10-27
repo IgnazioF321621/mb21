@@ -690,12 +690,22 @@ Nel codice **niente è stato rinominato**: restano `apriCheck`, `check_giorno`, 
   - L'ordine lo fa `MB21Lista.azioniENote(azioni, note)` in `lista.js`: dalla più recente, l'azione per `inizio`, la nota per `scritta_il`, senza data in fondo, a pari data prima l'azione.
   - Al tocco la nota si apre come prima (`leggiNota`).
 - **Scrivere una nota:** «+ Nuova azione» (`azionePiu`) propone come prima scelta «Nota del coach (prima dell'azione)» (`notaCoach`), poi «Telefonata, Piano Marketing, Follow Up…», cioè il modulo di sempre.
-- **Interruttore `COACH_YES = true` in `index.html`** (per la conformità). Con false:
+- **Interruttore `COACH_YES` in `index.html`** (per la conformità; **`false` dal 27/10, nota Pagine 093**, vedi «Coach spento»). Con false:
   - niente segno Coach Yes (`segnoCoach`), e `caricaCoachYes` non legge;
   - niente righe gialle e nessuna lettura delle note nella scheda;
   - «+ Nuova azione» va dritta al modulo;
   - le note restano nel database.
 - Prove in `prova_lista.js` (anche a interruttore spento); disegno con il codice vero e dati finti in `docs/prototipi/schizzo_scheda_azioni_coach_S6.png`.
+
+**Coach spento (nota Pagine 093, Ignazio 27/10/2026, «sì perfetto»: il coach e i suoi consigli «al momento non servono più»):** due interruttori, niente cancellato nel database né nel codice; si riaccende rimettendo `true`.
+- `COACH_YES = false` (`index.html`): via il segno 📖 Coach Yes, le righe gialle e «Nota del coach» nella scheda (sopra).
+- `COACH_ACCESO = false` (`pagina-coach.js`):
+  - `chiediRiflessione` esce subito con `null`: niente chat dopo l'esito e niente proposta dopo i tentativi a vuoto (`tentativiAVuoto`); chi la chiama va avanti come quando non c'è una chat;
+  - `caricaRicordi` non legge niente (né «già chiamati», né «promemoria del coach», né `coach_batterie` · `preparazione_incontro`): meno letture a ogni apertura di coda, MB Plan, Agenda e Dashboard;
+  - `ricordoHtml` e `rigaPreparazione` danno `''`: via «Ti eri detto…», «L'ultima volta … ha detto», «Ripassa nel Training», le righe prima della prima telefonata e della Presentazione, e con loro il ✎ dell'Admin;
+  - la riga del consiglio sotto il nome nella coda della veste di prima (`.rc-coach`, `cardContatto` in `pagina-dashboard.js`, da `sequenze.coach`) è dietro lo stesso interruttore.
+- Resta acceso il Training (legge anche lui `coach_batterie`, righe `carte_…` e `training`).
+- Prove: `prova_coach.js` (le prove di prima con il coach riacceso, più una a coach spento: nessuna chat, nessuna lettura, nessun riquadro); `prova_dashboard_livelli.js` e `prova_modulo_vista.js` (spento niente segno, riacceso come prima: i banchi `anteprima_dashboard.js` e `anteprima_agenda.js` hanno `impostaCoachYes`); `prova_lista.js`. Disegno prima/dopo con dati finti: `docs/prototipi/schizzo_coach_spento_093.png`.
 
 **Scheda contatto, tappe S5 e S5c (nota Pagine 072, Ignazio 22/10/2026: «la vecchia telefonata la voglio conservare»; poi «se non hai dati, bisogna partire dai dati e dalla categoria; eventualmente poi azioni»):**
 - Il riquadro delle cose da fare c'è per ogni categoria, anche Archiviato, Ex, Unlinked e senza categoria.

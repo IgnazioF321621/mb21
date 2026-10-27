@@ -719,7 +719,7 @@ prova('Scheda contatto S6: azioniENote — un elenco solo dalla più recente, l\
 prova('Scheda contatto S6: l\'interruttore COACH_YES in index.html spegne anche il segno Coach Yes e la sua lettura', () => {
   const fs = require('node:fs'), path = require('node:path');
   const idx = fs.readFileSync(path.join(__dirname, '../../index.html'), 'utf8');
-  assert.match(idx, /\nconst COACH_YES = true;\n/);
+  assert.match(idx, /\nconst COACH_YES = false;\n/);   // nota 093 (Ignazio 27/10): spento
   assert.match(idx, /async function caricaCoachYes\(\) \{\n  if \(!COACH_YES \|\| /);
   assert.match(idx, /function segnoCoach\(contattoId, nome\) \{\n  if \(!COACH_YES \|\| /);
 });

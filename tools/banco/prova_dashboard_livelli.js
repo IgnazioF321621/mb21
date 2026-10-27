@@ -387,6 +387,8 @@ prova('Nota 001: in «Chi sento oggi?» il segnale Coach Yes accanto ai nomi con
   const m = P.avvia(); P.carica(m);
   m.CY.di = 'io'; m.CY.letta = Date.now(); m.CY.ids = new Set(['c2', 'x1', 'x2']);   // x1 è la persona della conferma, x2 di un riordino
   m.LV.vista = 'oggi'; P.memo.coda = true; P.memo.conferme = true; P.memo.riordini = true; m.disegnaOggi();
+  assert.doesNotMatch(P.app.innerHTML, /segno-coach/);   // nota 093 (27/10): coach spento, nessun segnale
+  m.impostaCoachYes(true); m.disegnaOggi();              // riacceso: come prima
   const h = P.app.innerHTML;
   assert.match(h, /<b>Marco Neri<span class="segno-coach"[^>]*data-coach-yes="c2"/);
   assert.doesNotMatch(h, /<b>Laura Ferri<span class="segno-coach"/);
@@ -396,7 +398,7 @@ prova('Nota 001: in «Chi sento oggi?» il segnale Coach Yes accanto ai nomi con
   assert.match(P.app.innerHTML, /<h1[^>]*>Marco Neri<span class="segno-coach"/);
   m.PS.scelto = 'tutti';                                                                    // con «Tutti» niente
   assert.equal(m.CY.ids.size, 3);
-  delete P.memo.coda; delete P.memo.conferme; delete P.memo.riordini;
+  m.impostaCoachYes(false); delete P.memo.coda; delete P.memo.conferme; delete P.memo.riordini;
 });
 
 prova('Verifica Dashboard, tappa 1 (Ignazio 22/10): riga del telefono spenta (codice resta), via ds-sv/ds-check e OBIETTIVI_PER_TUTTI, invito agli obiettivi anche all\'Admin', () => {

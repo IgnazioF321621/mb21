@@ -7,6 +7,9 @@ const C = require('../../coach.js');
 let ok = 0;
 let coda = Promise.resolve();   // le prove una dopo l'altra, anche quelle che aspettano (la carta del Training)
 function prova(nome, fn) { coda = coda.then(async () => { await fn(); ok++; console.log('OK  ' + nome); }); }
+// pagina-coach.js vero; nota 093 (Ignazio 27/10): il coach è spento (COACH_ACCESO = false), le prove di prima lo riaccendono per controllare che funzioni ancora
+const PAGINA_COACH = require('node:fs').readFileSync(require('node:path').join(__dirname, '../../pagina-coach.js'), 'utf8');
+const coachAcceso = () => { assert.equal(PAGINA_COACH.split('\nconst COACH_ACCESO = false;\n').length, 2); return PAGINA_COACH.replace('\nconst COACH_ACCESO = false;\n', '\nconst COACH_ACCESO = true;\n'); };
 
 const B = {
   situazione: 'telefonata',
@@ -365,7 +368,7 @@ prova('Tentativi a vuoto, nell\'app: i quattro tocchi fanno quello che dicono (M
     then(res) { res(t === 'azioni' ? { data: esiti.map(esito => ({ esito })), error: null } : q._ins ? { data: null, error: null } : { data: [{ ordine: 7 }], error: null }); } }; return q; } };
   ctx.dbq = (_, p) => Promise.resolve(p);
   vm.createContext(ctx);
-  vm.runInContext(fs.readFileSync(require('node:path').join(__dirname, '../../pagina-coach.js'), 'utf8'), ctx);
+  vm.runInContext(coachAcceso(), ctx);
   const e = { id: 'az1', contatto_id: 'c1', user_id: 'u1', tipo_azione: 'Contatto', modalita: 'Telefonata', contatti: { nome: 'Mario Rossi', categoria: 'Prospect' } };
   let scelta, testo;
   ctx.recitaCoach = async (_e, _es, passi) => { testo = passi[0].c; return [{ chiave: 'canale', risposta: scelta }]; };
@@ -483,7 +486,7 @@ prova('Prima telefonata: la riga di preparazione solo per chi non è mai stato c
         res({ data: q._s === 'contatto_id' ? righe.esiti : righe.riflessione, error: null }); } }; return q; } } };
   ctx.dbq = (_, p) => Promise.resolve(p);
   vm.createContext(ctx);
-  vm.runInContext(fs.readFileSync(path.join(__dirname, '../../pagina-coach.js'), 'utf8'), ctx);
+  vm.runInContext(coachAcceso(), ctx);
   assert.equal(ctx.preparaChiamataHtml('nuovo'), '');                                   // prima di leggere niente: niente
   await ctx.caricaRicordi(['nuovo', 'vecchio']);
   assert.match(ctx.preparaChiamataHtml('nuovo'), /Il manuale consiglia due date pronte\..*Manuale di Avvio, pagine 8-11/);
@@ -517,7 +520,7 @@ prova('Il foglio «Correggi questa frase»: motivo o testo, poi coach_correzioni
     document: { createElement: () => velo, body: { appendChild() {} }, addEventListener() {} },
     supa: { from: t => ({ insert: r => { righe.push([t, r]); return { error: null }; } }) }, dbq: (_, p) => Promise.resolve(p), eAdmin: () => true };
   vm.createContext(ctx);
-  vm.runInContext(fs.readFileSync(path.join(__dirname, '../../pagina-coach.js'), 'utf8'), ctx);
+  vm.runInContext(coachAcceso(), ctx);
   const bottone = { disabled: false, textContent: '✎' };
   ctx.foglioCorreggiCoach({ situazione: 'telefonata', esito: 'PM Fissato', categoria: 'Prospect', frase: 'Ottimo, Ignazio!' }, bottone);
   motivi[0].onclick(); assert.equal(el('#cch-corr-invia').disabled, false);                          // un motivo: acceso
@@ -535,7 +538,7 @@ prova('«Ti eri detto…» con le parole giuste: dice chi ha detto cosa («È ve
   const ctx = { document: { addEventListener() {} }, eAdmin: () => false, MB21Coach: C, ST: {}, esc: x => x, ic: () => '', console, TRAINING_VISIBILE: true,
     supa: {}, dbq: () => Promise.resolve({}) };
   vm.createContext(ctx);
-  vm.runInContext(fs.readFileSync(path.join(__dirname, '../../pagina-coach.js'), 'utf8'), ctx);
+  vm.runInContext(coachAcceso(), ctx);
   const dai = (id, r) => { vm.runInContext(`RICORDI[${JSON.stringify(id)}] = ${JSON.stringify(r)}`, ctx); return ctx.ricordoHtml(id, 'Mario Rossi'); };
   const h = dai('a', { frase: null, obiezioni: ['È vendita?'], daFreni: false });
   assert.match(h, /L'ultima volta Mario ha detto: «È vendita\?»/);
@@ -546,6 +549,30 @@ prova('«Ti eri detto…» con le parole giuste: dice chi ha detto cosa («È ve
   assert.match(dai('d', { frase: 'Proporre un caffè', obiezioni: [], daFreni: false }), /Ti eri detto: <b>«Proporre un caffè»<\/b>/);   // le chat vecchie con la frase
   assert.ok(!/Ripassa nel Training/.test(dai('d', { frase: 'x', obiezioni: [] })));                  // senza obiezioni niente rimando
   assert.equal(ctx.ricordoHtml('sconosciuto', 'Mario'), '');
+});
+
+prova('Nota 093: con il coach spento niente chat dopo l\'esito, niente tentativi a vuoto, niente «Ti eri detto…» né righe di preparazione, e nessuna lettura', async () => {
+  const vm = require('node:vm');
+  let letture = 0, chat = 0;
+  const ctx = { document: { addEventListener() {} }, eAdmin: () => true, MB21Coach: C, ST: {}, esc: x => x, ic: () => '', console, mostraToast() {},
+    supa: { from: () => { letture++; throw new Error('nessuna lettura'); }, rpc: () => { letture++; throw new Error('nessuna lettura'); } }, dbq: () => { letture++; return Promise.resolve({ data: null, error: null }); } };
+  vm.createContext(ctx);
+  vm.runInContext(PAGINA_COACH, ctx);
+  ctx.recitaCoach = async () => { chat++; return []; };
+  const e = { id: 'az1', contatto_id: 'c1', user_id: 'u1', tipo_azione: 'Contatto', modalita: 'Telefonata', contatti: { nome: 'Persona A', categoria: 'Prospect' } };
+  assert.equal(await ctx.chiediRiflessione(e, 'PM Fissato'), null);        // la chat
+  assert.equal(await ctx.chiediRiflessione(e, 'Telefono spento'), null);   // i tentativi a vuoto
+  await ctx.caricaRicordi(['c1', 'c2']);
+  assert.equal(letture, 0); assert.equal(chat, 0);
+  // anche con un ricordo o un consiglio già in memoria non si vede niente
+  vm.runInContext("RICORDI.c1 = { frase: 'x', obiezioni: ['Non ho tempo'] }; PRIME_VOLTE.c2 = true; COACH.batterie.preparazione_incontro = { prima_telefonata: { c: 'consiglio' }, presentazione: { c: 'consiglio' } };", ctx);
+  assert.equal(ctx.ricordoHtml('c1', 'Persona A'), '');
+  assert.equal(ctx.preparaChiamataHtml('c2'), '');
+  assert.equal(ctx.preparaPresentazioneHtml({ tipo_azione: 'Consulenza PRD', modalita: 'Presentazione' }), '');
+  // la riga del consiglio sotto il nome nella coda (veste di prima) dietro lo stesso interruttore; Coach Yes spento in index.html
+  const leggi = f => require('node:fs').readFileSync(require('node:path').join(__dirname, '../..', f), 'utf8');
+  assert.match(leggi('pagina-dashboard.js'), /\$\{r\.coach && r\.contattato && COACH_ACCESO \? `<span class="rc-coach">/);
+  assert.match(leggi('index.html'), /\nconst COACH_YES = false;\n/);
 });
 
 coda.then(() => console.log(`\n${ok} prove superate`));

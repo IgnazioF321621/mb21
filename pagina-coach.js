@@ -19,7 +19,12 @@
 // pubblica il suo lavoro: il 24/09 ha pubblicato anche la chat di PM e Follow Up, prima della prova). Dopo l'ok si toglie dalla lista.
 // Oggi vuota: Consulenza prodotti, Appuntamento con un Partner, Rimandato e No Show sono online dal 24/09 (Ignazio: «pubblica»).
 const COACH_SOLO_ANTEPRIMA = [];
+// Nota Pagine 093 (Ignazio 27/10, «sì perfetto»: il coach «al momento non serve più»): tutto il coach spento con questo interruttore, insieme a
+// COACH_YES (index.html). Con false niente chat dopo l'esito, niente proposta dopo i tentativi a vuoto, niente «Ti eri detto…» né righe di preparazione,
+// niente consiglio sotto il nome nella coda (pagina-dashboard.js) e nessuna lettura per tutto questo. Nel database e nel codice resta tutto: con true si riaccende.
+const COACH_ACCESO = false;
 async function chiediRiflessione(e, esito) {
+  if (!COACH_ACCESO) return null;   // nota 093
   const categoria = (e.contatti && e.contatti.categoria) || e.categoria;
   const situazione = MB21Coach.situazione(e.tipo_azione, e.modalita, categoria, esito);
   if (!situazione) return e.tipo_azione === 'Contatto' && (!e.modalita || e.modalita === 'Telefonata') ? tentativiAVuoto(e, esito) : null;
@@ -190,6 +195,7 @@ async function tentativiAVuoto(e, esito) {
 const PRIME_VOLTE = {};   // contatto_id → true se non ha ancora nessun esito (mai chiamato), false se sì; non letto = niente
 const RICORDI = {};   // contatto_id → { frase, obiezioni, … } oppure null (letto: niente da ricordare)
 async function caricaRicordi(ids) {
+  if (!COACH_ACCESO) return;   // nota 093: nessuna lettura
   const tutti = [...new Set((ids || []).filter(Boolean))];
   if (tutti.length) await batteriaCoach('preparazione_incontro');   // la riga di preparazione per chi non è mai stato chiamato (preparaChiamataHtml)
   // da MB Plan «già chiamati» e riflessioni arrivano con apri_agenda() (`PRE.dati`, pagina-dashboard.js: una lettura per schermata), per un insieme
@@ -214,6 +220,7 @@ async function caricaRicordi(ids) {
   }
 }
 function ricordoHtml(contattoId, nome) {
+  if (!COACH_ACCESO) return '';   // nota 093
   const r = RICORDI[contattoId];
   if (!r) return '';
   const chi = primoNome(nome) || 'La persona';
@@ -242,6 +249,7 @@ function preparaPresentazioneHtml(a) {
 }
 // Lo stesso riquadro `.ricordo` per tutte le righe di preparazione: il consiglio, il ✎ dell'Admin, la fonte in piccolo (se c'è)
 function rigaPreparazione(r, situazione) {
+  if (!COACH_ACCESO) return '';   // nota 093
   const corr = eAdmin() ? `<button type="button" class="cch-corr" data-correggi-frase="${esc(r.c)}" data-situazione="${esc(situazione)}" title="Correggi questa frase" aria-label="Correggi questa frase">✎</button>` : '';
   return `<div class="ricordo">${ic('prossimo')}<div>${esc(r.c)}${corr}${r.fonte ? `<small style="margin:4px 0 0">${esc(r.fonte)}</small>` : ''}</div></div>`;
 }

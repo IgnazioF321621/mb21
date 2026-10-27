@@ -284,6 +284,8 @@ prova('Nota 005 e Agenda P5 (Ignazio 23/10): un foglio solo «Cosa vuoi aggiunge
 prova('Nota 001: il segnale Coach Yes accanto al nome solo sulle telefonate da fare (MB Plan) e nel modulo «+» della telefonata; il tocco apre «Coach Yes» con le note', async () => {
   pulisci();
   P.CY.di = 'io'; P.CY.letta = Date.now(); P.CY.ids = new Set(['ct1', 'c-isa']);
+  assert.doesNotMatch(P.vista('giorno'), /data-coach-yes/);   // nota 093 (27/10): coach spento, nessun segnale
+  P.impostaCoachYes(true);                                    // riacceso: come prima
   try {
     const giorno = P.vista('giorno');
     assert.match(giorno, /data-evento="t1"[^>]*>[\s\S]*?data-coach-yes="ct1" data-coach-nome="Marco Bini"/);   // la telefonata non fatta di Marco Bini
@@ -299,7 +301,7 @@ prova('Nota 001: il segnale Coach Yes accanto al nome solo sulle telefonate da f
     const f = P.fogli.at(-1);
     assert.match(f.innerHTML, /<small>Coach Yes<\/small><b>Fiammetta Rossi<\/b>/);
     assert.match(f.innerHTML, /<small>Contatto · 30\/09\/2026<\/small><div>Chiedile del viaggio<\/div>/);
-  } finally { P.CY.di = null; P.CY.ids = new Set(); P.finto.coachNote = undefined; }
+  } finally { P.impostaCoachYes(false); P.CY.di = null; P.CY.ids = new Set(); P.finto.coachNote = undefined; }
 });
 
 // ── Agenda P5b (Ignazio 23/10): si manda solo alle persone del gruppo che usano l'app (nomi dai dati); CONDIVISIONE_LINEE spento ──

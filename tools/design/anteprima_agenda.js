@@ -31,11 +31,11 @@ const codice = [
   riga('function classeCat'), riga('function ic('), riga('function escIcone'),
   funzione('esc'), riga('function percheHtml'), riga('function diPerche'),   // «Perché?» (nota 048)
   funzione('bottoniEsiti'), funzione('elencoEsitoHtml'), funzione('bloccoEsiti'), funzione('statoAzione'), funzione('avvisoSovrapposti'), riga('function iniziali('),
-  fra('const CY = {', '\nfunction doveSono'),   // nota 001: il segnale Coach Yes, vero
+  fra('const CY = {', '\nfunction doveSono').replace('const COACH_YES = false;', 'let COACH_YES = false;'),   // nota 001: il segnale Coach Yes, vero; nota 093: spento, le prove lo riaccendono (impostaCoachYes)
   // P5b: l'interruttore, qui cambiabile dalle prove (impostaLinee)
   'let CONDIVISIONE_LINEE = false;', funzione('puoSerataTeam'), funzione('nuovoAppuntamento'), funzione('parteLineaHtml'), riga('const parteDopoTocco'),   // nota 005: una persona dentro la Linea   // il modulo «+» vero (dal 05/10, nota 027: «Condividi con», la serata Team/Linea)
   fra("// ── Come si guarda l'Agenda (cantiere 37)", '// Prima si cerca la persona'),
-  'return { impostaLinee: v => { CONDIVISIONE_LINEE = v; }, CY, foglioCoachYes, caricaCoachYes, foglioAggiungi, disegnaAgenda, avvisoSovrapposti, grigliaGiorno, grigliaSettimana, menuAgendaHtml, foglioSpazio, preparaSettimana, rigaSpazioHtml, programmaSettimanaHtml, foglioCosa, collegaCose, spuntaCosa, foglioEvento, foglioRicevuto, controllaImpegniNuovi, nuovoAppuntamento, foglioCercaAgenda: typeof foglioCercaAgenda === \'function\' ? foglioCercaAgenda : null, apriCampoCosa: typeof apriCampoCosa === \'function\' ? apriCampoCosa : null };',
+  'return { impostaLinee: v => { CONDIVISIONE_LINEE = v; }, impostaCoachYes: v => { COACH_YES = v; }, CY, foglioCoachYes, caricaCoachYes, foglioAggiungi, disegnaAgenda, avvisoSovrapposti, grigliaGiorno, grigliaSettimana, menuAgendaHtml, foglioSpazio, preparaSettimana, rigaSpazioHtml, programmaSettimanaHtml, foglioCosa, collegaCose, spuntaCosa, foglioEvento, foglioRicevuto, controllaImpegniNuovi, nuovoAppuntamento, foglioCercaAgenda: typeof foglioCercaAgenda === \'function\' ? foglioCercaAgenda : null, apriCampoCosa: typeof apriCampoCosa === \'function\' ? apriCampoCosa : null };',
 ].join('\n');
 
 // ── una giornata finta, con due appuntamenti alla stessa ora ──
@@ -153,7 +153,7 @@ if (globalThis.AGENDA_V5) {
     n => MB21Icone.icona(n), x => String(x).replace(/&/g, '&amp;').replace(/</g, '&lt;'), AG, A, stub.chipPartnerSelect);
 }
 const nomi = Object.keys(stub);
-const { foglioCercaAgenda, apriCampoCosa, impostaLinee, CY, foglioCoachYes, caricaCoachYes, foglioAggiungi, disegnaAgenda, avvisoSovrapposti, grigliaGiorno, grigliaSettimana, menuAgendaHtml, foglioSpazio, preparaSettimana, rigaSpazioHtml, programmaSettimanaHtml, foglioCosa, collegaCose, spuntaCosa, foglioEvento, foglioRicevuto, controllaImpegniNuovi, nuovoAppuntamento } = new Function(...nomi, codice)(...nomi.map(n => stub[n]));
+const { foglioCercaAgenda, apriCampoCosa, impostaLinee, impostaCoachYes, CY, foglioCoachYes, caricaCoachYes, foglioAggiungi, disegnaAgenda, avvisoSovrapposti, grigliaGiorno, grigliaSettimana, menuAgendaHtml, foglioSpazio, preparaSettimana, rigaSpazioHtml, programmaSettimanaHtml, foglioCosa, collegaCose, spuntaCosa, foglioEvento, foglioRicevuto, controllaImpegniNuovi, nuovoAppuntamento } = new Function(...nomi, codice)(...nomi.map(n => stub[n]));
 
 // `orario` = la griglia del giorno da sola (nell'app sta nel cassetto «Timeline»); `giorno` (o `elenco`) = la pagina
 // formato NotePlan (cantiere 41: impegni, foglio, Core); `settimana` = le sette colonne
@@ -166,7 +166,7 @@ function vista(v, aperta) {
   if (v === 'settimana') return app.innerHTML + grigliaSettimana({ mioId: modo.tutti ? null : 'io', admin: modo.admin });
   return app.innerHTML;
 }
-module.exports = { foglioCercaAgenda, apriCampoCosa, stub, impostaLinee, CY, foglioCoachYes, caricaCoachYes, foglioAggiungi, foglioCosa, collegaCose, spuntaCosa, scelta, app, A, AG, modo, vista, menuAgendaHtml, disegnaAgenda, avvisoSovrapposti, az, OGGI, foglioSpazio, foglioEvento, foglioRicevuto, controllaImpegniNuovi, nuovoAppuntamento, finto, preparaSettimana, rigaSpazioHtml, programmaSettimanaHtml, fogli, scritture, avvisi };
+module.exports = { foglioCercaAgenda, apriCampoCosa, stub, impostaLinee, impostaCoachYes, CY, foglioCoachYes, caricaCoachYes, foglioAggiungi, foglioCosa, collegaCose, spuntaCosa, scelta, app, A, AG, modo, vista, menuAgendaHtml, disegnaAgenda, avvisoSovrapposti, az, OGGI, foglioSpazio, foglioEvento, foglioRicevuto, controllaImpegniNuovi, nuovoAppuntamento, finto, preparaSettimana, rigaSpazioHtml, programmaSettimanaHtml, fogli, scritture, avvisi };
 if (require.main !== module) return;
 
 // con un argomento si guarda una vista sola, grande: node tools/design/anteprima_agenda.js giorno /tmp/x.html
