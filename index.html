@@ -1050,11 +1050,13 @@
   .mc-altri { margin-top: 12px; }
   .vn5-schede { grid-template-columns: repeat(2, minmax(0, 1fr)); }   /* nota 098: Vendite, le schede Mese · Anno nella testata oro */
   .vn5-sconti { font-weight: 700; color: #8A6200; background: #FFF3D1; }
-  .vn5-riga .rp-chi, .vn5-riga .rp-chi > span { min-width: 0; }   /* nota 098: riga 1 targhetta piccola, nome · prodotto (si accorcia prima il prodotto, poi il nome); riga 2 intera */
-  .vn5-riga.pv-vendita .pv-nome { display: flex; align-items: center; white-space: nowrap; min-width: 0; }
-  .vn5-riga .vn-brand { flex: none; font-size: 10px; padding: 1px 5px; border-radius: 5px; }
-  .vn5-riga .vn5-chi { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-  .vn5-riga .vn5-prodotto { flex: 0 1000 auto; min-width: 4em; padding-left: 4px; overflow: hidden; text-overflow: ellipsis; font-weight: 400; color: var(--grigio); }
+  .vn5-riga .rp-chi, .vn5-riga .rp-chi > span { min-width: 0; }   /* nota 098: riga 1 targhetta piccola e nome intero (va a capo), riga 2 intera; il tocco apre i prodotti */
+  .vn5-riga .vn-brand { font-size: 10px; padding: 1px 5px; border-radius: 5px; vertical-align: 2px; }
+  .vn5-voce { border-bottom: 1px solid var(--linea); } .vn5-voce:last-child { border-bottom: 0; } .vn5-voce .vn-riga { border-bottom: 0; }
+  .vn5-riga .rp-chi { flex: 1 1 auto; }
+  .vn5-freccia { flex: none; color: var(--grigio); font-size: 18px; margin-left: -4px; }
+  .vn5-dentro { padding: 0 0 12px 50px; } .vn5-prodotto { font-size: 14px; padding: 6px 0; border-top: 1px solid var(--linea); }
+  .vn5-apri { display: block; margin-top: 6px; border: 0; background: transparent; padding: 6px 0; font-family: inherit; font-size: 14px; font-weight: 600; color: #8A6200; }
   .mc-basta { margin: 8px 4px 0; font-size: 14px; }   /* nota 098: «bastano nome, telefono e categoria: il resto quando vuoi» */
   .mc-altri > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 6px; background: var(--superficie); border-radius: 14px; padding: 13px 14px; font-weight: 600; box-shadow: var(--ombra-card); }
   .mc-altri > summary::-webkit-details-marker { display: none; }
@@ -5191,17 +5193,25 @@ async function disegnaProvvigioni() {
   app.querySelectorAll('[data-pvmese]').forEach(b => b.onclick = () => { PV.vista = 'mese'; PV.mese = b.dataset.pvmese; window.scrollTo(0, 0); disegnaProvvigioni(); });
   // un tocco su una vendita apre la scheda della persona sulla linguetta Vendite; la sua freccia («‹ Report») torna qui
   app.querySelectorAll('[data-pvcontatto]').forEach(b => b.onclick = () => { LS.apriSezione = 'vendite'; apriContattoDa(b.dataset.pvcontatto, vendite ? 'vendite' : 'provvigioni'); });
+  // nota 098: «Da consegnare» e «Sconti», il tocco apre (e richiude) i prodotti sul posto; «Apri la vendita ›» è il tocco di prima
+  app.querySelectorAll('[data-vnapri]').forEach(b => b.onclick = () => {
+    const d = app.querySelector(`[data-vndentro="${b.dataset.vnapri}"]`), f = app.querySelector(`[data-vnfreccia="${b.dataset.vnapri}"]`);
+    d.hidden = !d.hidden; f.textContent = d.hidden ? '›' : '⌄';
+  });
 }
 // Nota 098 (Ignazio 27/10, «A»): in cima alla pagina Vendite (il mese) «Da consegnare» e «Sconti», dalle stesse vendite del mese; il tocco apre la vendita
 // nella scheda del cliente, dove ci sono «Ordine fatto» e «Incassato» (qui nessun tasto che scrive)
 function gruppiVendite(m, oggi) {
   const L = MB21Lista, n = L.numero, sc = L.scontiMese(m), dc = m.vendite.filter(v => L.daConsegnare(v));
-  // poi (Ignazio 27/10): riga 1 la targhetta piccola del brand, il nome e « · prodotto» (con più prodotti il primo e «…»; se non ci sta si accorcia
-  // prima il prodotto, poi il nome); riga 2 la consegna o gli sconti, intera; a destra i VP o la percentuale
-  const prodotto = p => { const parti = String(p || '').split(/\s*[,;+\/]\s*/).filter(Boolean); return parti.length > 1 ? parti[0] + '…' : parti[0] || ''; };
-  const riga = (v, sotto, destra) => `<button class="vn-riga pv-vendita vn5-riga ${classeCat(v.categoria)}" data-pvcontatto="${esc(v.contatto_id)}">
-      <span class="rp-chi"><i class="rp-tondo">${esc(iniziali(v.nome))}</i><span><span class="pv-nome">${v.brand ? `<span class="vn-brand" style="background:${L.coloreBrand(v.brand)}">${esc(v.brand)}</span>` : ''}<span class="vn5-chi">${esc(v.nome)}</span>${prodotto(v.prodotto) ? `<span class="vn5-prodotto">· ${esc(prodotto(v.prodotto))}</span>` : ''}</span><span class="vn-sotto">${sotto}</span></span></span>
-      <span class="vn-numeri"><b>${destra}</b></span></button>`;
+  // poi (Ignazio 27/10): riga 1 la targhetta piccola del brand e il nome intero (se è lunghissimo va a capo), a destra i VP o la percentuale;
+  // riga 2 la consegna o gli sconti, intera. Il tocco apre sotto, sul posto, i prodotti uno per riga e «Apri la vendita ›»; un secondo tocco richiude
+  let k = 0;
+  const riga = (v, sotto, destra) => { k += 1; const prodotti = String(v.prodotto || '').split(/\s*[,;+\/]\s*/).filter(Boolean);
+    return `<div class="vn5-voce"><button class="vn-riga pv-vendita vn5-riga ${classeCat(v.categoria)}" data-vnapri="${k}">
+      <span class="rp-chi"><i class="rp-tondo">${esc(iniziali(v.nome))}</i><span><span class="pv-nome">${v.brand ? `<span class="vn-brand" style="background:${L.coloreBrand(v.brand)}">${esc(v.brand)}</span>` : ''}${esc(v.nome)}</span><span class="vn-sotto">${sotto}</span></span></span>
+      <span class="vn-numeri"><b>${destra}</b></span><span class="vn5-freccia" data-vnfreccia="${k}">›</span></button>
+      <div class="vn5-dentro" data-vndentro="${k}" hidden>${prodotti.map(x => `<div class="vn5-prodotto">${esc(x)}</div>`).join('')}
+        <button class="vn5-apri" data-pvcontatto="${esc(v.contatto_id)}">Apri la vendita ›</button></div></div>`; };
   return (dc.length ? `<h2 class="ck-sezione">Da consegnare · ${dc.length}</h2><div class="riquadro vn-elenco">${dc.map(v => riga(v,
       `consegna prevista il ${esc(L.data(v.consegna))}${L.daConfermare(v, oggi) ? ' · da confermare' : ''}`, `${n(v.vp)} VP`)).join('')}</div>` : '')
     + (sc.righe.length ? `<h2 class="ck-sezione">Sconti · ${sc.righe.length}</h2>
