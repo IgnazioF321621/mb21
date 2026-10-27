@@ -1050,7 +1050,11 @@
   .mc-altri { margin-top: 12px; }
   .vn5-schede { grid-template-columns: repeat(2, minmax(0, 1fr)); }   /* nota 098: Vendite, le schede Mese · Anno nella testata oro */
   .vn5-sconti { font-weight: 700; color: #8A6200; background: #FFF3D1; }
-  .vn5-riga .rp-chi, .vn5-riga .rp-chi > span { min-width: 0; } .vn5-riga .pv-nome, .vn5-riga .vn-sotto { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }   /* nota 098: si tagliano nome e prodotto, mai le cifre */
+  .vn5-riga .rp-chi, .vn5-riga .rp-chi > span { min-width: 0; }   /* nota 098: riga 1 targhetta piccola, nome · prodotto (si accorcia prima il prodotto, poi il nome); riga 2 intera */
+  .vn5-riga.pv-vendita .pv-nome { display: flex; align-items: center; white-space: nowrap; min-width: 0; }
+  .vn5-riga .vn-brand { flex: none; font-size: 10px; padding: 1px 5px; border-radius: 5px; }
+  .vn5-riga .vn5-chi { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .vn5-riga .vn5-prodotto { flex: 0 1000 auto; min-width: 4em; padding-left: 4px; overflow: hidden; text-overflow: ellipsis; font-weight: 400; color: var(--grigio); }
   .mc-basta { margin: 8px 4px 0; font-size: 14px; }   /* nota 098: «bastano nome, telefono e categoria: il resto quando vuoi» */
   .mc-altri > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 6px; background: var(--superficie); border-radius: 14px; padding: 13px 14px; font-weight: 600; box-shadow: var(--ombra-card); }
   .mc-altri > summary::-webkit-details-marker { display: none; }
@@ -5192,14 +5196,14 @@ async function disegnaProvvigioni() {
 // nella scheda del cliente, dove ci sono «Ordine fatto» e «Incassato» (qui nessun tasto che scrive)
 function gruppiVendite(m, oggi) {
   const L = MB21Lista, n = L.numero, sc = L.scontiMese(m), dc = m.vendite.filter(v => L.daConsegnare(v));
-  // poi (Ignazio 27/10): prima del nome la targhetta del brand (la stessa della scheda › Vendite), sotto il prodotto (con più prodotti il primo e «…»);
-  // se la riga è lunga si tagliano nome e prodotto, mai le cifre
+  // poi (Ignazio 27/10): riga 1 la targhetta piccola del brand, il nome e « · prodotto» (con più prodotti il primo e «…»; se non ci sta si accorcia
+  // prima il prodotto, poi il nome); riga 2 la consegna o gli sconti, intera; a destra i VP o la percentuale
   const prodotto = p => { const parti = String(p || '').split(/\s*[,;+\/]\s*/).filter(Boolean); return parti.length > 1 ? parti[0] + '…' : parti[0] || ''; };
   const riga = (v, sotto, destra) => `<button class="vn-riga pv-vendita vn5-riga ${classeCat(v.categoria)}" data-pvcontatto="${esc(v.contatto_id)}">
-      <span class="rp-chi"><i class="rp-tondo">${esc(iniziali(v.nome))}</i><span><span class="pv-nome">${v.brand ? `<span class="vn-brand" style="background:${L.coloreBrand(v.brand)}">${esc(v.brand)}</span>` : ''}${esc(v.nome)}</span><span class="vn-sotto">${esc(prodotto(v.prodotto))}${prodotto(v.prodotto) && sotto ? ' · ' : ''}${sotto}</span></span></span>
+      <span class="rp-chi"><i class="rp-tondo">${esc(iniziali(v.nome))}</i><span><span class="pv-nome">${v.brand ? `<span class="vn-brand" style="background:${L.coloreBrand(v.brand)}">${esc(v.brand)}</span>` : ''}<span class="vn5-chi">${esc(v.nome)}</span>${prodotto(v.prodotto) ? `<span class="vn5-prodotto">· ${esc(prodotto(v.prodotto))}</span>` : ''}</span><span class="vn-sotto">${sotto}</span></span></span>
       <span class="vn-numeri"><b>${destra}</b></span></button>`;
   return (dc.length ? `<h2 class="ck-sezione">Da consegnare · ${dc.length}</h2><div class="riquadro vn-elenco">${dc.map(v => riga(v,
-      `consegna prevista il ${esc(L.data(v.consegna))}${L.daConfermare(v, oggi) ? ' · da confermare' : ''} · ${n(v.vp)} VP`, '')).join('')}</div>` : '')
+      `consegna prevista il ${esc(L.data(v.consegna))}${L.daConfermare(v, oggi) ? ' · da confermare' : ''}`, `${n(v.vp)} VP`)).join('')}</div>` : '')
     + (sc.righe.length ? `<h2 class="ck-sezione">Sconti · ${sc.righe.length}</h2>
       <div class="vn-riga-info vn5-sconti">Sconti del mese ${n(sc.sconto, true)} su ${n(sc.totale, true)}${sc.percentuale == null ? '' : ` · ${sc.percentuale}%`}</div>
       <div class="riquadro vn-elenco">${sc.righe.map(x => riga(x.v, `sconti ${n(x.sconto, true)} su ${n(x.totale, true)}`, x.percentuale == null ? '' : x.percentuale + '%')).join('')}</div>` : '');

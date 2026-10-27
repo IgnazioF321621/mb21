@@ -26,11 +26,12 @@ prova('Vendite, il mese: «Da consegnare» e «Sconti» (sconti € X su € Y e
   const P = avvia({ v5: true, tab: 'vendite' });
   await P.m.disegnaProvvigioni(); for (let i = 0; i < 5; i++) await aspetta();
   const t = testo(P.app.innerHTML);
-  assert.match(t, /Da consegnare · 1 PA eSpring Persona A Prodotto · consegna prevista il 20\/11\/2026 · 300,00 VP/);   // poi (Ignazio 27/10): la targhetta del brand prima del nome, sotto il prodotto
+  assert.match(t, /Da consegnare · 1 PA eSpring Persona A · Prodotto consegna prevista il 20\/11\/2026 300,00 VP/);   // poi (Ignazio 27/10): targhetta piccola, nome · prodotto; sotto la consegna intera; a destra i VP
   // Persona A, Nutrilite: prezzo 99, incassato 95, sconto 4 → 4 su 99 · 4%; il mese: sconti 4 su incassato 135 + sconti 4 = 139 → 3%
-  assert.match(t, /Sconti · 1 Sconti del mese 4,00 € su 139,00 € · 3% PA Nutrilite\/XS Persona A Double X… · sconti 4,00 € su 99,00 € 4%/);   // più prodotti: il primo e «…»
-  assert.match(P.app.innerHTML, /<span class="pv-nome"><span class="vn-brand" style="background:[^"]+">Nutrilite\/XS<\/span>Persona A<\/span>/);
-  assert.match(leggi('index.html'), /\.vn5-riga \.pv-nome, \.vn5-riga \.vn-sotto \{ white-space: nowrap; overflow: hidden; text-overflow: ellipsis; \}/);   // si tagliano nome e prodotto, non le cifre
+  assert.match(t, /Sconti · 1 Sconti del mese 4,00 € su 139,00 € · 3% PA Nutrilite\/XS Persona A · Double X… sconti 4,00 € su 99,00 € 4%/);   // più prodotti: il primo e «…»
+  assert.match(P.app.innerHTML, /<span class="pv-nome"><span class="vn-brand" style="background:[^"]+">Nutrilite\/XS<\/span><span class="vn5-chi">Persona A<\/span><span class="vn5-prodotto">· Double X…<\/span><\/span><span class="vn-sotto">sconti/);
+  assert.match(leggi('index.html'), /\.vn5-riga \.vn5-prodotto \{ flex: 0 1000 auto;[^}]*text-overflow: ellipsis;[\s\S]*?\}/);   // si accorcia prima il prodotto, poi il nome; la seconda riga e le cifre mai
+  assert.match(leggi('index.html'), /\.vn5-riga \.vn-brand \{ flex: none; font-size: 10px;/);   // la targhetta più piccola del nome
   assert.ok(t.indexOf('Sconti · 1') < t.indexOf('Le vendite del mese'));
   P.clic('[data-pvcontatto="c1"]');
   assert.deepEqual(P.aperti.at(-1), ['c1', 'vendite']);
