@@ -398,7 +398,10 @@ async function caricaTrainingAdmin() {
   if (r.error || !a) { AD.training = { errore: 'Non riesco a leggere il Training: riprova.' }; return AD.sezione === 'training' && disegnaAdmin(); }
   const mazzi = a.mazzi.filter(z => z && z.percorso && Array.isArray(z.carte));
   const T = MB21Training, oggi = MB21Coda.oggiRoma();
-  const persone = (r.data || []).map(p => {
+  // Ignazio 27/10 (Regia): solo chi entra ancora (accesso attivo, non eliminato), come «Non hanno ancora aperto il Training»; nel database non si toglie
+  // niente: a chi si ridà l'accesso ricompare
+  const entra = id => AD.tutti.some(u => u.id === id && u.accesso_attivo && !u.eliminato_il);
+  const persone = (r.data || []).filter(p => entra(p.user_id)).map(p => {
     const stati = Object.fromEntries((p.carte || []).map(c => [c.carta, c]));
     const sc = T.scala(mazzi, stati, p.test || [], oggi), med = T.medaglie(p.test || [], p.giorni || []);
     const perc = sc.percorso ? sc.qui.percorsi.find(x => x.id === sc.percorso) : null;

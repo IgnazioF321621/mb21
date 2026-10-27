@@ -54,6 +54,24 @@ prova('Fuori dalla veste v5 il menu Admin è quello di prima', () => {
   assert.match(h, /<button class="rp-apri ad-voce" id="ad-scegli">/);
 });
 
+prova('Training di Admin (Ignazio 27/10): nella lista di chi si allena solo chi entra ancora (accesso attivo, non eliminato); nel database non si toglie niente', async () => {
+  const riga = id => ({ user_id: id, carte: [{ carta: 'c1', scatola: 1 }], test: [], giorni: ['2026-10-26'], ultima: null });
+  const ctx = { console, Date, Intl, Set, Map, Promise, JSON, Math, app: { innerHTML: '' }, esc: s => String(s ?? ''), ic: n => `[${n}]`, nomeDi: u => u.nome_cognome,
+    MB21Coda: { oggiRoma: () => '2026-10-27' }, MB21Lista: L, MB21Training: T, TRN: { mazzi: [{ percorso: { id: T.LIVELLI[0].percorsi[0].id, titolo: 'Percorso finto' }, carte: [{ id: 'c1' }] }] },
+    supa: { rpc: async () => ({ data: ['u1', 'u2', 'u3'].map(riga), error: null }) }, dbq: async (_, p) => p, window: {}, document: {} };
+  vm.createContext(ctx);
+  vm.runInContext(ADMIN + '\nthis.__A = { AD, caricaTrainingAdmin };', ctx);
+  ctx.__A.AD.sezione = null;
+  ctx.__A.AD.tutti = [{ id: 'u1', nome_cognome: 'Persona A', accesso_attivo: true }, { id: 'u2', nome_cognome: 'Persona B', accesso_attivo: false },
+    { id: 'u3', nome_cognome: 'Persona C', accesso_attivo: true, eliminato_il: '2026-10-25T18:00:00Z' }, { id: 'u4', nome_cognome: 'Persona D', accesso_attivo: true }];
+  await ctx.__A.caricaTrainingAdmin();
+  assert.deepEqual(ctx.__A.AD.training.persone.map(x => x.nome), ['Persona A']);
+  assert.deepEqual(ctx.__A.AD.training.mai, ['Persona D']);   // come prima: chi entra e non ha mai aperto il Training
+  ctx.__A.AD.tutti[1].accesso_attivo = true;   // se si ridà l'accesso, ricompare
+  await ctx.__A.caricaTrainingAdmin();
+  assert.deepEqual(ctx.__A.AD.training.persone.map(x => x.nome).sort(), ['Persona A', 'Persona B']);
+});
+
 (async () => {
   for (const [nome, fn] of prove) {
     try { await fn(); ok++; console.log('✔', nome); } catch (e) { console.error('✘', nome, '\n ', e.message); process.exitCode = 1; }
