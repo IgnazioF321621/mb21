@@ -184,8 +184,9 @@ function chiediDato(c, campo, titolo, spiega, scelte) {
 }
 const chiediSesso = c => chiediDato(c, 'sesso', `${c.nome} è un uomo o una donna?`,
   'Serve una volta sola: alcune tracce sono pensate per un pubblico femminile e non te le propongo per un uomo.', [['M', 'Uomo'], ['F', 'Donna']]);
-const chiediLavoro = c => chiediDato(c, 'lavoro', `${c.nome} è dipendente o autonomo?`,
-  'Serve una volta sola: a un dipendente propongo per prima «Siamo nel mondo reale», a un autonomo «L\'impresa ideale».', [['dipendente', 'Dipendente'], ['autonomo', 'Autonomo']]);
+// nota 098 (Ignazio 27/10): anche «Altro» (pensionato, studente, chi non lavora), che per le tracce vale come dipendente; le scelte sono MB21Lista.LAVORI
+const chiediLavoro = c => chiediDato(c, 'lavoro', `Che tipo di lavoro fa ${c.nome}?`,
+  'Serve una volta sola: a un dipendente (e a chi ha «Altro») propongo per prima «Siamo nel mondo reale», a un autonomo «L\'impresa ideale».', MB21Lista.LAVORI);
 // Le domande in fila, solo quelle che il consiglio segnala; torna true se almeno una risposta è stata salvata
 async function chiediSeServe(c, r) {
   let fatto = false;

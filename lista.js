@@ -436,7 +436,7 @@
   // lo stesso nel modulo Nuovo/Modifica e nella sezione Dati della scheda. [colonna di `contatti`, etichetta]
   const DATI_PERSONA = [['fascia_eta', 'Età'], ['compleanno', 'Compleanno'], ['sesso', 'Sesso'], ['professione', 'Professione'], ['lavoro', 'Lavoro'], ['citta', 'Località']];
   const SESSI = [['M', 'Uomo'], ['F', 'Donna']];
-  const LAVORI = [['dipendente', 'Dipendente'], ['autonomo', 'Autonomo']];
+  const LAVORI = [['dipendente', 'Dipendente'], ['autonomo', 'Autonomo'], ['altro', 'Altro']];   // «Altro» (nota 098, Ignazio 27/10): migrazione 20261027055000
   const nomeScelta = (elenco, v) => (elenco.find(x => x[0] === v) || [v, v])[1];   // il valore salvato → la parola che si legge
 
   // ── Vendite (cantiere 26) ──

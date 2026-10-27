@@ -114,6 +114,9 @@ prova('dipendente o autonomo: la traccia per il suo lavoro passa per prima; senz
   const dopoTd = [k('td', '2026-09-20')];
   assert.equal(S.prossima(M, dopoTd, { categoria: 'Prospect', sesso: 'M', lavoro: 'dipendente' }).traccia.id, 'mr');   // Siamo nel mondo reale prima dell'Impresa ideale
   assert.equal(S.prossima(M, dopoTd, { categoria: 'Prospect', sesso: 'M', lavoro: 'autonomo' }).traccia.id, 'ii');
+  // nota Pagine 098 (Ignazio 27/10, «B»): «Altro» (pensionato, studente…) vale come dipendente, e l'app non chiede più il tipo di lavoro
+  assert.equal(S.prossima(M, dopoTd, { categoria: 'Prospect', sesso: 'M', lavoro: 'altro' }).traccia.id, 'mr');
+  assert.equal(S.prossima(M, dopoTd, { categoria: 'Prospect', sesso: 'M', lavoro: 'altro' }).serveLavoro, false);
   const r = S.prossima(M, dopoTd, { categoria: 'Prospect', sesso: 'M', lavoro: null });
   assert.equal(r.traccia.id, 'ii'); assert.equal(r.serveLavoro, true);
   // «Tempo e denaro» (ordine 0) resta prima di tutto se non è stata condivisa, anche con il lavoro noto

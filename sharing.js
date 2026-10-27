@@ -52,7 +52,8 @@
   // Il consiglio: { traccia, fase, extra, fineFase, serveSesso, serveLavoro } oppure { fine: true } quando non c'è più niente da proporre.
   //   contatto.sesso: 'M' salta le «solo donne»; vuoto → se una candidata è «solo donne» si segnala serveSesso (l'app lo chiede)
   //   contatto.lavoro: 'dipendente' / 'autonomo' → la traccia con lo stesso per_lavoro passa per prima nella fase (Ignazio 22/09:
-  //     dipendenti «Siamo nel mondo reale», autonomi «L'impresa ideale»); vuoto → se una candidata ha per_lavoro si segnala serveLavoro
+  //     dipendenti «Siamo nel mondo reale», autonomi «L'impresa ideale»); vuoto → se una candidata ha per_lavoro si segnala serveLavoro;
+  //     'altro' (nota Pagine 098, Ignazio 27/10, «B»: pensionato, studente, chi non lavora) vale come 'dipendente'
   //   saltate: id scartati con «Un'altra» in questa sessione (si propongono per ultimi, non spariscono)
   function prossima(materiali, condivisioni, contatto, saltate = []) {
     const perChi = perChiDi(contatto);
@@ -61,12 +62,13 @@
     const uomo = contatto.sesso === 'M';
     const daFare = m => !condivisa(condivisioni, m.id) && !(uomo && m.solo_donne);
     const ultima = ultimaCondivisa(condivisioni, materiali);
+    const lavoro = contatto.lavoro === 'altro' ? 'dipendente' : contatto.lavoro;
     const scegli = lista => {
       const c = lista.filter(daFare);
       if (!c.length) return null;
       // la traccia per il suo lavoro passa avanti; dopo uno straniero viene un italiano, se ce n'è; le saltate vanno in fondo
       // «Tempo e denaro» (ordine 0, prima del PM) e la traccia del lavoro pesano uguale: a parità decide l'ordine del PDF
-      const peso = m => (saltate.includes(m.id) ? 4 : 0) + (ultima && ultima.straniero && m.straniero ? 2 : 0) - (m.ordine === 0 || (contatto.lavoro && m.per_lavoro === contatto.lavoro) ? 1 : 0);
+      const peso = m => (saltate.includes(m.id) ? 4 : 0) + (ultima && ultima.straniero && m.straniero ? 2 : 0) - (m.ordine === 0 || (lavoro && m.per_lavoro === lavoro) ? 1 : 0);
       return [...c].sort((a, b) => peso(a) - peso(b) || ordina(a, b))[0];
     };
     for (const f of percorso.fasi) {
