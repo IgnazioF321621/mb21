@@ -529,35 +529,45 @@ prova('105-107: le scelte scendono — scelta la persona si apre da sola «Tipo�
   assert.doesNotMatch(v.innerHTML, /data-scelta="modalita"/);                                      // una lista aperta per volta
 });
 
-prova('107: «Manda l\'appuntamento a [nome]»: «Cosa aggiungo?» (Dove e Note già spuntati, i punti a scelta), «Con» Telegram o WhatsApp, un tasto «Manda»', async () => {
+prova('107: un solo «Condividi con [nome]»: «Come» (Nell\'app MB21 · Telegram · WhatsApp), per i messaggi «Cosa aggiungo?» (i punti a scelta), un tasto «Condividi»', async () => {
   pulisci();
   const e = { id: 'c1', contatto_id: 'c-isa', user_id: 'io', tipo_azione: 'Appuntamento', modalita: 'Counseling', categoria: 'Partner', completata: false,
     inizio: P.A.isoDaRoma(P.OGGI, '15:00'), fine: P.A.isoDaRoma(P.OGGI, '16:00'), link: 'https://zoom.us/j/1', note: 'portare il libro', punti: [{ t: 'Il perché', fatto: false }],
     contatti: { nome: 'Fiammetta Rossi', categoria: 'Partner', telefono: '+39 333 1112222' } };
   P.foglioEvento({ ...e, quando: e.inizio });
   const f = P.fogli.at(-1);
-  assert.match(f.innerHTML, /Manda l'appuntamento a Fiammetta Rossi<\/b><small>Tipo, giorno, ora e durata ci sono sempre<\/small>/);
-  assert.match(f.innerHTML, /data-manda-apri="cosa"><b>Dove · Note<\/b>/); assert.match(f.innerHTML, /data-manda-apri="con"><b>Telegram<\/b>/);
-  assert.ok(f.innerHTML.indexOf('data-manda-via') < f.innerHTML.indexOf('data-cmd="modifica"'));   // sopra i comandi
-  await f.clic('[data-manda-apri="cosa"]'); await f.clic('[data-manda-cosa="punti"]');
-  assert.match(f.innerHTML, /data-manda-apri="cosa" ?[^>]*><b>Dove · Note · Punti da trattare<\/b>/); assert.match(f.innerHTML, /data-manda-cosa="punti"/);   // più di una: resta aperta
-  await f.clic('[data-manda-via]');
-  const t = P.avvisi.at(-1);
+  assert.equal((f.innerHTML.match(/Condividi con Fiammetta Rossi/g) || []).length, 1);   // una volta sola
+  assert.doesNotMatch(f.innerHTML, /Manda l'appuntamento|class="cd chiuso"/);
+  assert.match(f.innerHTML, /data-condividi-apri="come"><b>Nell(&#39;|')app MB21<\/b>/); assert.doesNotMatch(f.innerHTML, /data-condividi-apri="cosa"/);   // nell'app: niente testo da scegliere
+  assert.ok(f.innerHTML.indexOf('data-cd-con') < f.innerHTML.indexOf('data-cmd="modifica"'));   // sopra i comandi
+  await f.clic('[data-condividi-apri="come"]');
+  assert.deepEqual([...f.innerHTML.matchAll(/data-condividi-come="([^"]+)"/g)].map(x => x[1]), ['app', 'telegram', 'whatsapp']);
+  await f.clic('[data-condividi-come="telegram"]');
+  assert.match(f.innerHTML, /data-condividi-apri="cosa"><b>Dove · Note<\/b>/);
+  await f.clic('[data-condividi-apri="cosa"]'); await f.clic('[data-condividi-cosa="punti"]');
+  assert.match(f.innerHTML, /<b>Dove · Note · Punti da trattare<\/b>/); assert.match(f.innerHTML, /data-condividi-cosa="punti"/);   // più di una: resta aperta
+  await f.clic('[data-condividi-via]');
+  const t = P.avvisi.at(-1), righe = t.testo.split('\n');
   assert.equal(t.t, 'telegram'); assert.equal(t.tel, '+393331112222');
-  const righe = t.testo.split('\n');
   assert.equal(righe[0], 'Ciao Fiammetta! Ti confermo il nostro appuntamento:');
+  assert.match(righe[1], /^📅 Counseling · \S+ \d+ \S+, 15:00–16:00$/);
   assert.deepEqual(righe.slice(2), ['📍 Dove: https://zoom.us/j/1', '📝 Note: portare il libro', '✅ Punti da trattare:', '• Il perché']);
-  assert.match(t.testo.split('\n')[1], /^📅 Counseling · \S+ \d+ \S+, 15:00–16:00$/);
   const aperti = []; P.stub.window.open = u => aperti.push(u);
-  await f.clic('[data-manda-apri="con"]'); await f.clic('[data-manda-con="whatsapp"]');
-  assert.match(f.innerHTML, /data-manda-apri="con"><b>WhatsApp<\/b>/);
-  await f.clic('[data-manda-apri="cosa"]'); await f.clic('[data-manda-cosa="punti"]');   // i punti si tolgono: a scelta ogni volta
-  await f.clic('[data-manda-via]');
+  await f.clic('[data-condividi-apri="come"]'); await f.clic('[data-condividi-come="whatsapp"]');
+  await f.clic('[data-condividi-apri="cosa"]'); await f.clic('[data-condividi-cosa="punti"]');   // i punti si tolgono: a scelta ogni volta
+  await f.clic('[data-condividi-via]');
   assert.equal(aperti.length, 1); assert.match(aperti[0], /^https:\/\/wa\.me\/393331112222\?text=Ciao%20Fiammetta!/); assert.doesNotMatch(decodeURIComponent(aperti[0]), /Punti da trattare/);
   delete P.stub.window.open;
-  // senza un numero con il prefisso non c'è
-  P.foglioEvento({ ...e, quando: e.inizio, contatti: { ...e.contatti, telefono: '' } });
-  assert.doesNotMatch(P.fogli.at(-1).innerHTML, /Manda l'appuntamento/);
+  // «Nell'app MB21» → condividi_azione (mai i punti); poi la riga «Condiviso con» e «Non condividere più»; «Come» ha solo i messaggi
+  await f.clic('[data-condividi-apri="come"]'); await f.clic('[data-condividi-come="app"]');
+  await f.clic('[data-cd-con]'); await attendi();
+  assert.deepEqual(chiamate('condividi_azione').at(-1).args[0], { p_azione: 'c1', p_con: true, p_punti: false });
+  assert.match(f.innerHTML, /<b>Condividi con Fiammetta Rossi<\/b><div class="pt-testa"><b>Condiviso con Fiammetta Rossi<\/b><\/div>/); assert.match(f.innerHTML, /data-cd-togli/);
+  await f.clic('[data-condividi-apri="come"]');
+  assert.deepEqual([...f.innerHTML.matchAll(/data-condividi-come="([^"]+)"/g)].map(x => x[1]), ['telegram', 'whatsapp']);
+  // un Prospect senza telefono: niente riquadro
+  P.foglioEvento({ ...e, quando: e.inizio, categoria: 'Prospect', contatti: { nome: 'Tito Rovere', categoria: 'Prospect', telefono: '' } });
+  assert.doesNotMatch(P.fogli.at(-1).innerHTML, /Condividi con/);
 });
 
 (async () => {

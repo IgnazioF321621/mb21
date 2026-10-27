@@ -1847,11 +1847,14 @@ async function controllaImpegniNuovi() {
   } });
   if (nuovi.length) apri();
 }
-// ── Nota Pagine 107 (Ignazio 27/10, «sì così»): «Manda l'appuntamento a [nome]» ── tipo, giorno, ora e durata ci sono sempre; «Cosa aggiungo? ▾» scende e si
-// spunta anche più di una voce (Dove, Note, Punti da trattare: i punti a scelta ogni volta), «Con ▾» (Telegram o WhatsApp), poi un tasto solo, «Manda».
-// WhatsApp apre la chat della persona con il testo già scritto; Telegram non lo permette verso una persona: il testo si copia e si apre la sua chat
-// (apriTelegramCon, admin.js, come per gli inviti), dove si incolla. Solo il telefono della scheda: niente dati nuovi. Lo stile delle scelte è quello del modulo (note 105-107).
-const MANDA_CANALI = [['telegram', 'Telegram'], ['whatsapp', 'WhatsApp']];
+// ── Nota Pagine 107 (Ignazio 27/10, «sì così», poi «sì così» al riquadro unico): un solo «Condividi con [nome]» nel foglio dell'appuntamento ──
+// «Come ▾»: Nell'app MB21 (condividi_azione: la trova nella sua Agenda e nel suo calendario; solo un Partner, finché non è condiviso) · Telegram · WhatsApp
+// (solo con il telefono della scheda); per Telegram e WhatsApp «Cosa aggiungo? ▾» (anche più di una: Dove, Note, Punti da trattare; i punti a scelta ogni
+// volta) e il testo già scritto (tipo, giorno, ora e durata sempre); un tasto solo, «Condividi». WhatsApp apre la chat con il testo; Telegram non lo
+// permette verso una persona: il testo si copia e si apre la sua chat (apriTelegramCon, admin.js, come per gli inviti). Già condiviso nell'app: la riga con la
+// risposta e «Non condividere più». Le scelte scendono come nel modulo (note 105-107). Niente dati nuovi.
+const MODI_CONDIVIDI = [['app', 'Nell\'app MB21', 'la trova nella sua Agenda e nel suo calendario'], ['telegram', 'Telegram', 'il messaggio già scritto: lo incolli nella sua chat'],
+  ['whatsapp', 'WhatsApp', 'il messaggio già scritto nella sua chat']];
 function testoAppuntamento(e, cosa) {
   const A = MB21Agenda, nome = String((e.contatti && e.contatti.nome) || '').trim().split(/\s+/)[0];
   const righe = [`Ciao${nome ? ' ' + nome : ''}! Ti confermo il nostro appuntamento:`, `📅 ${e.modalita || e.tipo_azione} · ${dataLunga(A.partiRoma(e.inizio).giorno)}, ${A.orario(e)}`];
@@ -1860,29 +1863,40 @@ function testoAppuntamento(e, cosa) {
   if (cosa.has('punti') && (e.punti || []).length) righe.push('✅ Punti da trattare:', ...e.punti.map(p => `• ${p.t}`));
   return righe.join('\n');
 }
-function collegaManda(el, e) {
-  const posto = el.querySelector(`[data-manda="${e.id}"]`), tel = numeroDaChiamare(e.contatti && e.contatti.telefono);
+function collegaCondividi(el, e) {
+  const posto = el.querySelector(`[data-condividi="${e.id}"]`);
   if (!posto) return;
-  if (!tel) { posto.innerHTML = ''; return; }   // senza un numero con il prefisso non si manda niente
+  const A = MB21Agenda, tel = numeroDaChiamare(e.contatti && e.contatti.telefono), app = A.puoCondividereAzione(e);
+  if (!tel && !app) { posto.innerHTML = ''; return; }   // né un Partner né un numero con il prefisso: niente da condividere
   const voci = [['dove', 'Dove', !!(e.link || e.luogo)], ['note', 'Note', !!e.note], ['punti', 'Punti da trattare', !!(e.punti || []).length]].filter(v => v[2]);
-  const st = { cosa: new Set(voci.filter(v => v[0] !== 'punti').map(v => v[0])), con: 'telegram', aperta: null };
+  const st = { cosa: new Set(voci.filter(v => v[0] !== 'punti').map(v => v[0])), come: null, aperta: null, risposte: null, di: undefined };
+  const tendina = (nome, testo, righe) => `<div class="campo"><label>${nome === 'come' ? 'Come' : 'Cosa aggiungo?'}</label><button type="button" class="sel5${st.aperta === nome ? ' aperto' : ''}" data-condividi-apri="${nome}">${testo}<em>${st.aperta === nome ? '⌃' : '▾'}</em></button>
+    ${st.aperta === nome ? `<div class="ag-scelte tendina5">${righe}</div>` : ''}</div>`;
   const disegna = () => {
+    if (st.di !== e.condiviso_con) { st.di = e.condiviso_con; st.risposte = null; }   // condiviso o tolto: la risposta si rilegge
+    const modi = MODI_CONDIVIDI.filter(([k]) => (k === 'app' ? app && !e.condiviso_con : !!tel));
+    if (!modi.some(x => x[0] === st.come)) st.come = (modi[0] || [])[0] || null;
+    const nome = esc(nomePersona(e)), modo = MODI_CONDIVIDI.find(x => x[0] === st.come);
     const sunto = voci.filter(v => st.cosa.has(v[0])).map(v => v[1]).join(' · ');
-    posto.innerHTML = `<div class="riquadro mc-g manda5"><b>Manda l'appuntamento a ${esc(nomePersona(e))}</b><small>Tipo, giorno, ora e durata ci sono sempre</small>
-      ${voci.length ? `<div class="campo"><label>Cosa aggiungo?</label><button type="button" class="sel5${st.aperta === 'cosa' ? ' aperto' : ''}" data-manda-apri="cosa">${sunto ? `<b>${esc(sunto)}</b>` : '<small>Niente</small>'}<em>${st.aperta === 'cosa' ? '⌃' : '▾'}</em></button>
-        ${st.aperta === 'cosa' ? `<div class="ag-scelte tendina5">${voci.map(v => `<button type="button" data-manda-cosa="${v[0]}" class="${st.cosa.has(v[0]) ? 'scelto' : ''}"><span>${v[1]}</span>${st.cosa.has(v[0]) ? '<b>✓</b>' : ''}</button>`).join('')}</div>` : ''}</div>` : ''}
-      <div class="campo"><label>Con</label><button type="button" class="sel5${st.aperta === 'con' ? ' aperto' : ''}" data-manda-apri="con"><b>${(MANDA_CANALI.find(c => c[0] === st.con) || [])[1]}</b><em>${st.aperta === 'con' ? '⌃' : '▾'}</em></button>
-        ${st.aperta === 'con' ? `<div class="ag-scelte tendina5">${MANDA_CANALI.map(c => `<button type="button" data-manda-con="${c[0]}" class="${st.con === c[0] ? 'scelto' : ''}"><span>${c[1]}</span>${st.con === c[0] ? '<b>✓</b>' : ''}</button>`).join('')}</div>` : ''}</div>
-      <button type="button" class="primario" data-manda-via>${ic(st.con)} Manda</button></div>`;
-    posto.querySelectorAll('[data-manda-apri]').forEach(b => { b.onclick = () => { st.aperta = st.aperta === b.dataset.mandaApri ? null : b.dataset.mandaApri; disegna(); }; });
-    posto.querySelectorAll('[data-manda-cosa]').forEach(b => { b.onclick = () => { const k = b.dataset.mandaCosa; if (st.cosa.has(k)) st.cosa.delete(k); else st.cosa.add(k); disegna(); }; });   // più di una: resta aperta
-    posto.querySelectorAll('[data-manda-con]').forEach(b => { b.onclick = () => { st.con = b.dataset.mandaCon; st.aperta = null; disegna(); }; });
-    const via = posto.querySelector('[data-manda-via]');
+    const stato = !app ? '' : e.condiviso_con
+      ? `<div class="pt-testa"><b>Condiviso con ${nome}</b>${puntiCondivisi() ? `<small>${e.punti_condivisi ? 'vede anche i punti' : 'senza i punti'}</small>` : ''}</div>
+        <div class="cd-risposte" data-cd-risposte>${st.risposte == null ? '…' : st.risposte}</div>
+        <div class="pt-comandi">${puntiCondivisi() ? `<button type="button" class="link" data-cd-punti="${e.punti_condivisi ? '0' : '1'}">${e.punti_condivisi ? 'Nascondi i punti' : 'Fai vedere i punti'}</button>` : ''}<button type="button" class="link" data-cd-togli>Non condividere più</button></div>`
+      : SENZA_APP.has(e.id) ? `<div class="pt-testa"><b>${nome} non usa ancora MB21</b></div><div class="pt-comandi"><button type="button" class="link" data-cd-invita>${ic('invito')} Invitalo nell'app</button></div>` : '';
+    posto.innerHTML = `<div class="riquadro mc-g manda5 cd"${app ? ` data-cd="${esc(e.id)}"` : ''}><b>Condividi con ${nome}</b>${stato}
+      ${modi.length ? tendina('come', `<b>${esc(modo[1])}</b>`, modi.map(([k, n, sotto]) => `<button type="button" data-condividi-come="${k}" class="${k === st.come ? 'scelto' : ''}"><span>${esc(n)}<small>${esc(sotto)}</small></span>${k === st.come ? '<b>✓</b>' : ''}</button>`).join('')) : ''}
+      ${st.come && st.come !== 'app' && voci.length ? tendina('cosa', sunto ? `<b>${esc(sunto)}</b>` : '<small>Niente</small>', voci.map(v => `<button type="button" data-condividi-cosa="${v[0]}" class="${st.cosa.has(v[0]) ? 'scelto' : ''}"><span>${v[1]}</span>${st.cosa.has(v[0]) ? '<b>✓</b>' : ''}</button>`).join('')) : ''}
+      ${st.come ? `<button type="button" class="primario" ${st.come === 'app' ? 'data-cd-con' : 'data-condividi-via'}>${ic(st.come === 'app' ? 'condividi' : st.come)} Condividi</button>` : ''}</div>`;
+    posto.querySelectorAll('[data-condividi-apri]').forEach(b => { b.onclick = () => { st.aperta = st.aperta === b.dataset.condividiApri ? null : b.dataset.condividiApri; disegna(); }; });
+    posto.querySelectorAll('[data-condividi-come]').forEach(b => { b.onclick = () => { st.come = b.dataset.condividiCome; st.aperta = null; disegna(); }; });
+    posto.querySelectorAll('[data-condividi-cosa]').forEach(b => { b.onclick = () => { const k = b.dataset.condividiCosa; if (st.cosa.has(k)) st.cosa.delete(k); else st.cosa.add(k); disegna(); }; });   // più di una: resta aperta
+    const via = posto.querySelector('[data-condividi-via]');
     if (via) via.onclick = () => {
       const testo = testoAppuntamento(e, st.cosa);
-      if (st.con === 'whatsapp') window.open('https://wa.me/' + tel.slice(1) + '?text=' + encodeURIComponent(testo), '_blank', 'noopener');
+      if (st.come === 'whatsapp') window.open('https://wa.me/' + tel.slice(1) + '?text=' + encodeURIComponent(testo), '_blank', 'noopener');
       else apriTelegramCon(tel, testo);
     };
+    if (app) legaCondivisioneAzione(posto, e, disegna, st);   // condiviso o tolto: si ridisegna il riquadro (la lista dell'Agenda la aggiorna «localmente»)
   };
   disegna();
 }
@@ -1892,16 +1906,6 @@ function collegaManda(el, e) {
 const puntiCondivisi = () => typeof PUNTI_CONDIVISI !== 'undefined' && PUNTI_CONDIVISI;
 const nomePersona = e => (e.contatti && e.contatti.nome) || 'la persona';
 const SENZA_APP = new Set();   // le azioni la cui persona non usa ancora MB21 (lo dice `condividi_azione`): si scrive e si offre l'invito (Ignazio 05/10)
-function condivisioneAzioneHtml(e) {
-  const A = MB21Agenda;
-  if (!A.puoCondividereAzione(e)) return '';
-  if (!e.condiviso_con && SENZA_APP.has(e.id)) return `<div class="cd" data-cd="${esc(e.id)}"><div class="pt-testa"><b>${esc(nomePersona(e))} non usa ancora MB21</b></div>
-    <div class="pt-comandi"><button type="button" class="link" data-cd-invita>${ic('invito')} Invitalo nell'app</button><button type="button" class="link" data-cd-con>Riprova</button></div></div>`;
-  if (!e.condiviso_con) return `<div class="cd chiuso" data-cd="${esc(e.id)}"><button type="button" class="link" data-cd-con>${ic('condividi')} Condividi con ${esc(nomePersona(e))}</button></div>`;
-  return `<div class="cd" data-cd="${esc(e.id)}"><div class="pt-testa"><b>Condiviso con ${esc(nomePersona(e))}</b>${puntiCondivisi() ? `<small>${e.punti_condivisi ? 'vede anche i punti' : 'senza i punti'}</small>` : ''}</div>
-    <div class="cd-risposte" data-cd-risposte>…</div>
-    <div class="pt-comandi">${puntiCondivisi() ? `<button type="button" class="link" data-cd-punti="${e.punti_condivisi ? '0' : '1'}">${e.punti_condivisi ? 'Nascondi i punti' : 'Fai vedere i punti'}</button>` : ''}<button type="button" class="link" data-cd-togli>Non condividere più</button></div></div>`;
-}
 // le risposte di chi riceve, scritte a parole con i nomi (si leggono dopo, senza fermare il disegno)
 // `azione` (nota 077): l'appuntamento, per la stessa regola delle Conferme (rispostaValida): «Non può» data prima dell'ultimo «Sposta» è da ridare
 async function mostraRisposte(el, origine, id, azione) {
@@ -1920,7 +1924,8 @@ async function mostraRisposte(el, origine, id, azione) {
   if (osp.totale) n.ci_sono = osp.nomi;
   dove.innerHTML = `${osp.totale ? `<div class="cd-si"><b>Ospiti ${osp.totale}</b></div>` : ''}${gruppo('Partecipano', n.ci_sono, 'cd-si')}${gruppo('Non possono', n.non_ci_sono, 'cd-no')}${gruppo('Senza risposta', n.senza, 'cd-senza')}`; void c;
 }
-function collegaCondivisioneAzione(el, e, ridisegna) {
+// i tocchi della condivisione nell'app, dentro il riquadro unico (nota 107): `st.risposte` tiene la risposta letta, così aprire una scelta non la rilegge
+function legaCondivisioneAzione(el, e, ridisegna, st) {
   const blocco = el.querySelector(`[data-cd="${e.id}"]`);
   if (!blocco) return;
   const localmente = campi => { Object.assign(e, campi); const o = (AG.azioni || []).find(x => x.id === e.id); if (o && o !== e) Object.assign(o, campi); };
@@ -1942,7 +1947,7 @@ function collegaCondivisioneAzione(el, e, ridisegna) {
   su('[data-cd-togli]', () => chiama(false, false, 'Non più condiviso'));
   // il link per registrarsi (lo stesso della scheda: foglioLinkInvito, cantiere 32)
   su('[data-cd-invita]', () => foglioLinkInvito({ da: visto().id, nome: nomePersona(e), telefono: e.contatti && e.contatti.telefono }));
-  if (e.condiviso_con) mostraRisposte(blocco, 'azione', e.id, e);
+  if (e.condiviso_con && st.risposte == null) mostraRisposte(blocco, 'azione', e.id, e).then(() => { const d = blocco.querySelector('[data-cd-risposte]'); if (d) st.risposte = d.innerHTML; });
 }
 // la serata di gruppo (solo l'Admin): con chi, la Linea (uno dei suoi frontali, da `squadra`), i punti sì/no, le risposte con i nomi
 function condivisioneSpazioHtml(s) {
@@ -2037,12 +2042,11 @@ function extraEvento(e) {
   return `${ricordo}${prima}${suCosa}${e.ospite ? `<div class="note-ev">Ospite: ${esc(e.ospite)}</div>` : ''}
       ${e.note ? `<div class="note-ev">${testoConLink(e.note)}</div>` : ''}
       ${richiamo ? '' : puntiHtml(e, 'azioni')}
-      ${richiamo ? '' : condivisioneAzioneHtml(e)}
       ${contattaHtml(e.contatti && e.contatti.telefono)}
       ${richiamo ? `<div class="note-ev">Dalla coda: ${esc(e.esito || '')}</div>`
         : fasi.length ? bloccoEsiti(e, e.contatti ? e.contatti.categoria : null)
         : `<div class="note-ev">Nessun esito previsto per ${esc(e.categoria ? MB21Lista.nomeCategoria(e.categoria) : 'questa categoria')} · ${esc(e.tipo_azione)}</div>`}
-      ${richiamo || e.completata ? '' : `<div data-manda="${esc(e.id)}"></div>`}
+      ${richiamo ? '' : `<div data-condividi="${esc(e.id)}"></div>`}
       <div class="ag-comandi">
         ${MB21Agenda.eConsegna(e) ? '' /* nota 051 (Ignazio 12/10): la consegna si sposta solo con «Sposta la consegna», che cambia anche la vendita */
           /* nota 105 (Ignazio 27/10): pochi comandi, Modifica per primo (dentro si aggiungono le persone e si cambia tutto) */
@@ -2107,8 +2111,7 @@ function collegaComandiEvento(el, e, dopo, ridisegna) {
   const giorno = A.partiRoma(e.quando || e.inizio).giorno;
   collegaEsiti(el, e, { nome: e.contatti ? e.contatti.nome : '', categoria: e.contatti ? e.contatti.categoria : e.categoria }, dopo);
   collegaPunti(el, e, 'azioni', ridisegna || disegnaAgenda);
-  collegaCondivisioneAzione(el, e, ridisegna || disegnaAgenda);
-  collegaManda(el, e);   // nota 107
+  collegaCondividi(el, e);   // nota 107: un riquadro solo «Condividi con [nome]»
   el.querySelectorAll('[data-cmd]').forEach(b => {
     b.onclick = () => {
       const chiudiFoglio = () => { const v = b.closest('.velo'); if (v) v.remove(); };

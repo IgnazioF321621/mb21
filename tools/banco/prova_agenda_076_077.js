@@ -63,7 +63,7 @@ prova('077: dopo uno spostamento «Partecipa» resta valida (chi organizza non v
 prova('077: nel foglio dell\'appuntamento chi organizza legge la stessa regola («Senza risposta» dopo uno spostamento su «Non può»); niente database', () => {
   assert.match(PA, /async function mostraRisposte\(el, origine, id, azione\) \{/);
   assert.match(PA, /A\.nomeRispostaDiLui\(azione \? A\.rispostaValida\(data\[0\], azione\) : data\[0\]\.risposta\)/);
-  assert.match(PA, /if \(e\.condiviso_con\) mostraRisposte\(blocco, 'azione', e\.id, e\);/);
+  assert.match(PA, /if \(e\.condiviso_con && st\.risposte == null\) mostraRisposte\(blocco, 'azione', e\.id, e\)/);   // nota 107: nel riquadro unico, letta una volta
   assert.equal(A.nomeRispostaDiLui(A.rispostaValida({ risposta: 'non_ci_sono', risposto_il: '2026-10-25T08:00:00Z' }, { spostato_il: '2026-10-25T09:00:00Z' })), 'Senza risposta');
   assert.equal(A.nomeRispostaDiLui(A.rispostaValida({ risposta: 'ci_sono', risposto_il: '2026-10-25T08:00:00Z' }, { spostato_il: '2026-10-25T09:00:00Z' })), 'Partecipa');
   // le serate (spazi) non hanno «Sposta» con la data: restano come prima
