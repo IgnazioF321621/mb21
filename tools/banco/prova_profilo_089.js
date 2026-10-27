@@ -63,7 +63,7 @@ prova('089: «Cambia password» non è più una riga a sé: sta dentro «I tuoi 
   assert.ok(dove(h, 'id="pf-password"') < dove(h, 'id="pf-numero"'));
   app.clic('#pf-password');
   assert.deepEqual(tocchi, [['password', false]]);
-  assert.doesNotMatch(PROFILO, /rigaProfilo\('pf-password'/);
+  assert.equal((PROFILO.match(/rigaProfilo\('pf-password'/g) || []).length, 1);   // poi (nota 098, Ignazio 27/10): riga a sé solo nella veste v5 (prova_profilo_v5.js)
 });
 
 prova('089: «Com\'è andata?» senza i tre bottoni, sempre 1 ora dopo; il Buongiorno e la sera restano da scegliere', () => {

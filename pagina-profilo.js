@@ -144,31 +144,42 @@ function disegnaProfilo() {
   const numero = (ST.stato || {}).contatti_al_giorno;
   const foto = `<button class="pf-cerchio" id="pf-foto-apri" aria-label="Cambia la foto"><span class="cerchio grande">${dentroCerchio(u)}</span><i>${ic('foto')}</i></button>`;
   // v5 (nota 095, Regia 26/10): la testata scura del Profilo, con «‹ Oggi» (lo stesso #pf-indietro), il chip, il feedback, il titolo e la foto (lo stesso tasto)
-  app.innerHTML = `${typeof veste5 === 'function' && veste5() ? testaZonaV5({ colore: 'var(--testo)', torna: 'Oggi', tornaId: 'pf-indietro', titolo: 'Profilo', sotto: 'Il tuo quadro personale', destra: foto, classe: 'p5t' })
-    : `<button class="indietro" id="pf-indietro">‹ Oggi</button>
-    <div class="testa-pagina"><h1>Profilo</h1>${foto}</div>
-    <div class="sotto">Il tuo quadro personale</div>`}
-    <div class="zona-oggi">La mia crescita</div>
-    ${mioProfiloHtml()}
+  // poi (nota 098, Ignazio 27/10, «sì»): a righe, come le Impostazioni di iPhone: gruppi (`p6-gruppo`) con «Il tuo account» in cima (I tuoi dati e
+  // «Cambia password» come riga a sé), il quadratino colorato con l'icona (CSS `.p6`), «Esci da MB21» riga rossa da sola. Le voci, i fogli e i tasti sono gli stessi.
+  const v5 = typeof veste5 === 'function' && veste5();
+  const crescita = `${mioProfiloHtml()}
     ${mieiSegniHtml()}
     ${mioTrainingHtml()}
     ${rigaProfilo('pf-libri', ic('libro') + ' I miei libri')}
     ${typeof rigaMessaggiProfilo === 'function' ? rigaMessaggiProfilo() : ''}
-    ${AVVIO_NEL_PROFILO ? rigaProfilo('pf-benvenuto', ic('benvenuto') + ' Rivedi il benvenuto') : ''}
-    <div class="zona-oggi">Impostazioni</div>
-    ${voceProfilo('dati', ic('persona') + ' I tuoi dati', { sotto: esc(u.telefono || 'Telefono da scrivere'), corpo: `
+    ${AVVIO_NEL_PROFILO ? rigaProfilo('pf-benvenuto', ic('benvenuto') + ' Rivedi il benvenuto') : ''}`;
+  const dati = voceProfilo('dati', ic('persona') + ' I tuoi dati', { sotto: esc(v5 ? `${nomeDi(u)} · ${u.telefono || 'Telefono da scrivere'}` : u.telefono || 'Telefono da scrivere'), corpo: `
       <div class="pf-riga"><span>Nome</span><b>${esc(nomeDi(u))}</b></div>
       <div class="pf-riga"><span>Email</span><b>${esc(u.email || '—')}</b></div>
       <div class="pf-riga"><span>Codice Amway</span><b>${esc(u.partner_id || '—')}</b></div>
       <label>Telefono<input id="pf-tel" type="tel" autocomplete="tel" inputmode="tel" maxlength="30" value="${esc(u.telefono || '')}" placeholder="+39 …"></label>
       <button class="primario" id="pf-tel-salva">Salva telefono</button>
       <small>Nome, email e codice Amway li cambia l'Admin.</small>
-      <button class="link" id="pf-password" style="display:block;margin-top:6px">${ic('password')} Cambia password ›</button>` })}
-    ${rigaProfilo('pf-numero', ic('telefonate') + ' Contatti al giorno', numero === 0 ? 'In pausa' : esc(String(numero || '—')))}
+      ${v5 ? '' : `<button class="link" id="pf-password" style="display:block;margin-top:6px">${ic('password')} Cambia password ›</button>`}` });
+  const impostazioni = `${rigaProfilo('pf-numero', ic('telefonate') + ' Contatti al giorno', numero === 0 ? 'In pausa' : esc(String(numero || '—')))}
     ${avvisiNuoviHtml(avvisi[s] || avvisi.no_supporto, statoAvvisi)}
     ${calendarioHtml()}
     ${typeof toccoScaricaLista === 'function' ? rigaProfilo('pf-scarica-lista', ic('file') + ' Scarica la mia lista', '', 'Schede, azioni e note in un file Excel') : ''}
-    ${rigaProfilo('pf-privacy', ic('lucchetto') + ' Privacy', '', 'Come sono trattati i tuoi dati')}
+    ${rigaProfilo('pf-privacy', ic('lucchetto') + ' Privacy', '', 'Come sono trattati i tuoi dati')}`;
+  app.innerHTML = v5 ? `${testaZonaV5({ colore: 'var(--testo)', torna: 'Oggi', tornaId: 'pf-indietro', titolo: 'Profilo', sotto: 'Il tuo quadro personale', destra: foto, classe: 'p5t' })}
+    <div class="p6"><div class="zona-oggi">Il tuo account</div><div class="p6-gruppo">${dati}${rigaProfilo('pf-password', ic('password') + ' Cambia password')}</div>
+    <div class="zona-oggi">La mia crescita</div><div class="p6-gruppo">${crescita}</div>
+    <div class="zona-oggi">Impostazioni</div><div class="p6-gruppo">${impostazioni}</div>
+    <div class="p6-gruppo"><button class="p6-esci" id="pf-esci">Esci da MB21</button></div></div>
+    ${versione()}`
+    : `<button class="indietro" id="pf-indietro">‹ Oggi</button>
+    <div class="testa-pagina"><h1>Profilo</h1>${foto}</div>
+    <div class="sotto">Il tuo quadro personale</div>
+    <div class="zona-oggi">La mia crescita</div>
+    ${crescita}
+    <div class="zona-oggi">Impostazioni</div>
+    ${dati}
+    ${impostazioni}
     <button class="link" id="pf-esci" style="display:block;margin:18px auto 0;color:var(--rosso)">Esci da MB21</button>
     ${versione()}`;
   const su = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; };

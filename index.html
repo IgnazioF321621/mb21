@@ -2576,6 +2576,19 @@
   .p5t .pf-cerchio .cerchio { box-shadow: 0 0 0 3px rgba(255,255,255,.35); }
   .pf-segni { border-left: 4px solid var(--z-segni); }   /* v5: dove si parla di Segni Vitali, il rosa della zona (le targhette restano blu, rosse e verdi) */
   .pf-segni .avv-testa b { color: var(--z-segni); }
+  /* nota 098 (Ignazio 27/10, «sì»): il Profilo a righe, come le Impostazioni di iPhone; gruppi bianchi, righe con il quadratino colorato dell'icona */
+  .p6-gruppo { background: var(--superficie); border-radius: 14px; overflow: hidden; margin-bottom: 6px; }
+  .p6-gruppo > .pf-box { border: 0; border-radius: 0; margin: 0; padding: 11px 14px; box-shadow: none; background: transparent; }
+  .p6-gruppo > .pf-box + .pf-box { background: linear-gradient(var(--linea), var(--linea)) right top / calc(100% - 56px) 1px no-repeat; }
+  .p6 .avv-testa > span:first-child { position: relative; padding-left: 42px; min-height: 30px; display: flex; flex-direction: column; justify-content: center; }
+  .p6 .avv-testa b { font-weight: 500; color: var(--testo); }
+  .p6 .avv-testa b > svg.ic:first-child { position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 30px; height: 30px; padding: 6px; box-sizing: border-box; border-radius: 8px; background: var(--p6c, #8E8E93); color: #fff; }
+  .p6 .pf-segni { border-left: 0; } .p6 .pf-targhe, .p6 .pf-corpo { margin-left: 42px; }
+  .p6 .pf-targhe { margin-top: 6px; gap: 6px; } .p6 .sv-targa.pf-targa { flex: none; min-height: 0; padding: 4px 11px; font-size: 12px; }
+  .p6 [data-voce="perche"] { --p6c: #F59E0B; } .p6 [data-voce="segni"] { --p6c: var(--z-segni); } .p6 #pf-training { --p6c: #9333EA; } .p6 #pf-libri { --p6c: #2E9E3E; }
+  .p6 #pf-messaggi { --p6c: #0866D6; } .p6 #pf-password { --p6c: #0866D6; } .p6 #pf-numero { --p6c: #F26B00; } .p6 [data-voce="avvisi"] { --p6c: #E11D48; }
+  .p6 [data-voce="calendario"] { --p6c: #0866D6; } .p6 #pf-scarica-lista { --p6c: #2E9E3E; }
+  .p6-esci { display: block; width: 100%; border: 0; background: none; padding: 13px; font-family: inherit; font-size: 16px; color: var(--rosso); text-align: center; }
   /* v5: la parte alta ferma della Lista Nomi diventa la testata verde (resta ferma in alto, come prima) */
   .ls-testa.l5 { background: var(--zc); margin-bottom: 12px; padding-bottom: 14px; gap: 10px; border-bottom: 0; }
   .l5 .v5-titolo h1 { font-size: 34px; }
