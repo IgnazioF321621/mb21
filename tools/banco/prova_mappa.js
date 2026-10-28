@@ -260,6 +260,20 @@ prova('file Amway: mese, albero e volumi come lo script import_mappa.py', () => 
   assert.doesNotMatch(AD.slice(AD.indexOf('async function foglioFileAmway'), AD.indexOf('async function foglioFileAmway') + 6000), /from\('contatti'\)\.delete/);
 });
 
+prova('nota 119: quanto scende la linea sotto una persona (tutti quelli sotto e quanti livelli)', () => {
+  const n = (id, ...figli) => ({ id, figli });
+  const a = n('A', n('B', n('C', n('D', n('E'), n('F'))), n('G')), n('H', n('I')));
+  assert.deepEqual(M.sottoDi(a), { persone: 8, livelli: 4 });
+  assert.deepEqual(M.sottoDi(a.figli[0]), { persone: 5, livelli: 3 });
+  assert.deepEqual(M.sottoDi(n('Z')), { persone: 0, livelli: 0 });
+  const PM = require('node:fs').readFileSync(require('node:path').join(__dirname, '../../pagina-mappa.js'), 'utf8');
+  const giu = new Function('return ' + PM.slice(PM.indexOf('function giuHtml'), PM.indexOf('\n}\n', PM.indexOf('function giuHtml')) + 2))();
+  assert.equal(giu({ persone: 8, livelli: 4 }), '<div class="mp-giu">↓ sotto di sé <b>4 livelli</b> · <b>8 persone</b></div>');
+  assert.equal(giu({ persone: 1, livelli: 1 }), '<div class="mp-giu">↓ sotto di sé <b>1 livello</b> · <b>1 persona</b></div>');
+  assert.equal(giu({ persone: 0, livelli: 0 }), '');
+  assert.match(PM, /\$\{giuHtml\(M\.sottoDi\(r\)\)\}/);
+});
+
 prova('file Amway: VPP e VPG vanno agli utenti dell\'app col loro codice', () => {
   const r = M.amwayPerUtenti([{ id: 'u1', partner_id: '111' }, { id: 'u2', partner_id: null }, { id: 'u3', partner_id: '999' }],
     [{ partner_id: '111', vpp: 1221.5, vpg: 539.93 }, { partner_id: '222', vpp: 0, vpg: 0 }], 202609);

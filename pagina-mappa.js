@@ -204,6 +204,11 @@ function segniGruppoV5(n, r) {
   return `<div class="m5-gruppo">${SEGNI_V5.map(([k, t]) => `<span class="${k}">${t} <b>${n[k] || 0}</b></span>`).join('')}</div>`;
 }
 
+// nota 119 (Ignazio 28/10): sotto i numeri, quanto scende la linea di chi ha qualcuno sotto («↓ sotto di sé 4 livelli · 8 persone»)
+function giuHtml({ persone, livelli }) {
+  return persone ? `<div class="mp-giu">↓ sotto di sé <b>${livelli} ${livelli === 1 ? 'livello' : 'livelli'}</b> · <b>${persone} ${persone === 1 ? 'persona' : 'persone'}</b></div>` : '';
+}
+
 function mesePulito(m) {
   return m ? `${String(m).slice(4, 6)}/${String(m).slice(0, 4)}` : '—';
 }
@@ -269,6 +274,7 @@ function disegnaMappa() {
           <div class="mp-codice">Codice ${esc(r.id)}</div>
           <div class="mp-numeri">${v5 ? '' : `VPP <b>${num(r.vpp)}</b> · `}VPG <b>${num(r.vpg)}</b> · <b class="mp-bonus">bonus ${r.bonus == null ? '—' : num(r.bonus, 0) + '%'}</b>${
             r.gruppo ? ` · gruppo <b>${r.gruppo}</b>` : ''}</div>
+          ${giuHtml(M.sottoDi(r))}
           ${v5 ? segniGruppoV5(MP.segni && MP.segni.gruppo[r.id], r) : segniGruppoHtml(MP.segni && MP.segni.gruppo[r.id])}
           ${v5 && MP.filtro === 'avvio' && !r.spento ? avvioRigaV5(avvii.get(r.id)) : ''}
           ${r.alLivelloSuccessivo ? `<div class="mp-manca">mancano <b>${num(r.alLivelloSuccessivo)}</b> ${M.bonusSuccessivo(r.bonus) ? `per il ${M.bonusSuccessivo(r.bonus)}%` : 'per il livello successivo'}</div>` : ''}

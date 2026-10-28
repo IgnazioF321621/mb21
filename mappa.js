@@ -89,6 +89,15 @@
   }
 
   // Tutti gli id, per «apri tutto»
+  // Nota Pagine 119 (Ignazio 28/10, «sì aggiungila»): quanto scende la linea sotto una persona, su tutto l'albero (filtri e gruppi chiusi non contano):
+  // `persone` = tutti quelli sotto, a ogni livello; `livelli` = quanti livelli sotto di lei (0 = nessuno)
+  function sottoDi(n) {
+    let persone = 0, livelli = 0;
+    const scendi = (x, d) => { for (const f of x.figli || []) { persone++; if (d + 1 > livelli) livelli = d + 1; if (d < 60) scendi(f, d + 1); } };
+    scendi(n, 0);
+    return { persone, livelli };
+  }
+
   function tuttiGliId(cime) {
     const ids = [];
     const scendi = n => { ids.push(n.id); n.figli.forEach(scendi); };
@@ -392,6 +401,6 @@
   }
 
   const api = { SOGLIA_ATTIVO, STATI, MESI_BREVI, stato, nomeLeggibile, albero, righe, conta, tuttiGliId, storico, schedaDelPartner, partnerDellaScheda,
-    segniGruppo, segniAl, ramoDi, ordinePerMappa, lineePerCodice, bonusSuccessivo, leggiFileAmway, confrontoSquadra, daTogliere, amwayPerUtenti, usoApp, etichettaUso };
+    segniGruppo, segniAl, ramoDi, ordinePerMappa, lineePerCodice, bonusSuccessivo, sottoDi, leggiFileAmway, confrontoSquadra, daTogliere, amwayPerUtenti, usoApp, etichettaUso };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else radice.MB21Mappa = api;
 })(typeof self !== 'undefined' ? self : this);
