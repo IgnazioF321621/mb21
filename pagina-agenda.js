@@ -2082,14 +2082,14 @@ function extraEvento(e) {
         ...(MB21Agenda.eConsegna(e) ? [] /* nota 051 (Ignazio 12/10): la consegna si sposta solo con «Sposta la consegna», che cambia anche la vendita */
           /* nota 105 (Ignazio 27/10): pochi comandi, Modifica per primo (dentro si aggiungono le persone e si cambia tutto) */
           : [['cmd', 'modifica', 'modifica', 'Modifica'], richiamo && e.esito !== 'Richiamare' ? ['cmd', 'fissa', 'piu', 'Fissa appuntamento'] : ['cmd', 'sposta', 'orario', 'Sposta']]),
-        ...(richiamo ? [] : [['cmd', 'elimina', '', 'Elimina']])])}
+        ...(richiamo ? [] : [['cmd', 'elimina', 'elimina', 'Elimina']])])}
       <div class="ag-comandi"><button data-cmd="contatto">${ic('persona')} Apri contatto</button></div>`;
 }
 // Nota 116 (Ignazio 28/10: «creiamo tendina anche per modifica, sposta, elimina… apri contatto rimane»): i comandi in una tendina (tendina5Html,
-// index.html), chiusa con i loro nomi in fila; dentro gli stessi bottoni (`data-cmd` nel foglio, `data-fi-cmd` nell'incontro). Voce = [attr, valore, icona, nome].
+// index.html), chiusa con il titolo «Modifiche» (nota 121, Ignazio 28/10: «cambiamo in Modifiche», cestino accanto a Elimina); dentro gli stessi bottoni (`data-cmd` nel foglio, `data-fi-cmd` nell'incontro). Voce = [attr, valore, icona, nome].
 function comandiTendina(voci) {
   if (!voci.length) return '';
-  return `<div class="cmd5">${tendina5Html(`<small>${esc(voci.map(v => v[3]).join(' · '))}</small>`,
+  return `<div class="cmd5">${tendina5Html('<small>Modifiche</small>',
     voci.map(([attr, v, icona, nome]) => `<button type="button" data-${attr}="${v}"${v === 'elimina' ? ' class="pericolo"' : ''}><span>${icona ? ic(icona) : ''}${esc(nome)}</span></button>`).join(''))}</div>`;
 }
 
@@ -2134,7 +2134,7 @@ function foglioIncontro(inc) {
         return `<button type="button" class="fi-persona ${classeCat(c)}" data-fi-persona="${esc(p.id)}"><span class="ts-pastiglia">${esc(iniziali(nome))}</span><span><b>${esc(nome)}</b><small>${esc(c ? MB21Lista.nomeCategoria(c) : '')}</small></span>${p.esito ? `<em class="fi-esito">${ic('fatto')} ${esc(A.nomePasso(p.esito))}</em>` : '<em>Esito ›</em>'}</button>`; }).join('')}
       ${fase && senza.length > 1 ? `<button type="button" class="primario fi-tutti" data-fi-tutti>Fatto per tutti</button>` : ''}</div>
     ${persone.map(p => `<div data-condividi="${esc(p.id)}"></div>`).join('')}
-    ${comandiTendina([['fi-cmd', 'modifica', 'modifica', 'Modifica'], ['fi-cmd', 'sposta', 'orario', 'Sposta'], ['fi-cmd', 'elimina', '', 'Elimina']])}
+    ${comandiTendina([['fi-cmd', 'modifica', 'modifica', 'Modifica'], ['fi-cmd', 'sposta', 'orario', 'Sposta'], ['fi-cmd', 'elimina', 'elimina', 'Elimina']])}
     <p class="na5-aiuto">Modifica, Sposta ed Elimina valgono per tutto l'incontro. Per aprire una persona, tocca il suo nome.</p></div>`;
   velo.querySelector('#fi-x').onclick = chiudi;
   collegaTendine5(velo);   // nota 116: Modifica · Sposta · Elimina a tendina

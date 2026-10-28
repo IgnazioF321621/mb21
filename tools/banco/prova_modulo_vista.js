@@ -469,9 +469,12 @@ prova('105: il foglio di un appuntamento ha Modifica · Sposta · Apri contatto 
   P.foglioEvento({ ...e, quando: e.inizio });
   const comandi = [...P.fogli.at(-1).innerHTML.matchAll(/data-cmd="([^"]+)"/g)].map(x => x[1]);
   assert.deepEqual(comandi.filter(x => ['modifica', 'sposta', 'contatto', 'elimina', 'persona'].includes(x)), ['modifica', 'sposta', 'elimina', 'contatto']);
-  // nota 116 (28/10): Modifica · Sposta · Elimina in una tendina chiusa che dice cosa c'è dentro; «Apri contatto» resta un tasto; gli esiti a tendina «Scegli ▾»
+  // nota 116 (28/10): Modifica · Sposta · Elimina in una tendina; «Apri contatto» resta un tasto; gli esiti a tendina «Scegli ▾»
+  // nota 121 (28/10): la tendina chiusa dice «Modifiche»; Elimina ha il cestino (icona 'elimina') come le altre voci
   const h116 = P.fogli.at(-1).innerHTML;
-  assert.match(h116, /<div class="cmd5"><div class="tnd5"><button type="button" class="sel5" data-tnd5><small>Modifica · Sposta · Elimina<\/small><em>▾<\/em><\/button><div class="ag-scelte tendina5" >/);
+  assert.match(h116, /<div class="cmd5"><div class="tnd5"><button type="button" class="sel5" data-tnd5><small>Modifiche<\/small><em>▾<\/em><\/button><div class="ag-scelte tendina5" >/);
+  const elim121 = h116.match(/<button type="button" data-cmd="elimina" class="pericolo"><span>([\s\S]*?)Elimina<\/span>/);
+  assert.ok(elim121 && elim121[1].length > 0, 'Elimina ha la sua icona');
   assert.match(h116, /<\/div><\/div><\/div>\s*<div class="ag-comandi"><button data-cmd="contatto">/);
   P.foglioEvento({ ...e, id: 'pm1', tipo_azione: 'Piano Marketing', modalita: null, categoria: 'Prospect', contatti: { nome: 'Persona A', categoria: 'Prospect' }, quando: P.A.isoDaRoma(P.OGGI, '08:00') });
   const pm116 = P.fogli.at(-1).innerHTML;
