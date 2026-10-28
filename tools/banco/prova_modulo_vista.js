@@ -468,7 +468,15 @@ prova('105: il foglio di un appuntamento ha Modifica · Sposta · Apri contatto 
     punti: [{ t: 'Il perché', fatto: true }], su_cosa: null, contatti: { nome: 'Fiammetta Rossi', categoria: 'Partner' } };
   P.foglioEvento({ ...e, quando: e.inizio });
   const comandi = [...P.fogli.at(-1).innerHTML.matchAll(/data-cmd="([^"]+)"/g)].map(x => x[1]);
-  assert.deepEqual(comandi.filter(x => ['modifica', 'sposta', 'contatto', 'elimina', 'persona'].includes(x)), ['modifica', 'sposta', 'contatto', 'elimina']);
+  assert.deepEqual(comandi.filter(x => ['modifica', 'sposta', 'contatto', 'elimina', 'persona'].includes(x)), ['modifica', 'sposta', 'elimina', 'contatto']);
+  // nota 116 (28/10): Modifica · Sposta · Elimina in una tendina chiusa che dice cosa c'è dentro; «Apri contatto» resta un tasto; gli esiti a tendina «Scegli ▾»
+  const h116 = P.fogli.at(-1).innerHTML;
+  assert.match(h116, /<div class="cmd5"><div class="tnd5"><button type="button" class="sel5" data-tnd5><small>Modifica · Sposta · Elimina<\/small><em>▾<\/em><\/button><div class="ag-scelte tendina5" >/);
+  assert.match(h116, /<\/div><\/div><\/div>\s*<div class="ag-comandi"><button data-cmd="contatto">/);
+  P.foglioEvento({ ...e, id: 'pm1', tipo_azione: 'Piano Marketing', modalita: null, categoria: 'Prospect', contatti: { nome: 'Persona A', categoria: 'Prospect' }, quando: P.A.isoDaRoma(P.OGGI, '08:00') });
+  const pm116 = P.fogli.at(-1).innerHTML;
+  assert.match(pm116, /<div class="come-andata">È avvenuto\?<\/div>\s*<div class="tnd5"><button type="button" class="sel5" data-tnd5><small>Scegli<\/small><em>▾<\/em><\/button><div class="ag-scelte tendina5" data-azione="pm1" data-passo="avvenuto"><button type="button" data-esito="Fatto" class=""><span>Fatto<\/span><\/button><button type="button" data-esito="Rimandato"/);
+  assert.doesNotMatch(pm116, /class="ag-esiti"/);
   // «Modifica»: un'altra persona è già nello stesso incontro (stessa ora, stesso tipo), con il suo esito
   P.finto.stessoIncontro = [{ id: 'c2', contatto_id: 'c-due', categoria: 'Partner', tipo_azione: 'Appuntamento', modalita: 'Counseling', esito: 'Fatto', contatti: { nome: 'Persona Due', categoria: 'Partner' } }];
   const p = P.nuovoAppuntamento({ modifica: e, resta: true }); await attendi(); await attendi(); await attendi();

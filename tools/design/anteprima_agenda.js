@@ -30,7 +30,7 @@ const codice = [
   fra('const CLASSI_CAT = {', '\nfunction classeCat'),
   riga('function classeCat'), riga('function ic('), riga('function escIcone'),
   funzione('esc'), riga('function percheHtml'), riga('function diPerche'),   // «Perché?» (nota 048)
-  funzione('bottoniEsiti'), funzione('elencoEsitoHtml'), funzione('bloccoEsiti'), funzione('statoAzione'), funzione('avvisoSovrapposti'), riga('function iniziali('),
+  funzione('bottoniEsiti'), funzione('tendina5Html'), funzione('collegaTendine5'), funzione('elencoEsitoHtml'), funzione('bloccoEsiti'), funzione('statoAzione'), funzione('avvisoSovrapposti'), riga('function iniziali('),
   fra('const CY = {', '\nfunction doveSono').replace('const COACH_YES = false;', 'let COACH_YES = false;'),   // nota 001: il segnale Coach Yes, vero; nota 093: spento, le prove lo riaccendono (impostaCoachYes)
   // P5b: l'interruttore, qui cambiabile dalle prove (impostaLinee)
   'let CONDIVISIONE_LINEE = false; let PUNTI_CONDIVISI = false; let SERATA_DA_MANDARE = false;',   // nota 106: «Serata da mandare» spenta (impostaSerata)

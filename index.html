@@ -1329,6 +1329,15 @@
   .ag-comandi { display: flex; gap: 8px; flex-wrap: wrap; }
   .ag-comandi button { border: 0; background: var(--sfondo); border-radius: var(--raggio-pill); font-size: 13px; font-weight: 600; min-height: 36px; padding: 8px 12px; color: var(--testo); display: inline-flex; align-items: center; gap: 6px; }
   .ag-comandi button.pericolo { color: var(--rosso); }
+  /* nota 116: la tendina degli esiti e quella di Modifica · Sposta · Elimina (tendina5Html); chiusa si vede solo la riga «Scegli ▾» */
+  .tnd5:not(.aperta) > .tendina5 { display: none; }
+  .tnd5.aperta > .sel5 { border-color: var(--accento); border-radius: var(--raggio-riga) var(--raggio-riga) 0 0; }
+  .tnd5.aperta > .sel5 em { display: inline-block; transform: rotate(180deg); }
+  .tnd5 { margin-bottom: 8px; }
+  .ag-scelte.tendina5 button.pericolo { color: var(--rosso); }
+  .ag-scelte.tendina5 button svg.ic { width: 18px; height: 18px; vertical-align: -3px; margin-right: 6px; }
+  .blocco-esiti + .cmd5 { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--bordo); }
+  .cmd5 + .ag-comandi { margin-top: 2px; }
   .blocco-esiti + .ag-comandi { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--bordo); }   /* nota 034: gli esiti (e il «Fatto» dei passi) staccati da Sposta · Modifica · Apri contatto · Elimina */
   .ag-blocco { width: 100%; display: flex; justify-content: space-between; align-items: center; text-align: left; border: 0; border-radius: var(--raggio-riga); padding: 13px 14px; margin: 6px 0; font-size: 15px; font-weight: 600; font-family: inherit; }
   /* Righe di richiamo (partner da avviare, telefonate, riordini, conferme…): bianche come le righe delle persone (Ignazio 19/09: le tinte
@@ -3449,6 +3458,15 @@ function bottoniEsiti(bottoni, attuale, attr, classe) {
     `<button ${attr}="${esc(f)}" class="esito-btn ${(typeof COSA_FA_ESITO !== 'undefined' && COSA_FA_ESITO[f] && COSA_FA_ESITO[f].classe) || ''} ${attuale === f ? classe : ''}">${esc(MB21Agenda.nomePasso(f))}</button>`).join('')).map((riga, n) =>
     `<div class="${n === 0 ? 'buoni' : 'nonandati'}">${riga}</div>`).join('');   // due righe come la coda (Ignazio 24/09: variante A)
 }
+// Nota Pagine 116 (Ignazio 28/10, «ok così», disegno docs/prototipi/schizzo_esiti_tendina_116.png): gli esiti e Modifica · Sposta · Elimina come le
+// tendine della scheda nuova (sel5 + tendina5, note 105-107): chiusa dice cosa c'è dentro, un tocco la apre verso il basso. Dentro ci sono gli stessi
+// bottoni di prima con i loro data-…, quindi gli stessi tocchi. `attr`: attributi della lista (gli esiti ci tengono data-azione e data-passo).
+function tendina5Html(etichetta, voci, attr = '') {
+  return `<div class="tnd5"><button type="button" class="sel5" data-tnd5>${etichetta}<em>▾</em></button><div class="ag-scelte tendina5" ${attr}>${voci}</div></div>`;
+}
+function collegaTendine5(el) {
+  el.querySelectorAll('[data-tnd5]').forEach(b => { b.onclick = () => b.parentElement.classList.toggle('aperta'); });
+}
 // «Cosa avete fatto?» (note Azioni 031-032): l'elenco che si apre verso il basso, uguale in MB Plan, nella scheda e nel foglio «Modifica».
 // `inc` = MB21Agenda.vociIncontro; `bottone`: con «Fatto»/«Salva» suo (MB Plan e scheda) o senza (Modifica, che ha il suo «Salva»).
 function elencoEsitoHtml(a, inc, bottone) {
@@ -3515,7 +3533,9 @@ function bloccoEsiti(a, categoria, aperto = false) {
   const dentro = chiusa && !aperto
     ? `<button class="link" data-apri-esiti style="padding:4px 0;font-size:13px">Cambia esito ›</button>`
     : gruppi.map(p => `<div class="come-andata">${esc(p.titolo)}</div>
-    <div class="ag-esiti" data-azione="${esc(a.id)}" data-passo="${p.passo}">${bottoniEsiti(p.bottoni, p.attuale, 'data-esito', 'attuale')}</div>`).join('');
+    ${tendina5Html(p.attuale ? `<b>${esc(MB21Agenda.nomePasso(p.attuale))}</b>` : '<small>Scegli</small>',   // nota 116: prima una fila di tasti (bottoniEsiti)
+      MB21Agenda.esitiInDueRighe(p.bottoni).flat().map(f => `<button type="button" data-esito="${esc(f)}" class="${p.attuale === f ? 'scelto' : ''}"><span>${esc(MB21Agenda.nomePasso(f))}</span>${p.attuale === f ? '<b>✓</b>' : ''}</button>`).join(''),
+      `data-azione="${esc(a.id)}" data-passo="${p.passo}"`)}`).join('');
   return `<div class="blocco-esiti" data-blocco="${esc(a.id)}">${dentro}</div>`;
 }
 // Stato scritto accanto all'azione
@@ -3547,9 +3567,10 @@ function collegaEsiti(el, a, contatto, dopo) {
       chiudiAppuntamento(e, r.esito, { dopo, extra: r.extra, testo: el2.nomi(r), nota: r.frase });
     };
   });
-  el.querySelectorAll('.ag-esiti[data-azione] [data-esito]').forEach(b => b.onclick = () => {
+  collegaTendine5(el);   // nota 116
+  el.querySelectorAll('[data-azione][data-passo] [data-esito]').forEach(b => b.onclick = () => {
     if (soloGuardo() || b.classList.contains('attuale')) return;
-    const passo = b.closest('.ag-esiti').dataset.passo, esito = b.dataset.esito;
+    const passo = b.closest('[data-passo]').dataset.passo, esito = b.dataset.esito;
     const e = { ...a, categoria: a.categoria || contatto.categoria, contatti: { nome: contatto.nome, categoria: contatto.categoria } };
     const fase = MB21Agenda.fattoDi(a.tipo_azione);
     if (passo === 'avvenuto' && esito === 'Fatto') {

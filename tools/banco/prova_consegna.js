@@ -23,7 +23,7 @@ function banco({ vendita, modulo } = {}) {
     disegnaScheda: () => {},
   };
   vm.createContext(ctx);
-  vm.runInContext(pezzo(idx, 'function bottoniEsiti') + pezzo(idx, 'function bloccoEsiti') + pezzo(idx, 'async function consegnaDaCarta') + pezzo(ven, 'async function segnaOrdineFatto')
+  vm.runInContext(pezzo(idx, 'function bottoniEsiti') + pezzo(idx, 'function tendina5Html') + pezzo(idx, 'function bloccoEsiti') + pezzo(idx, 'async function consegnaDaCarta') + pezzo(ven, 'async function segnaOrdineFatto')
     + ';this.bloccoEsiti = bloccoEsiti; this.consegnaDaCarta = consegnaDaCarta;', ctx);
   return { ctx, scritte, avvisi, dopo: async () => { ridisegni++; }, ridisegni: () => ridisegni };
 }
