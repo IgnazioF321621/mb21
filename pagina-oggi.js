@@ -46,7 +46,10 @@ async function caricaOggiV5(oggi) {
     richiami = cont.data.filter(x => x.esito === 'Richiamare' && x.data_scelta && A.partiRoma(x.data_scelta).giorno === oggi)
       .map(x => ({ contatto_id: x.contatto_id, ora: A.partiRoma(x.data_scelta).ora }));
   }
-  Object.assign(O5, { di: io, giorno: oggi, oggi: voci, domani: vociDomani, richiami, training: trn });
+  // nota 132: gli appuntamenti di oggi ancora senza esito, per il numero sull'icona dell'app (dalla stessa lettura, niente richieste in più)
+  const aperti = app1.error ? null : (app1.data || []).filter(x => !x.esito && x.inizio && A.partiRoma(x.inizio).giorno === oggi).length;
+  Object.assign(O5, { di: io, giorno: oggi, oggi: voci, domani: vociDomani, richiami, training: trn, aperti });
+  if (typeof aggiornaNumeroApp === 'function') aggiornaNumeroApp();
 }
 // Il ripasso di oggi senza scaricare i mazzi: quante carte tornano oggi (`prossima` passata) e i giorni di fila. null se non si legge.
 async function caricaTrainingOggi(oggi) {

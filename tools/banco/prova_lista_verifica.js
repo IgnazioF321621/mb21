@@ -511,7 +511,7 @@ prova('L7: le altre pagine non buttano via tutta la Lista: rileggono solo la per
     .map(f => [f, leggi(f)]);
   const svuotano = tutti.flatMap(([f, t]) => t.split('\n').map((riga, i) => [f, i + 1, riga]).filter(([, , riga]) => /LS\.righe = \[\]/.test(riga)).map(([f, , riga]) => f + ': ' + riga.trim().slice(0, 60)));
   assert.deepEqual(svuotano.map(x => x.split(':')[0]), ['index.html', 'admin.js', 'pagina-lista.js', 'pagina-lista.js']);   // uscita dall'app · import dell'Admin · lettura non riuscita · «Aggiorna i nomi»
-  assert.match(IDX, /SIGNED_OUT'\) \{ togliCopiaOffline\(\); LS\.righe = \[\];/);
+  assert.match(IDX, /SIGNED_OUT'\) \{ if \(typeof togliNumeroApp === 'function'\) togliNumeroApp\(\); togliCopiaOffline\(\); LS\.righe = \[\];/);   // nota 132: uscendo si toglie anche il numero sull'icona
   assert.match(leggi('pagina-mappa.js'), /await aggiornaRiga\(data\.id\);/);
   assert.match(leggi('pagina-coach.js'), /\n      aggiornaRiga\(e\.contatto_id\);   \/\/ Lista Nomi L7/);
   assert.match(IDX, /else aggiornaRiga\(contattoId\);/);

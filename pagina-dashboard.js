@@ -666,7 +666,25 @@ function disegnaAvvioLV() {
 }
 
 // ── Il router: chi disegna cosa ──
+// Nota Pagine 132 (Ignazio 28/10: «nella schermata home si legga il numerino sopra, come su calendario o sulle email»; «solo le cose di oggi»): il numero
+// sull'icona di MB21 nella Home del telefono (Badging API, app aggiunta alla Home con gli avvisi attivi) = le persone di oggi ancora da sentire
+// (l'elenco unico di Oggi: richiami, conferme, riordini, Dare Seguito, coda, telefonate scelte) + gli appuntamenti di oggi senza esito (O5.aperti, dalla
+// lettura di Oggi). Solo dai conti già fatti: nessuna lettura in più. A zero sparisce. Si aggiorna quando Oggi si disegna o si rilegge e al ritorno in
+// primo piano; guardando un altro partner (o «Tutti») resta il proprio. Dove il telefono o il browser non lo sanno fare, niente (nessun errore).
+function aggiornaNumeroApp() {
+  try {
+    if (!('setAppBadge' in navigator) || !ST.utente || vediTutti() || guardoAltri()) return;
+    if (!ST.risultato || !ST.oggi || ST.oggi !== MB21Coda.oggiRoma()) return;   // i conti di oggi non ci sono ancora
+    const e = elencoDiOggi(), contatti = Math.max(0, e.totale - e.fatti);
+    const app = typeof O5 !== 'undefined' && O5.di === ST.utente.id && O5.giorno === ST.oggi && typeof O5.aperti === 'number' ? O5.aperti : 0;
+    const n = MB21Dashboard.numeroApp(contatti, app);
+    (n ? navigator.setAppBadge(n) : navigator.clearAppBadge()).catch(() => {});
+  } catch (e) { /* senza il numero l'app va lo stesso */ }
+}
+function togliNumeroApp() { try { if ('clearAppBadge' in navigator) navigator.clearAppBadge().catch(() => {}); } catch (e) { /* niente */ } }
+
 function disegnaOggi() {
+  aggiornaNumeroApp();
   if (ST.vistaCatalogo && ST.tab === 'lista') return disegnaCatalogo();   // «Da catalogare» (ora in Lista Nomi) usa le stesse funzioni: dopo ogni tocco si ridisegna da sé
   const vai = ST.vaiA; ST.vaiA = null;   // cantiere 29: dall'Agenda «N riordini da sentire» porta dritto al riquadro; dal benvenuto su «Il mio avvio»
   if (vai === 'riordini') { LV.vista = 'oggi'; LV.vaiA = 'riordini'; }
@@ -2331,7 +2349,7 @@ window.addEventListener('online', () => { if (ST.offline && ST.utente && ST.tab 
 // Il telefono tiene l'app viva in secondo piano: uscendo dall'app il riquadro torna «da mostrare»; rientrando sulla Dashboard si riapre
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'hidden') ST.riquadroObMostrato = false;
-  else if (ST.utente && ST.tab === 'oggi') mostraRiquadroObiettivi();
+  else { aggiornaNumeroApp(); if (ST.utente && ST.tab === 'oggi') mostraRiquadroObiettivi(); }   // nota 132: al ritorno in primo piano
 });
 
 // «Il mio giorno» (fino al 28/09 «Check del Giorno»): 13 campi come in Glide. Dal 17/09 (Ignazio) un giorno che ha già un Check si apre compilato

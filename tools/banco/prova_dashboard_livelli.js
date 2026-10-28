@@ -102,7 +102,7 @@ prova('Tappa 8: via il codice delle 5 righe che si aprivano (aperteDash, contiOg
   const fs = require('node:fs'), path = require('node:path');
   const dash = fs.readFileSync(path.join(__dirname, '../../pagina-dashboard.js'), 'utf8');
   assert.doesNotMatch(dash, /aperteDash|apertaRigaDash|cambiaRigaDash|CHIAVE_APERTE|contiOggi|totaleOggi|fraseOggi/);
-  assert.equal((dash.match(/elencoDiOggi\(\)/g) || []).length, 3);   // la funzione, la Home, «Chi sento oggi?»
+  assert.equal((dash.match(/elencoDiOggi\(\)/g) || []).length, 4);   // la funzione, la Home, «Chi sento oggi?», il numero sull'icona (nota 132)
 });
 
 prova('Tappa 7: una scheda sola per ogni motivo — stessa testata (motivo, nome, riga di sotto), cambiano solo i tasti', () => {
