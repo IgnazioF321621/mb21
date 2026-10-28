@@ -2327,7 +2327,7 @@ function spaziComeBlocchi(g) {
 
 // ── Un solo ingresso per aggiungere (nota Pagine 005, Ignazio 06/10/2026; Agenda P5, Ignazio 23/10/2026: un foglio solo, via «Con chi?») ──
 // Il «+» in alto e «Aggiungi» nella card «Programma della settimana» aprono lo stesso foglio «Cosa vuoi aggiungere?», con tre voci che aprono
-// subito il loro modulo: «Programmare la settimana» (preparaSettimana) · «Appuntamento con una persona» (nuovoAppuntamento) · «Serata con il Team
+// subito il loro modulo: «Programmare la settimana» (preparaSettimana) · «Appuntamento» (nuovoAppuntamento; fino al 28/10 «… con una persona», nota 115) · «Serata con il Team
 // o una Linea» (il modulo con «Tutto il Team» già scelto; la Linea si sceglie lì). La terza la vede solo chi può (puoSerataTeam, index.html).
 // `voci`: { k, icona, titolo, sotto, tinta }; risolve la `k` scelta, 'indietro' o null
 function foglioStrade(titolo, sotto, voci, conIndietro) {
@@ -2352,7 +2352,7 @@ async function foglioAggiungi() {
   const persone = personeAppDelGruppo(), nomi = persone.map(p => p.nome).join(', ');
   const k = await foglioStrade('Cosa vuoi aggiungere?', `Settimana ${A.numeroSettimana(lun)} · ${Number(lun.slice(8))} ${lun.slice(5, 7) === dom.slice(5, 7) ? '' : mese(lun) + ' '}– ${Number(dom.slice(8))} ${mese(dom)}`, [
     { k: 'settimana', icona: 'scala-settimana', tinta: 'var(--mb-programma, #2c4a7c)', titolo: 'Programmare la settimana', sotto: 'Piani Marketing, Consulenze e incontri della settimana' },
-    { k: 'persona', icona: 'persona', tinta: 'var(--cat-partner)', titolo: 'Appuntamento con una persona', sotto: 'Piano Marketing, Consulenza, Appuntamento, Telefonata… con un nome della tua lista' },
+    { k: 'persona', icona: 'persona', tinta: 'var(--cat-partner)', titolo: 'Appuntamento', sotto: 'Piano Marketing, Consulenza, Appuntamento, Telefonata… con un nome della tua lista' },
     ...(senzaLinguette() ? [{ k: 'cosa', icona: 'fatto', tinta: '#1F7A30', titolo: 'Una cosa da fare', sotto: 'Si scrive nel «Da fare» della pagina che stai guardando' }] : []),
     ...(puoSerataTeam() && (CONDIVISIONE_LINEE || (typeof SERATA_DA_MANDARE !== 'undefined' && SERATA_DA_MANDARE)) ? [CONDIVISIONE_LINEE ? { k: 'team', icona: 'squadra', tinta: 'var(--gr-crescita)', titolo: 'Serata con il Team o una Linea', sotto: 'La trovano nella loro Agenda' }
       : { k: 'manda', icona: 'squadra', tinta: 'var(--gr-crescita)', titolo: 'Serata da mandare', sotto: `${persone.length === 1 ? 'La riceve' : 'La ricevono'}: ${nomi}` }] : [])]);

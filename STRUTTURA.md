@@ -1246,7 +1246,7 @@ Le 4 righe Partner/Cliente · Contatto · Richiamare/Appuntamento sono state agg
 - **«Cosa vuoi aggiungere?», un foglio solo (Agenda P5, Ignazio 23/10/2026; cambia i due fogli approvati il 06/10, e Ignazio lo sa):**
   - Tre voci che aprono subito il loro modulo (`foglioAggiungi`, `pagina-agenda.js`):
     - «Programmare la settimana» (preparaSettimana, riga «…anche gli incontri di gruppo», senza sigle);
-    - «Appuntamento con una persona» (nuovoAppuntamento);
+    - «Appuntamento» (nuovoAppuntamento; nota 115, Ignazio 28/10: prima «Appuntamento con una persona», ora può averne più d'una);
     - «Serata con il Team o una Linea» (il modulo con «Tutto il Team» già scelto; la Linea si sceglie lì).
   - Via il secondo foglio «Con chi?» e il suo ritorno. Admin, con una persona o con il Team: da 3 a 2 tocchi; partner 2; serata con una Linea 3.
   - La terza voce la vede solo chi può, con una regola sola: `puoSerataTeam()` in `index.html`, la stessa di `puoTeam` del modulo. Oggi solo l'Admin.

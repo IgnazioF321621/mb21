@@ -262,7 +262,7 @@ prova('Nota 005 e Agenda P5 (Ignazio 23/10): un foglio solo «Cosa vuoi aggiunge
   P.foglioAggiungi(); await attendi();
   let f = P.fogli.at(-1);
   assert.match(f.innerHTML, /<h3>Cosa vuoi aggiungere\?<\/h3>/);
-  assert.deepEqual(strade(f), ['settimana:Programmare la settimana', 'persona:Appuntamento con una persona', 'team:Serata con il Team o una Linea']);
+  assert.deepEqual(strade(f), ['settimana:Programmare la settimana', 'persona:Appuntamento', 'team:Serata con il Team o una Linea']);
   assert.doesNotMatch(f.innerHTML, /st-indietro|LdS|SdS|Appuntamento singolo/);   // niente secondo foglio, niente sigle
   await f.clic('[data-strada="team"]'); await attendi(); await attendi();
   let m = P.fogli.at(-1);
@@ -278,7 +278,7 @@ prova('Nota 005 e Agenda P5 (Ignazio 23/10): un foglio solo «Cosa vuoi aggiunge
   pulisci();
   P.foglioAggiungi(); await attendi();
   f = P.fogli.at(-1);
-  assert.deepEqual(strade(f), ['settimana:Programmare la settimana', 'persona:Appuntamento con una persona']);
+  assert.deepEqual(strade(f), ['settimana:Programmare la settimana', 'persona:Appuntamento']);
   await f.clic('[data-strada="persona"]'); await attendi(); await attendi();
   assert.match(P.fogli.at(-1).innerHTML, /id="na-scegli"/); assert.doesNotMatch(P.fogli.at(-1).innerHTML, /data-strada=/);
   // «Programmare la settimana» apre il foglio della settimana
