@@ -430,12 +430,19 @@ prova('129: con il tipo «Contatto» solo quando, note e portato da — niente D
   }
 });
 
-prova('129: il «+» dell\'Agenda senza persona resta com\'è: «Con chi?», «Aggiungi un\'altra persona», «Una linea» e la Categoria in «Altro»', async () => {
+prova('129 e 134: il «+» dell\'Agenda senza persona: «Con chi?», «Aggiungi un\'altra persona», «Una linea»; in «Altro» niente più Categoria (nota 134)', async () => {
   pulisci();
   const { v } = await apri({});
   assert.match(v.innerHTML, /<h4 class="mc-t">Con chi\?<\/h4>/);
   await contatto(v, 'Tito Rovere'); await valoreTendina(v, 'tipo', 'Piano Marketing'); await altro(v);
-  assert.match(v.innerHTML, /id="na-piu-persona"[\s\S]*id="na-linea"/); assert.match(v.innerHTML, /data-tendina="categoria"/);
+  assert.match(v.innerHTML, /id="na-piu-persona"[\s\S]*id="na-linea"/); assert.doesNotMatch(v.innerHTML, /data-tendina="categoria"|<label>Categoria|dal contatto/);
+});
+
+prova('134: chi non ha una categoria la sceglie ancora qui, sotto «Che cosa?» (dalla scheda e dal «+»): nessun modo di sceglierla si perde', async () => {
+  pulisci();
+  let { v } = await apri({ contatto: { id: 'c-senza', nome: 'Persona Senza', categoria: null }, resta: true });
+  assert.match(v.innerHTML, /<h4 class="mc-t">Che cosa\?<\/h4><div class="riquadro mc-g"><div class="campo"><label>Categoria di Persona Senza<\/label><button type="button" class="sel5[^"]*" data-tendina="categoria"/);
+  assert.match(v.innerHTML, /Il contatto non ha una categoria/);
 });
 
 // ── Note Pagine 103 e 104 (Ignazio 27/10, «sì» sul disegno docs/prototipi/schizzo_appuntamento_103_104.png) ──
@@ -445,7 +452,8 @@ prova('104: quattro domande in ordine — Con chi? · Che cosa? (l\'Area sotto, 
   assert.match(v.innerHTML, /<h4 class="mc-t">Con chi\?<\/h4>/); assert.doesNotMatch(v.innerHTML, /Che cosa\?|Quando\?|Altro · facoltativo/);   // prima la persona
   await contatto(v, 'Fiammetta Rossi'); await scegli(v, 'tipo', 'Appuntamento');
   const h = v.innerHTML, pos = t => { const i = h.indexOf(t); assert.ok(i > 0, t); return i; };
-  const ordine = ['>Con chi?<', 'Fiammetta Rossi', 'id="na-piu-persona"', '>Che cosa?<', 'data-tendina="tipo"', 'data-tendina="modalita"', 'id="na-area"', '>Quando?<', 'id="na-giorno"', 'data-tendina="durata"', 'Altro · facoltativo', 'id="na-dove"', 'id="na-punti"', 'id="na-note"', 'id="na-portato"', 'data-tendina="categoria"'].map(pos);
+  const ordine = ['>Con chi?<', 'Fiammetta Rossi', 'id="na-piu-persona"', '>Che cosa?<', 'data-tendina="tipo"', 'data-tendina="modalita"', 'id="na-area"', '>Quando?<', 'id="na-giorno"', 'data-tendina="durata"', 'Altro · facoltativo', 'id="na-dove"', 'id="na-punti"', 'id="na-note"', 'id="na-portato"'].map(pos);
+  assert.doesNotMatch(h, /data-tendina="categoria"|dal contatto/);   // nota 134
   assert.deepEqual(ordine, [...ordine].sort((a, b) => a - b));
   assert.doesNotMatch(h, /Obbligatorio|id="na-porta"|Porta qualcuno|Area e tipo|Data e note/);
   assert.match(h, /Area: <b>Attività<\/b>/); await v.clic('#na-area'); assert.match(v.innerHTML, /Area: <b>Prodotti<\/b>/);

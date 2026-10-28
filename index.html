@@ -4190,7 +4190,7 @@ async function nuovoAppuntamento(opz = {}) {
     const avvisoOre = () => avvisoSovrapposti(campi.giorno, campi.ora, durataScelta(), opz.saltaId, opz.userId || (visto() && visto().id), { tipo: st.tipo, modalita: st.modalita });   // nota 103: lo stesso incontro non è un «già un impegno»
     // Note Pagine 103 e 104 (Ignazio 27/10, «sì» sul disegno docs/prototipi/schizzo_appuntamento_103_104.png): quattro domande in ordine, con gli stessi campi
     // e gli stessi salvataggi di prima — 1 Con chi? (una o più persone) · 2 Che cosa? (tipo, sottotipo, sotto l'Area già scelta) · 3 Quando? · 4 «Altro ·
-    // facoltativo», chiuso con il riassunto (dove, punti da trattare, note, portato da, condivisione, categoria). Via «Obbligatorio» (lo dice il Salva) e
+    // facoltativo», chiuso con il riassunto (dove, punti da trattare, note, portato da, condivisione; la categoria tolta dalla nota 134). Via «Obbligatorio» (lo dice il Salva) e
     // «Porta qualcuno» (resta «Portato da»). La serata (Team o Linea, solo l'Admin) resta com'era, più sotto in disegna().
     const persone5 = () => [...(st.contatto ? [{ ...st.contatto, categoria: st.categoria }] : []), ...st.altri];
     const tipiDiTutti = () => (m ? [m.tipo_azione] : A.tipiPer(st.categoria)).filter(t => st.altri.every(p => A.tipiPer(p.categoria).includes(t)));   // i tipi validi per tutte le persone
@@ -4290,8 +4290,8 @@ async function nuovoAppuntamento(opz = {}) {
           }
           if (nellApp.length && PUNTI_CONDIVISI) h += `<div class="campo"><label>Vede anche i punti da trattare?</label>${tendina('puntiCond', ['1', '0'], st.puntiCond ? '1' : '0', ['Sì', 'No'])}</div>`;
         }
-        const categorie = st.categoria && !A.CATEGORIE.includes(st.categoria) ? [st.categoria, ...A.CATEGORIE] : A.CATEGORIE;   // Ex, Unlinked…: resta com'è, o si cambia
-        if (!personaFissa && !soloContatto) h += `<div class="campo"><label>Categoria${st.altri.length ? ' di ' + esc(st.contatto.nome) : ''} <small>dal contatto</small></label>${tendina('categoria', categorie, st.categoria, categorie.map(MB21Lista.nomeCategoria))}</div>`;
+        // nota 134 (Ignazio 28/10: «non c'è bisogno… perché "con chi" ha già la categoria»): in fondo a «Altro» niente più «Categoria · dal contatto»; la
+        // categoria si sceglie qui solo quando manca (sotto «Che cosa?»), altrimenti si cambia dalla scheda del contatto
       }
       return h + '</div>';
     }
