@@ -248,6 +248,16 @@ prova('file Amway: mese, albero e volumi come lo script import_mappa.py', () => 
   assert.ok(M.leggiFileAmway('"Mese di competenza",202609\n"Qualifica Amway Partner","Codice Amway Partner"\n').errore);
   const c = M.confrontoSquadra([{ partner_id: '111' }, { partner_id: '999' }], f.squadra);
   assert.deepEqual([c.nuovi.map(p => p.partner_id), c.usciti.map(p => p.partner_id)], [['222'], ['999']]);
+  // nota 118 (28/10): chi esce si toglie dalla Mappa; avviso se ha volumi non a zero (vanno via a cascata)
+  const u = M.confrontoSquadra([{ partner_id: '111', nome: 'ROSSI, MARIO' }, { partner_id: '888', nome: 'PERSONA, A' }, { partner_id: '999', nome: 'PERSONA, B' }], f.squadra).usciti;
+  assert.deepEqual(M.daTogliere(u, [{ partner_id: '888', vpp: 0, vpg: 0 }, { partner_id: '999', vpp: 0, vpg: 12.5 }]),
+    [{ partner_id: '888', nome: 'PERSONA, A', conVolumi: false }, { partner_id: '999', nome: 'PERSONA, B', conVolumi: true }]);
+  assert.deepEqual(M.daTogliere([], []), []);
+  assert.equal(M.daTogliere([{ partner_id: 777, nome: 'X' }], [{ partner_id: '777', vpp: '3', vpg: null }])[0].conVolumi, true);   // codici numero o testo
+  const AD = require('node:fs').readFileSync(require('node:path').join(__dirname, '../../admin.js'), 'utf8');
+  assert.match(AD, /data-fa-togli="\$\{esc\(p\.partner_id\)\}" checked>/);
+  assert.match(AD, /supa\.from\('squadra'\)\.delete\(\)\.in\('partner_id', via\)/);
+  assert.doesNotMatch(AD.slice(AD.indexOf('async function foglioFileAmway'), AD.indexOf('async function foglioFileAmway') + 6000), /from\('contatti'\)\.delete/);
 });
 
 prova('file Amway: VPP e VPG vanno agli utenti dell\'app col loro codice', () => {

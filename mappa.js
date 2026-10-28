@@ -280,6 +280,12 @@
     const a = new Set((prima || []).map(p => p.partner_id)), b = new Set(nuova.map(p => p.partner_id));
     return { nuovi: nuova.filter(p => !a.has(p.partner_id)), usciti: (prima || []).filter(p => !b.has(p.partner_id)) };
   }
+  // Nota Pagine 118 (Ignazio 28/10, via Regia): chi non è più nel file si toglie dalla Mappa (spunta già messa nel foglio «File Amway»);
+  // `conVolumi` = ha almeno un mese con VPP o VPG non a zero (volumi_mese, che va via con lui): il foglio lo avvisa, così l'Admin decide
+  function daTogliere(usciti, volumi) {
+    const pieni = new Set((volumi || []).filter(v => Number(v.vpp) || Number(v.vpg)).map(v => String(v.partner_id)));
+    return (usciti || []).map(p => ({ partner_id: p.partner_id, nome: p.nome, conVolumi: pieni.has(String(p.partner_id)) }));
+  }
 
   // VPP/VPG del file per Dashboard e Check (obiettivi_mese.vpp_amway / vpg_amway): una riga per utente dell'app col suo codice
   function amwayPerUtenti(utenti, volumi, mese) {
@@ -386,6 +392,6 @@
   }
 
   const api = { SOGLIA_ATTIVO, STATI, MESI_BREVI, stato, nomeLeggibile, albero, righe, conta, tuttiGliId, storico, schedaDelPartner, partnerDellaScheda,
-    segniGruppo, segniAl, ramoDi, ordinePerMappa, lineePerCodice, bonusSuccessivo, leggiFileAmway, confrontoSquadra, amwayPerUtenti, usoApp, etichettaUso };
+    segniGruppo, segniAl, ramoDi, ordinePerMappa, lineePerCodice, bonusSuccessivo, leggiFileAmway, confrontoSquadra, daTogliere, amwayPerUtenti, usoApp, etichettaUso };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else radice.MB21Mappa = api;
 })(typeof self !== 'undefined' ? self : this);

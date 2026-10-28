@@ -705,7 +705,9 @@ function collegaAdmin() {
 }
 
 // Carica file Amway (cantiere 19 lavoro 2): prima il riepilogo (mese, partner, chi entra e chi non c'è più), poi Carica.
-// Riscrive albero e volumi di quel mese come scripts/import_mappa.py; non cancella nessuno.
+// Riscrive albero e volumi di quel mese come scripts/import_mappa.py. Chi non è più nel file (nota Pagine 118, Ignazio 28/10): una riga per persona con
+// «Togli dalla Mappa» già spuntata; al Carica, dopo gli upsert, si cancella da squadra (i suoi volumi_mese vanno via a cascata; avviso se non sono a zero).
+// Le schede in contatti non si toccano.
 // Poi VPP/VPG del mese in obiettivi_mese per ogni utente col suo codice (Ignazio 16/09: «si aggiornano in automatico dove sono richiesti»).
 async function foglioFileAmway(f) {
   if (f.errore) return mostraToast(f.errore);
@@ -716,6 +718,9 @@ async function foglioFileAmway(f) {
   ]);
   if (sq.error || gia.error || ut.error) return mostraToast('Non riesco a leggere i dati di adesso: riprova.');
   const c = MB21Mappa.confrontoSquadra(sq.data, f.squadra);
+  const vu = c.usciti.length ? await dbq('volumi di chi esce', supa.from('volumi_mese').select('partner_id, vpp, vpg').in('partner_id', c.usciti.map(p => p.partner_id))) : { data: [] };
+  if (vu.error) return mostraToast('Non riesco a leggere i dati di adesso: riprova.');
+  const togliere = MB21Mappa.daTogliere(c.usciti, vu.data);
   const perUtenti = MB21Mappa.amwayPerUtenti(ut.data, f.volumi, f.mese);   // VPP/VPG di Dashboard e Check
   const meseTesto = `${MB21Mappa.MESI_BREVI[f.mese % 100 - 1]} ${Math.floor(f.mese / 100)}`;
   const nomi = l => l.map(p => esc(MB21Mappa.nomeLeggibile(p.nome))).join(', ');
@@ -725,7 +730,9 @@ async function foglioFileAmway(f) {
     <p>${f.squadra.length} partner nel file. VPP e VPG aggiornati anche in Oggi e nel Check per ${perUtenti.length} utenti dell'app.</p>
     ${gia.count ? `<p>Questo mese è già caricato: i numeri di ${esc(meseTesto)} vengono <b>sostituiti</b> con quelli del file.</p>` : ''}
     ${c.nuovi.length ? `<p>Entrano nella Mappa (${c.nuovi.length}): ${nomi(c.nuovi)}</p>` : ''}
-    ${c.usciti.length ? `<p>Non sono più nel file (${c.usciti.length}), restano nella Mappa: ${nomi(c.usciti)}</p>` : ''}
+    ${togliere.length ? `<p>Non sono più nel file (${togliere.length}): al «Carica» chi è spuntato esce dalla Mappa. La sua scheda nella Lista resta.</p>
+      ${togliere.map(p => `<label class="cf-spunta"><input type="checkbox" data-fa-togli="${esc(p.partner_id)}" checked><span>Togli dalla Mappa: <b>${esc(MB21Mappa.nomeLeggibile(p.nome))}</b>${p.conVolumi
+        ? '<br><small style="color:var(--rosso)">Ha volumi non a zero nei mesi caricati: togliendolo vanno via anche quelli.</small>' : ''}</span></label>`).join('')}` : ''}
     <button class="primario" id="fa-carica">Carica</button>
     <button class="link" id="fa-annulla">Annulla</button></div>`;
   document.body.appendChild(velo);
@@ -736,15 +743,18 @@ async function foglioFileAmway(f) {
     const bottone = velo.querySelector('#fa-carica');
     bottone.disabled = true; bottone.textContent = 'Carico…';
     const ora = new Date().toISOString();
+    const via = [...velo.querySelectorAll('[data-fa-togli]')].filter(x => x.checked).map(x => x.dataset.faTogli);   // nota 118
     const r1 = await dbq('carica squadra', supa.from('squadra').upsert(f.squadra.map(p => ({ ...p, aggiornato_il: ora })), { onConflict: 'partner_id' }));
     const r2 = r1.error ? r1 : await dbq('carica volumi', supa.from('volumi_mese').upsert(f.volumi.map(v => ({ ...v, aggiornato_il: ora })), { onConflict: 'partner_id,mese' }));
     const r3 = r1.error || r2.error || !perUtenti.length ? { error: r1.error || r2.error }
       : await dbq('VPP e VPG del mese', supa.from('obiettivi_mese').upsert(perUtenti, { onConflict: 'user_id,mese' }));   // tocca solo i dati Amway
     if (r1.error || r2.error || r3.error) { bottone.disabled = false; bottone.textContent = 'Carica'; return mostraToast('Non caricato: riprova.'); }
+    const r4 = via.length ? await dbq('togli dalla Mappa', supa.from('squadra').delete().in('partner_id', via)) : {};   // nota 118: i volumi a cascata
     chiudi();
     MP.squadra = null; MP.volumi = null; MP.storico = {};   // la Mappa si rilegge alla prossima apertura
+    if (r4.error) setTimeout(() => mostraToast('Chi non è più nel file non è stato tolto dalla Mappa: ricarica il file e riprova.'), 2500);
     const al = await allineaSchede();   // schede dei partner a cascata per chi è entrato nella squadra
     if (al && (al.create || al.collegate)) setTimeout(() => mostraToast(`Schede dei partner: ${al.create} create, ${al.collegate} collegate`), 2500);
-    mostraToast(`File Amway di ${meseTesto} caricato: ${f.squadra.length} partner`);
+    mostraToast(`File Amway di ${meseTesto} caricato: ${f.squadra.length} partner${via.length && !r4.error ? ` · ${via.length} ${via.length === 1 ? 'tolto' : 'tolti'} dalla Mappa` : ''}`);
   };
 }
