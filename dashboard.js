@@ -567,10 +567,26 @@
     return [n('chiudere') ? `${n('chiudere')} da chiudere` : '', n('contattare') ? `${n('contattare')} da chiamare` : '', e.fatti ? e.conto : ''].filter(Boolean).join(' · ');
   }
 
-  // Nota Pagine 132: il numero sull'icona dell'app = persone di oggi ancora da sentire + appuntamenti di oggi senza esito (interi, mai negativo; 0 = niente)
-  const numeroApp = (contatti, appuntamenti) => Math.max(0, Math.floor(Number(contatti) || 0)) + Math.max(0, Math.floor(Number(appuntamenti) || 0));
+  // Nota Pagine 132, corretta dalla 133 (Ignazio 28/10: «i contatti del giorno ancora da fare, gli appuntamenti del giorno che ancora si devono svolgere,
+  // se non è stato fatto training e se c'è ancora da chiudere il giorno di oggi nei check»; il PM passato senza esito: «No, solo fino all'appuntamento»).
+  // Il numero sull'icona = quattro parti: (1) le righe ancora aperte dell'elenco di Oggi (`elenco` = elencoOggi), senza le Conferme degli appuntamenti
+  // già contati al punto 2 e senza quelle con l'ora passata (ogni appuntamento si conta una volta sola); (2) i miei appuntamenti di oggi senza esito
+  // (`appuntamenti` = [{ id, inizio }]) con l'inizio non ancora passato; (3) +1 se il Training di oggi non è fatto (`training` false; null = non si sa,
+  // non conta); (4) +1 se il Check di oggi non è scritto (`check` false; null = non si sa). 0 = niente numero.
+  function numeroApp({ elenco, appuntamenti, training = null, check = null, adesso = Date.now() } = {}) {
+    const dopo = iso => !!iso && Date.parse(iso) > adesso;
+    const app = (appuntamenti || []).filter(a => dopo(a.inizio)), contati = new Set((appuntamenti || []).map(a => a.id));
+    const righe = ((elenco && elenco.gruppi) || []).flatMap(g => g.righe || [])
+      .filter(r => r.motivo !== 'conf' || (!contati.has(r.id) && dopo((r.dato && (r.dato.quando || r.dato.inizio)) || '')));
+    return righe.length + app.length + (training === false ? 1 : 0) + (check === false ? 1 : 0);
+  }
+  // il prossimo inizio fra gli appuntamenti ancora da svolgere (ms), per rifare il conto quando passa; null se non ce n'è
+  const prossimoInizio = (appuntamenti, adesso = Date.now()) => {
+    const t = (appuntamenti || []).map(a => Date.parse(a.inizio)).filter(x => x > adesso).sort((x, y) => x - y);
+    return t.length ? t[0] : null;
+  };
 
-  const api = { INIZIO_VENDITE, INIZIO_TRACCE_PERCORSO, vpDalleVendite, INIZIO_AZIONI, contattiDalleAzioni, SCHEDE, CAMPI_CHECK, CAMPI_OBIETTIVI, CRESCITE, SOGLIA_AMBIZIOSO, LIBRI, haObiettivi, propostaObiettivi, aumenta, risultatiMese, ripartoGruppo, lineeDaSquadra, risultatiAmway, alGiornoTesto, sintesiRiquadro, riassuntoScheda, parolaRisultato, obiettiviDelTeam, senzaObiettivi, confrontoMese, percorsoAzione, rapportiDalloStorico, efficaciaDi, CONTATTI_PER_PM, PM_PER_ISCRITTO, VP_NUOVO_ISCRITTO, CHIAVI_FOGLIO, nomeMese, validaObiettivi, COMPLIMENTI, AUMENTO, giorniRimasti, INIZIO_PERSONE, applicaPersone, totaliMesi, riquadro, calcola, segniVitali, validaCheck, meseSpostato, unisciPartner, mesiDaGiorni, GRUPPI_OGGI, elencoOggi, fraseElencoOggi, numeroApp };
+  const api = { INIZIO_VENDITE, INIZIO_TRACCE_PERCORSO, vpDalleVendite, INIZIO_AZIONI, contattiDalleAzioni, SCHEDE, CAMPI_CHECK, CAMPI_OBIETTIVI, CRESCITE, SOGLIA_AMBIZIOSO, LIBRI, haObiettivi, propostaObiettivi, aumenta, risultatiMese, ripartoGruppo, lineeDaSquadra, risultatiAmway, alGiornoTesto, sintesiRiquadro, riassuntoScheda, parolaRisultato, obiettiviDelTeam, senzaObiettivi, confrontoMese, percorsoAzione, rapportiDalloStorico, efficaciaDi, CONTATTI_PER_PM, PM_PER_ISCRITTO, VP_NUOVO_ISCRITTO, CHIAVI_FOGLIO, nomeMese, validaObiettivi, COMPLIMENTI, AUMENTO, giorniRimasti, INIZIO_PERSONE, applicaPersone, totaliMesi, riquadro, calcola, segniVitali, validaCheck, meseSpostato, unisciPartner, mesiDaGiorni, GRUPPI_OGGI, elencoOggi, fraseElencoOggi, numeroApp, prossimoInizio };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Dashboard = api;
 })(this);

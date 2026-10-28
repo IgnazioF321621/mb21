@@ -46,8 +46,9 @@ async function caricaOggiV5(oggi) {
     richiami = cont.data.filter(x => x.esito === 'Richiamare' && x.data_scelta && A.partiRoma(x.data_scelta).giorno === oggi)
       .map(x => ({ contatto_id: x.contatto_id, ora: A.partiRoma(x.data_scelta).ora }));
   }
-  // nota 132: gli appuntamenti di oggi ancora senza esito, per il numero sull'icona dell'app (dalla stessa lettura, niente richieste in più)
-  const aperti = app1.error ? null : (app1.data || []).filter(x => !x.esito && x.inizio && A.partiRoma(x.inizio).giorno === oggi).length;
+  // nota 132/133: gli appuntamenti di oggi ancora senza esito ({ id, inizio }), per il numero sull'icona dell'app (dalla stessa lettura, niente richieste
+  // in più); quelli già iniziati li toglie il conto (MB21Dashboard.numeroApp), così l'ora che passa li fa uscire anche senza rileggere
+  const aperti = app1.error ? null : (app1.data || []).filter(x => !x.esito && x.inizio && A.partiRoma(x.inizio).giorno === oggi).map(x => ({ id: x.id, inizio: x.inizio }));
   Object.assign(O5, { di: io, giorno: oggi, oggi: voci, domani: vociDomani, richiami, training: trn, aperti });
   if (typeof aggiornaNumeroApp === 'function') aggiornaNumeroApp();
 }

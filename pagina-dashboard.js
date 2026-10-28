@@ -666,19 +666,26 @@ function disegnaAvvioLV() {
 }
 
 // ── Il router: chi disegna cosa ──
-// Nota Pagine 132 (Ignazio 28/10: «nella schermata home si legga il numerino sopra, come su calendario o sulle email»; «solo le cose di oggi»): il numero
-// sull'icona di MB21 nella Home del telefono (Badging API, app aggiunta alla Home con gli avvisi attivi) = le persone di oggi ancora da sentire
-// (l'elenco unico di Oggi: richiami, conferme, riordini, Dare Seguito, coda, telefonate scelte) + gli appuntamenti di oggi senza esito (O5.aperti, dalla
-// lettura di Oggi). Solo dai conti già fatti: nessuna lettura in più. A zero sparisce. Si aggiorna quando Oggi si disegna o si rilegge e al ritorno in
-// primo piano; guardando un altro partner (o «Tutti») resta il proprio. Dove il telefono o il browser non lo sanno fare, niente (nessun errore).
+// Nota Pagine 132 (Ignazio 28/10: «nella schermata home si legga il numerino sopra, come su calendario o sulle email»), con la regola della nota 133
+// (Ignazio 28/10): il numero sull'icona di MB21 nella Home del telefono (Badging API, app aggiunta alla Home con gli avvisi attivi) = le righe ancora
+// aperte dell'elenco unico di Oggi (senza le Conferme degli appuntamenti contati sotto: prima il PM delle 21 contava due volte) + i miei appuntamenti di
+// oggi senza esito e non ancora iniziati (O5.aperti, dalla lettura di Oggi) + 1 se il Training di oggi non è fatto (O5.training) + 1 se il Check di oggi
+// non è scritto (DS.dati.ultimoCheck). Il conto è in MB21Dashboard.numeroApp. Solo dai conti già fatti: nessuna lettura in più. A zero sparisce.
+// Si aggiorna quando Oggi si disegna o si rilegge, al ritorno in primo piano e, con l'app aperta, all'inizio del prossimo appuntamento (un timer, niente
+// letture); guardando un altro partner (o «Tutti») resta il proprio. Dove il telefono o il browser non lo sanno fare, niente (nessun errore).
+let timerNumeroApp = null;
 function aggiornaNumeroApp() {
   try {
     if (!('setAppBadge' in navigator) || !ST.utente || vediTutti() || guardoAltri()) return;
     if (!ST.risultato || !ST.oggi || ST.oggi !== MB21Coda.oggiRoma()) return;   // i conti di oggi non ci sono ancora
-    const e = elencoDiOggi(), contatti = Math.max(0, e.totale - e.fatti);
-    const app = typeof O5 !== 'undefined' && O5.di === ST.utente.id && O5.giorno === ST.oggi && typeof O5.aperti === 'number' ? O5.aperti : 0;
-    const n = MB21Dashboard.numeroApp(contatti, app);
+    const D = MB21Dashboard, o5 = typeof O5 !== 'undefined' && O5.di === ST.utente.id && O5.giorno === ST.oggi ? O5 : null;
+    const appuntamenti = o5 && Array.isArray(o5.aperti) ? o5.aperti : [];
+    const training = o5 && o5.training ? !!o5.training.fattoOggi : null, check = DS.dati ? DS.dati.ultimoCheck === ST.oggi : null;
+    const n = D.numeroApp({ elenco: elencoDiOggi(), appuntamenti, training, check });
     (n ? navigator.setAppBadge(n) : navigator.clearAppBadge()).catch(() => {});
+    clearTimeout(timerNumeroApp);
+    const poi = D.prossimoInizio(appuntamenti);
+    if (poi && poi - Date.now() < 86400000) timerNumeroApp = setTimeout(aggiornaNumeroApp, poi - Date.now() + 1000);
   } catch (e) { /* senza il numero l'app va lo stesso */ }
 }
 function togliNumeroApp() { try { if ('clearAppBadge' in navigator) navigator.clearAppBadge().catch(() => {}); } catch (e) { /* niente */ } }
