@@ -25,7 +25,7 @@ function mondo({ admin = true } = {}) {
     document: { getElementById: id => app.getElementById(id) }, mostraToast: t => chiamate.push(['toast', t]),
     toccaTarga: (c, k) => chiamate.push(['tocca', c.id, k]) };
   vm.createContext(ctx);
-  vm.runInContext([pezzo(PO, 'function testaMappaV5'), riga(PL, 'const targheDaToccare = '), pezzo(PL, 'function targheHtml'), PM, 'this.MP = MP; this.disegna = disegnaMappa;'].join('\n'), ctx);
+  vm.runInContext([require('./testa_v5.js')(PO), pezzo(PO, 'function testaMappaV5'), riga(PL, 'const targheDaToccare = '), pezzo(PL, 'function targheHtml'), PM, 'this.MP = MP; this.disegna = disegnaMappa;'].join('\n'), ctx);
   Object.assign(ctx.MP, {
     squadra: [{ partner_id: 'P000', sponsor_id: null, nome: 'ADMIN, FINTO' }, { partner_id: 'P001', sponsor_id: 'P000', nome: 'A, PERSONA' }, { partner_id: 'P002', sponsor_id: 'P000', nome: 'B, PERSONA' },
       { partner_id: 'P003', sponsor_id: 'P001', nome: 'C, PERSONA' }],
@@ -142,7 +142,7 @@ prova('«Quanto rende il lavoro» (Ignazio 26/10, «A»): con la v5 non sta più
 prova('Al caricamento subito la testata v5 con «…», mai il titolo vecchio', () => {
   assert.match(PM, /if \(!MP\.squadra\) app\.innerHTML = `\$\{mappaV5\(\) \? testaMappaV5\('…', ''\) : '<h1>Mappa<\/h1>'\}<div class="vuoto">Carico il gruppo…<\/div>`;/);
   const W = mondo();
-  assert.match(W.ctx.testaMappaV5('…', ''), /<span class="v5-sopra">…<\/span><h1>Mappa<\/h1>/);
+  assert.match(W.ctx.testaMappaV5('…', ''), /<span class="v5-sopra">…<\/span>[\s\S]*<h1>Mappa<\/h1>/);
 });
 
 console.log(`\n${ok} prove superate`);

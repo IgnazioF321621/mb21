@@ -15,10 +15,10 @@ function menu(v5) {
   const app = { innerHTML: '' };
   const ctx = { console, Date, Intl, Set, Map, Promise, JSON, Math, app, esc: s => String(s ?? ''), escIcone: s => s, ic: n => `[${n}]`, dentroCerchio: () => 'PA',
     nomeDi: u => u.nome_cognome, versione: () => '', ST: { utente: { id: 'admin' } }, MB21Coda: { oggiRoma: () => '2026-10-27' }, MB21Lista: L, MB21Training: T,
-    AVVISI_TEAM: { messaggi: false }, INVITO_APP: false, veste5: () => v5, chipPartnerSelect: () => '', supa: {}, dbq: async () => ({}), window: {}, document: {} };
+    AVVISI_TEAM: { messaggi: false }, INVITO_APP: false, veste5: () => v5, chipPartnerSelect: () => '', supa: {}, dbq: async () => ({}), window: {}, document: { getElementById: () => null } };
   vm.createContext(ctx);
   const i = PO.indexOf('function testaZonaV5');
-  vm.runInContext(PO.slice(i, PO.indexOf('\n}\n', i) + 3) + ADMIN + '\nthis.__A = { AD, disegnaAdmin }; collegaAdmin = () => {};', ctx);
+  vm.runInContext(require('./testa_v5.js')(PO) + PO.slice(i, PO.indexOf('\n}\n', i) + 3) + ADMIN + '\nthis.__A = { AD, disegnaAdmin }; collegaAdmin = () => {};', ctx);
   Object.assign(ctx.__A.AD, { sezione: null, richieste: [], doppioni: [], eliminati: [], segnAperte: 3, dispositivi: {}, wes: [{ data: '2026-11-01' }], bbs: [{ data: '2026-10-01' }],
     fc: [{ dal: '2026-01-01', valore: 2.26194 }],
     utenti: [{ id: 'u1', nome_cognome: 'Persona A', accesso_attivo: true, ultimo_uso: new Date(Date.now() - 3600e3).toISOString(), auth_id: 'x' },

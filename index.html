@@ -2424,7 +2424,8 @@
     --z-check: #0098A3; --z-report: #3D4451; --z-mappa: #1E3A8A; }
   /* una schermata sola: i riquadri si distribuiscono fino alla barra (altezza visibile del telefono, 100dvh); sotto restano la versione e «Da seguire» */
   .o5 { display: flex; flex-direction: column; min-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 170px); }
-  .o5-testa { display: flex; justify-content: space-between; align-items: flex-end; margin: 6px 0 10px; }
+  .o5-testa { display: flex; justify-content: space-between; align-items: flex-start; margin: 2px 0 10px; }   /* nota 111: «Tu ▾» e il profilo all'altezza della data */
+  .o5-su { display: flex; justify-content: flex-end; margin-top: 6px; }   /* nota 111: il feedback da solo, in alto a destra */
   .o5-testa h1 { margin: 2px 0 0; font-size: 34px; font-weight: 800; line-height: 1.1; }
   .o5-data { font-size: 13px; font-weight: 700; color: var(--z-contatti); letter-spacing: .03em; }
   .o5-dx { display: flex; gap: 10px; align-items: center; }
@@ -2519,6 +2520,15 @@
   .v5-indietro { background: none; border: 0; color: #fff; font: inherit; font-size: 16px; font-weight: 700; padding: 6px 0; white-space: nowrap; }
   .v5-fb { width: 34px; height: 34px; border-radius: 17px; border: 0; background: rgba(255,255,255,.22); color: #fff; display: flex; align-items: center; justify-content: center; padding: 0; flex: none; }
   .v5-fb svg.ic { width: 18px; height: 18px; }
+  .v5-fb { position: relative; }
+  .v5-fb.con-risposta::after { content: ''; position: absolute; top: -2px; right: -2px; width: 11px; height: 11px; border-radius: 50%; background: var(--rosso); border: 2px solid var(--zc); }
+  /* nota 111: la riga sopra il titolo (la data, il mese, il conto) con a destra «Tu ▾», la lente e «+»; il titolo le sta subito sotto */
+  .v5-riga { display: flex; justify-content: space-between; align-items: center; gap: 10px; min-width: 0; }
+  .v5-riga .o5-dx { min-width: 0; }
+  .v5-riga + .v5-titolo { margin-top: -8px; }
+  .a5-scale { display: flex; gap: 8px; align-items: center; }
+  .a5-scale .v5-scale { flex: 1; }
+  .a5-scale .v5-scale button { font-size: 13px; }   /* con «Oggi» accanto, su un telefono stretto «Settimana» ci sta */
   .v5-testa .o5-ps { background: rgba(255,255,255,.22); border: 0; color: #fff; }
   body:has(.v5-testa) #segnala { display: none; }   /* v5: il feedback sta nella testata delle pagine nuove */
   .v5-sopra { font-size: 13px; font-weight: 700; opacity: .9; letter-spacing: .03em; }

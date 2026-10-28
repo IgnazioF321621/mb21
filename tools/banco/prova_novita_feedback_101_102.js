@@ -27,7 +27,7 @@ prova('102: il tondo del feedback sta in alto a destra, allineato alla colonna (
   for (const f of fs.readdirSync(path.join(__dirname, '..', '..')).filter(x => /\.js$/.test(x)).concat('index.html')) assert.doesNotMatch(leggi(f), /sg\.hidden = true/, f);
 });
 
-prova('102: Esplora ha il tasto del feedback nella testata, accanto al profilo, con il puntino della risposta; il tocco apre «Invia Feedback»', () => {
+prova('102 e 111: Esplora ha il tasto del feedback nella testata, da solo in alto a destra, con il puntino della risposta; il tocco apre «Invia Feedback»', () => {
   for (const risposta of [false, true]) {
     const app = new Nodo(), sg = new Nodo(), vai = [];
     sg.classList = { contains: c => c === 'con-risposta' && risposta };
@@ -36,9 +36,10 @@ prova('102: Esplora ha il tasto del feedback nella testata, accanto al profilo, 
       document: { getElementById: id => (id === 'segnala' ? sg : app.getElementById(id)) } };
     vm.createContext(ctx);
     const da = PO.indexOf('const ZONE_V5 = ['), a = PO.indexOf('\nfunction esploraVai');
-    vm.runInContext(PO.slice(da, a) + ';this.esplora = apriEsplora;', ctx);
+    vm.runInContext(require('./testa_v5.js')(PO) + PO.slice(da, a) + ';this.esplora = apriEsplora;', ctx);
     ctx.esplora();
-    assert.match(app.innerHTML, new RegExp(`<div class="o5-dx"><button class="o5-feedback${risposta ? ' con-risposta' : ''}" id="o5-feedback" aria-label="Invia Feedback">\\[segnala\\]</button><button id="ds-profilo">PI</button></div>`));
+    // nota 111 (Ignazio 28/10): il feedback da solo, in alto a destra; il profilo resta nella riga del titolo
+    assert.match(app.innerHTML, new RegExp(`^<div class="o5-su"><button class="o5-feedback${risposta ? ' con-risposta' : ''}" id="o5-feedback" aria-label="Invia Feedback">\\[segnala\\]</button></div><div class="o5-testa"><div><h1>Esplora</h1></div><div class="o5-dx"><button id="ds-profilo">PI</button></div></div>`));
     app.clic('#o5-feedback');
     assert.deepEqual(vai, ['feedback']);
   }

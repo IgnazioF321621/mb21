@@ -89,7 +89,7 @@ function avvia(opz = {}) {
     const PO = fs.readFileSync(path.join(BASE, 'pagina-oggi.js'), 'utf8'), i = PO.indexOf('function testaZonaV5');
     const chip = () => '<button class="o5-ps" id="ps-scegli">Tu ▾</button>';
     Object.assign(stub, { veste5: () => true, chipPartnerSelect: chip, haStatistiche: () => !!opz.efficacia, apriStatistiche: da => aperti.push(['statistiche', da]),
-      testaZonaV5: new Function('esc', 'ic', 'chipPartnerSelect', PO.slice(i, PO.indexOf('\n}\n', i) + 3) + '\nreturn testaZonaV5;')(x => String(x == null ? '' : x).replace(/&/g, '&amp;').replace(/</g, '&lt;'), n => `[${n}]`, chip) });
+      testaZonaV5: new Function('esc', 'ic', 'chipPartnerSelect', 'document', require('../banco/testa_v5.js')(PO) + PO.slice(i, PO.indexOf('\n}\n', i) + 3) + '\nreturn testaZonaV5;')(x => String(x == null ? '' : x).replace(/&/g, '&amp;').replace(/</g, '&lt;'), n => `[${n}]`, chip, { getElementById: () => null }) });   // nota 111
     if (opz.tab) stub.ST.tab = opz.tab;
   }
   const codice = [

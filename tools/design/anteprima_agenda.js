@@ -159,8 +159,8 @@ if (globalThis.AGENDA_V5) {
     testaAgendaV5: null, TRC: { righe: [{}], ascoltate: [], letteIl: '2026-09-21' }, MIO: { righe: [] }, caricaTracceDaControllare: async () => {}, caricaMioPercorso: async () => {},
     tracceHtml: () => '<button class="ag-blocco sezione catalogare" id="dash-tracce" aria-expanded="false"><span><span class="sez-testo"><b>Tracce condivise</b><small>1 da controllare</small></span></span><span><span class="sez-quanti">1</span>›</span></button>', mioPercorsoHtml: () => '',
     localStorage: { getItem: k => (memoria.has(k) ? memoria.get(k) : null), setItem: (k, v) => memoria.set(k, String(v)), memoria } });
-  stub.testaAgendaV5 = new Function('ic', 'esc', 'AG', 'MB21Agenda', 'chipPartnerSelect', PO.slice(i, PO.indexOf('\n}\n', i) + 3) + '\nreturn testaAgendaV5;')(
-    n => MB21Icone.icona(n), x => String(x).replace(/&/g, '&amp;').replace(/</g, '&lt;'), AG, A, stub.chipPartnerSelect);
+  stub.testaAgendaV5 = new Function('ic', 'esc', 'AG', 'MB21Agenda', 'chipPartnerSelect', 'document', require('../banco/testa_v5.js')(PO) + PO.slice(i, PO.indexOf('\n}\n', i) + 3) + '\nreturn testaAgendaV5;')(
+    n => MB21Icone.icona(n), x => String(x).replace(/&/g, '&amp;').replace(/</g, '&lt;'), AG, A, stub.chipPartnerSelect, { getElementById: () => null });   // nota 111: il feedback condiviso
 }
 const nomi = Object.keys(stub);
 const { foglioCercaAgenda, apriCampoCosa, impostaLinee, impostaPunti, impostaSerata, impostaCoachYes, CY, foglioCoachYes, caricaCoachYes, foglioAggiungi, disegnaAgenda, avvisoSovrapposti, grigliaGiorno, grigliaSettimana, menuAgendaHtml, foglioSpazio, preparaSettimana, rigaSpazioHtml, programmaSettimanaHtml, foglioCosa, collegaCose, spuntaCosa, foglioEvento, foglioRicevuto, controllaImpegniNuovi, nuovoAppuntamento } = new Function(...nomi, codice)(...nomi.map(n => stub[n]));

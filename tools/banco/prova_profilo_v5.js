@@ -18,7 +18,7 @@ function prova(nome, fn) { prove.push([nome, fn]); }
 function profilo(v5, aperte = []) {
   const app = new Nodo(), tocchi = [];
   const codice = [riga(PROFILO, 'const AVVIO_NEL_PROFILO = '), funzione(PROFILO, 'voceProfilo'), funzione(PROFILO, 'rigaProfilo'), funzione(PROFILO, 'mioProfiloHtml'),
-    funzione(PROFILO, 'avvisiNuoviHtml'), funzione(PROFILO, 'disegnaProfilo'), funzione(PO, 'testaZonaV5'),
+    funzione(PROFILO, 'avvisiNuoviHtml'), funzione(PROFILO, 'disegnaProfilo'), require('./testa_v5.js')(PO), funzione(PO, 'testaZonaV5'),
     AVVISI.slice(AVVISI.indexOf('const AVVISI_QUANDO = ['), AVVISI.indexOf('\nasync function impostaAvviso')), 'disegnaProfilo();'].join('\n');
   const stub = {
     app, document: { getElementById: id => app.getElementById(id) }, esc, ic: n => `<svg class="ic">${n}</svg>`, MB21Lista: L, veste5: () => v5, chipPartnerSelect: () => '',

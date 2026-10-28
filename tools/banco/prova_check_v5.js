@@ -5,7 +5,7 @@ const B = path.join(__dirname, '..', '..');
 const PO = fs.readFileSync(path.join(B, 'pagina-oggi.js'), 'utf8'), PD = fs.readFileSync(path.join(B, 'pagina-dashboard.js'), 'utf8');
 const pezzo = n => { const i = PO.indexOf('function ' + n); return PO.slice(i, PO.indexOf('\n}\n', i) + 3); };
 globalThis.__extraCheck = "\nconst OGGI_V5 = true; const chipPartnerSelect = () => '<button class=\"o5-ps\" id=\"ps-scegli\">Tu ▾</button>';\n"
-  + PO.slice(PO.indexOf('const SCHEDE_CHECK_V5'), PO.indexOf('\n', PO.indexOf('const SCHEDE_CHECK_V5'))) + '\n' + pezzo('testaCheckV5');
+  + PO.slice(PO.indexOf('const SCHEDE_CHECK_V5'), PO.indexOf('\n', PO.indexOf('const SCHEDE_CHECK_V5'))) + '\n' + require('./testa_v5.js')(PO) + pezzo('testaCheckV5');
 const f = path.join(B, 'tools/design/anteprima_dashboard.js');
 const src = fs.readFileSync(f, 'utf8').replace("const pagina = fs.readFileSync(path.join(BASE, 'pagina-dashboard.js'), 'utf8');",
   "const pagina = fs.readFileSync(path.join(BASE, 'pagina-dashboard.js'), 'utf8') + globalThis.__extraCheck;");
