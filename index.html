@@ -336,6 +336,14 @@
   .na5-piu { display: flex; align-items: center; gap: 6px; width: 100%; border: 0; background: none; color: var(--accento); font: inherit; font-weight: 700; padding: 10px 0 4px; text-align: left; }
   .na5-aiuto { font-size: 12.5px; color: var(--testo-soft); margin: 4px 0 2px; }
   .na5-cambia { padding: 0; font-size: 12.5px; }
+  /* nota 109: il foglio di un incontro con più persone */
+  .fi-tit { display: block; font-size: 12px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: var(--testo-soft); margin-bottom: 4px; }
+  .fi-persona { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 0; border: 0; border-top: 1px solid var(--linea); background: none; font: inherit; color: var(--testo); text-align: left; }
+  .fi-persona:first-of-type { border-top: 0; }
+  .fi-persona .ts-pastiglia { width: 34px; height: 34px; font-size: 13px; flex: none; background: var(--cat, var(--grigio)); color: #fff; }
+  .fi-persona > span:nth-child(2) { flex: 1; min-width: 0; } .fi-persona b { display: block; } .fi-persona small { color: var(--testo-soft); font-size: 12.5px; }
+  .fi-persona em { font-style: normal; font-size: 13px; font-weight: 700; color: var(--accento); white-space: nowrap; } .fi-persona em.fi-esito { color: var(--ok); }
+  .fi-tutti { width: 100%; margin-top: 8px; }
   .na5-cond small { display: block; font-size: 12.5px; color: var(--testo-soft); margin: 6px 0 3px; }   /* nota 107: «Condividi con», una riga per persona */
   .na5-nuova { font-size: 11px; font-weight: 700; color: #8A6200; background: #FFF3D1; border-radius: 6px; padding: 1px 6px; margin-left: 6px; vertical-align: 2px; }   /* nota 108 */
   .na5-piu small { color: var(--testo-soft); font-weight: 400; font-size: 12.5px; }
@@ -3909,20 +3917,23 @@ function spostaAppuntamento(e, dopo) {
     const prima = { inizio: e.inizio, fine: e.fine, confermato_il: e.confermato_il || null };
     // nota 061: spostato un appuntamento condiviso si segna quando (spostato_il); dalla nota 077 (25/10) conta per «Non può» (va ridata), «Partecipa» resta (rispostaValida)
     if (e.condiviso_con) { nuovo.spostato_il = new Date().toISOString(); prima.spostato_il = e.spostato_il || null; }
-    const { error } = await dbq('sposta appuntamento', supa.from('azioni').update(nuovo).eq('id', e.id));
+    // nota 109: un incontro con più persone si sposta tutto insieme (le righe di ognuno)
+    const tutte = e._persone && e._persone.length > 1 ? e._persone : [e], ids = tutte.map(x => x.id);
+    if (tutte.some(x => x.condiviso_con)) nuovo.spostato_il = nuovo.spostato_il || new Date().toISOString();
+    const { error } = await dbq('sposta appuntamento', ids.length === 1 ? supa.from('azioni').update(nuovo).eq('id', e.id) : supa.from('azioni').update(nuovo).in('id', ids));
     if (error) return mostraToast('Non spostato: controlla la connessione e riprova.');
-    await allineaRigaCoda(e, e.inizio, nuovaData);   // la riga «PM Fissato» dalla coda segue l'appuntamento (nota 035)
+    for (const x of tutte) await allineaRigaCoda(x, x.inizio, nuovaData);   // la riga «PM Fissato» dalla coda segue l'appuntamento (nota 035)
     await dopo(g);
     // Nota Pagine 077 (Ignazio 25/10/2026, «A»): spostato un appuntamento condiviso, a chi lo riceve arriva subito un avviso sul telefono. La richiesta
     // parte quando «Annulla» non si può più toccare (DURATA_ANNULLA): con «Annulla» non arriva niente. Il resto lo controlla la funzione `avvisi` ('spostato').
     let annullato = false;
-    const avvisaChiRiceve = () => supa.functions.invoke('avvisi', { body: { tipo: 'spostato', azione: e.id } }).catch(() => {});
-    if (e.condiviso_con) setTimeout(() => { if (!annullato) avvisaChiRiceve(); }, DURATA_ANNULLA + 500);
+    const avvisaTutti = () => tutte.filter(x => x.condiviso_con).forEach(x => supa.functions.invoke('avvisi', { body: { tipo: 'spostato', azione: x.id } }).catch(() => {}));
+    if (tutte.some(x => x.condiviso_con)) setTimeout(() => { if (!annullato) avvisaTutti(); }, DURATA_ANNULLA + 500);
     mostraToast(`Spostato a ${g.split('-').reverse().join('/')} ${o}`, async () => {
       annullato = true;
-      const { error: eAnnulla } = await dbqAvvisa('annulla sposta', supa.from('azioni').update(prima).eq('id', e.id), 'Annullamento non riuscito: controlla la connessione e riprova.');
-      if (!eAnnulla) await allineaRigaCoda(e, nuovaData, e.inizio);
-      else if (e.condiviso_con) avvisaChiRiceve();   // l'annullamento non è riuscito: lo spostamento resta, e chi lo riceve lo sa
+      const { error: eAnnulla } = await dbqAvvisa('annulla sposta', ids.length === 1 ? supa.from('azioni').update(prima).eq('id', e.id) : supa.from('azioni').update(prima).in('id', ids), 'Annullamento non riuscito: controlla la connessione e riprova.');
+      if (!eAnnulla) for (const x of tutte) await allineaRigaCoda(x, nuovaData, x.inizio);
+      else avvisaTutti();   // l'annullamento non è riuscito: lo spostamento resta, e chi lo riceve lo sa
       await dopo(giorno);
     });
   };
@@ -3931,6 +3942,7 @@ function spostaAppuntamento(e, dopo) {
 // Elimina un'azione (Agenda e scheda contatto, stesso codice; `dopo()` ridisegna chi l'ha aperto). Avviso con Annulla che la rimette.
 async function eliminaAppuntamento(e, dopo) {
   const ridisegna = dopo || apriAgenda;
+  if (e._persone && e._persone.length > 1) return eliminaIncontro(e, ridisegna);   // nota 109: tutto l'incontro
   if (!await chiediConferma('Eliminare questa azione?', `${e.tipo_azione || 'Azione'}${e.modalita ? ' · ' + e.modalita : ''}${e.esito ? ' · ' + e.esito : ''}`, 'Elimina', true)) return;   // conferma dell'app, non confirm(): in Arc/Claude non compariva (Ignazio 17/09)
   // Una funzione del database (nota 010, 03/10): tiene una copia dell'azione (anche dopo che l'avviso è sparito), ricalcola il rientro se era l'ultima e conserva il legame
   // con le vendite (riordino, consegna) per Annulla, che rimette tutto com'era
@@ -3945,6 +3957,23 @@ async function eliminaAppuntamento(e, dopo) {
     await aggiornaRiga(e.contatto_id);
     await ridisegna();
     mostraToast('Azione ripristinata');
+  });
+}
+// Nota 109: un incontro con più persone si elimina tutto, con una conferma sola (la stessa funzione elimina_azione per ogni riga; «Annulla» le rimette tutte)
+async function eliminaIncontro(inc, ridisegna) {
+  const persone = inc._persone;
+  if (!await chiediConferma(`Eliminare l'appuntamento con ${persone.length} persone?`, `${inc.modalita || inc.tipo_azione} · ${persone.map(p => (p.contatti && p.contatti.nome) || '—').join(', ')}`, 'Elimina', true)) return;
+  const tolte = [];
+  for (const p of persone) { const { error } = await dbq('elimina azione', supa.rpc('elimina_azione', { p_azione: p.id })); if (!error) tolte.push(p); }
+  if (!tolte.length) return mostraToast('Non eliminato: controlla la connessione e riprova.');
+  AG.aperta = null;
+  await Promise.all(tolte.map(p => aggiornaRiga(p.contatto_id)));
+  await ridisegna();
+  mostraToast(tolte.length === persone.length ? 'Appuntamento eliminato' : 'Eliminato solo in parte: riprova', async () => {
+    for (const p of tolte) await dbq('ripristina azione', supa.rpc('annulla_elimina_azione', { p_azione: p.id }));
+    await Promise.all(tolte.map(p => aggiornaRiga(p.contatto_id)));
+    await ridisegna();
+    mostraToast('Appuntamento ripristinato');
   });
 }
 // (P3 Agenda, 23/10: il foglio «Senza esito» della pastiglia non c'è più: gli appuntamenti senza esito sono in «Da chiudere» del Programma della settimana)

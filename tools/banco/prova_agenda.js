@@ -808,4 +808,21 @@ prova('Agenda P5b (23/10): personeConApp — le persone del gruppo che usano l\'
   assert.deepEqual(A.personeConApp([], utenti, 'ME'), []); assert.deepEqual(A.personeConApp(squadra, null, 'ME'), []);
 });
 
+prova('Nota 109 (Ignazio 28/10): un appuntamento con più persone resta UNO — stesso partner, stessa ora, stesso tipo e sottotipo; le telefonate restano una per riga', () => {
+  const p = (id, nome, ora = '21:00', mod = 'Counseling', user = 'io', tipo = 'Appuntamento') => ({ ...ev(id, '2026-09-21', ora, 60, tipo), modalita: mod, user_id: user, contatti: { nome, categoria: 'Partner' } });
+  const tutti = A.incontri([p('a', 'Persona A'), p('b', 'Persona B'), p('c', 'Persona C', '22:00'), p('d', 'Persona D', '21:00', 'Avvio'), p('e', 'Persona E', '21:00', 'Counseling', 'altro'),
+    { ...p('t1', 'Persona T', '21:00', 'Telefonata', 'io', 'Contatto') }, { ...p('t2', 'Persona U', '21:00', 'Telefonata', 'io', 'Contatto') }]);
+  assert.deepEqual(tutti.map(x => (x._persone ? x._persone.map(y => y.id).join('+') : x.id)), ['a+b', 'c', 'd', 'e', 't1', 't2']);
+  const opz = { mioId: 'io', admin: false };
+  assert.equal(A.riga(tutti[0], opz).titolo, 'Counseling · Persona A, Persona B');
+  const quattro = A.incontri(['a', 'b', 'c', 'd'].map(x => p(x, 'Persona ' + x.toUpperCase())))[0];
+  assert.equal(A.riga(quattro, opz).titolo, 'Counseling · Persona A, Persona B (+2)');
+  // completato quando lo sono tutte
+  const mezzo = A.incontri([{ ...p('a', 'Persona A'), completata: true, esito: 'Fatto' }, p('b', 'Persona B')])[0];
+  assert.match(A.riga(mezzo, opz).sotto, /Da completare/);
+  // un incontro, un punto nel Mese e 1 nel conto del giorno (Oggi e Agenda)
+  assert.equal(A.puntiGiorni([p('a', 'Persona A'), p('b', 'Persona B')], ['2026-09-21'])['2026-09-21'].quanti, 1);
+  assert.equal(A.programmaDelGiorno({ azioni: [p('a', 'Persona A'), p('b', 'Persona B'), p('c', 'Persona C', '22:00')], giorno: '2026-09-21', opz }).voci.length, 2);
+});
+
 console.log(`\n${ok} prove superate`);

@@ -623,6 +623,28 @@ prova('107: in «Altro» lo stesso «Condividi con» del foglio — «Nell\'app 
   P.finto.usaApp = undefined;
 });
 
+prova('109: in Agenda lo stesso incontro con più persone è una riga sola; toccandola un foglio solo con tutte le persone, l\'esito per ciascuna, Modifica · Sposta · Elimina per tutto', async () => {
+  pulisci();
+  const prima = P.AG.azioni.length;
+  P.AG.azioni.push(P.az('inc1', P.OGGI, '21:00', 60, 'Appuntamento', 'Counseling', 'Persona B', 'Partner'), P.az('inc2', P.OGGI, '21:00', 60, 'Appuntamento', 'Counseling', 'Persona C', 'Partner'));
+  try {
+    const g = P.vista('giorno');
+    assert.equal((g.match(/Counseling · Persona B, Persona C/g) || []).length, 1); assert.doesNotMatch(g, /Counseling · Persona C</);
+    const i1 = P.AG.azioni.find(a => a.id === 'inc1');
+    P.foglioEvento({ ...i1, quando: i1.inizio });
+    const f = P.fogli.at(-1);
+    assert.match(f.innerHTML, /<h3>Counseling · 2 persone<\/h3>/);
+    assert.deepEqual([...f.innerHTML.matchAll(/data-fi-persona="([^"]+)"/g)].map(x => x[1]), ['inc1', 'inc2']);
+    assert.deepEqual([...f.innerHTML.matchAll(/data-fi-cmd="([^"]+)"/g)].map(x => x[1]), ['modifica', 'sposta', 'elimina']);
+    assert.equal((f.innerHTML.match(/data-condividi="/g) || []).length, 2);   // «Condividi con» uno per persona
+    await f.clic('[data-fi-persona="inc2"]');   // una persona: il suo foglio di sempre
+    assert.match(P.fogli.at(-1).innerHTML, /<h3>Counseling · Persona C<\/h3>/);
+    const IDX = require('node:fs').readFileSync(require('node:path').join(__dirname, '../../index.html'), 'utf8');
+    assert.match(IDX, /if \(e\._persone && e\._persone\.length > 1\) return eliminaIncontro\(e, ridisegna\);/);   // Elimina: tutto l'incontro, una conferma
+    assert.match(IDX, /supa\.from\('azioni'\)\.update\(nuovo\)\.in\('id', ids\)/);                                     // Sposta: tutte le righe
+  } finally { P.AG.azioni.length = prima; }
+});
+
 (async () => {
   for (const [nome, fn] of coda) { await fn(); ok++; console.log('OK  ' + nome); }
   console.log(`\n${ok} prove superate`);

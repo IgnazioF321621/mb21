@@ -622,7 +622,7 @@ function quandoChiudereV5(e, oggi) {
 }
 function daChiudereV5(oggi) {
   if (AG.giorno !== oggi) return [];
-  return (AG.passati || []).filter(a => !a.esito).sort((x, y) => (x.inizio < y.inizio ? 1 : x.inizio > y.inizio ? -1 : 0));
+  return MB21Agenda.incontri((AG.passati || []).filter(a => !a.esito)).sort((x, y) => (x.inizio < y.inizio ? 1 : x.inizio > y.inizio ? -1 : 0));   // nota 109
 }
 function giornoV5Html(eventi, opz, oggi) {
   const A = MB21Agenda, tre = largo();
@@ -634,7 +634,7 @@ function giornoV5Html(eventi, opz, oggi) {
   }
   // In programma: quello già in «Da chiudere» non si ripete nell'Elenco (nella Timeline sì: lì si guarda l'ora)
   // il conto è quello di MB21Agenda.programmaDelGiorno, lo stesso del riquadro AGENDA di Oggi (nota 098)
-  const gia = new Set(chiudere.map(a => a.id));
+  const gia = new Set(chiudere.flatMap(a => (a._persone || [a]).map(x => x.id)));
   const prog = A.programmaDelGiorno({ azioni: AG.azioni, spazi: spaziDelGiorno(AG.giorno).map(s => ({ inizio: s.inizio, titolo: MB21Spazi.titolo(s) })),
     ricevuti: vediTutti() ? [] : AG.ricevuti, giorno: AG.giorno, fuori: gia, opz });
   const elenco = prog.eventi, quanti = prog.voci.length;
@@ -666,7 +666,7 @@ function collegaGiornoV5(eventi) {
 function disegnaAgenda() {
   if (typeof accendiTab === 'function') accendiTab();   // nella barra «Progetti» o «MB Plan» (25/09)
   const A = MB21Agenda, oggi = MB21Coda.oggiRoma();
-  const eventi = A.eventiDelGiorno(AG.azioni, AG.giorno);
+  const eventi = A.incontri(A.eventiDelGiorno(AG.azioni, AG.giorno));   // nota 109: un incontro con più persone, una riga
   const opz = { mioId: vediTutti() ? null : visto().id, admin: eAdmin() };   // con «Tutti» il nome del partner su ogni riga
   const punti = A.puntiGiorni(AG.azioni, AG.settimana);
   const conCose = giorniConCose(AG.cose, oggi);
@@ -747,7 +747,7 @@ function disegnaMese() {
     <div class="mm-griglia">${A.GIORNI_SETTIMANA.map(g => `<b>${g}</b>`).join('')}
       ${giorni.map(g => {
         const p = punti[g] || { punti: [], tanti: false };
-        const ev = A.eventiDelGiorno(AG.azioni, g);
+        const ev = A.incontri(A.eventiDelGiorno(AG.azioni, g));   // nota 109
         return `<button class="mm-g${g.slice(0, 7) !== mese0.slice(0, 7) ? ' altro' : ''}${g === oggi ? ' oggi' : ''}${g === AG.giorno ? ' scelto' : ''}" data-giorno="${g}">
           <span class="mm-n">${Number(g.slice(8))}${anelloCose(conCose, g)}</span>
           <span class="ag-punti">${p.punti.map(c => `<i class="${classeCat(c)}"></i>`).join('')}${p.tanti ? `<i class="tanti ${classeCat(null)}"></i>` : ''}</span>
@@ -890,7 +890,7 @@ function disegnaAnno() {
 function giorniSettimanaHtml(opz, oggi) {
   const A = MB21Agenda;
   return `<div class="ss-giorni">${AG.settimana.map((g, i) => {
-    const ev = A.eventiDelGiorno(AG.azioni, g);
+    const ev = A.incontri(A.eventiDelGiorno(AG.azioni, g));   // nota 109
     const cose = A.coseDelGiorno(AG.cose, g, oggi);   // le cose da fare di quel giorno, sotto gli impegni (come i riferimenti di NotePlan)
     const coseHtml = cose.map(c => `<span class="ss-riga ss-cosa${c.fatto_il ? ' fatta' : ''}"><i></i>${c.ora ? `<em>${esc(String(c.ora).slice(0, 5))}</em>` : ''}${esc(c.testo)}</span>`).join('')
       + spaziDelGiorno(g).map(x => `<span class="ss-riga ss-spazio" style="--tinta:${coloreSpazio(x.tipo)}"><i></i><em>${MB21Spazi.orario(x).ora}</em>${esc(MB21Spazi.titolo(x))}${MB21Spazi.daRiempire(x.tipo) ? ' · da riempire' : ''}</span>`).join('')
@@ -1052,7 +1052,7 @@ async function fineBlocco() {
 }
 // dopo lo spostamento si ridisegna la pagina; se la Timeline era nel pannello (telefono/iPad) si riapre com'era
 function ridisegnaDopoBlocco(velo) {
-  const eventi = MB21Agenda.eventiDelGiorno(AG.azioni, AG.giorno), opz = { mioId: vediTutti() ? null : visto().id, admin: eAdmin() };
+  const eventi = MB21Agenda.incontri(MB21Agenda.eventiDelGiorno(AG.azioni, AG.giorno)), opz = { mioId: vediTutti() ? null : visto().id, admin: eAdmin() };
   const lato = velo && velo.classList.contains('lato');
   if (velo) velo.remove();
   disegnaAgenda();
@@ -1256,7 +1256,7 @@ function programmaSettimanaHtml() {
   // P3 (Ignazio 23/10): «Da chiudere» è l'unico posto degli appuntamenti passati senza esito, anche delle settimane prima (AG.passati, i più
   // recenti LIMITE_SENZA_ESITO): prima stavano anche nella pastiglia «N senza esito» della testata. I più vecchi in alto.
   const giaQui = new Set(p.daChiudere.map(a => a.id));
-  const daChiudere = [...p.daChiudere, ...(AG.passati || []).filter(a => !a.esito && !giaQui.has(a.id))].sort((x, y) => (x.inizio < y.inizio ? -1 : x.inizio > y.inizio ? 1 : 0));
+  const daChiudere = A.incontri([...p.daChiudere, ...(AG.passati || []).filter(a => !a.esito && !giaQui.has(a.id))]).sort((x, y) => (x.inizio < y.inizio ? -1 : x.inizio > y.inizio ? 1 : 0));
   const quantiChiudere = (AG.passati || []).length >= LIMITE_SENZA_ESITO ? `${daChiudere.length}+` : daChiudere.length;
   const mese = g => A.titoloMese(g).slice(0, 3).toLowerCase();
   const opz = { mioId: vediTutti() ? null : visto().id, admin: eAdmin() };
@@ -1268,8 +1268,8 @@ function programmaSettimanaHtml() {
   return `<div class="mb-programma"><div class="mb-prog-testa">${ic('scala-settimana')}<span><b>Programma della settimana</b><small>Settimana ${A.numeroSettimana(lun)} · ${Number(lun.slice(8))} ${mese(lun)} – ${Number(dom.slice(8))} ${mese(dom)}</small></span></div>
     ${daChiudere.length ? `<div class="mb-prog-chiudere"><div class="mb-prog-tit">Da chiudere · ${quantiChiudere}</div>${daChiudere.map(a => riga(a, true)).join('')}</div>` : ''}
     ${p.righe.length ? `<ul>${p.righe.map(r => `<li style="--tinta:${coloreSpazio(r.tipo)}"><i></i>${esc(r.testo)}</li>`).join('')}</ul>` : `<p>${vuoto}</p>`}
-    ${p.fatti.length ? `<button class="mb-prog-fatti" data-cmd="fatti" aria-expanded="${aperti}"><span>Fatti e passati<i>${p.fatti.length}</i></span><span>${aperti ? '⌄' : '›'}</span></button>
-      <div class="mb-prog-elenco"${aperti ? '' : ' hidden'}>${p.fatti.map(a => riga(a, false)).join('')}</div>` : ''}
+    ${p.fatti.length ? `<button class="mb-prog-fatti" data-cmd="fatti" aria-expanded="${aperti}"><span>Fatti e passati<i>${A.incontri(p.fatti).length}</i></span><span>${aperti ? '⌄' : '›'}</span></button>
+      <div class="mb-prog-elenco"${aperti ? '' : ' hidden'}>${A.incontri(p.fatti).map(a => riga(a, false)).join('')}</div>` : ''}
     ${dom >= oggi ? `<button data-cmd="prepara" class="mb-prog-bottone">${ic('piu')}<span>Aggiungi</span></button>` : ''}</div>`;
 }
 function collegaMenuAgenda(radice, chiudi) {
@@ -1520,7 +1520,7 @@ function grigliaGiorno(eventi, opz) {
 // ── La settimana intera: sette colonne, il colpo d'occhio su dove sei pieno e dove sei libero ──
 function grigliaSettimana(opz) {
   const A = MB21Agenda, oggi = MB21Coda.oggiRoma();
-  const giorni = AG.settimana.map(g => ({ g, d: A.disposizioneGiorno(A.eventiDelGiorno(AG.azioni, g), { minimoMinuti: 30, oraDa: 24, oraA: 0 }) }));
+  const giorni = AG.settimana.map(g => ({ g, d: A.disposizioneGiorno(A.incontri(A.eventiDelGiorno(AG.azioni, g)), { minimoMinuti: 30, oraDa: 24, oraA: 0 }) }));   // nota 109
   // La settimana mostra solo le ore che servono: dalla prima all'ultima cosa della settimana, con mezz'ora
   // di margine, e almeno otto ore. Con pochi appuntamenti, 8→24 sarebbe un lenzuolo quasi vuoto (Ignazio 21/09).
   // gli spazi da riempire (27/09): tratteggiati sopra la griglia; contano anche per decidere quali ore mostrare
@@ -2103,8 +2103,57 @@ function eventoAgenda(e, opz) {
 // Il foglio che sale dal basso toccando un blocco nella griglia: dentro c'è esattamente quello che c'è
 // nell'elenco quando la riga si apre. Dando un esito il foglio si toglie di mezzo e, se il passo dopo
 // serve ancora (il PM «Fatto» che aspetta il risultato), si riapre da solo.
-function foglioEvento(e) {
+// Nota Pagine 109 (Ignazio 28/10, «la proposta è ok»): il foglio di un incontro con più persone. Una riga per persona con il suo esito (toccandola si apre il
+// suo foglio, con gli esiti di sempre); «Fatto per tutti» dove il passo «Fatto» è lo stesso per tutti (il Piano Marketing: MB21Agenda.fattoDi);
+// «Condividi con» uno per persona (lo stesso riquadro di sempre); Modifica · Sposta · Elimina valgono per tutto l'incontro.
+function incontroDi(e) {
+  const A = MB21Agenda, g = A.partiRoma(e.quando || e.inizio).giorno, visti = new Set(), tutti = [];
+  for (const x of [...A.eventiDelGiorno(AG.azioni || [], g), ...A.eventiDelGiorno(AG.passati || [], g)]) if (!visti.has(x.id)) { visti.add(x.id); tutti.push(x); }
+  return A.incontri(tutti).find(x => x._persone && x._persone.some(p => p.id === e.id)) || null;
+}
+function foglioIncontro(inc) {
+  const A = MB21Agenda, persone = inc._persone, opz = { mioId: vediTutti() ? null : visto().id, admin: eAdmin() }, r = A.riga(inc, opz);
+  const cat = (inc.contatti && inc.contatti.categoria) || inc.categoria, giorno = A.partiRoma(inc.quando || inc.inizio).giorno, fase = A.fattoDi(inc.tipo_azione);
+  const velo = document.createElement('div');
+  velo.className = 'velo';
+  document.body.appendChild(velo);
+  const chiudi = () => velo.remove();
+  velo.onclick = ev => { if (ev.target === velo) chiudi(); };
+  const senza = persone.filter(p => !p.esito);
+  velo.innerHTML = `<div class="foglio alto ${classeCat(cat)}">
+    <div class="testa-foglio"><h3>${esc(`${inc.modalita || inc.tipo_azione} · ${persone.length} persone`)}</h3><button id="fi-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
+    <p>${esc(dataLunga(giorno))} · ${esc(A.orario(inc))} · ${escIcone(r.sotto)}</p>
+    <div class="riquadro mc-g fi-persone"><b class="fi-tit">Com'è andato, per ognuno</b>
+      ${persone.map(p => { const c = (p.contatti && p.contatti.categoria) || p.categoria, nome = (p.contatti && p.contatti.nome) || '—';
+        return `<button type="button" class="fi-persona ${classeCat(c)}" data-fi-persona="${esc(p.id)}"><span class="ts-pastiglia">${esc(iniziali(nome))}</span><span><b>${esc(nome)}</b><small>${esc(c ? MB21Lista.nomeCategoria(c) : '')}</small></span>${p.esito ? `<em class="fi-esito">${ic('fatto')} ${esc(A.nomePasso(p.esito))}</em>` : '<em>Esito ›</em>'}</button>`; }).join('')}
+      ${fase && senza.length > 1 ? `<button type="button" class="primario fi-tutti" data-fi-tutti>Fatto per tutti</button>` : ''}</div>
+    ${persone.map(p => `<div data-condividi="${esc(p.id)}"></div>`).join('')}
+    <div class="ag-comandi"><button data-fi-cmd="modifica">${ic('modifica')} Modifica</button><button data-fi-cmd="sposta">${ic('orario')} Sposta</button><button data-fi-cmd="elimina" class="pericolo">Elimina</button></div>
+    <p class="na5-aiuto">Modifica, Sposta ed Elimina valgono per tutto l'incontro. Per aprire una persona, tocca il suo nome.</p></div>`;
+  velo.querySelector('#fi-x').onclick = chiudi;
+  velo.querySelectorAll('[data-fi-persona]').forEach(b => { b.onclick = () => { const p = persone.find(x => x.id === b.dataset.fiPersona); chiudi(); foglioEvento({ ...p, quando: p.quando || p.inizio }, true); }; });
+  const tutti = velo.querySelector('[data-fi-tutti]');
+  if (tutti) tutti.onclick = async () => {   // lo stesso «Fatto» di ogni persona, una dopo l'altra (senza il prossimo appuntamento: per un PM viene dopo il risultato)
+    if (soloGuardo()) return;
+    chiudi();
+    for (const p of senza) await chiudiAppuntamento({ ...p, categoria: p.categoria || (p.contatti && p.contatti.categoria) }, fase, { dopo: async () => {}, senzaProssimo: true, testo: 'Fatto' });
+    await apriAgenda(giorno);
+  };
+  for (const p of persone) collegaCondividi(velo, { ...p, quando: p.quando || p.inizio });
+  velo.querySelectorAll('[data-fi-cmd]').forEach(b => { b.onclick = () => {
+    chiudi();
+    if (b.dataset.fiCmd === 'modifica') return foglioAzione(persone[0].id, { ritorno: null, dopo: () => apriAgenda() });   // Modifica sa già chi è nello stesso incontro (nota 105)
+    if (b.dataset.fiCmd === 'sposta') return spostaAppuntamento(inc, async g => { AG.aperta = null; await apriAgenda(g); });
+    return eliminaAppuntamento(inc);
+  }; });
+}
+function foglioEvento(e, solo) {
   const A = MB21Agenda;
+  // nota 109: un appuntamento con più persone si apre nel foglio dell'incontro; `solo` = il foglio di una persona, aperto da lì
+  if (!solo && e.tipo_azione && e.tipo_azione !== 'Contatto') {
+    const inc = e._persone && e._persone.length > 1 ? e : incontroDi(e);
+    if (inc && inc._persone.length > 1) return foglioIncontro(inc);
+  }
   const opz = { mioId: vediTutti() ? null : visto().id, admin: eAdmin() };
   const r = A.riga(e, opz);
   const cat = (e.contatti && e.contatti.categoria) || e.categoria;
@@ -2127,7 +2176,7 @@ function foglioEvento(e) {
       chiudi();
       await apriAgenda(giorno);
       const agg = AG.azioni.find(x => x.id === e.id);   // se manca un passo (PM «Fatto» → risultato) si riapre
-      if (agg && (A.daChiudere(agg) || FATTO_APERTO.has(e.id) || agg.esito === A.fattoDi(agg.tipo_azione))) foglioEvento({ ...agg, quando: e.quando });
+      if (agg && (A.daChiudere(agg) || FATTO_APERTO.has(e.id) || agg.esito === A.fattoDi(agg.tipo_azione))) foglioEvento({ ...agg, quando: e.quando }, solo);
     }, disegna);
   };
   disegna();

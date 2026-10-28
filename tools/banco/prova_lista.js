@@ -583,7 +583,7 @@ prova('Agenda P3 (Ignazio 23/10): «N senza esito» non è più in testata; i se
   const fs = require('node:fs'), path = require('node:path');
   const ag = fs.readFileSync(path.join(__dirname, '../../pagina-agenda.js'), 'utf8'), idx = fs.readFileSync(path.join(__dirname, '../../index.html'), 'utf8');
   assert.doesNotMatch(ag + idx, /ag-passati|function scegliPassato/);
-  assert.match(ag, /const daChiudere = \[\.\.\.p\.daChiudere, \.\.\.\(AG\.passati \|\| \[\]\)\.filter\(a => !a\.esito && !giaQui\.has\(a\.id\)\)\]/);
+  assert.match(ag, /const daChiudere = A\.incontri\(\[\.\.\.p\.daChiudere, \.\.\.\(AG\.passati \|\| \[\]\)\.filter\(a => !a\.esito && !giaQui\.has\(a\.id\)\)\]\)/);   // nota 109: un incontro, una riga
   assert.match(ag, /const e = \[\.\.\.\(AG\.azioni \|\| \[\]\), \.\.\.\(AG\.passati \|\| \[\]\)\]\.find\(x => x\.id === b\.dataset\.progEvento\);/);
 });
 

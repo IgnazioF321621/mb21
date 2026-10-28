@@ -145,6 +145,21 @@
   const titoloMese = giorno => `${MESI[Number(giorno.slice(5, 7)) - 1]} ${giorno.slice(0, 4)}`;
 
   // Righe dell'agenda di un giorno, in ordine d'ora. `azioni`: righe di azioni (con contatti/utenti incorporati).
+  // Nota Pagine 109 (Ignazio 28/10: «un appuntamento, anche con più persone, deve restare UN SOLO appuntamento»): gli eventi dello stesso incontro
+  // (stesso partner, stessa ora d'inizio, stesso tipo e sottotipo: stessoIncontro) diventano uno solo, il primo, con `_persone` (tutte, nell'ordine);
+  // nel database restano le righe per persona (ognuno il suo esito). Le telefonate restano una per riga. Si usa dove l'appuntamento si MOSTRA.
+  function incontri(eventi) {
+    const fuori = [], per = new Map();
+    for (const e of eventi || []) {
+      const q = e.quando || e.inizio;
+      if (!e.tipo_azione || e.tipo_azione === 'Contatto' || !q) { fuori.push(e); continue; }
+      const k = [e.user_id || '', Date.parse(q), e.tipo_azione, e.modalita || ''].join('|'), g = per.get(k);
+      if (g) { g._persone.push(e); continue; }
+      const n = { ...e, _persone: [e] };
+      per.set(k, n); fuori.push(n);
+    }
+    return fuori.map(x => (x._persone && x._persone.length === 1 ? x._persone[0] : x));
+  }
   function eventiDelGiorno(azioni, giorno) {
     return azioni
       .map(a => ({ ...a, quando: a.tipo_azione === 'Contatto' && a.data_scelta ? a.data_scelta : a.inizio }))
@@ -267,7 +282,7 @@
   const azioniAgenda = righe => senzaDoppioniCoda(righe).filter(a => !(a.senza_ora && !a.completata) && !eRichiamo(a));
   const passatoSenzaEsito = (a, adesso) => a.tipo_azione !== 'Contatto' && !a.completata && !a.esito && !!a.inizio && a.inizio < adesso;
   function programmaDelGiorno({ azioni, spazi = [], ricevuti = [], giorno, fuori = null, opz = {} }) {
-    const eventi = eventiDelGiorno(azioni || [], giorno).filter(e => !(fuori && fuori.has(e.id)));
+    const eventi = incontri(eventiDelGiorno(azioni || [], giorno).filter(e => !(fuori && fuori.has(e.id))));   // nota 109: un incontro conta 1
     const ric = ricevutiDelGiorno(ricevuti, giorno);
     const fineDi = (inizio, fine) => (fine && fine > inizio ? partiRoma(fine).ora : '');
     const voci = [...eventi.map(e => ({ t: e.quando, f: e.tipo_azione === 'Contatto' && e.data_scelta ? null : e.fine, titolo: riga(e, opz).titolo })),
@@ -370,7 +385,10 @@
   }
   // Riga con le parole di Glide: «sottotipo · contatto» / «area | fase • stato [Partner]»
   function riga(a, { mioId, admin }) {
-    const nome = (a.contatti && a.contatti.nome) || '—';
+    // nota 109: un incontro con più persone dice i nomi («Persona A, Persona B», da quattro in su «… (+2)») ed è «completato» quando lo sono tutte
+    const piu = a._persone && a._persone.length > 1 ? a._persone : null, nomeDi = x => (x.contatti && x.contatti.nome) || '—';
+    const nome = !piu ? nomeDi(a) : piu.length > 3 ? `${piu.slice(0, 2).map(nomeDi).join(', ')} (+${piu.length - 2})` : piu.map(nomeDi).join(', ');
+    if (piu) a = { ...a, completata: piu.every(x => x.completata), esito: piu.every(x => x.esito) ? a.esito : null };
     // [Partner] all'inizio (decisione di Ignazio 15/09, Partner Select «Tutti»): solo Admin, appuntamenti non di mioId
     const partner = admin && a.user_id !== mioId && a.utenti ? `[${a.utenti.nome || a.utenti.nome_cognome}] ` : '';
     const titolo = `${partner}${a.modalita || a.tipo_azione || ''} · ${nome}`;
@@ -745,7 +763,7 @@
   function puntiGiorni(azioni, giorni, max = 4) {
     const fuori = {};
     for (const g of giorni || []) fuori[g] = { punti: [], tanti: false };
-    for (const a of azioni || []) {
+    for (const a of incontri(azioni || [])) {   // nota 109: un incontro, un punto
       const q = quandoDi(a);
       if (!q) continue;
       const g = partiRoma(q).giorno;
@@ -931,7 +949,7 @@
     partiRoma, isoDaRoma, spostaGiorno, settimana, titoloMese, eventiDelGiorno, riga, orario,
     oraProposta, passatiSenzaEsito, validaAppuntamento, tipoDaCoda, senzaDoppioniCoda, ORE_CONFERMA, confermeDaFare, testoConferma, rispostaValida, confermeConRisposte, quandoBreve, risposteNuove, riordiniDaSentire, INIZIO_RIORDINI_GLIDE, ESITO_ATTESA_ORDINE,
     ORA_DA, ORA_A, PASSO_MIN, MINIMO_VISTA, DURATA_CONTATTO, DURATA_NORMALE, durataPredefinita, avvisoFissato, inMinuti, daMinuti, alQuarto,
-    fascia, disposizioneGiorno, estremiGriglia, oreUtili, puntiGiorni, contaPerTipo, ORDINE_TIPI, sovrapposti, stessoIncontro, fasceLibere, oreProposte,
+    fascia, disposizioneGiorno, estremiGriglia, oreUtili, puntiGiorni, contaPerTipo, ORDINE_TIPI, sovrapposti, stessoIncontro, incontri, fasceLibere, oreProposte,
     AVVENUTO, RISULTATI, daChiudere, passiEsito, passiIncontro, vociIncontro, esitoDaVoci, ESITO_ALTRO, passiFatti, esitoDaiPassi, senzaApp, ramoDellaLinea, parteDi, frontaleDi, personeConApp, domandaEsito, dopoTelefonata, fattoDi, ESITI_CHIUSURA, GIORNI_CHIUSURA, GIORNI_RELAZIONE, GIORNI_NO_RISPOSTA, GIORNI_TELEFONO_SPENTO, GIORNI_STORICO, nelPassato, chiudeRelazione, giorniRisentire, proponeVendita, ICONE_TIPO, controllaGiorno,
     coseDelGiorno, LEGAMI, legameDi, campiLegame, coseDelMese, coseDellaScala, senzaPeriodo, numeroSettimana, meseAccanto, mesiTra, giorniTra, testoCosa, testoTroppoLungo, MAX_COSA, MAX_VOCE, daMBPlan, MAX_PUNTO, MAX_PUNTI, MAX_LINK, puntiDi, aggiungiPunto, puntiDaRighe, spuntaPunto, togliPunto, contoPunti, linkChiamata, legamePunti, conPunti, MAX_LUOGO, doveDa, testoDove, linkMappa,
     RISPOSTE, nomeRisposta, nomeRispostaDiLui, CONDIVISIONI_SPAZIO, SDS_DEL_TEAM, FRASE_OSPITI, conOspiti, eConsegna, aggiungiOspite, ospitiPerChiOrganizza, chiaveRicevuto, ricevutiDelGiorno, ricevutiComeEventi, titoloRicevuto, eRichiamo, azioniAgenda, passatoSenzaEsito, programmaDelGiorno, ricevutiNuovi, contoRisposte, nomiPerRisposta, puoCondividereAzione, puoCondividereSpazio, RIPETIZIONI, ripetizioniPer, prossimaRipetizione, SCALE, inizioScala, GIORNI_SETTIMANA, giornoSettimana };
