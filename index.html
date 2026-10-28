@@ -2765,6 +2765,9 @@
     html.v5 .o5-coppia.uno > .o5-r { grid-column: 1 / -1; }
     html.v5 .o5-tessere { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     html.v5 .segnala-bottone:not(.in-foglio) { right: calc(50% - 364px); }   /* nota 102: allineato alla colonna da 760 */
+    /* nota 113 (segnalazione da iPad 27/10, Ignazio 28/10 «sì»): nel Check dentro la pagina Annulla · Salva stanno in fondo al modulo, dopo l'ultima
+       voce; ferma a 72 px dal fondo (per la barra dell'iPhone) sull'iPad restava a metà, con i campi che scorrevano sotto. Sull'iPhone resta ferma. */
+    html.v5 .ck-in-pagina .mc-fondo { position: static; box-shadow: none; }
   }
   @media (min-width: 1000px) {
     html.v5 main:has(.o5), html.v5 main:has(.o5-tessere), html.v5 main:has(.ss-giorni), html.v5 main:has(.mm-griglia) { max-width: 1120px; }

@@ -58,6 +58,10 @@ prova('La scheda Giorno: lo stesso modulo di «Il mio giorno» dentro la pagina 
   const { m: M } = P.vista('mese'); M.vaiLV('ckgiorno', { ckData: null });
   const h = P.app.innerHTML;
   assert.match(h, /<div id="ck-pagina" class="ck-pagina"><div class="mc ck-in-pagina">/);
+  // nota 113 (28/10): da 700 px (iPad e computer) Annulla · Salva in fondo al modulo, non fermi a metà schermo; sull'iPhone restano fermi sopra la barra
+  const IDX = fs.readFileSync(path.join(B, 'index.html'), 'utf8'), m700 = IDX.slice(IDX.indexOf('@media (min-width: 700px) {\n    html.v5 body'), IDX.indexOf('@media (min-width: 1000px) {\n    html.v5 main:has'));
+  assert.match(m700, /html\.v5 \.ck-in-pagina \.mc-fondo \{ position: static; box-shadow: none; \}/);
+  assert.match(IDX, /\.ck-in-pagina \.mc-fondo \{ bottom: calc\(env\(safe-area-inset-bottom\) \+ 72px\);/);
   assert.match(h, /<input id="ck-data" type="date" value="2026-10-04"/);
   for (const id of ['ck-contatti', 'ck-pm', 'ck-tracce', 'ck-libro', 'ck-pagine', 'ck-open', 'ck-counseling', 'ck-si', 'ck-no']) assert.match(h, new RegExp(`id="${id}"`), id);
   assert.doesNotMatch(h, /id="ck-x"|class="velo"/);
