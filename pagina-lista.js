@@ -961,7 +961,8 @@ async function sezioneAzioni() {
   // Card stretta (Ignazio 24/09, «nel telefono è tutto molto lungo»): riga 1 tipo · modalità con la data a destra, riga 2 area · esito · nota.
   // Azione già chiusa: il blocco degli esiti resta vuoto e «Cambia esito» sta nella riga dei comandi; al tocco il blocco si apre lì sopra.
   // S6: l'azione chiusa aperta al tocco ha la ⌃ per richiuderla dentro la card, accanto alla data (niente più riga del titolo sopra)
-  const testa = (titolo, a) => `<div class="testa"><div class="t">${titolo}</div><div class="q">${esc(MB21Lista.data(a.inizio, true))}${a.esito ? `<button class="az-su" data-az-apri="${esc(a.id)}" aria-label="Richiudi">⌃</button>` : ''}</div></div>`;
+  // Nota Pagine 131 (Ignazio 28/10, «ok»: «io metterei la data sempre come prima cosa»): anche nella card aperta la data viene per prima, piccola come nelle righe
+  const testa = (titolo, a) => `<div class="testa"><div class="t"><small class="az-data">${esc(MB21Lista.data(a.inizio, true))}</small>${titolo}</div><div class="q">${a.esito ? `<button class="az-su" data-az-apri="${esc(a.id)}" aria-label="Richiudi">⌃</button>` : ''}</div></div>`;
   const dettagli = parti => { const p = parti.filter(Boolean); return p.length ? `<div class="s">${p.join(' · ')}</div>` : ''; };
   const link = (attr, id, testo, rosso) => `<button class="link" ${attr}="${esc(id)}"${rosso ? ' style="color:var(--rosso)"' : ''}>${testo}</button>`;
   // Verifica Scheda contatto S3 (Ignazio 22/10): un'azione già chiusa (con l'esito) è UNA riga «data · tipo · esito ›»; al tocco si apre

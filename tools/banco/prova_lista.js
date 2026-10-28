@@ -683,7 +683,8 @@ prova('Scheda contatto S3+S6 (Ignazio 22/10): azioni chiuse in una riga; aperta,
   h = box.innerHTML;
   assert.equal(ctx.LS.azAperta, 'a2');
   assert.doesNotMatch(h, /az-riga[^"]*" data-az-apri="a2"/);   // niente riga del titolo sopra
-  assert.match(h, /<div class="azione">\s*<div class="testa"><div class="t">Piano Marketing · 1a1<\/div><div class="q">10\/10<button class="az-su" data-az-apri="a2" aria-label="Richiudi">⌃<\/button><\/div><\/div>[\s\S]*?nota finta[\s\S]*?data-cambia-esito="a2"[\s\S]*?data-elimina-azione="a2"/);
+  assert.match(h, /<div class="azione">\s*<div class="testa"><div class="t"><small class="az-data">10\/10<\/small>Piano Marketing · 1a1<\/div><div class="q"><button class="az-su" data-az-apri="a2" aria-label="Richiudi">⌃<\/button><\/div><\/div>[\s\S]*?nota finta[\s\S]*?data-cambia-esito="a2"[\s\S]*?data-elimina-azione="a2"/);
+  assert.match(h, /<div class="t"><small class="az-data">23\/10<\/small>Contatto · Telefonata<\/div><div class="q"><\/div>/);   // nota 131: la data per prima anche nella card aperta, come nelle righe
   assert.doesNotMatch(h, /Carico le azioni/);   // aprire una riga non rilegge e non fa saltare la pagina
   // coach spento: niente righe gialle e nessuna lettura delle note
   ctx.COACH_YES = false; ctx.LS.note = null; ctx.LS.azAperta = null; letture = 0;

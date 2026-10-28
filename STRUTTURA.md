@@ -666,6 +666,8 @@ Nel codice **niente è stato rinominato**: restano `apriCheck`, `check_giorno`, 
 - Stessa lettura e stesso salvataggio di prima. Prova in `prova_lista.js`; disegno con dati finti in `docs/prototipi/schizzo_scheda_cose_S2.png`.
 
 **Scheda contatto, tappa S3 (Ignazio 22/10/2026):** nella linguetta Azioni (`sezioneAzioni`) ogni azione già chiusa, cioè con l'esito, è una riga sola «data · tipo · esito ›» (`.az-riga` in `index.html`).
+
+**Data per prima anche nella card aperta (nota Pagine 131, Ignazio 28/10/2026: «io metterei la data sempre come prima cosa»):** in `sezioneAzioni` la `testa` della card (azione da fare, o chiusa e riaperta) comincia con la data piccola (`.az-data`, come la `<small>` delle righe chiuse) e poi «tipo · modalità»; a destra resta solo la ⌃ per richiuderla. Così riga e card hanno la stessa forma per tutti i tipi. Prova in `tools/banco/prova_lista.js`; foto `docs/prototipi/data_prima_131.png`.
 - Al tocco si apre sotto la card di sempre (`cardAzione`: note, Cambia esito, Modifica, Elimina); la riga resta sopra con ⌃ per richiuderla.
 - È aperta una sola azione per volta (`LS.azAperta`, che riparte da capo a ogni scheda) e il tocco non rilegge le azioni.
 - L'azione ancora da fare resta aperta con i suoi esiti; «Nuova azione» resta in alto.
