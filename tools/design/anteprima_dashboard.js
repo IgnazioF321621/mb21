@@ -83,7 +83,7 @@ const stato = {
 // il codice: la pagina intera + i pezzi di index.html che usa
 const pezzi = [
   fra('const CLASSI_CAT = {', '\nfunction classeCat'), riga('function classeCat'), riga('function ic('), riga('function escIcone'), funzione('esc'),
-  riga('function iniziali('), funzione('centesimi'), funzione('dataEstesa'), riga('const nomeDi'),
+  riga('function iniziali('), funzione('tendina5Html'), funzione('collegaTendine5'), funzione('centesimi'), funzione('dataEstesa'), riga('const nomeDi'),
   riga('function percheHtml(codice, valori)'),   // il «Perché?» della nota 048 (dalla nota 076 il solo percheHtml: i «Perché iniziare» sono percheIniziareHtml)
  
   funzione('statoPercorso'), funzione('salvaTraguardo'), funzione('livelliCheck'), funzione('caricaCoreCheck'),

@@ -84,7 +84,10 @@ prova('La persona: la stessa scheda per tutti, col motivo in alto; il motivo cam
   h = P.vista('persona', { persona: 'conf|k1' }).html;
   assert.match(h, /<span class="lv-chip">Conferma<\/span>[\s\S]*?<div class="sotto">Da confermare · /);
   assert.deepEqual([...h.matchAll(/data-conferma="(\w+)"/g)].map(m => m[1]), ['si', 'sposta', 'annulla', 'nr']);
-  assert.match(h, /class="no" data-conferma="annulla"[^>]*>Annullato<\/button>/);
+  assert.match(h, /class="no" data-conferma="annulla"[^>]*><span>Annullato<\/span><\/button>/);
+  // nota 117 (28/10): le scelte della conferma stanno nella tendina «Scegli ▾» (tendina5Html), non più in una griglia di tasti
+  assert.match(h, /L'appuntamento è confermato\?<\/div><div class="tnd5"><button type="button" class="sel5" data-tnd5><small>Scegli<\/small><em>▾<\/em><\/button><div class="ag-scelte tendina5" ><button type="button" data-conferma="si"/);
+  assert.doesNotMatch(h, /conf-bottoni/);
   // il riordino: Ordine · Richiamare, poi Non risponde · Telefono spento · Nessun ordine
   h = P.vista('persona', { persona: 'rio|r1' }).html;
   assert.match(h, /<span class="lv-chip">Riordino<\/span>[\s\S]*?<div class="sotto">Nutrilite · Daily<\/div>/);

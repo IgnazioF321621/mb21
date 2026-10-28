@@ -1165,19 +1165,22 @@ function confermeHtml(solo) {
         <div class="conf-testo${c.nonPuo ? ' non-puo' : ''}">${esc(MB21Agenda.testoConferma(c, new Date().toISOString()))}</div>
         ${CONF.nonRisponde.has(c.id) ? '<div class="conf-nr">' + ic('telefonooff') + ' Non risponde · riprova più tardi</div>' : ''}
         ${contattaHtml(tel)}
-        <div class="bottoni conf-bottoni">${c.nonPuo ? `
-          <button class="appuntamento" data-conferma="sposta" data-id="${esc(c.id)}" ${ST.offline ? 'disabled' : ''}>Sposta</button>
-          <button class="no" data-conferma="annulla" data-id="${esc(c.id)}" ${ST.offline ? 'disabled' : ''}>Annullato</button>` : `
-          <button class="appuntamento" data-conferma="si" data-id="${esc(c.id)}" ${ST.offline ? 'disabled' : ''}>Confermato</button>
-          <button data-conferma="sposta" data-id="${esc(c.id)}" ${ST.offline ? 'disabled' : ''}>Sposta</button>
-          <button class="no" data-conferma="annulla" data-id="${esc(c.id)}" ${ST.offline ? 'disabled' : ''}>Annullato</button>
-          <button data-conferma="nr" data-id="${esc(c.id)}">Non risponde</button>`}
-        </div>
+        ${confermaTendina(c)}
       </div></div>`;
   }).join('');
 }
 
+// Nota Pagine 117 (Ignazio 28/10: «se apro per la conferma di un appuntamento, ancora abbiamo i tasti in maniera vecchia, non con le tendine»): le scelte
+// della conferma nella tendina «Scegli ▾» (tendina5Html, index.html, nota 116), gli stessi bottoni `data-conferma` di prima (prima una griglia di tasti)
+function confermaTendina(c) {
+  const spento = ST.offline ? ' disabled' : '';
+  const voci = c.nonPuo ? [['sposta', 'Sposta', ''], ['annulla', 'Annullato', 'no']] : [['si', 'Confermato', ''], ['sposta', 'Sposta', ''], ['annulla', 'Annullato', 'no'], ['nr', 'Non risponde', '']];
+  return `<div class="come-andata conf-tit">L'appuntamento è confermato?</div>${tendina5Html('<small>Scegli</small>',
+    voci.map(([k, nome, cl]) => `<button type="button"${cl ? ` class="${cl}"` : ''} data-conferma="${k}" data-id="${esc(c.id)}"${k === 'nr' ? '' : spento}><span>${nome}</span></button>`).join(''))}`;
+}
+
 function collegaConferme() {
+  collegaTendine5(app);   // nota 117
   app.querySelectorAll('[data-conferma]').forEach(b => {
     b.onclick = async () => {
       const c = CONF.righe.find(x => x.id === b.dataset.id);
