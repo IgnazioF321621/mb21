@@ -2864,10 +2864,15 @@ function lasciaIlCampo() {
 // impedendo di scrivere»): sul telefono la barra fissata in basso sale sopra la tastiera e copre il campo, e a volte, chiusa la tastiera,
 // resta a metà. Regola unica per tutte le pagine e i fogli: finché c'è un campo di testo col cursore, o la parte visibile della finestra
 // è molto più bassa del solito (la tastiera), la barra sparisce (classe `tastiera` sul body); chiusa la tastiera torna al suo posto.
+// Nota Pagine 126 (Ignazio 28/10/2026: «clicco sulla rotella dell'orario e continua a saltare e non si apre»): ora, data, mese e settimana sull'iPhone
+// aprono la rotella, non la tastiera; contarli come tastiera faceva salire il foglio (nota 088) a metà tocco e la rotella si chiudeva o il tocco
+// finiva su un altro bottone del foglio. Restano campi di testo per `lasciaIlCampo`, non per la classe `tastiera`.
+const conRotella = el => !!el && el.tagName === 'INPUT' && /^(time|date|datetime-local|month|week)$/.test(el.type);
 function tastieraAperta() {
   const vv = window.visualViewport;
   const bassa = !!vv && vv.height * (vv.scale || 1) < window.innerHeight * 0.75;   // con lo zoom delle dita la finestra visibile si stringe ma non è la tastiera
-  const prima = document.body.classList.contains('tastiera'), ora = campoDiTesto(document.activeElement) || bassa;
+  const el = document.activeElement;
+  const prima = document.body.classList.contains('tastiera'), ora = (campoDiTesto(el) && !conRotella(el)) || bassa;
   document.body.classList.toggle('tastiera', ora);
   if (prima && !ora) riallineaBarra();   // tastiera appena chiusa
 }

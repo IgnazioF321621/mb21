@@ -32,6 +32,15 @@ prova('cursore in un campo: la barra sparisce; uscito dal campo torna', () => {
   ctx.document.activeElement = { tagName: 'BODY' }; ascolti.focusout();
   assert.ok(!classi.has('tastiera'));
 });
+prova('nota 126: ora, data, mese e settimana aprono la rotella, non la tastiera: niente classe tastiera (il foglio non salta); restano campi per lasciaIlCampo', () => {
+  for (const type of ['time', 'date', 'datetime-local', 'month', 'week']) {
+    ctx.document.activeElement = { tagName: 'INPUT', type }; ascolti.focusin();
+    assert.ok(!classi.has('tastiera'), type);
+    assert.equal(ctx.campoDiTesto(ctx.document.activeElement), true, type);
+  }
+  ctx.document.activeElement = { tagName: 'INPUT', type: 'text' }; ascolti.focusin(); assert.ok(classi.has('tastiera'));
+  ctx.document.activeElement = { tagName: 'BODY' }; ascolti.focusout(); assert.ok(!classi.has('tastiera'));
+});
 prova('finestra visibile bassa (tastiera) anche senza cursore: sparisce; con lo zoom delle dita no', () => {
   ctx.window.visualViewport.height = 450; ctx.tastieraAperta(); assert.ok(classi.has('tastiera'));
   ctx.window.visualViewport.scale = 2; ctx.tastieraAperta(); assert.ok(!classi.has('tastiera'));
