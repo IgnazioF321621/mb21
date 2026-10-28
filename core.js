@@ -63,17 +63,21 @@
     const perGiorno = new Map(check.map(c => [c.data, c]));
 
     // 1 · Presentare almeno 8 PM al mese
-    const pm = azioni
+    // nota Pagine 110 (Ignazio 28/10): un PM con più persone è una riga sola (MB21Report.pmIncontri), con tutti i nomi e i candidati = le persone
+    const pm = R.pmIncontri(azioni
       .filter(a => a.tipo_azione === 'Piano Marketing' && R.contaAzione(a) && nelMese(giornoRoma(a.inizio), mese))
-      .sort((x, y) => (x.inizio < y.inizio ? -1 : 1))
+      .sort((x, y) => (x.inizio < y.inizio ? -1 : 1)))
       .map(a => {
-        const mano = (d.pm || {})[a.id] || {};
+        const mano = (d.pm || {})[a.id] || {}, tutte = a._persone, esiti = tutte.map(x => x.esito);
         return { id: a.id, data: gg(giornoRoma(a.inizio)), uno_a_uno: a.modalita === 'PM 1a1', casa: a.modalita === 'PM Casa/Pull',
-          nome: (a.contatti && a.contatti.nome) || '—', candidati: mano.candidati != null ? Number(mano.candidati) : 1,
-          iscritti: a.esito === 'Iscrizione', clienti: a.esito === 'Prodotti', no: a.esito === 'No BuonFine' };
+          nome: tutte.map(x => (x.contatti && x.contatti.nome) || '—').join(', '), candidati: mano.candidati != null ? Number(mano.candidati) : tutte.length,
+          iscritti: esiti.includes('Iscrizione'), clienti: esiti.includes('Prodotti'), no: esiti.every(e => e === 'No BuonFine'),
+          nIscritti: esiti.filter(e => e === 'Iscrizione').length, nClienti: esiti.filter(e => e === 'Prodotti').length, nNo: esiti.filter(e => e === 'No BuonFine').length };
       });
+    // i PM per incontro; iscritti, clienti e «no» per persona (un PM con due iscritti ne conta due)
+    const somma = k => pm.reduce((t, r) => t + r[k], 0);
     const s1 = { righe: pm, quanti: pm.length, obiettivo: OBIETTIVI.pm, raggiunto: pm.length >= OBIETTIVI.pm,
-      iscritti: pm.filter(r => r.iscritti).length, clienti: pm.filter(r => r.clienti).length, no: pm.filter(r => r.no).length };
+      iscritti: somma('nIscritti'), clienti: somma('nClienti'), no: somma('nNo') };
 
     // 3 · Servire almeno 10 clienti al mese: un cliente per riga, con i VP del mese
     // una vendita conta nel mese in cui CONTANO i suoi VP (`consegna` se c'è, se no `data`: la promo pagata oggi con l'ordine

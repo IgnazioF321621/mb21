@@ -108,7 +108,7 @@ prova('Griglia PM: fine del mese, non ancora iniziata, obiettivo superato, contr
   assert.equal(R.griglia([], { obiettivo: 8, inizio: '2026-09-01', mesi: 12 }, oggi).fine, '2027-08-31');
   const futura = R.griglia([], { obiettivo: 15, inizio: '2026-10-01', mesi: 3 }, oggi);
   assert.deepEqual([futura.alMese, futura.ritmo], [5, 0]);
-  const tanti = Array.from({ length: 10 }, (_, i) => az(i, 'Piano Marketing', 'Iscrizione', `2026-09-0${i % 9 + 1}T10:00:00Z`));
+  const tanti = Array.from({ length: 10 }, (_, i) => az(i, 'Piano Marketing', 'Iscrizione', `2026-09-0${i % 9 + 1}T${10 + Math.floor(i / 9)}:00:00Z`));   // dieci PM a ore diverse (nota 110: stessa ora = stesso incontro)
   const sup = R.griglia(tanti, { obiettivo: 8, inizio: '2026-09-01', mesi: 1 }, oggi);
   assert.deepEqual([sup.celle.length, sup.mancanti, sup.percentuale, sup.alMese], [10, 0, 100, 0]);
   const misti = ['Iscrizione', 'No Show', 'Rimandato', null, 'No BuonFine'].map((e, i) => az(i, 'Piano Marketing', e, `2026-09-0${i + 1}T10:00:00Z`));
@@ -155,6 +155,24 @@ prova('Il giorno reale (nota Azioni 030): la telefonata conta nel giorno dell\'e
   assert.equal(contattiSett.totale, 1); assert.equal(contattiOtt.totale, 1);   // la vecchia a settembre, la telefonata chiusa in ritardo a ottobre
   // un esito dato «domani» (orologio avanti) non conta oggi
   assert.equal(R.numeri([{ ...tel, esito_il: '2026-10-13' }], R.periodoMese(o), o).find(g => g.tipi.includes('Contatto')).totale, 0);
+});
+
+prova('Nota 110 (Ignazio 28/10): un Piano Marketing con più persone conta 1 PM nel Report, nella Griglia e nel Modulo Core; ogni persona tiene la sua azione e il suo esito', () => {
+  const o = '2026-10-20', ora = '2026-10-10T17:00:00Z';
+  const insieme = [az('p1', 'Piano Marketing', 'Iscrizione', ora, { user_id: 'io', modalita: 'PM 1a1' }), az('p2', 'Piano Marketing', 'No BuonFine', ora, { user_id: 'io', modalita: 'PM 1a1' }),
+    az('p3', 'Piano Marketing', 'Iscrizione', ora, { user_id: 'io', modalita: 'PM 1a1' }), az('p4', 'Piano Marketing', 'Prodotti', '2026-10-11T17:00:00Z', { user_id: 'io', modalita: 'PM 1a1' })];
+  assert.deepEqual(R.pmIncontri(insieme).map(x => x._persone.map(p => p.id)), [['p1', 'p2', 'p3'], ['p4']]);
+  const g = R.numeri(insieme, R.periodoMese(o), o).find(x => x.chiave === 'pm');
+  assert.equal(g.totale, 2);                                                   // due incontri = 2 PM
+  assert.equal(g.esiti.find(e => e.esito === 'Iscrizione').n, 2);              // gli iscritti restano per persona
+  const gr = R.griglia(insieme, { obiettivo: 8, inizio: '2026-10-01', mesi: 1 }, o);
+  assert.equal(gr.fatti, 2); assert.equal(gr.celle[0].nome, 'Nome p1, Nome p2, Nome p3'); assert.equal(gr.celle[0].persone, 3);
+  const C = require('../../core.js');
+  const m = C.modulo({ mese: '2026-10', azioni: insieme, oggi: o });
+  assert.equal(m.s1.quanti, 2); assert.equal(m.s1.righe[0].nome, 'Nome p1, Nome p2, Nome p3'); assert.equal(m.s1.righe[0].candidati, 3);
+  assert.deepEqual([m.s1.iscritti, m.s1.clienti, m.s1.no], [2, 1, 1]);          // iscritti, clienti e «no» per persona
+  // un altro partner alla stessa ora, o un altro sottotipo, sono altri PM
+  assert.equal(R.pmIncontri([...insieme, az('q1', 'Piano Marketing', 'Iscrizione', ora, { user_id: 'lei', modalita: 'PM 1a1' }), az('q2', 'Piano Marketing', 'Iscrizione', ora, { user_id: 'io', modalita: 'PM Open' })]).length, 4);
 });
 
 console.log(`\n${ok} prove superate`);

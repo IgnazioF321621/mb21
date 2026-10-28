@@ -90,6 +90,17 @@
   // (migrazione 20261012185700): si cambiano insieme.
   const giornoAzione = a => (a.tipo_azione === 'Contatto' && a.esito_il ? a.esito_il : a.inizio ? giornoRoma(a.inizio) : null);
 
+  // Nota Pagine 110 (Ignazio 28/10: «1 PM a 1 persona = 1 dato; 1 PM a N persone = 1 PM in Report, Core, Griglia; ogni persona ha la sua azione»; e anche nel
+  // Check): un Piano Marketing con più persone (stesso partner, stessa ora d'inizio, stesso sottotipo) conta UNO. `pmIncontri(righe)`: un elemento per incontro,
+  // il primo, con `_persone` (tutte). ⚠️ La stessa regola è nella vista `azioni_conti` (migrazione 20261028090000): si cambiano insieme.
+  const chiavePM = a => [a.user_id || '', Date.parse(a.inizio), a.modalita || ''].join('|');
+  function pmIncontri(righe) {
+    const per = new Map(), fuori = [];
+    for (const a of righe || []) { const k = chiavePM(a), g = per.get(k); if (g) g._persone.push(a); else { const n = { ...a, _persone: [a] }; per.set(k, n); fuori.push(n); } }
+    return fuori;
+  }
+  const quantiContano = (g, righe) => (g.chiave === 'pm' ? pmIncontri(righe).length : righe.length);
+
   // ── Numeri a scalini ──
   function numeri(azioni, periodo, oggi) {
     const nel = azioni.map(a => ({ ...a, giorno: giornoAzione(a) }))
@@ -105,14 +116,14 @@
         if (!perEsito.has(e)) perEsito.set(e, []);
         perEsito.get(e).push(a);
       }
-      const totale = sue.filter(contaAzione).length;
+      const contano = sue.filter(contaAzione), totale = quantiContano(g, contano), base = contano.length;   // nota 110: i PM per incontro; i risultati per persona
       const esiti = [...perEsito].map(([esito, righe]) => ({
         esito, n: righe.length, verde: g.verdi.includes(esito), conta: !fuori.has(esito),
-        percentuale: fuori.has(esito) ? null : totale ? Math.round(righe.length / totale * 100) : 0,   // sul totale che conta
+        percentuale: fuori.has(esito) ? null : base ? Math.round(righe.length / base * 100) : 0,   // sulle persone che contano
         persone: righe.sort((x, y) => (y.inizio > x.inizio ? 1 : -1)).slice(0, MAX_NOMI).map(persona),
         altre: Math.max(0, righe.length - MAX_NOMI),
       })).sort((x, y) => (y.verde - x.verde) || (y.conta - x.conta) || ((x.esito === SENZA_ESITO) - (y.esito === SENZA_ESITO)) || (y.n - x.n) || x.esito.localeCompare(y.esito));
-      return { ...g, totale, nonContano: sue.length - totale, esiti };
+      return { ...g, totale, nonContano: sue.length - base, esiti };
     });
   }
   const persona = a => ({ id: a.id, contatto_id: a.contatto_id, nome: (a.contatti && a.contatti.nome) || '—', categoria: (a.contatti && a.contatti.categoria) || null, giorno: a.giorno, modalita: a.modalita || '', portato: a.portatoNome || '' });
@@ -124,11 +135,13 @@
       const da = spostaMese(annoPeriodo.da, i);
       return { da, etichetta: MESI_BREVI[Number(da.slice(5, 7)) - 1], azioni: 0, verdi: 0, futuro: da > oggi };
     });
+    const giaPM = new Set();   // nota 110: un Piano Marketing con più persone è un'azione sola nel grafico
     for (const a of azioni) {
       const giorno = giornoAzione(a);
       if (!giorno || giorno > oggi || !dentro(giorno, annoPeriodo)) continue;
       const g = gruppi.find(x => x.tipi.includes(a.tipo_azione));
       if (!g || !contaAzione(a)) continue;   // solo le azioni che contano (stessa regola dei numeri)
+      if (g.chiave === 'pm') { const k = chiavePM(a); if (giaPM.has(k)) { if (g.verdi.includes(a.esito)) mesi[(Number(giorno.slice(0, 4)) * 12 + Number(giorno.slice(5, 7))) - (Number(annoPeriodo.da.slice(0, 4)) * 12 + 9)].verdi++; continue; } giaPM.add(k); }
       const m = mesi[(Number(giorno.slice(0, 4)) * 12 + Number(giorno.slice(5, 7))) - (Number(annoPeriodo.da.slice(0, 4)) * 12 + 9)];
       m.azioni++;
       if (g.verdi.includes(a.esito)) m.verdi++;
@@ -149,17 +162,18 @@
     const primo = spostaMese(inizio, mesi);   // inizio + mesi (giorno limitato alla fine del mese), meno un giorno
     const ultimo = Number(spostaGiorno(spostaMese(primo, 1), -1).slice(8, 10));
     const fine = spostaGiorno(primo.slice(0, 8) + String(Math.min(Number(inizio.slice(8, 10)), ultimo)).padStart(2, '0'), -1);
-    const fatti = pm.map(a => ({ ...a, giorno: giornoAzione(a) }))
+    const fatti = pmIncontri(pm.map(a => ({ ...a, giorno: giornoAzione(a) }))
       .filter(a => a.giorno && a.giorno >= inizio && a.giorno <= fine && a.giorno <= oggi && PM_AVVENUTO.includes(a.esito))   // cantiere 27: solo i PM avvenuti
-      .sort((x, y) => (x.inizio > y.inizio ? 1 : -1));
+      .sort((x, y) => (x.inizio > y.inizio ? 1 : x.inizio < y.inizio ? -1 : 0)));   // nota 110: una cella per incontro, con tutti i nomi (nell'ordine in cui sono)
     const mancanti = Math.max(0, obiettivo - fatti.length);
     const iniziato = oggi >= inizio, finito = oggi > fine;
     const mesiRimasti = finito ? 0 : iniziato ? mesiTra(oggi, fine) + 1 : mesi;   // mese in corso compreso
     const mesiPassati = !iniziato ? 0 : finito ? mesi : mesiTra(inizio, oggi) + 1;
     const celle = Array.from({ length: Math.max(obiettivo, fatti.length) }, (_, i) => {
       const a = fatti[i];
-      return a ? { numero: i + 1, id: a.id, contatto_id: a.contatto_id, giorno: a.giorno, nome: (a.contatti && a.contatti.nome) || '—',
-        breve: abbrevia(a.contatti && a.contatti.nome), ospite: a.ospite || '', esito: a.esito || '',
+      const nomi = a ? a._persone.map(x => (x.contatti && x.contatti.nome) || '—') : [];
+      return a ? { numero: i + 1, id: a.id, contatto_id: a.contatto_id, giorno: a.giorno, nome: nomi.join(', '), persone: a._persone.length,
+        breve: a._persone.map(x => abbrevia(x.contatti && x.contatti.nome)).join(', '), ospite: a.ospite || '', esito: a.esito || '',
         portato: a.portatoNome ? abbrevia(a.portatoNome) : '' } : { numero: i + 1 };
     });
     return {
@@ -180,7 +194,7 @@
     return null;
   }
 
-  const api = { INIZIO_CONTI, GRUPPI, SENZA_ESITO, CONTATTO_PARLATO, PM_AVVENUTO, VERSO_PARTNER, contaAzione, MAX_NOMI, OBIETTIVI_PM, MESI_BREVI, giornoRoma, spostaMese, spostaGiorno, dataBreve, dataLunga, periodoMese, periodoAnno, periodiWes,
+  const api = { INIZIO_CONTI, GRUPPI, SENZA_ESITO, CONTATTO_PARLATO, PM_AVVENUTO, VERSO_PARTNER, contaAzione, pmIncontri, MAX_NOMI, OBIETTIVI_PM, MESI_BREVI, giornoRoma, spostaMese, spostaGiorno, dataBreve, dataLunga, periodoMese, periodoAnno, periodiWes,
     spostaPeriodo, spostaPeriodoVisibile, periodoIniziale, testoPeriodo, numeri, grafico, abbrevia, griglia, coloreCella, COLORI_GRIGLIA, validaGriglia };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Report = api;
