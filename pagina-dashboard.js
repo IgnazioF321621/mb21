@@ -1719,7 +1719,7 @@ async function caricaDashboard(oggi) {
       !AVVISI_TEAM.biglietti || vediTutti() || visto().id !== ST.utente.id ? { data: [] } : letta('da_segnare', 'biglietti da segnare', () => supa.rpc('biglietti_da_segnare')),   // T2b: spento, non si legge
       // gli eventi BBS e WES (01/10): il mese si legge accanto al nome, così si sa a quale evento si riferiscono i numeri (l'evento in vendita, come nella Mappa)
       letta('bbs', 'eventi BBS', () => supa.from('bbs').select('data, creato_il')),
-      letta('wes', 'eventi WES', () => supa.from('wes').select('data, creato_il')),
+      letta('wes', 'eventi WES', () => supa.from('wes').select('data, giorno, creato_il')),
       leggiSquadraMese(oggi),   // la Squadra del mese (prime linee, linee riceventi Bonus, 15 Planner, totale gruppo) dal file Amway
     ]);
     // `breve` = nel riquadro piccolo, `lungo` = nel foglio obiettivi. Solo BBS e WES hanno un evento: il CEP è un numero da raggiungere (Ignazio 01/10: «oggi 5, vogliamo arrivare a 10»)

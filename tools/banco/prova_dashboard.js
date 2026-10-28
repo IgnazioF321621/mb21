@@ -152,7 +152,7 @@ prova('Obiettivi: da dove vengono i punti del gruppo (VPG meno VPP): i nuovi isc
   assert.deepEqual(D.ripartoGruppo(600, 150, 0, 100), { altri: 450, nuovi: 0, daNuovi: 0, daLinee: 100, restano: 350, conLinee: true });
 });
 
-prova('Obiettivi: «Risultati» dal file Amway — entrati nel mese, prime linee attive, linee riceventi Bonus, totale gruppo, 15 Planner (stesso conto della pagina Check)', () => {
+prova('Obiettivi: «Risultati» dal file Amway — entrati nel mese, prime linee (tutte, nota 136), linee riceventi Bonus, totale gruppo, 15 Planner (stesso conto della pagina Check)', () => {
   const squadra = [
     { partner_id: 'IO', sponsor_id: 'UP', data_ingresso: '2020-01-01' },
     { partner_id: 'A', sponsor_id: 'IO', data_ingresso: '2026-09-05' }, { partner_id: 'B', sponsor_id: 'IO', data_ingresso: '2025-01-01' }, { partner_id: 'Z', sponsor_id: 'IO', data_ingresso: '2026-09-20' },
@@ -162,7 +162,9 @@ prova('Obiettivi: «Risultati» dal file Amway — entrati nel mese, prime linee
     { partner_id: 'Z', mese: 202609, vpp: 0, bonus: 0 }, { partner_id: 'A', mese: 202608, vpp: 999, bonus: 21 }];
   const pm = [{ partner_id: 'A', user_id: 'uA', mese: 202609, pm: 16 }, { partner_id: 'C', user_id: 'uC', mese: 202609, pm: 15 }, { partner_id: 'B', user_id: 'uB', mese: 202609, pm: 14 }, { partner_id: 'X', user_id: 'uX', mese: 202609, pm: 30 }];
   assert.deepEqual(D.risultatiAmway({ squadra, volumi, pm, pid: 'IO', mese: 202609 }),
-    { sponsor_personali: 2, sponsor_gruppo: 3, prime_linee: 2, linee_bonus: 1, totale_gruppo: 12, planner: 2 });   // personali A e Z; gruppo A, Z, C (non X); prime linee attive A e B; un solo con bonus; 2 con 15 PM nel ramo
+    { sponsor_personali: 2, sponsor_gruppo: 3, prime_linee: 3, linee_bonus: 1, totale_gruppo: 12, planner: 2 });   // personali A e Z; gruppo A, Z, C (non X); prime linee A, B e Z (tutte, nota 136); un solo con bonus; 2 con 15 PM nel ramo
+  assert.equal(D.risultatiAmway({ squadra, volumi, pm, pid: 'IO', mese: 202609 }).prime_linee, 3);
+  assert.equal(D.risultatiAmway({ squadra, volumi: [...volumi, { partner_id: 'IO', mese: 202608, vpp: 1 }], pm, pid: 'IO', mese: 202608 }).prime_linee, 1);   // nota 136: ad agosto solo B (A e Z entrate a settembre)
   assert.equal(D.risultatiAmway({ squadra, volumi, pm, pid: null, mese: 202609 }), null);                         // senza codice Amway
   assert.equal(D.risultatiAmway({ squadra, volumi, pm, pid: 'SCONOSCIUTO', mese: 202609 }), null);                // non è nel file
   assert.equal(D.risultatiAmway({ squadra: null, volumi, pm, pid: 'IO', mese: 202609 }), null);
@@ -408,7 +410,7 @@ prova('Nota Pagine 062: «Linee riceventi Bonus» dal file Amway conta la percen
   const squadra = [{ partner_id: 'IO', sponsor_id: 'X' }, { partner_id: 'SG', sponsor_id: 'IO' }, { partner_id: 'A', sponsor_id: 'IO' }];
   const volumi = [{ partner_id: 'IO', mese: 202610, vpp: 300, bonus: 6, dimensioni_gruppo: 10 }, { partner_id: 'SG', mese: 202610, vpp: 0, bonus: 3 }, { partner_id: 'A', mese: 202610, vpp: 50, bonus: 0 }];
   const r = D.risultatiAmway({ squadra, volumi, pm: [], pid: 'IO', mese: 202610 });
-  assert.equal(r.linee_bonus, 1); assert.equal(r.prime_linee, 1);
+  assert.equal(r.linee_bonus, 1); assert.equal(r.prime_linee, 2);   // nota 136: le prime linee sono tutte (prima 1, solo quella con VP)
 });
 
 prova('T5 elencoOggi: prima da chiudere (Conferme, Riordini, Dare Seguito), poi coda e scelte insieme; conto «fatti N di M»', () => {

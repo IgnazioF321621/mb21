@@ -222,7 +222,7 @@
   // del BBS, il biglietto del WES, l'abbonamento CEP. Non è un livello Amway o N21: è la direzione verso il Leaders Club.
   // In Glide era una spunta a mano (e per questo è morta); qui si calcola da quello che l'app sa già: `obiettivi_mese.vpp_amway`,
   // i biglietti della propria scheda (`miei_biglietti`), i periodi CEP. Si conta da settembre 2026, nuovo anno di performance.
-  // Fotografia a fine mese (o a oggi se il mese è in corso): il biglietto vale per l'evento in vendita in quel mese
+  // Fotografia a fine mese (o a oggi se il mese è in corso): il biglietto vale per il prossimo evento non ancora passato quel giorno (nota 136)
   // (`MB21Lista.eventoAttivo`, la stessa regola delle targhette), il CEP se quel giorno si è dentro un periodo.
   // biglietti: [{ tipo, evento, contatto }] · null = non lo so (nessuna scheda col codice) · cep: [{ dal, uscito_il }] · null = non lo so
   // eventi: { bbs, wes } le righe delle tabelle (data, creato_il) · obiettivi: le righe di obiettivi_mese di questa persona
@@ -240,7 +240,7 @@
     const o = (obiettivi || []).find(x => x.mese === m) || null;
     const vp = o && o.vpp_amway != null && o.vpp_amway !== '' ? Number(o.vpp_amway) : null;
     const biglietto = tipo => {
-      const attivo = L.eventoAttivo(ev[tipo.toLowerCase()], quando, m);
+      const attivo = L.eventoAttivo(ev[tipo.toLowerCase()], quando, al);   // nota 136: il prossimo evento non passato al giorno della fotografia
       // testi corti: sul telefono la casella è larga 80 px
       if (biglietti == null) return { ok: false, ignoto: true, testo: 'non lo so' };
       if (!attivo) return { ok: false, testo: 'nessuno in vendita' };
@@ -434,7 +434,9 @@
     // nota Pagine 062 (Ignazio 19/10/2026): una linea riceve il bonus per la percentuale della squadra, anche se quel mese non ha VP personali
     // (Simone Ferrara: 3% con 509 VP di gruppo e 0 personali non era contato). Le «prime linee» invece restano quelle con VP personali.
     const conBonus = al => (linee || []).filter(x => Number(x.bonus) >= al).length;
-    const quanti = { bonus: noto ? Number(bonus) : null, lineeBonus: noto ? conBonus(3) : null, planner, primeLinee: noto ? attive.length : null,
+    // nota Pagine 136 (Ignazio 28/10: «sono le prime linee, non le prime linee attive»): il segno vitale «Prime linee» conta tutte le prime linee, con o senza
+    // VP nel mese. `attive` (con VP personali, nota 062) resta per la linea da aiutare e per l'elenco «di cui Leaders Club».
+    const quanti = { bonus: noto ? Number(bonus) : null, lineeBonus: noto ? conBonus(3) : null, planner, primeLinee: noto ? (linee || []).length : null,
       iscritti, totale, cep: cep == null ? null : Number(cep), bbs, wes };
     const righe = LIVELLI.map(L => {
       const voci = [], P = L.piu;
@@ -470,7 +472,7 @@
       const manca = k => (quanti[k] == null ? 0 : serve(k) - quanti[k]);
       if (noto && manca('primeLinee') > 0) {
         const m = manca('primeLinee');
-        passi.push({ testo: `${m === 1 ? 'Una prima linea attiva in più' : `${m} prime linee attive in più`} (${quanti.primeLinee} su ${serve('primeLinee')})`, vai: 'lista' });
+        passi.push({ testo: `${m === 1 ? 'Una prima linea in più' : `${m} prime linee in più`} (${quanti.primeLinee} su ${serve('primeLinee')})`, vai: 'lista' });
       }
       if (manca('iscritti') > 0) {
         const m = manca('iscritti');

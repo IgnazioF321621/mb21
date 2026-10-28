@@ -254,12 +254,22 @@ prova('Segni Vitali: posti del biglietto, eventi al mese, evento in vendita', ()
   assert.equal(L.eventoAttivo(eventi), '2026-10-01');                                          // adesso: l'ultimo caricato
   assert.equal(L.eventoAttivo(eventi, Date.parse('2026-09-19T23:00:00Z')), '2026-09-01');      // prima che arrivasse ottobre
   assert.equal(L.eventoAttivo(eventi, Date.parse('2026-08-31T23:00:00Z')), null);
-  // Wes di ottobre e Wes di febbraio già caricato: nel mese di ottobre conta ottobre, adesso (Mappa) febbraio
-  const wes = [{ data: '2026-10-01', creato_il: '2026-09-01T10:00:00Z' }, { data: '2027-02-01', creato_il: '2026-09-20T10:00:00Z' }];
+  // nota 136 (Ignazio 28/10: «dobbiamo guardare quelli nuovi, non quelli passati»): il PROSSIMO evento non ancora passato al giorno guardato.
+  // Wes del 16 ottobre e Wes di febbraio già caricato: fino al 16/10 conta ottobre, dal 17/10 febbraio (prima, a fine ottobre, contava ancora ottobre)
+  const wes = [{ data: '2026-10-01', giorno: '2026-10-16', creato_il: '2026-09-01T10:00:00Z' }, { data: '2027-02-01', giorno: '2027-02-12', creato_il: '2026-09-20T10:00:00Z' }];
   assert.equal(L.eventoAttivo(wes, Date.parse('2026-10-10T22:00:00Z'), '2026-10-10'), '2026-10-01');
+  assert.equal(L.eventoAttivo(wes, Date.parse('2026-10-16T21:00:00Z'), '2026-10-16'), '2026-10-01');   // il giorno del WES vale ancora
+  assert.equal(L.eventoAttivo(wes, Date.parse('2026-10-28T22:00:00Z'), '2026-10-28'), '2027-02-01');   // il caso di Ignazio
   assert.equal(L.eventoAttivo(wes, Date.parse('2026-11-30T22:00:00Z'), '2026-11-30'), '2027-02-01');
-  assert.equal(L.eventoAttivo(wes), '2027-02-01');
-  assert.equal(L.eventoAttivo([{ data: '2026-10-16', creato_il: '2026-09-15T13:48:26Z' }]), '2026-10-01');
+  assert.equal(L.eventoAttivo(wes, Date.parse('2026-10-28T22:00:00Z')), '2027-02-01');                 // senza giorno: il giorno di `quando`
+  assert.equal(L.eventoAttivo(wes, Date.parse('2027-03-01T22:00:00Z'), '2027-03-01'), '2027-02-01');   // passati tutti: l'ultimo caricato
+  assert.equal(L.eventoAttivo(wes, Date.parse('2026-09-10T22:00:00Z'), '2026-09-10'), '2026-10-01');   // a settembre febbraio non c'era ancora
+  assert.equal(L.eventoAttivo([{ data: '2026-10-16', creato_il: '2026-09-15T13:48:26Z' }], null, '2026-10-20'), '2026-10-01');   // senza giorno del WES: il mese vale tutto il mese
+  // BBS (solo il mese): conta dal mese guardato in poi
+  const bbs = [{ data: '2026-09-01', creato_il: '2026-09-01T10:00:00Z' }, { data: '2026-11-01', creato_il: '2026-09-20T10:00:00Z' }];
+  assert.equal(L.eventoAttivo(bbs, null, '2026-09-25'), '2026-09-01');
+  assert.equal(L.eventoAttivo(bbs, null, '2026-10-28'), '2026-11-01');
+  assert.equal(L.eventoDaMostrare(wes, '2026-10-28').data, '2027-02-01');
   assert.equal(L.momento('2026-09-16T11:58:12.55943+00:00'), Date.parse('2026-09-16T11:58:12.559Z'));
   assert.equal(L.momento('2026-09-16 11:58:12.55943+00'), Date.parse('2026-09-16T11:58:12.559Z'));
 });

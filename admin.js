@@ -752,6 +752,10 @@ async function foglioFileAmway(f) {
     const r4 = via.length ? await dbq('togli dalla Mappa', supa.from('squadra').delete().in('partner_id', via)) : {};   // nota 118: i volumi a cascata
     chiudi();
     MP.squadra = null; MP.volumi = null; MP.storico = {};   // la Mappa si rilegge alla prossima apertura
+    // nota 136 (Ignazio 28/10, «sì»): anche Traguardo, Check e Dashboard rileggono subito squadra e volumi (prima tenevano la lettura di inizio sessione)
+    if (typeof CK !== 'undefined') CK.giorni = null;
+    if (typeof COMUNI !== 'undefined') delete COMUNI.squadra;
+    if (typeof PRE !== 'undefined' && PRE.dati) delete PRE.dati.squadra;
     if (r4.error) setTimeout(() => mostraToast('Chi non è più nel file non è stato tolto dalla Mappa: ricarica il file e riprova.'), 2500);
     const al = await allineaSchede();   // schede dei partner a cascata per chi è entrato nella squadra
     if (al && (al.create || al.collegate)) setTimeout(() => mostraToast(`Schede dei partner: ${al.create} create, ${al.collegate} collegate`), 2500);

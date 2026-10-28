@@ -350,12 +350,12 @@ prova('Pacesetter (Ignazio 26/09): 2 iscritti personali del Check · 100 VP · C
 });
 
 prova('I livelli (Ignazio 27/09, Manuale pag. 31): una lista sola «Segni Vitali», ordine e nomi del Manuale, poi il riquadro; si accende con tutta la lista', () => {
-  // come Ignazio a settembre 2026: 6%, 4 prime linee con VP (una al 3%), 9 ferme
+  // come Ignazio a settembre 2026: 6%, 13 prime linee, 4 con VP (una al 3%), 9 ferme. Nota 136: «Prime linee» le conta tutte (13), non solo le 4 con VP
   const linee = [{ vpp: 107.38, bonus: 3 }, { vpp: 47.46, bonus: 0 }, { vpp: 78.27, bonus: 0 }, { vpp: 116.36, bonus: 0 }, ...Array(9).fill({ vpp: 0, bonus: 0 })];
   const v = C.livelli({ core: false, bonus: 6, linee, cep: 3, planner: 0, iscritti: 0, totale: 32, bbs: 3, wes: 4, mesi21: 0 });
-  assert.deepEqual(v.righe.map(r => [r.titolo, r.stato, r.fatto]), [['Leaders Club', '1 su 9', false], ['Executive Leader Club', '0 su 9', false], ['Produttore Argento', '0 su 9', false], ['Platino', '0 su 10', false]]);
+  assert.deepEqual(v.righe.map(r => [r.titolo, r.stato, r.fatto]), [['Leaders Club', '2 su 9', false], ['Executive Leader Club', '1 su 9', false], ['Produttore Argento', '0 su 9', false], ['Platino', '0 su 10', false]]);
   assert.deepEqual(v.righe[0].voci.map(x => [x.testo, x.stato]), [['Bonus attività', '6% su 9%'], ['Linee riceventi Bonus', '1 su 3'], ['15 Planner', '0 su 1'],
-    ['Prime linee', '4 su 5'], ['Iscritti al mese gruppo', '0 su 5'], ['Totale gruppo', 'fatto'], ['Iscritti CEP', '3 su 5'], ['Biglietti BBS', '3 su 10'],
+    ['Prime linee', 'fatto'], ['Iscritti al mese gruppo', '0 su 5'], ['Totale gruppo', 'fatto'], ['Iscritti CEP', '3 su 5'], ['Biglietti BBS', '3 su 10'],
     ['Biglietti WES', '4 su 10']]);   // Ignazio 04/10: il Core non c'è nel Manuale, né al Leaders Club né all'Executive
   // Executive: sotto «Linee riceventi Bonus» le due righe «di cui al 6%» (almeno 3) e «di cui Leaders Club» (almeno 2), che non contano come passi a parte
   assert.deepEqual(v.righe[1].voci.filter(x => x.sotto).map(x => [x.testo, x.stato]), [['di cui al 6%', '0 su 3'], ['di cui Leaders Club', 'da segnare']]);
@@ -386,15 +386,15 @@ prova('I prossimi passi (Ignazio 27/09): massimo 2, solo quelli che mancano, coi
     { partner_id: 'K', nome: 'Luca Galli', vpp: 78.27, bonus: 0, manca: 121.73 }, { partner_id: 'A', nome: 'Alberto Bellini', vpp: 116.36, bonus: 0, manca: 83.64 },
     { partner_id: 'V', nome: 'Vanessa Farina', vpp: 0, bonus: 0, manca: 200 }];
   const r = C.livelli({ core: false, bonus: 6, linee, cep: 7, mancaMio: 193.86, nonOra: [] }).righe[0];
-  assert.deepEqual(r.passi.map(p => p.testo), ['Una prima linea attiva in più (4 su 5)', 'Alberto Bellini: 84 VP e arriva al 3%']);
-  assert.equal(r.passi[1].partner_id, 'A');
+  assert.deepEqual(r.passi.map(p => p.testo), ['Alberto Bellini: 84 VP e arriva al 3%']);   // nota 136: 5 prime linee su 5 (anche Vanessa senza VP), quel passo non c'è più
+  assert.equal(r.passi[0].partner_id, 'A');
   assert.equal(r.info, 'Al 9% mancano 194 VP: arrivano con i passi sopra');
   const r2 = C.livelli({ core: false, bonus: 6, linee, cep: 7, mancaMio: 193.86, nonOra: ['A'] }).righe[0];
-  assert.equal(r2.passi[1].testo, 'Luca Galli: 122 VP e arriva al 3%');
+  assert.equal(r2.passi[0].testo, 'Luca Galli: 122 VP e arriva al 3%');
   assert.deepEqual(r2.nonOra, [{ partner_id: 'A', nome: 'Alberto Bellini' }]);
   // tutti «Non ora»: resta il passo che c'è (il CEP, se manca), niente nomi
   const r3 = C.livelli({ core: false, bonus: 6, linee, cep: 3, mancaMio: 193.86, nonOra: ['A', 'K', 'S'] }).righe[0];
-  assert.deepEqual(r3.passi.map(p => p.testo), ['Una prima linea attiva in più (4 su 5)', '2 iscritti al CEP in più nel gruppo (3 su 5)']);
+  assert.deepEqual(r3.passi.map(p => p.testo), ['2 iscritti al CEP in più nel gruppo (3 su 5)']);
   // il 9% non è il prossimo scalino (3% → 9%): niente VP inventati
   assert.equal(C.livelli({ core: false, bonus: 3, linee, cep: 7, mancaMio: 50 }).righe[0].info, 'Bonus al 3%: il 9% arriva con la crescita delle linee');
 });
@@ -445,7 +445,7 @@ prova('I passi (Ignazio 27/09): nell\'ordine di Ignazio — prime linee, iscritt
   const dati = { core: false, bonus: 6, linee, cep: 7, mancaMio: 193.86, nonOra: [], planner: 0, iscritti: 2, totale: 32, bbs: 3, wes: 12, mesi21: 0 };
   const lc = C.livelli(dati).righe[0];
   // un posto fisso ciascuno (27/09): le persone nuove, poi una persona da aiutare col nome
-  assert.deepEqual(lc.passi.map(p => p.testo), ['Una prima linea attiva in più (4 su 5)', 'Alberto Bellini: 84 VP e arriva al 3%']);
+  assert.deepEqual(lc.passi.map(p => p.testo), ['Una prima linea in più (4 su 5)', 'Alberto Bellini: 84 VP e arriva al 3%']);
   // Bellini e Galli «Non ora»: il secondo posto passa a Fiammetta, non sparisce
   assert.equal(C.livelli({ ...dati, nonOra: ['A', 'K'] }).righe[0].passi[1].testo, 'Fiammetta Moretti: 153 VP e arriva al 3%');
   // prime linee a posto: il primo posto va agli iscritti del mese
@@ -522,13 +522,13 @@ prova('Executive (Ignazio 04/10): «Linee riceventi Bonus» è fatta solo con le
   assert.equal(ok.voci.filter(x => x.sotto).length, 2);
 });
 
-prova('Nota Pagine 062 (Ignazio 19/10): una linea riceve il bonus per la percentuale della squadra, anche senza VP personali; le prime linee restano quelle con VP', () => {
+prova('Nota Pagine 062 (Ignazio 19/10): una linea riceve il bonus per la percentuale della squadra, anche senza VP personali; le prime linee (nota 136) sono tutte', () => {
   const linee = [{ partner_id: 'SG', nome: 'Simone', vpp: 0, bonus: 3 }, { partner_id: 'A', nome: 'Anna', vpp: 120, bonus: 0 }, { partner_id: 'B', nome: 'Bea', vpp: 0, bonus: 6 }];
   const v = C.livelli({ core: false, bonus: 6, linee, cep: 0 });
   const lc = v.righe[0].voci;
   assert.equal(lc.find(x => x.chiave === 'lineeBonus').testo, 'Linee riceventi Bonus');
   assert.match(lc.find(x => x.chiave === 'lineeBonus').stato, /^2 su 3$/);   // Simone al 3% e Bea al 6%, anche con 0 VPP
-  assert.match(lc.find(x => x.chiave === 'primeLinee').stato, /^1 su 5$/);   // le prime linee attive: solo Anna
+  assert.match(lc.find(x => x.chiave === 'primeLinee').stato, /^3 su 5$/);   // nota 136 (Ignazio 28/10: «sono le prime linee, non le prime linee attive»): tutte e tre
   assert.match(v.righe[1].voci.find(x => x.testo === 'di cui al 6%').stato, /^1 su 3$/);   // Bea, anche senza VPP
 });
 

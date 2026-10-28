@@ -72,7 +72,7 @@ async function aggiornaRiga(id) {
 // prima si leggevano tutti i biglietti e tutti i CEP, oltre le 1000 righe che il database dà per richiesta, e all'Admin qualche targhetta mancava a caso.
 async function leggiTarghe() {
   const oggi = MB21Coda.oggiRoma();
-  const [bbs, wes] = await Promise.all([dbq('targhe BBS', supa.from('bbs').select('data')), dbq('targhe Wes', supa.from('wes').select('data'))]);
+  const [bbs, wes] = await Promise.all([dbq('targhe BBS', supa.from('bbs').select('data')), dbq('targhe Wes', supa.from('wes').select('data, giorno'))]);
   if (bbs.error || wes.error) return {};
   const attivi = { bbs: MB21Lista.eventoAttivo(bbs.data), wes: MB21Lista.eventoAttivo(wes.data) };
   const eventi = [attivi.bbs, attivi.wes].filter(Boolean);

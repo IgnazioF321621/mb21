@@ -5301,7 +5301,8 @@ function livelliCheck(l, coreFatto) {
   const mese = Number(l.mese.slice(0, 4) + l.mese.slice(5, 7));
   const vol = new Map(CK.amway.volumi.filter(v => v.mese === mese).map(v => [v.partner_id, v]));
   const mio = vol.get(pid);
-  const linee = CK.amway.squadra.filter(p => p.sponsor_id === pid).map(p => {
+  // nota 136: le prime linee entrate entro il mese guardato (tutte contano come «Prime linee»; per un mese passato non quelle entrate dopo)
+  const linee = CK.amway.squadra.filter(p => p.sponsor_id === pid && p.partner_id !== pid && String(p.data_ingresso || '').slice(0, 7) <= l.mese.slice(0, 7)).map(p => {
     const v = vol.get(p.partner_id) || {};
     return { partner_id: p.partner_id, nome: MB21Mappa.nomeLeggibile(p.nome), vpp: v.vpp || 0, bonus: v.bonus || 0, manca: v.al_livello_successivo };
   });

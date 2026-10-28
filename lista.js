@@ -293,21 +293,25 @@
   // Millisecondi da una data del database («2026-09-16T11:58:12.55943+00:00»): Safari non legge più di 3 decimali
   const momento = t => Date.parse(String(t).replace(' ', 'T').replace(/(\.\d{3})\d+/, '$1').replace(/([+-]\d{2})$/, '$1:00'));
 
-  // Evento in vendita: l'ultimo caricato (data più alta) tra quelli già caricati a `quando` (millisecondi; vuoto = adesso).
-  // Con `mese` (Dashboard e Check, un mese alla volta): se quel mese ha il suo evento conta quello
-  // (Ignazio 16/09: un biglietto del Wes preso il 10 ottobre va sul Wes di ottobre, anche se è già caricato quello dopo).
-  // eventi: righe di `bbs` o `wes` con data e creato_il. Restituisce il mese («2026-10-01») o null
-  function eventoAttivo(eventi, quando, mese) {
+  // L'evento a cui si contano i biglietti (nota Pagine 136, Ignazio 28/10: «Biglietti WES: dobbiamo guardare quelli nuovi, non quelli passati»; prima, con
+  // un mese che aveva il suo evento, contava quello anche già passato: a fine ottobre il WES del 16/10 e non quello di febbraio). Fra gli eventi già caricati
+  // a `quando` (millisecondi; vuoto = adesso) è il PROSSIMO non ancora passato al `giorno` guardato («2026-10-28»; vuoto = il giorno di `quando`, o oggi):
+  // il WES col suo giorno (`giorno`; senza, il mese), il BBS col mese (`data`: un BBS del mese guardato vale ancora). Se sono passati tutti, l'ultimo caricato.
+  // Una funzione sola per Mappa, Lista (targhette), Check (Leader 1° livello), Dashboard e Traguardo (Segni Vitali).
+  // eventi: righe di `bbs` o `wes` con data (e giorno, creato_il). Restituisce il mese («2026-10-01») o null
+  function eventoAttivo(eventi, quando, giorno) {
     const presi = (eventi || []).filter(e => quando == null || !e.creato_il || momento(e.creato_il) <= quando);
     if (!presi.length) return null;
-    if (mese && presi.some(e => meseEvento(e.data) === meseEvento(mese))) return meseEvento(mese);
-    return meseEvento(presi.map(e => e.data).sort().pop());
+    const rif = giorno ? String(giorno).slice(0, 10) : giornoRoma(quando == null ? Date.now() : quando);
+    const quandoE = e => (e.giorno ? String(e.giorno).slice(0, 10) : meseEvento(e.data));
+    const prossimi = presi.filter(e => (e.giorno ? quandoE(e) >= rif : meseEvento(e.data) >= meseEvento(rif))).sort((x, y) => (quandoE(x) < quandoE(y) ? -1 : 1));
+    return meseEvento(prossimi.length ? prossimi[0].data : presi.map(e => e.data).sort().pop());
   }
 
   // L'evento da scrivere accanto a BBS e WES (Ignazio 01/10: «metti il prossimo che si effettuerà»): è lo stesso evento a cui si riferiscono i numeri (quello in vendita,
   // `eventoAttivo`, lo stesso della Mappa), purché non sia già passato: «sempre successivo». { data, etichetta «11-2026», inCorso } oppure null.
   function eventoDaMostrare(eventi, oggi) {
-    const m = eventoAttivo(eventi, null, null);
+    const m = eventoAttivo(eventi, null, oggi);
     if (!m || String(m).slice(0, 7) < String(oggi).slice(0, 7)) return null;
     return { data: m, etichetta: etichettaEvento(m), inCorso: String(m).slice(0, 7) === String(oggi).slice(0, 7) };
   }
