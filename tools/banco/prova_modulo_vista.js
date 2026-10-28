@@ -404,6 +404,40 @@ prova('Una Telefonata parte sempre «Senza orario · solo in coda», anche da un
   assert.equal(P.AG.azioni.length, prima);
 });
 
+// ── Nota Pagine 129 (Ignazio 28/10, «la prima proposta va bene»; la Categoria non serve: docs/prototipi/schizzo_scheda_azione_129.png) ──
+const valoreTendina = async (v, nome, val) => { await altro(v); if (!v.querySelector(`[data-scelta="${nome}"]`)) await v.clic(`[data-tendina="${nome}"]`); const b = v.querySelectorAll(`[data-scelta="${nome}"] button`).find(x => x.dataset.v === val); await b.onclick({ target: b, preventDefault() {} }); };
+prova('129: con la persona già data (scheda, coda, prossimo appuntamento) niente «Con chi?», «Aggiungi un\'altra persona», «Una linea» né Categoria, per tutti i tipi; il nome in testata', async () => {
+  for (const tipo of ['Contatto', 'Piano Marketing']) {
+    pulisci();
+    const { v } = await apri({ contatto: { id: 'c-tito', nome: 'Tito Rovere', categoria: 'Prospect' }, resta: true });   // come dalla scheda (pagina-lista.js)
+    await valoreTendina(v, 'tipo', tipo); await altro(v);
+    const h = v.innerHTML;
+    assert.doesNotMatch(h, />Con chi\?<|id="na-piu-persona"|id="na-linea"|id="na-scegli"|data-tendina="categoria"|<label>Categoria/, tipo);
+    assert.match(h, /<h4 class="mc-t">Che cosa\?<\/h4>/); assert.match(h, /id="na-note"/); assert.match(h, /id="na-portato"/);
+    assert.equal(v.querySelector('#na-testa').querySelector('b').textContent, 'Tito Rovere');
+    if (tipo === 'Piano Marketing') assert.match(h, /data-tendina="durata"[\s\S]*id="na-dove"[\s\S]*id="na-punti"/);   // il PM tiene i suoi campi
+  }
+});
+
+prova('129: con il tipo «Contatto» solo quando, note e portato da — niente Durata, Dove, Punti da trattare né Condividi con (Messaggio, Presenza, Telefonata a un\'ora); con «Contatto» nessun messaggio', async () => {
+  for (const modalita of ['Messaggio', 'Presenza']) {
+    pulisci();
+    const { v } = await apri({ contatto: { id: 'c-isa', nome: 'Fiammetta Rossi', categoria: 'Partner', telefono: '+393330000001' }, tipo: 'Contatto', modalita });
+    await altro(v);
+    const h = v.innerHTML;
+    assert.doesNotMatch(h, /data-tendina="durata"|id="na-dove"|id="na-punti"|<label>Condividi con<\/label>|data-tendina="come:/, modalita);
+    assert.match(h, /id="na-giorno"[\s\S]*id="na-ora"/); assert.match(h, /<small>Note, portato da<\/small>/);
+  }
+});
+
+prova('129: il «+» dell\'Agenda senza persona resta com\'è: «Con chi?», «Aggiungi un\'altra persona», «Una linea» e la Categoria in «Altro»', async () => {
+  pulisci();
+  const { v } = await apri({});
+  assert.match(v.innerHTML, /<h4 class="mc-t">Con chi\?<\/h4>/);
+  await contatto(v, 'Tito Rovere'); await valoreTendina(v, 'tipo', 'Piano Marketing'); await altro(v);
+  assert.match(v.innerHTML, /id="na-piu-persona"[\s\S]*id="na-linea"/); assert.match(v.innerHTML, /data-tendina="categoria"/);
+});
+
 // ── Note Pagine 103 e 104 (Ignazio 27/10, «sì» sul disegno docs/prototipi/schizzo_appuntamento_103_104.png) ──
 prova('104: quattro domande in ordine — Con chi? · Che cosa? (l\'Area sotto, con «cambia») · Quando? · «Altro · facoltativo» chiuso; niente «Obbligatorio» né «Porta qualcuno»', async () => {
   pulisci();

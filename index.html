@@ -4124,6 +4124,11 @@ async function nuovoAppuntamento(opz = {}) {
     if (m.condiviso_con) USA_APP_SI.add(m.contatto_id);   // nota 107: già condiviso nell'app, quindi la usa
   }
   const serata = () => st.condividi === 'team' || st.condividi === 'linea';
+  // Nota Pagine 129 (Ignazio 28/10/2026: «c'è qualcosa nel flow che non funziona»; scelta A «prima il tipo»): quando la persona è già data (scheda,
+  // coda di Oggi, «Fissato il prossimo appuntamento? Sì», «Fissa appuntamento», coach) il foglio la mostra solo nella testata: niente «Con chi?»,
+  // «Aggiungi un'altra persona», «Una linea» né Categoria (il colore della testata la dice già; si cambia da «Modifica contatto»). Gli incontri con
+  // più persone si fanno dal «+» dell'Agenda; la Modifica di un appuntamento resta com'era (può avere più persone).
+  const personaFissa = !!opz.contatto && !m;
   const puoTeam = () => puoSerataTeam() && !opz.contatto && !opz.spazio;
   const puoPersona = () => !!st.contatto && st.tipo !== 'Contatto' && [{ categoria: st.categoria }, ...st.altri].some(p => p.categoria === 'Partner');   // nota 103: almeno un Partner
   const frontali = () => (typeof AG !== 'undefined' && Array.isArray(AG.frontali) ? AG.frontali : []);
@@ -4196,12 +4201,14 @@ async function nuovoAppuntamento(opz = {}) {
     const telDi = p => numeroDaChiamare(p.telefono || (elenco.find(x => x.id === p.id) || {}).telefono || (opz.contatto && opz.contatto.id === p.id ? opz.contatto.telefono : ''));
     const modiDi = p => [...(p.categoria === 'Partner' && st.tipo !== 'Contatto' && USA_APP_SI.has(p.id) ? ['app'] : []), ...(telDi(p) ? ['telegram', 'whatsapp'] : []), ''];
     // si parte da «Nell'app» per chi la usa (nota 059: già condiviso), da «Non condividere» per gli altri: il messaggio si sceglie
-    const comeDi = p => { const k = st['come:' + chiave5(p)], modi = modiDi(p); return k !== undefined && modi.includes(k) ? k : modi.includes('app') ? 'app' : ''; };
+    const comeDi = p => { if (st.tipo === 'Contatto') return '';   // nota 129: con «Contatto» niente «Condividi con», quindi nessun messaggio né invito
+      const k = st['come:' + chiave5(p)], modi = modiDi(p); return k !== undefined && modi.includes(k) ? k : modi.includes('app') ? 'app' : ''; };
     const leggiChiUsaApp = () => persone5().filter(p => p.id && p.categoria === 'Partner' && !USA_APP.has(p.id)).forEach(p => usaLApp(p.id).then(si => { if (si && velo.isConnected !== false) disegna(); }));
     const nomiInFila = nomi => (nomi.length > 1 ? nomi.slice(0, -1).join(', ') + ' e ' + nomi.at(-1) : nomi[0] || '');
     function htmlAppuntamento(tipi) {
       const riga5 = (c, togli) => `<div class="na5-chi ${classeCat(c.categoria)}"><span class="ts-pastiglia">${esc(iniziali(c.nome))}</span><span><b>${esc(c.nome)}${c.nuova ? '<span class="na5-nuova">scheda nuova</span>' : ''}${st.tipo === 'Contatto' ? segnoCoach(c.id, c.nome) : ''}</b><small>${esc(c.categoria ? MB21Lista.nomeCategoria(c.categoria) : 'Senza categoria')}</small></span>${togli == null ? '' : `<button type="button" class="link" data-togli-persona="${esc(togli)}" aria-label="Togli">${ic('chiudi')}</button>`}</div>`;
-      let h = `<h4 class="mc-t">Con chi?</h4><div class="riquadro mc-g">`;
+      let h = personaFissa ? '' : `<h4 class="mc-t">Con chi?</h4><div class="riquadro mc-g">`;
+      if (!personaFissa) {
       // la prima persona: fissa se arriva dalla scheda o dalla coda; in Modifica si cambia (✕) solo se è sola
       if (st.contatto) h += riga5({ ...st.contatto, categoria: st.categoria }, m ? (st.altri.length ? null : '') : opz.contatto && !st.altri.length ? null : '');
       // nota 114 (Ignazio 28/10, «sì» sul disegno docs/prototipi/schizzo_con_chi_114.png): sull'iPad i suggerimenti del campo non uscivano; un tasto apre
@@ -4214,6 +4221,7 @@ async function nuovoAppuntamento(opz = {}) {
       if (st.tipo !== 'Contatto') h += `<button type="button" class="na5-piu" id="na-linea">${ic('mappa')} Una linea <small>una persona della Mappa e chi sta sotto</small></button>`;   // nota 108
       if (st.altri.length) h += `<p class="na5-aiuto">Ognuno ha il suo esito. Chi usa l'app lo trova nella sua Agenda.</p>`;
       h += '</div>';
+      }
       if (st.contatto && !tipi.length) {   // senza categoria (o con persone che non possono avere lo stesso tipo) si sceglie qui
         const categorie = st.categoria && !A.CATEGORIE.includes(st.categoria) ? [st.categoria, ...A.CATEGORIE] : A.CATEGORIE;
         h += `<h4 class="mc-t">Che cosa?</h4><div class="riquadro mc-g"><div class="campo"><label>Categoria di ${esc(st.contatto.nome)}</label>${tendina('categoria', categorie, st.categoria, categorie.map(MB21Lista.nomeCategoria))}
@@ -4238,11 +4246,14 @@ async function nuovoAppuntamento(opz = {}) {
       h += `<div class="campo"><label>${soloGiorno ? 'Giorno' : 'Giorno e ora'}</label><div class="ag-due-campi">
         <input id="na-giorno" type="date" value="${esc(campi.giorno)}">${soloGiorno ? '' : `<input id="na-ora" type="time" value="${esc(campi.ora)}">`}</div></div>`;
       if (!st.durataToccata) st.durata = A.durataPredefinita(st.tipo);
-      if (!soloGiorno) {
+      // nota 129 (scelta A, «prima il tipo»): con il tipo «Contatto» (telefonata, messaggio, presenza) solo quando, note e portato da: niente Durata
+      // (resta quella di sempre per un contatto), Dove, Punti da trattare né Condividi con
+      const soloContatto = st.tipo === 'Contatto';
+      if (!soloGiorno && !soloContatto) {
         h += `<div class="campo"><label>Durata</label>${tendina('durata', [...A.DURATE.map(d => d[0]), 'altra'], st.altra ? 'altra' : st.durata, [...A.DURATE.map(d => d[1]), 'Altra…'])}</div>`;
         if (st.altra) h += `<div class="campo"><label>Finisce alle</label><input id="na-fine" type="time" value="${esc(campi.fine)}"></div>`;
-        h += `<div id="na-avviso">${avvisoOre()}</div>`;
       }
+      if (!soloGiorno) h += `<div id="na-avviso">${avvisoOre()}</div>`;
       h += '</div>';
       // 4 · Altro · facoltativo: chiuso, con scritto cosa c'è dentro; i valori restano anche chiuso (campi)
       leggiAvvio(() => disegna());
@@ -4253,9 +4264,9 @@ async function nuovoAppuntamento(opz = {}) {
       const sunto = [campi.dove.trim() && 'dove', (campi.punti.trim() || st.suCosa.length) && 'punti da trattare', campi.note.trim() && 'note',
         st.portato && 'portato da ' + st.portato.nome, nellApp.length && 'nell\'app con ' + nomiInFila(nellApp), messaggio.length && 'messaggio a ' + nomiInFila(messaggio)].filter(Boolean);
       h += `<div class="riquadro mc-g na5-altro-g"><button type="button" class="na5-altro" id="na-altro-apri" aria-expanded="${st.altroAperto}"><span><b>Altro · facoltativo</b>
-        <small>${esc(sunto.length ? sunto.join(' · ') : soloGiorno ? 'Note, portato da' : 'Dove, punti da trattare, note, portato da')}</small></span><em>${st.altroAperto ? '⌃' : '›'}</em></button>`;
+        <small>${esc(sunto.length ? sunto.join(' · ') : soloGiorno || soloContatto ? 'Note, portato da' : 'Dove, punti da trattare, note, portato da')}</small></span><em>${st.altroAperto ? '⌃' : '›'}</em></button>`;
       if (st.altroAperto) {
-        if (!soloGiorno) {
+        if (!soloGiorno && !soloContatto) {
           h += `<div class="campo"><label>Dove <small>il link se è online, il posto se dal vivo</small></label><input id="na-dove" maxlength="${A.MAX_LINK}" autocomplete="off" placeholder="Link di Zoom/Meet, oppure hotel, sala, indirizzo" value="${esc(campi.dove)}"></div>`;
           const scelti = passi.filter(x => st.suCosa.includes(x)).map(A.nomePasso);
           h += `<div class="campo"><label>Punti da trattare <small>${passi.length ? 'i passi dell\'incontro, o scrivi: uno per riga' : 'uno per riga'}</small></label>
@@ -4266,7 +4277,7 @@ async function nuovoAppuntamento(opz = {}) {
         h += `<div class="campo"><label>Portato da</label><div class="fa-persona"><span>${st.portato ? esc(st.portato.nome) : '<span style="color:var(--grigio)">nessuno</span>'}</span>
           ${st.portato ? '<button class="link" id="na-togli-portato" aria-label="Togli">' + ic('chiudi') + '</button>' : '<button class="link" id="na-portato">＋ Scegli</button>'}</div></div>`;
         // «Condividi con» (nota 107): per ogni persona «Come»; per i messaggi «Cosa aggiungo?» (più di una, resta aperta); i punti nell'app solo con PUNTI_CONDIVISI
-        const conChi = persone5().filter(p => modiDi(p).length > 1);
+        const conChi = soloContatto ? [] : persone5().filter(p => modiDi(p).length > 1);
         if (conChi.length) {
           h += `<div class="campo"><label>Condividi con</label>${conChi.map(p => `<div class="na5-cond"><small>${esc(p.nome)}</small>${tendina('come:' + chiave5(p), modiDi(p), comeDi(p), modiDi(p).map(x => NOMI_MODO[x]))}</div>`).join('')}</div>`;
           const voci = [['dove', 'Dove', !!campi.dove.trim()], ['note', 'Note', !!campi.note.trim()], ['punti', 'Punti da trattare', !!campi.punti.trim()]].filter(x => x[2]);
@@ -4279,7 +4290,7 @@ async function nuovoAppuntamento(opz = {}) {
           if (nellApp.length && PUNTI_CONDIVISI) h += `<div class="campo"><label>Vede anche i punti da trattare?</label>${tendina('puntiCond', ['1', '0'], st.puntiCond ? '1' : '0', ['Sì', 'No'])}</div>`;
         }
         const categorie = st.categoria && !A.CATEGORIE.includes(st.categoria) ? [st.categoria, ...A.CATEGORIE] : A.CATEGORIE;   // Ex, Unlinked…: resta com'è, o si cambia
-        h += `<div class="campo"><label>Categoria${st.altri.length ? ' di ' + esc(st.contatto.nome) : ''} <small>dal contatto</small></label>${tendina('categoria', categorie, st.categoria, categorie.map(MB21Lista.nomeCategoria))}</div>`;
+        if (!personaFissa && !soloContatto) h += `<div class="campo"><label>Categoria${st.altri.length ? ' di ' + esc(st.contatto.nome) : ''} <small>dal contatto</small></label>${tendina('categoria', categorie, st.categoria, categorie.map(MB21Lista.nomeCategoria))}</div>`;
       }
       return h + '</div>';
     }
@@ -4385,6 +4396,8 @@ async function nuovoAppuntamento(opz = {}) {
       testa.querySelector('small').textContent = serata() ? 'Nuova serata' : (opz.titolo || 'Nuovo appuntamento');
       testa.querySelector('.ts-pastiglia').innerHTML = serata() ? ic('squadra') : st.contatto ? esc(iniziali(st.contatto.nome)) : ic('agenda');
       testa.querySelector('b').textContent = serata() ? (MB21Spazi.pulisciNome(campi.serata) || MB21Spazi.nome(st.serataTipo)) : st.contatto ? nomiInFila(persone5().map(p => p.nome)) : 'Con chi?';
+      const segno = personaFissa && st.tipo === 'Contatto' ? segnoCoach(st.contatto.id, st.contatto.nome) : '';
+      if (segno) testa.querySelector('b').innerHTML = esc(nomiInFila(persone5().map(p => p.nome))) + segno;   // nota 129: il segno Coach Yes, che stava in «Con chi?»
       const ns = velo.querySelector('#na-serata');
       if (ns) ns.onchange = () => { leggiCampi(); testa.querySelector('b').textContent = MB21Spazi.pulisciNome(campi.serata) || MB21Spazi.nome(st.serataTipo); };
       const bp = velo.querySelector('#na-portato'), tp = velo.querySelector('#na-togli-portato');
