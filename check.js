@@ -303,6 +303,8 @@
   }
   // Le 7 abitudini, una riga ciascuna, per quando «Leader Core» si apre: titolo, fatta, e a destra lo stato in due parole
   // `finora` = i giorni già passati del mese (mese in corso) oppure tutti (mese chiuso): «12 su 15 giorni finora» (Ignazio 27/09)
+  // i titoli delle 7 abitudini, nell'ordine di vociCore: servono anche alle righe d'attesa mentre il Modulo Core si legge (nota 138)
+  const TESTI_CORE = ['8 Piani Marketing', 'Consumo personale', 'Sviluppa 100 VP (10 clienti)', 'Una traccia ogni giorno', '10 pagine ogni giorno', 'OPEN · WES · BBS', 'Squadra'];
   function vociCore(m, finora) {
     const n = m.giorni, f = m.abitudini, g = finora || n;
     const vp = m.s2.vp == null ? '—' : `${formato(m.s2.vp, 0)} VP`;
@@ -566,7 +568,7 @@
     return { nome: r.titolo, mancano: r.passi.map(x => x.testo) };
   }
 
-  const api = { GRUPPI, VOCI, CAMPI_GIORNO, CAMPI_STATO, andamento, valore, prepara, calcola, grafico, segniVitali, storicoLinee, LC1_VP, LC1_INIZIO, PACE_SPONSOR, LIVELLI, SCALA_BONUS, GRADINI_BONUS, obiettiviDelBonus, gradinoDalBonus, gradinoDaVpg, lc1, percorso, piuVicino, livelli, prossimoTraguardo, statoLuce };
+  const api = { GRUPPI, VOCI, CAMPI_GIORNO, CAMPI_STATO, andamento, valore, prepara, calcola, grafico, segniVitali, storicoLinee, LC1_VP, LC1_INIZIO, PACE_SPONSOR, LIVELLI, SCALA_BONUS, GRADINI_BONUS, obiettiviDelBonus, gradinoDalBonus, gradinoDaVpg, lc1, percorso, piuVicino, livelli, prossimoTraguardo, statoLuce, TESTI_CORE };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Check = api;
 })(this);

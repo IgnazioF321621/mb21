@@ -619,13 +619,16 @@ function disegnaTraguardoLV() {
 }
 // Nota 098 (prototipo check-percorso): «Il più vicino» aperto in cima e «Gli altri» (Leader 1° livello, Core, Pacesetter), ognuno con i suoi passi a
 // parole (vociHtml, la stessa lista del gradino: «fatto» o cosa manca; il Core con le 7 abitudini). Il titolo apre il dettaglio di adesso. I livelli sotto, come prima.
+// Nota 138 (Ignazio 28/10, «ok»: toccando Leaders Club si apriva il Platino): mentre il Modulo Core si legge la sua card tiene già lo spazio delle 7 righe,
+// grigie con «…» (prima una riga sola «Leggo il Modulo Core…», poi 7: tutto l'elenco sotto scendeva di circa tre righe mentre si toccava)
+const vociInAttesa = () => MB21Check.TESTI_CORE.map(testo => ({ testo, fatto: false, stato: '…' }));
 function percorsoV5Html(p, vicino) {
   const { l, pc } = p;
   const card = g => {
     const lista = g.chiave === 'leader1' ? (l.luci || []).map(x => ({ testo: PUNTI_LC1[x.chiave] || x.titolo, fatto: x.ok, stato: MB21Check.statoLuce(x) })) : (g.voci || []);
     const barre = Array.from({ length: g.totale }, (_, i) => `<i${i < g.fatti ? ' class="si"' : ''}></i>`).join('');
     return `<div class="riquadro ck5-trag${vicino && vicino.chiave === g.chiave ? ' vicino' : ''}"><button class="ck5-trag-t" data-lv-grad="${g.chiave}"><b>${esc(nomeGradino(g))}</b><span>${g.fatti} su ${g.totale} ›</span></button>
-      <span class="ck5-barre">${barre}</span>${g.pronto || g.chiave === 'leader1' ? `<div class="ck-lc1">${vociHtml(lista, null)}</div>` : '<small class="sotto">Leggo il Modulo Core…</small>'}</div>`;
+      <span class="ck5-barre">${barre}</span><div class="ck-lc1${g.pronto || g.chiave === 'leader1' ? '' : ' in-attesa'}">${vociHtml(g.pronto || g.chiave === 'leader1' ? lista : vociInAttesa(), null)}</div></div>`;
   };
   const altri = pc.gradini.filter(g => !vicino || g.chiave !== vicino.chiave);
   return (vicino ? `<div class="zona-oggi">Il più vicino</div>${card(vicino)}` : '') + (altri.length ? `<div class="zona-oggi">${vicino ? 'Gli altri' : 'I traguardi'}</div>${altri.map(card).join('')}` : '');
@@ -645,8 +648,8 @@ function disegnaGradinoLV() {
   if (g) {
     titolo = nomeGradino(g);
     sotto = g.fatto ? 'Raggiunto' : g.chiave === 'core' ? `${g.fatti} abitudini su 7` : `Fatti ${g.fatti} passi su ${g.totale}`;
-    const lista = g.chiave === 'leader1' ? (l.luci || []).map(x => ({ testo: PUNTI_LC1[x.chiave] || x.titolo, fatto: x.ok, stato: MB21Check.statoLuce(x) })) : (g.voci || []);
-    corpo = vociHtml(lista, null) + consiglio(g.consiglio) + (g.chiave === 'core' ? `<button class="ck-modulo" data-vai="core">${ic('crescita')} Modulo del mese<span>›</span></button>` : '');
+    const lista = g.chiave === 'leader1' ? (l.luci || []).map(x => ({ testo: PUNTI_LC1[x.chiave] || x.titolo, fatto: x.ok, stato: MB21Check.statoLuce(x) })) : g.pronto ? (g.voci || []) : vociInAttesa();   // nota 138
+    corpo = (g.pronto ? '' : '<div class="in-attesa">') + vociHtml(lista, null) + (g.pronto ? '' : '</div>') + consiglio(g.consiglio) + (g.chiave === 'core' ? `<button class="ck-modulo" data-vai="core">${ic('crescita')} Modulo del mese<span>›</span></button>` : '');
   } else {
     const [f, t] = conteggioVoci(r.voci);
     titolo = r.titolo; sotto = r.fatto ? 'Raggiunto' : f === 0 ? `Ancora nessun passo su ${t}` : `${f === 1 ? 'Fatto 1 passo' : `Fatti ${f} passi`} su ${t}`;

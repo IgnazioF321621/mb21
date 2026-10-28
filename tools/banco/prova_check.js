@@ -353,6 +353,11 @@ prova('Nota 137 (Ignazio 28/10: «la spunta verde come è adesso, ma anche il nu
   assert.equal(C.statoLuce({ chiave: 'vp', ok: false, ignoto: true }), 'non lo so');
 });
 
+prova('Nota 138: i titoli delle 7 abitudini per le righe d\'attesa sono quelli delle righe vere (TESTI_CORE)', () => {
+  const voci = C.percorso({ lc1: lc1Di(187.5, true), modulo: moduloVuoto }).gradini[1].voci;
+  assert.deepEqual(voci.map(v => v.testo), C.TESTI_CORE);
+});
+
 prova('Pacesetter (Ignazio 26/09): 2 iscritti personali del Check · 100 VP · CEP nello stesso mese; consiglia solo gli sponsor', () => {
   const p0 = C.percorso({ lc1: lc1Di(187.5, true), modulo: moduloVuoto, sponsor: 0 });
   const g = p0.gradini[2];

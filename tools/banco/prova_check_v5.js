@@ -91,6 +91,15 @@ prova('Il Percorso: «Il più vicino» aperto in cima e «Gli altri», ognuno co
   assert.equal(M.LV.vista, 'gradino'); assert.equal(M.LV.gradino, g);
 });
 
+prova('Nota 138 (Ignazio 28/10, «ok»: toccando Leaders Club si apriva il Platino): la card del Core ha sempre 7 righe, anche mentre il Modulo si legge (grigie, «…»)', () => {
+  const { html } = P.vista('traguardo');
+  const da = html.indexOf('data-lv-grad="core"'), card = html.slice(da, html.indexOf('class="riquadro ck5-trag', da));
+  assert.equal((card.match(/<div class="(ok)?( sottovoce)?"><span>/g) || []).length, 7);
+  assert.doesNotMatch(html, /Leggo il Modulo Core/);
+  assert.match(PD, /<div class="ck-lc1\$\{g\.pronto \|\| g\.chiave === 'leader1' \? '' : ' in-attesa'\}">\$\{vociHtml\(g\.pronto \|\| g\.chiave === 'leader1' \? lista : vociInAttesa\(\), null\)\}<\/div>/);
+  assert.match(PD, /const vociInAttesa = \(\) => MB21Check\.TESTI_CORE\.map\(testo => \(\{ testo, fatto: false, stato: '…' \}\)\);/);
+});
+
 prova('Da «Com\'è andata oggi?» di Oggi e dall\'avviso della sera si apre la scheda Giorno', () => {
   assert.match(PO, /if \(go === 'sera'\) return vaiLV\('ckgiorno', \{ ckData: null \}\);/);
   assert.match(PD, /if \(vai === 'giorno'\) \{ LV\.vista = checkV5\(\) \? 'ckgiorno' : 'home'; LV\.ckData = null; \}/);
