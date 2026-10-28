@@ -23,7 +23,9 @@ const scegli = async (v, nome, valore) => { await altro(v); if (!v.querySelector
 const apriTendina = async (v, nome) => { if (!v.querySelector(`[data-scelta="${nome}"]`)) await v.clic(`[data-tendina="${nome}"]`); };
 // note 103 e 104 (27/10): scelta una persona, il campo diventa la sua riga con ✕; per cambiarla si toglie e si riscrive. «Altro · facoltativo» (dove, punti,
 // note, portato da, condivisione, categoria) parte chiuso: `altro(v)` lo apre
-const contatto = async (v, nome) => { if (!v.querySelector('#na-contatto')) await v.clic('[data-togli-persona=""]'); const inp = v.querySelector('#na-contatto'); inp.value = nome; await inp.onchange(); await attendi(); await altro(v); };   // attendi: si legge se usa l'app (nota 107)
+// nota 114 (28/10): senza persona c'è il tasto «Scegli dalla tua lista» (#na-scegli), che apre sceltaContatto (nel banco risponde P.scelta.persona)
+const sceltoDaLista = async (v, nome) => { const prima = P.scelta.persona; P.scelta.persona = P.finto.contatti.find(c => c.nome === nome) || null; try { await v.clic('#na-scegli'); await attendi(); } finally { P.scelta.persona = prima; } };
+const contatto = async (v, nome) => { if (!v.querySelector('#na-scegli')) await v.clic('[data-togli-persona=""]'); await sceltoDaLista(v, nome); await attendi(); await altro(v); };   // attendi: si legge se usa l'app (nota 107)
 const altro = async v => { const b = v.querySelector('#na-altro-apri'); if (b && /id="na-altro-apri" aria-expanded="false"/.test(v.innerHTML)) await b.onclick(); };
 
 prova('Un partner qualsiasi: con un Prospect niente «Condividi con»; con un Partner compare «Nessuno · Fiammetta Rossi» e, scelta la persona, «Vedono anche i punti?»', conPunti(async () => {
@@ -83,7 +85,7 @@ prova('L\'Admin dal «+»: «Nessuno · Tutto il Team · Una Linea» subito; con
   const { v, p } = await apri({});
   assert.match(v.innerHTML, /data-v="team"/); assert.match(v.innerHTML, /data-v="linea"/);
   await scegli(v, 'condividi', 'team');
-  assert.doesNotMatch(v.innerHTML, /id="na-contatto"/); assert.doesNotMatch(v.innerHTML, /Area e tipo/);
+  assert.doesNotMatch(v.innerHTML, /id="na-scegli"/); assert.doesNotMatch(v.innerHTML, /Area e tipo/);
   assert.doesNotMatch(v.innerHTML, /data-scelta="serataTipo"/); assert.match(v.innerHTML, /id="na-serata"/);   // nota 005: da me in giù è sempre Team assert.match(v.innerHTML, /id="na-giorno"/); assert.match(v.innerHTML, /id="na-dove"/);
   assert.match(v.innerHTML, /data-scelta="durata"[\s\S]*?data-v="60" class="scelto"/);
   v.querySelector('#na-serata').value = 'Serata Linea Rossi';
@@ -126,7 +128,7 @@ prova('Una Linea: la lista dei frontali; senza sceglierne uno non si salva; scel
   pulisci(); P.modo.admin = true;
   const s2 = await apri({});
   await scegli(s2.v, 'condividi', 'team'); await scegli(s2.v, 'condividi', '');
-  assert.match(s2.v.innerHTML, /id="na-contatto"/); assert.doesNotMatch(s2.v.innerHTML, /id="na-serata"/);
+  assert.match(s2.v.innerHTML, /id="na-scegli"/); assert.doesNotMatch(s2.v.innerHTML, /id="na-serata"/);
 }));
 
 prova('Un riquadro solo «Punti da trattare» (05/10): con un Partner un selettore che si apre con i passi del tipo scelto (nota 011; niente pillole); i passi scelti diventano righe dei punti e restano in su_cosa', async () => {
@@ -271,14 +273,14 @@ prova('Nota 005 e Agenda P5 (Ignazio 23/10): un foglio solo «Cosa vuoi aggiunge
   pulisci(); P.modo.admin = true;
   P.foglioAggiungi(); await attendi();
   await P.fogli.at(-1).clic('[data-strada="persona"]'); await attendi(); await attendi();
-  assert.match(P.fogli.at(-1).innerHTML, /id="na-contatto"/);
+  assert.match(P.fogli.at(-1).innerHTML, /id="na-scegli"/);
   // chi non è Admin: due voci, la serata no
   pulisci();
   P.foglioAggiungi(); await attendi();
   f = P.fogli.at(-1);
   assert.deepEqual(strade(f), ['settimana:Programmare la settimana', 'persona:Appuntamento con una persona']);
   await f.clic('[data-strada="persona"]'); await attendi(); await attendi();
-  assert.match(P.fogli.at(-1).innerHTML, /id="na-contatto"/); assert.doesNotMatch(P.fogli.at(-1).innerHTML, /data-strada=/);
+  assert.match(P.fogli.at(-1).innerHTML, /id="na-scegli"/); assert.doesNotMatch(P.fogli.at(-1).innerHTML, /data-strada=/);
   // «Programmare la settimana» apre il foglio della settimana
   pulisci(); P.AG.spazi = [];
   P.foglioAggiungi(); await attendi();
@@ -516,7 +518,7 @@ prova('105: un appuntamento chiuso: in «Che cosa?» «Esito: … · correggi» 
 prova('105-107: le scelte scendono — scelta la persona si apre da sola «Tipo»; scelto il tipo si apre il suo sottotipo; scelto, si richiude; un tocco apre e richiude le altre', async () => {
   pulisci();
   const { v } = await apri({});
-  const inp = v.querySelector('#na-contatto'); inp.value = 'Fiammetta Rossi'; await inp.onchange();
+  await sceltoDaLista(v, 'Fiammetta Rossi');
   assert.match(v.innerHTML, /data-tendina="tipo" aria-expanded="true"><small>Scegli<\/small>/); assert.match(v.innerHTML, /data-scelta="tipo"/);
   await v.clic('[data-scelta="tipo"] [data-v="Appuntamento"]');
   assert.match(v.innerHTML, /data-tendina="tipo" aria-expanded="false"><b>Appuntamento<\/b>/); assert.doesNotMatch(v.innerHTML, /data-scelta="tipo"/);

@@ -347,6 +347,10 @@
   .na5-cond small { display: block; font-size: 12.5px; color: var(--testo-soft); margin: 6px 0 3px; }   /* nota 107: «Condividi con», una riga per persona */
   .na5-nuova { font-size: 11px; font-weight: 700; color: #8A6200; background: #FFF3D1; border-radius: 6px; padding: 1px 6px; margin-left: 6px; vertical-align: 2px; }   /* nota 108 */
   .na5-piu small { color: var(--testo-soft); font-weight: 400; font-size: 12.5px; }
+  /* nota 114: «Con chi?» senza persona: un tasto che apre l'elenco dei nomi (sceltaContatto), al posto del campo con i suggerimenti */
+  .na5-scegli { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 48px; border: 1px solid var(--bordo); border-radius: 14px; background: var(--superficie);
+    font: inherit; font-size: 16px; color: var(--testo-soft); padding: 10px 14px; text-align: left; cursor: pointer; }
+  .na5-scegli span { flex: 1; } .na5-scegli em { font-style: normal; font-size: 20px; color: var(--testo-tenue); }
   .na5-altro-g { margin-top: 14px; }
   .na5-altro { display: flex; justify-content: space-between; align-items: center; gap: 8px; width: 100%; border: 0; background: none; font: inherit; color: var(--testo); padding: 4px 0; text-align: left; }
   .na5-altro b { font-size: 15px; } .na5-altro small { display: block; color: var(--testo-soft); font-size: 12.5px; font-weight: 500; }
@@ -4134,7 +4138,9 @@ async function nuovoAppuntamento(opz = {}) {
       let h = `<h4 class="mc-t">Con chi?</h4><div class="riquadro mc-g">`;
       // la prima persona: fissa se arriva dalla scheda o dalla coda; in Modifica si cambia (✕) solo se è sola
       if (st.contatto) h += riga5({ ...st.contatto, categoria: st.categoria }, m ? (st.altri.length ? null : '') : opz.contatto && !st.altri.length ? null : '');
-      else h += `<div class="campo"><input id="na-contatto" list="na-nomi" placeholder="Scrivi il nome" value="" autocomplete="off"><datalist id="na-nomi">${elenco.map(c => `<option value="${esc(c.nome)}">`).join('')}</datalist></div>`;
+      // nota 114 (Ignazio 28/10, «sì» sul disegno docs/prototipi/schizzo_con_chi_114.png): sull'iPad i suggerimenti del campo non uscivano; un tasto apre
+      // lo stesso foglio di «Aggiungi un'altra persona» (sceltaContatto), con l'elenco dei nomi da toccare
+      else h += `<button type="button" class="na5-scegli" id="na-scegli">${ic('cerca')}<span>Scegli dalla tua lista</span><em>›</em></button>`;
       h += st.altri.map(c => riga5(c, c.esito ? null : c.id || 'n:' + c.codice)).join('');   // nota 108: chi non ha ancora la scheda si riconosce dal codice   // nota 105: chi ha già il suo esito non si toglie
       // con l'interruttore delle Linee acceso (oggi spento), l'Admin dal «+» sceglie qui anche la serata: «Tutto il Team» o «Una Linea» (nota 027)
       if (CONDIVISIONE_LINEE && puoTeam() && !st.contatto) h += `<div class="campo"><label>Oppure una serata</label>${scelte('condividi', ['', 'team', 'linea'], st.condividi, ['Nessuno', 'Tutto il Team', 'Una Linea'])}</div>`;
@@ -4354,12 +4360,18 @@ async function nuovoAppuntamento(opz = {}) {
       if (area) area.onclick = () => { leggiCampi(); st.area = st.area === 'Prodotti' ? 'Attività' : 'Prodotti'; disegna(); };
       const altro = velo.querySelector('#na-altro-apri');
       if (altro) altro.onclick = () => { leggiCampi(); st.altroAperto = !st.altroAperto; disegna(); };
-      const inp = velo.querySelector('#na-contatto');
-      if (inp) inp.onchange = () => {
-        const trovato = elenco.find(c => c.nome.toLowerCase() === inp.value.trim().toLowerCase());
+      const prendi = trovato => {
         st.contatto = trovato || null; st.categoria = trovato ? trovato.categoria : null;
         if (!A.tipiPer(st.categoria).includes(st.tipo)) { st.tipo = tipoPer(st.categoria); st.modalita = null; }
         leggiCampi(); tipoAncoraBuono(); disegna();
+      };
+      const inp = velo.querySelector('#na-contatto');
+      if (inp) inp.onchange = () => prendi(elenco.find(c => c.nome.toLowerCase() === inp.value.trim().toLowerCase()));
+      const scegli = velo.querySelector('#na-scegli');   // nota 114
+      if (scegli) scegli.onclick = async () => {
+        leggiCampi();
+        const c = await sceltaContatto('Con chi?', '', []);
+        if (c) prendi(c);
       };
       velo.querySelectorAll('[data-parte]').forEach(b => { b.onclick = () => { leggiCampi(); st.parte = parteDopoTocco(st.linea, st.parte, b.dataset.parte); disegna(); }; });   // nota 005
       velo.querySelectorAll('[data-invita]').forEach(b => { b.onclick = () => {
