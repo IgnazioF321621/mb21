@@ -154,6 +154,15 @@
       const q = e.quando || e.inizio;
       if (!e.tipo_azione || e.tipo_azione === 'Contatto' || !q) { fuori.push(e); continue; }
       const k = [e.user_id || '', Date.parse(q), e.tipo_azione, e.modalita || ''].join('|'), g = per.get(k);
+      // Nota Pagine 120 (Ignazio 28/10): la stessa persona non entra due volte. Le scelte in più di «Cosa avete fatto?» sono righe a parte alla stessa
+      // ora (chiudi_azione, nota 045): diventano una riga sola, la prima, con i loro esiti in `_piuEsiti` («Lista nomi · Telefonate»)
+      const i = g && e.contatto_id ? g._persone.findIndex(p => p.contatto_id === e.contatto_id) : -1;
+      if (i >= 0) {
+        const p = g._persone[i], unita = { ...p, _piuEsiti: [...(p._piuEsiti || []), ...(e.esito ? [e.esito] : [])] };
+        g._persone[i] = unita;
+        if (i === 0) g._piuEsiti = unita._piuEsiti;
+        continue;
+      }
       if (g) { g._persone.push(e); continue; }
       const n = { ...e, _persone: [e] };
       per.set(k, n); fuori.push(n);
@@ -394,7 +403,7 @@
     const titolo = `${partner}${a.modalita || a.tipo_azione || ''} · ${nome}`;
     const dallaCoda = a.tipo_azione === 'Contatto' && !!a.data_scelta;   // Richiamare / PM Fissato dati dalla coda
     const stato = (dallaCoda ? 'dalla coda' : a.completata ? '✅ Completato' : '⏳ Da completare') + (a.confermato_il && !a.completata ? ' · 👍 confermato' : '');
-    const sotto = dallaCoda ? (a.esito || '') : [a.area, a.esito ? nomePasso(a.esito) : null].filter(Boolean).join(' | ');   // i passi col loro nome leggibile (nota 070)
+    const sotto = dallaCoda ? (a.esito || '') : [a.area, a.esito ? [a.esito, ...(a._piuEsiti || [])].map(nomePasso).join(' · ') : null].filter(Boolean).join(' | ');   // nota 120: e le scelte in più   // i passi col loro nome leggibile (nota 070)
     return { titolo, sotto: `${sotto ? sotto + ' • ' : ''}${stato}`, colore: COLORI[a.tipo_azione] || COLORI.Contatto };
   }
   function orario(a) {

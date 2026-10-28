@@ -825,4 +825,19 @@ prova('Nota 109 (Ignazio 28/10): un appuntamento con più persone resta UNO — 
   assert.equal(A.programmaDelGiorno({ azioni: [p('a', 'Persona A'), p('b', 'Persona B'), p('c', 'Persona C', '22:00')], giorno: '2026-09-21', opz }).voci.length, 2);
 });
 
+prova('Nota 120 (Ignazio 28/10): la stessa persona non entra due volte nello stesso incontro; le scelte in più di «Cosa avete fatto?» sono una riga sola', () => {
+  const p = (id, contatto, nome, esito) => ({ ...ev(id, '2026-09-21', '10:00', 60, 'Appuntamento'), modalita: 'Lista/Contatti', user_id: 'io', contatto_id: contatto, completata: true, esito, contatti: { nome, categoria: 'Partner' } });
+  const opz = { mioId: 'io', admin: false };
+  const una = A.incontri([p('a', 'c1', 'Persona A', 'ListaNomi'), p('b', 'c1', 'Persona A', 'Telefonate')]);
+  assert.equal(una.length, 1); assert.equal(una[0].id, 'a'); assert.ok(!una[0]._persone);
+  assert.deepEqual(una[0]._piuEsiti, ['Telefonate']);
+  assert.equal(A.riga(una[0], opz).titolo, 'Lista/Contatti · Persona A');
+  assert.match(A.riga(una[0], opz).sotto, new RegExp(`${A.nomePasso('ListaNomi')} · ${A.nomePasso('Telefonate')}`));
+  // con un'altra persona: due persone, non tre; la prima tiene le sue scelte
+  const due = A.incontri([p('a', 'c1', 'Persona A', 'ListaNomi'), p('x', 'c2', 'Persona B', 'ListaNomi'), p('b', 'c1', 'Persona A', 'Telefonate')]);
+  assert.equal(due.length, 1); assert.deepEqual(due[0]._persone.map(x => x.id), ['a', 'x']); assert.deepEqual(due[0]._persone[0]._piuEsiti, ['Telefonate']);
+  assert.equal(A.riga(due[0], opz).titolo, 'Lista/Contatti · Persona A, Persona B');
+  assert.equal(A.puntiGiorni([p('a', 'c1', 'Persona A', 'ListaNomi'), p('b', 'c1', 'Persona A', 'Telefonate')], ['2026-09-21'])['2026-09-21'].quanti, 1);
+});
+
 console.log(`\n${ok} prove superate`);

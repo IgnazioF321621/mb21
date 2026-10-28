@@ -2366,6 +2366,8 @@
   .mp-tondo { flex: none; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
     font-size: 12px; font-weight: 700; color: #fff; }
   .mp-riga.spento { opacity: .5; }
+  .dp-no { display: block; width: 100%; margin-top: 10px; min-height: 48px; border: 1.5px solid var(--testo); border-radius: var(--raggio-bottone); background: none;
+    font: inherit; font-size: 16px; font-weight: 600; color: var(--testo); }   /* nota 120: «Nessun appuntamento», visibile quanto «Sì, fissalo» */
   .mp-giu { font-size: 12.5px; color: var(--testo-soft); margin-top: 3px; }   /* nota 119: quanto scende la linea sotto la persona */
   .mp-giu b { color: var(--testo); }
   .mp-apri { flex: 0 0 auto; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center;
@@ -3838,7 +3840,10 @@ async function chiudiAppuntamento(e, esito, opz = {}) {
     }
     return storico ? null : tracciaDiApertura(pianoFissato, { id: e.contatto_id, nome }, riflessione);
   }
-  const creato = opz.senzaProssimo || storico ? null : await nuovoAppuntamento({
+  // Nota Pagine 120 (Ignazio 28/10: «al momento dell'esito bisogna solo dire cosa si è fatto»; «fissato il prossimo appuntamento?»): prima una domanda
+  // sola con due risposte; la scheda del prossimo appuntamento si apre solo con «Sì, fissalo» (prima si apriva da sola, già compilata)
+  const vuole = !opz.senzaProssimo && !storico && await domandaProssimo(e.contatti ? e.contatti.nome : '', opz.testo || MB21Agenda.nomePasso(esito));
+  const creato = !vuole ? null : await nuovoAppuntamento({
     titolo: `${esito} · ${e.contatti ? e.contatti.nome : ''}`, sottotitolo: 'Fissa il prossimo appuntamento', salta: true,
     giorno: MB21Agenda.spostaGiorno(MB21Coda.oggiRoma(), 1),
     contatto: { id: e.contatto_id, ...e.contatti }, tipo: e.tipo_azione, modalita: e.modalita, area: e.area, userId: e.user_id,
@@ -3852,6 +3857,21 @@ async function chiudiAppuntamento(e, esito, opz = {}) {
 }
 
 // Il momento dopo l'esito (la chat del coach) e il promemoria «Ti eri detto…» (cantiere 42): in pagina-coach.js
+
+// Nota 120: «Fissato il prossimo appuntamento?» · «Sì, fissalo» (true) · «Nessun appuntamento» (false), due tasti ben visibili; toccando fuori = nessuno
+function domandaProssimo(nome, fatto) {
+  return new Promise(risolvi => {
+    const velo = document.createElement('div');
+    velo.className = 'velo';
+    velo.innerHTML = `<div class="foglio"><h3>Fissato il prossimo appuntamento?</h3><p>${nome ? `Con ${esc(nome)}. ` : ''}Salvato: ${esc(fatto)}.</p>
+      <button class="primario" id="dp-si">Sì, fissalo</button><button class="dp-no" id="dp-no">Nessun appuntamento</button></div>`;
+    document.body.appendChild(velo);
+    const fine = v => { velo.remove(); risolvi(v); };
+    velo.onclick = ev => { if (ev.target === velo) fine(false); };
+    velo.querySelector('#dp-si').onclick = () => fine(true);
+    velo.querySelector('#dp-no').onclick = () => fine(false);
+  });
+}
 
 // Sposta un appuntamento (inizio/fine) o un esito dalla coda (data_scelta). `dopo(giorno)`: cosa ridisegnare
 // «A quest'ora hai già…» (cantiere 37): lo stesso avviso nel modulo Nuovo appuntamento e nel foglio Sposta,
@@ -4083,7 +4103,7 @@ async function nuovoAppuntamento(opz = {}) {
     Object.assign(st, { condividi: m.condiviso_con ? 'persona' : '', condivisoAMano: true, suCosa: m.su_cosa || [], portato: m.portato || null, altra: !!st.durata && !A.DURATE.some(d => d[0] === st.durata) });
     const { data: insieme } = await dbq('stesso incontro', supa.from('azioni').select('id, contatto_id, categoria, tipo_azione, modalita, esito, contatti(nome, categoria)')
       .eq('user_id', m.user_id).eq('inizio', m.inizio).eq('tipo_azione', m.tipo_azione).neq('id', m.id));
-    st.altri = (Array.isArray(insieme) ? insieme : []).filter(x => A.stessoIncontro(x, m))
+    st.altri = (Array.isArray(insieme) ? insieme : []).filter(x => A.stessoIncontro(x, m) && x.contatto_id !== m.contatto_id)   // nota 120: mai la stessa persona due volte
       .map(x => ({ id: x.contatto_id, nome: (x.contatti || {}).nome || '—', categoria: (x.contatti || {}).categoria || x.categoria, azione: x.id, esito: x.esito }));
     st.giaInsieme = st.altri.map(x => x.azione);
     if (m.condiviso_con) USA_APP_SI.add(m.contatto_id);   // nota 107: già condiviso nell'app, quindi la usa
@@ -4123,7 +4143,7 @@ async function nuovoAppuntamento(opz = {}) {
       ${opz.sottotitolo ? `<p style="margin:12px 4px 0">${esc(opz.sottotitolo)}</p>` : ''}
       <div id="na-corpo"></div>
       <div class="errore" id="na-errore"></div>
-      <div class="mc-fondo"><button class="link" id="na-no">${opz.salta ? 'Salta' : 'Annulla'}</button><button class="primario" id="na-si">Salva</button></div></div>`;
+      <div class="mc-fondo"><button class="link" id="na-no">Annulla</button><button class="primario" id="na-si">Salva</button></div></div>`;
     document.body.appendChild(velo);
     const chiudi = valore => { velo.remove(); risolvi(valore); };
     velo.querySelector('#na-x').onclick = () => chiudi(null);

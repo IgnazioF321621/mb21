@@ -183,6 +183,7 @@ prova('Chiudere con più passi: una chiamata sola al database (esito, spunte in 
   let toastAnnulla = null, toastTesto = '';
   ctx.mostraToast = (t, annulla) => { toastTesto = t; toastAnnulla = annulla; };
   ctx.apriAgenda = async () => {}; ctx.nuovoAppuntamento = async () => null; ctx.chiediRiflessione = async () => null; ctx.registraVenditaDa = async () => false;
+  ctx.domandaProssimo = async () => false;   // nota 120: «Fissato il prossimo appuntamento?» → «Nessun appuntamento»
   ctx.tracciaDiApertura = async (c, k, poi) => (poi ? poi() : null);
   ctx.MB21Sharing = { proponeTraccia: () => false }; ctx.chiediRientro = async () => null; ctx.chiediData = async () => null; ctx.proponiTracciaDopo = async () => false;
   ctx.fermoScaduto = () => false;   // abbonamento scaduto (nota Pagine 050): la sua prova è in prova_condivisi_vista.js
@@ -296,6 +297,8 @@ prova('Azione di più di 7 giorni fa (chi importa lo storico): nessuna domanda d
   ctx.nuovoAppuntamento = async o => { log.push(['nuovoAppuntamento', o.titolo]); return o.salta ? { id: 'p' } : { id: 'pm1', inizio: '2020-05-05T16:30:00Z', tipo_azione: 'Piano Marketing', categoria: 'Prospect' }; };
   ctx.appuntamentoDaCoda = async () => { log.push(['appuntamentoDaCoda']); return { id: 'pm1', inizio: '2020-05-05T16:30:00Z', tipo_azione: 'Piano Marketing', categoria: 'Prospect' }; };
   ctx.chiediRiflessione = async () => { log.push(['coach']); return null; };
+  let risposta = true;   // nota 120: la risposta a «Fissato il prossimo appuntamento?»
+  ctx.domandaProssimo = async (nome, fatto) => { log.push(['domanda', nome, fatto]); return risposta; };
   ctx.tracciaDiApertura = async (c, k, poi) => { log.push(['traccia']); return poi ? poi() : null; };
   ctx.chiediRientro = async () => { log.push(['rientro']); return '2026-10-22'; }; ctx.dataBreve = g => g;
   ctx.MB21Sharing = { proponeTraccia: () => true };
@@ -323,7 +326,14 @@ prova('Azione di più di 7 giorni fa (chi importa lo storico): nessuna domanda d
   log.length = 0; await ctx.chiudiAppuntamento(pm, 'Ulteriore Follow Up', { dopo: async () => {} });
   assert.deepEqual(log.map(x => x[0]).filter(x => x !== 'toast'), []);
   log.length = 0; await ctx.chiudiAppuntamento({ ...pm, inizio: '2026-10-02T08:00:00Z' }, 'Ulteriore Follow Up', { dopo: async () => {} });
-  assert.deepEqual(log.map(x => x[0]).filter(x => x !== 'toast' && x !== 'scrive'), ['nuovoAppuntamento', 'proponiTraccia', 'traccia', 'coach']);
+  assert.deepEqual(log.map(x => x[0]).filter(x => x !== 'toast' && x !== 'scrive'), ['domanda', 'nuovoAppuntamento', 'proponiTraccia', 'traccia', 'coach']);
+  assert.deepEqual(log[0], ['domanda', 'Mario', 'Ulteriore Follow Up']);
+  // nota 120: «Nessun appuntamento» → la scheda del prossimo non si apre e non si crea niente
+  risposta = false;
+  log.length = 0; await ctx.chiudiAppuntamento({ ...pm, inizio: '2026-10-02T08:00:00Z' }, 'Ulteriore Follow Up', { dopo: async () => {} });
+  assert.deepEqual(log.map(x => x[0]).filter(x => x !== 'toast' && x !== 'scrive'), ['domanda', 'proponiTraccia', 'traccia', 'coach']);
+  assert.ok(log.some(x => x[0] === 'toast' && /salvato/.test(x[1])));
+  risposta = true;
 });
 
 prova('Eliminare un\'azione (nota 010): una funzione del database, il rientro riletto, Annulla la rimette con i legami; Sposta (nota 035): la riga «PM Fissato» della coda segue', async () => {
