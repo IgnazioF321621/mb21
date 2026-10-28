@@ -2377,8 +2377,10 @@ function apriCampoCosa() {
   if (campo) { if (campo.scrollIntoView) campo.scrollIntoView({ block: 'center' }); campo.focus(); }
 }
 // «Programmare la settimana» (Agenda P6, Ignazio 23/10/2026; prima nota 005 a numeri e passi, 046, 022): una schermata sola. In cima si sceglie
-// cosa mettere (Piano Marketing già acceso); sotto i giorni che restano: un tocco sul giorno apre le ore libere, un tocco sull'ora mette lo spazio
-// del tipo acceso, con scritto tipo e ora. In ogni giorno, in grigio, quello che c'è già (MB21Spazi.giaNelGiorno: spazi, Piani e Consulenze fissati,
+// cosa mettere (Piano Marketing già acceso); sotto i giorni che restano: un tocco sul giorno apre il campo ora dell'iPhone (la rotella, già sulla
+// prima ora libera) con «Aggiungi», che mette lo spazio del tipo acceso, con scritto tipo e ora. Nota Pagine 125 (Ignazio 28/10/2026, «ok»): prima
+// erano pillole a ore piene; con la rotella si mettono anche i quarti d'ora (l'iPhone mostra tutti i minuti: lo step non lo rispetta, provato nel
+// simulatore). Se a quell'ora c'è già qualcosa (impegni, serate ricevute, spazi, quelli appena messi) lo si dice e non si aggiunge. In ogni giorno, in grigio, quello che c'è già (MB21Spazi.giaNelGiorno: spazi, Piani e Consulenze fissati,
 // serate ricevute), dai dati già caricati. Niente «quanti» né limite di 4 (Ignazio lo sa). L'Admin nella propria Agenda trova la SdS/OPEN del
 // lunedì già messa, con la ×; per gli altri la frase di Ignazio sta in un «Perché?». Il nome della serata si mette dopo, dal foglio dell'incontro.
 async function preparaSettimana() {
@@ -2392,7 +2394,7 @@ async function preparaSettimana() {
   if (sdsMia && !CONDIVISIONE_LINEE && AG.ramo === undefined) await caricaRamoApp();
   const riceve = sdsMia && !CONDIVISIONE_LINEE ? personeAppDelGruppo() : [];
   const sdsA = riceve.length === 1 ? riceve[0] : null;
-  const st = { tipo: S.DA_PREPARARE[0], scelti: [], aperto: null, sdsVia: false };
+  const st = { tipo: S.DA_PREPARARE[0], scelti: [], aperto: null, ora: '', avviso: '', sdsVia: false };
   const lun = settimana[S.SDS.giorno];
   const sds = () => (sdsMia && !st.sdsVia && S.sdsDaMettere(settimana, esistenti, oggi) ? [{ tipo: 'SdS/OPEN', giorno: lun, ora: S.SDS.ora, durata: S.SDS.durata }] : []);
   const ricevutiDi = g => (visto().id === ST.utente.id ? A.ricevutiComeEventi(AG.ricevuti, g, visto().id) : []);   // nota 049: le serate ricevute occupano l'ora
@@ -2405,6 +2407,15 @@ async function preparaSettimana() {
     const occ = S.occupati(g, [...A.eventiDelGiorno(AG.azioni, g), ...ricevutiDi(g)], esistenti, [...st.scelti, ...sds()]);
     return S.oreLibere(occ, { adesso: g === oggi ? A.inMinuti(A.partiRoma(new Date().toISOString()).ora) : null });
   }
+  // nota 125: cosa c'è già nell'ora scelta (un'ora intera da lì), con i nomi da dire; vuoto = libera
+  function scontriDi(g, ora) {
+    const da = A.inMinuti(ora), a = da + S.DURATA, tocca = o => !!o && da < o.a && a > o.da;
+    const nomi = [];
+    for (const e of [...A.eventiDelGiorno(AG.azioni, g), ...ricevutiDi(g)]) if (tocca(S.occupati(g, [e])[0])) nomi.push(e._ricevuto ? A.titoloRicevuto(e._ricevuto) : A.riga(e, { mioId: null, admin: false }).titolo);
+    for (const s of esistenti) if (tocca(S.occupati(g, [], [s])[0])) nomi.push(S.titolo(s));
+    for (const x of [...sds(), ...st.scelti]) if (tocca(S.occupati(g, [], [], [x])[0])) nomi.push(x.tipo === 'SdS/OPEN' ? 'SdS/OPEN' : S.TIPI[x.tipo].nome);
+    return nomi;
+  }
   const pastiglia = (tipo, testo, attr) => `<span class="sp-chip" style="--tinta:${tipo === 'SdS/OPEN' ? 'var(--az-appuntamento)' : coloreSpazio(tipo)}">${esc(testo)}<button type="button" ${attr} aria-label="Togli ${esc(testo)}">${ic('chiudi')}</button></span>`;
   function disegna(errore) {
     const nuovi = [...sds(), ...st.scelti];
@@ -2416,13 +2427,13 @@ async function preparaSettimana() {
         const gia = S.giaNelGiorno(g, esistenti, AG.azioni, ricevutiDi(g));
         const miei = st.scelti.map((x, i) => ({ ...x, i })).filter(x => x.giorno === g);
         const sdsQui = g === lun ? sds() : [];
-        const ore = st.aperto === g ? oreDi(g) : null;
         return `<div class="sp-giorno${st.aperto === g ? ' aperto' : ''}"><button type="button" class="sp-g" data-g="${g}"><b>${esc(giornoBreve(g))}</b>${
           gia.length || miei.length || sdsQui.length ? '' : '<small>tocca per aggiungere</small>'}</button>
           ${gia.map(x => `<span class="sp-gia">${esc(x.ora)} ${esc(x.testo)}</span>`).join('')}
           ${sdsQui.map(x => pastiglia('SdS/OPEN', `SdS/OPEN ${x.ora}${CONDIVISIONE_LINEE ? ' · per tutto il Team' : sdsA ? ` · la riceve: ${sdsA.nome}` : ''}`, 'data-sds-via')).join('')}
           ${miei.map(x => pastiglia(x.tipo, `${S.TIPI[x.tipo].nome} ${x.ora}`, `data-togli="${x.i}"`)).join('')}</div>
-          ${ore ? `<div class="sp-ore">${ore.length ? ore.map(o => `<button type="button" data-ora="${o}">${o}</button>`).join('') : '<small>Nessuna ora libera in questo giorno.</small>'}</div>` : ''}`;
+          ${st.aperto === g ? `<div class="sp-ora-riga"><input type="time" id="sp-ora-nuova" aria-label="Ora" value="${esc(st.ora)}"><button type="button" class="primario" id="sp-aggiungi">Aggiungi</button></div>
+          ${st.avviso ? `<div class="ag-scontro">${ic('attenzione')} ${esc(st.avviso)}</div>` : ''}` : ''}`;
       }).join('')}
       <p class="sp-conto${nuovi.length ? ' pieno' : ''}">${nuovi.length ? esc('Nuovi: ' + S.riassunto(nuovi)) : 'Tocca un giorno per mettere il primo'}</p>`;
     velo.innerHTML = `<div class="foglio alto mc sp-foglio">
@@ -2433,8 +2444,23 @@ async function preparaSettimana() {
     velo.querySelector('#sp-x').onclick = chiudi;
     velo.querySelector('#sp-no').onclick = chiudi;
     velo.querySelectorAll('[data-tipo-scelto]').forEach(b => { b.onclick = () => { st.tipo = b.dataset.tipoScelto; disegna(); }; });
-    velo.querySelectorAll('[data-g]').forEach(b => { b.onclick = () => { st.aperto = st.aperto === b.dataset.g ? null : b.dataset.g; disegna(); }; });
-    velo.querySelectorAll('[data-ora]').forEach(b => { b.onclick = () => { st.scelti.push({ tipo: st.tipo, giorno: st.aperto, ora: b.dataset.ora, durata: S.DURATA }); st.aperto = null; disegna(); }; });
+    velo.querySelectorAll('[data-g]').forEach(b => { b.onclick = () => {
+      st.aperto = st.aperto === b.dataset.g ? null : b.dataset.g;
+      st.ora = st.aperto ? (oreDi(st.aperto)[0] || '') : ''; st.avviso = '';   // la rotella parte dalla prima ora libera
+      disegna();
+    }; });
+    const campoOra = velo.querySelector('#sp-ora-nuova'), aggiungi = velo.querySelector('#sp-aggiungi');
+    if (campoOra) campoOra.onchange = () => { st.ora = campoOra.value; };
+    if (aggiungi) aggiungi.onclick = () => {
+      const ora = (campoOra.value || '').slice(0, 5);
+      st.ora = ora;
+      if (!/^\d\d:\d\d$/.test(ora)) { st.avviso = 'Scegli l\'ora.'; return disegna(); }
+      if (st.aperto === oggi && A.inMinuti(ora) <= A.inMinuti(A.partiRoma(new Date().toISOString()).ora)) { st.avviso = 'Quest\'ora di oggi è già passata: scegline un\'altra.'; return disegna(); }
+      const scontri = scontriDi(st.aperto, ora);
+      if (scontri.length) { st.avviso = `A quest'ora hai già ${scontri.join(', ')}`; return disegna(); }
+      st.scelti.push({ tipo: st.tipo, giorno: st.aperto, ora, durata: S.DURATA }); st.aperto = null; st.avviso = '';
+      disegna();
+    };
     velo.querySelectorAll('[data-togli]').forEach(b => { b.onclick = () => { st.scelti.splice(Number(b.dataset.togli), 1); disegna(); }; });
     velo.querySelectorAll('[data-sds-via]').forEach(b => { b.onclick = () => { st.sdsVia = true; disegna(); }; });
     velo.querySelector('#sp-si').onclick = async () => {

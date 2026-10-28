@@ -20,11 +20,11 @@ prova('P6: una schermata sola — «Cosa metti in settimana?» con Piano Marketi
   assert.equal([...v.innerHTML.matchAll(/data-tipo-scelto="([^"]+)"( class="scelto")?/g)].map(m => m[1] + (m[2] ? '*' : '')).join(), 'Piano Marketing*,Consulenza PRD,Team,LOS');
   assert.doesNotMatch(v.innerHTML, /data-quanti|Avanti|Messi \d|sp-solo-sds|data-nome-apri/);   // niente numeri, passi, conti né nome qui
   assert.match(v.innerHTML, /id="sp-si" disabled>Crea</); assert.match(v.innerHTML, /Tocca un giorno per mettere il primo/);
-  v.clic('[data-g="2026-09-23"]'); v.clic('[data-ora]', 0);
+  v.clic('[data-g="2026-09-23"]'); v.clic('#sp-aggiungi');
   assert.match(v.innerHTML, /<span class="sp-chip"[^>]*>Piano Marketing \d\d:\d\d<button type="button" data-togli="0"/);
-  v.clic('[data-tipo-scelto="Team"]'); v.clic('[data-g="2026-09-23"]'); v.clic('[data-ora]', 0);   // un altro tipo, stesso giorno, senza contare
+  v.clic('[data-tipo-scelto="Team"]'); v.clic('[data-g="2026-09-23"]'); v.clic('#sp-aggiungi');   // un altro tipo, stesso giorno, senza contare
   v.clic('[data-tipo-scelto]', 0);   // di nuovo Piano Marketing (il primo)
-  for (let k = 0; k < 5; k++) { v.clic('[data-g="2026-09-24"]'); v.clic('[data-ora]', 0); }   // niente limite di 4
+  for (let k = 0; k < 5; k++) { v.clic('[data-g="2026-09-24"]'); v.clic('#sp-aggiungi'); }   // niente limite di 4
   assert.match(v.innerHTML, /Nuovi: 6 Piani Marketing e 1 incontro di Team/);
   await v.clic('#sp-si');
   const righe = P.scritture.find(x => x.tabella === 'spazi' && x.op === 'insert').args[0];
@@ -33,6 +33,35 @@ prova('P6: una schermata sola — «Cosa metti in settimana?» con Piano Marketi
   assert.equal('nome' in righe.find(r => r.tipo === 'Team'), false);   // il nome della serata si mette dopo, dal foglio dell'incontro
   assert.ok(righe.every(r => !('condiviso_con' in r) && !('linea_codice' in r)));   // Ignazio 23/10: gli incontri di Team/LdS sono solo suoi, non si mandano a nessuno
   assert.match(P.avvisi.at(-1).t, /^Settimana pronta: 6 Piani Marketing e 1 incontro di Team/);
+});
+
+prova('Nota 125: toccando il giorno, il campo ora dell\'iPhone (rotella) già sulla prima ora libera e «Aggiungi», niente pillole; i quarti d\'ora; se l\'ora è occupata lo dice e non aggiunge', async () => {
+  pulisci();
+  P.AG.spazi = [{ id: 'e1', user_id: 'io', tipo: 'Piano Marketing', inizio: iso('2026-09-23', '09:00'), durata: 60 }];
+  try {
+    await P.preparaSettimana();
+    const v = P.fogli[0];
+    v.clic('[data-g="2026-09-23"]');
+    assert.match(v.innerHTML, /<div class="sp-ora-riga"><input type="time" id="sp-ora-nuova" aria-label="Ora" value="10:00"><button type="button" class="primario" id="sp-aggiungi">Aggiungi<\/button><\/div>/);   // le 9 sono occupate
+    assert.doesNotMatch(v.innerHTML, /sp-ore|data-ora=/);
+    v.querySelector('#sp-ora-nuova').value = '09:30';   // a cavallo del Piano Marketing delle 9
+    v.clic('#sp-aggiungi');
+    assert.match(v.innerHTML, /<div class="ag-scontro">[\s\S]*A quest&#39;ora hai già Piano Marketing<\/div>|<div class="ag-scontro">[\s\S]*A quest'ora hai già Piano Marketing<\/div>/);
+    assert.doesNotMatch(v.innerHTML, /data-togli=/);
+    assert.match(v.innerHTML, /id="sp-ora-nuova" aria-label="Ora" value="09:30"/);   // l'ora scelta resta nel campo
+    v.querySelector('#sp-ora-nuova').value = '18:15';
+    v.clic('#sp-aggiungi');
+    assert.match(v.innerHTML, /<span class="sp-chip"[^>]*>Piano Marketing 18:15<button type="button" data-togli="0"/);
+    assert.doesNotMatch(v.innerHTML, /sp-ora-nuova|ag-scontro/);   // il giorno si richiude
+    v.clic('[data-g="2026-09-23"]'); v.querySelector('#sp-ora-nuova').value = '18:45'; v.clic('#sp-aggiungi');   // tocca quello appena messo
+    assert.match(v.innerHTML, /A quest(&#39;|')ora hai già Piano Marketing/);
+    v.querySelector('#sp-ora-nuova').value = ''; v.clic('#sp-aggiungi');
+    assert.match(v.innerHTML, /Scegli l(&#39;|')ora\./);
+    v.querySelector('#sp-ora-nuova').value = '19:15'; v.clic('#sp-aggiungi');
+    await v.clic('#sp-si');
+    const righe = P.scritture.find(x => x.tabella === 'spazi' && x.op === 'insert').args[0];
+    assert.deepEqual(righe.map(r => P.A.partiRoma(r.inizio).ora).sort(), ['18:15', '19:15']);
+  } finally { P.AG.spazi = []; }
 });
 
 prova('P6: in ogni giorno, in grigio, quello che c\'è già (spazi, Piani e Consulenze fissati); la × toglie una pastiglia nuova', async () => {
@@ -48,7 +77,7 @@ prova('P6: in ogni giorno, in grigio, quello che c\'è già (spazi, Piani e Cons
     assert.doesNotMatch(gio, /sp-gia/);   // un Follow Up non è un Piano Marketing né una Consulenza: non si scrive qui
     const ven = v.innerHTML.slice(v.innerHTML.indexOf('data-g="2026-09-25"'), v.innerHTML.indexOf('data-g="2026-09-26"'));
     assert.match(ven, /<span class="sp-gia">18:00 Piano Marketing · fissato<\/span>/);   // un PM già fissato con una persona (x5 del banco)
-    v.clic('[data-g="2026-09-22"]'); v.clic('[data-ora]', 0);
+    v.clic('[data-g="2026-09-22"]'); v.clic('#sp-aggiungi');
     assert.match(v.innerHTML, /data-togli="0"/);
     v.clic('[data-togli="0"]');
     assert.doesNotMatch(v.innerHTML, /data-togli=/); assert.match(v.innerHTML, /id="sp-si" disabled>/);
@@ -77,7 +106,7 @@ prova('P6, P5b e nota 047: l\'Admin trova la SdS/OPEN del lunedì già messa (co
     v = P.fogli[0];
     v.clic('[data-sds-via]');
     assert.doesNotMatch(v.innerHTML, /data-sds-via/); assert.match(v.innerHTML, /id="sp-si" disabled>/);
-    v.clic('[data-g="2026-09-23"]'); v.clic('[data-ora]', 0);
+    v.clic('[data-g="2026-09-23"]'); v.clic('#sp-aggiungi');
     await v.clic('#sp-si');
     righe = P.scritture.find(x => x.tabella === 'spazi' && x.op === 'insert').args[0];
     assert.equal(righe.some(r => r.tipo === 'SdS/OPEN'), false);
