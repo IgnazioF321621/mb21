@@ -839,7 +839,8 @@ function disegnaDati(c, extra) {
   }).filter(Boolean);
   // «Contatti fatti» (nota 091 b): arriva con la seconda passata, contato solo per questa persona; finché non c'è la riga non si vede (niente «0» di passaggio)
   const fatti = valore('contatti_fatti');
-  const resto = [['Interesse', MB21Lista.testoInteresse(c.area)], ['Contatto e/o Incaricato di', c.referral_di], ['Note', c.note], ['Contatti fatti', fatti == null ? '' : String(fatti)]]
+  const resto = [['Area di interesse', MB21Lista.testoInteresse(c.area)],   // nota Pagine 130 (Ignazio 28/10): «Interesse» → «Area di interesse», anche nel modulo
+    ['Contatto e/o Incaricato di', c.referral_di], ['Note', c.note], ['Contatti fatti', fatti == null ? '' : String(fatti)]]
     .filter(([, v]) => v).map(([k, v]) => [k, esc(v)]);
   // nota Pagine 031 (Ignazio 06/10): il codice Amway, si copia con un tocco; arriva con `datiPersonaExtra` (la stessa lettura di compleanno e lavoro)
   const codice = valore('codice_amway');
@@ -1664,7 +1665,7 @@ function moduloSemplice(titolo, campi, opz = {}) {
 // lo stesso di prima: il salvataggio non cambia (MB21Lista.areaDa). Un valore vecchio fuori elenco resta nel menu nascosto finché non si cambia.
 function campoInteresse(area, opz, conStorico) {
   const L = MB21Lista, x = L.interesseDa(area);
-  return `<div class="campo"><label>Interesse</label><select id="f-area" hidden>${opz(conStorico(L.AREE, area), area, '—')}</select>
+  return `<div class="campo"><label>Area di interesse</label><select id="f-area" hidden>${opz(conStorico(L.AREE, area), area, '—')}</select>
       <select id="f-int"><option value="">—</option>${['Attività', 'Prodotti'].map(v => `<option${x.interesse === v ? ' selected' : ''}>${v}</option>`).join('')}</select></div>
     <div class="campo" id="f-quali-campo"${x.interesse === 'Prodotti' ? '' : ' hidden'}><label>Quali prodotti?</label><select id="f-quali"><option value="">—</option>${L.QUALI_PRODOTTI.map(([v, t]) => `<option value="${esc(v)}"${x.quali === v ? ' selected' : ''}>${esc(t)}</option>`).join('')}</select></div>`;
 }

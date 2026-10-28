@@ -143,12 +143,12 @@ prova('M8: Età, «Tipo di lavoro» (nota 098, prima «Dipendente o autonomo?»)
   const A = modulo(), { f } = A.apri({ id: 'w', user_id: 'io', nome: 'Persona W', categoria: 'Prospect' });
   assert.match(f.innerHTML, /<label>Età<\/label><select id="f-eta">/);
   assert.match(f.innerHTML, /<label>Tipo di lavoro <small class="sotto" style="margin:0">\(serve per la traccia dopo il Piano Marketing\)<\/small><\/label>/);
-  assert.match(f.innerHTML, /<label>Interesse<\/label><select id="f-area" hidden>[\s\S]*?<\/select>\s*<select id="f-int">/);   // nota 098: due scelte, il menu di prima nascosto
+  assert.match(f.innerHTML, /<label>Area di interesse<\/label><select id="f-area" hidden>[\s\S]*?<\/select>\s*<select id="f-int">/);   // nota 098: due scelte, il menu di prima nascosto
   assert.match(f.innerHTML, /<label>Contatto e\/o Incaricato di<\/label>/);
   assert.doesNotMatch(f.innerHTML, /Fascia Età|per la prima traccia dopo il PM|<label>Area<\/label>/);
   const B = modulo(), b = B.apri({ id: 'w', user_id: 'io', nome: 'Persona W', categoria: null }, { poiAzione: true });
   assert.match(b.f.innerHTML, /Per segnare un'azione serve la categoria: sceglila qui sotto e tocca «Salva», poi si apre «Nuova azione»\./);
-  assert.match(PL, /const resto = \[\['Interesse', MB21Lista\.testoInteresse\(c\.area\)\],/);   // anche nella sezione Dati, a parole («Prodotti · eSpring»)
+  assert.match(PL, /const resto = \[\['Area di interesse', MB21Lista\.testoInteresse\(c\.area\)\],/);   // anche nella sezione Dati, a parole («Prodotti · eSpring»)
 });
 
 prova('M3 e M4: moduloSemplice mostra la persona solo se chi lo apre la passa; «Salva» spento dice cosa manca (anche la voce «Scegli …» di un menu)', () => {
