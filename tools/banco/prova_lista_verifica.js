@@ -253,7 +253,7 @@ function apriModuloVero(c, poi) {
     dbq: () => new Promise(() => {}), supa: { from: () => ({ select: () => ({ eq: () => ({ maybeSingle: () => null }) }) }) }, leggiAccountCliente: () => new Promise(() => {}),
     document: { createElement: () => { const n = new Nodo(); fogli.push(n); return n; }, body: { appendChild() {} } } };
   vm.createContext(ctx);
-  vm.runInContext(CONTA[0] + pezzo(PL, 'function campoInteresse') + '\n' + pezzo(PL, 'function collegaInteresse') + '\n' + pezzo(PL, 'function apriModulo') + ';this.apri = apriModulo;', ctx);
+  vm.runInContext(CONTA[0] + pezzo(PL, 'function campoInteresse') + '\n' + pezzo(PL, 'function collegaInteresse') + '\n' + pezzo(PL, 'function apriModulo') + '\n' + pezzo(IDX, 'function tendina5Html') + '\n' + pezzo(IDX, 'function collegaTendine5') + ';this.apri = apriModulo;', ctx);
   ctx.apri(c, poi || {});
   return fogli[0];
 }
@@ -280,6 +280,24 @@ prova('L4: finché manca qualcosa, sul bottone c\'è scritto cosa: «Scrivi il n
   assert.equal($('invia').textContent, 'Salva'); assert.equal($('invia').disabled, false);
   $('f-nome').value = '  '; $('f-nome').oninput();
   assert.equal($('invia').textContent, 'Scrivi il nome');
+});
+
+prova('Nota 127: la Categoria è una tendina (sel5 + tendina5) — chiusa dice la scelta col pallino, «Non collegato» con la sua spiegazione; un tocco su una voce la sceglie, scrive in #f-cat e la tendina si richiude', () => {
+  const f = apriModuloVero({ id: 'c1', user_id: 'io', nome: 'Persona A', categoria: 'Prospect', telefono: '+393330000001' }), $ = id => f.querySelector('#' + id);
+  let h = f.innerHTML;
+  assert.doesNotMatch(h, /mc-cats|class="mc-cat /);   // niente più pastiglie
+  assert.match(h, /<div id="f-cat-tnd"><div class="tnd5"><button type="button" class="sel5" data-tnd5><b><i class="mc-pallino cat-Prospect"><\/i>Prospect<\/b><em>▾<\/em><\/button><div class="ag-scelte tendina5" >/);
+  assert.match(h, /<button type="button" class="scelto" data-cat="Prospect"><span><i class="mc-pallino cat-Prospect"><\/i>Prospect<\/span><b>✓<\/b><\/button>/);
+  assert.match(h, /data-cat="Unlinked"><span><i class="mc-pallino cat-Unlinked"><\/i>Non collegato<small>Conosciuto\/a, nessun recapito<\/small><\/span>/);
+  let cambiato = 0; $('f-cat').dispatchEvent = () => { cambiato++; };
+  f.querySelector('[data-cat="Partner"]').onclick();
+  assert.equal($('f-cat').value, 'Partner'); assert.equal(cambiato, 1);
+  h = f.innerHTML;
+  assert.match(h, /class="sel5" data-tnd5><b><i class="mc-pallino cat-Partner"><\/i>Partner<\/b>/);
+  assert.match(h, /<button type="button" class="scelto" data-cat="Partner">/); assert.doesNotMatch(h, /class="scelto" data-cat="Prospect"/);
+  assert.doesNotMatch(h, /class="tnd5 aperta"/);   // ridisegnata chiusa
+  assert.match(apriModuloVero(null, { nome: 'Persona B' }).innerHTML, /class="sel5" data-tnd5><small>Scegli la categoria<\/small>/);   // nuovo contatto senza categoria
+  assert.match(IDX, /\.mc-pallino \{ display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var\(--cat\);/);
 });
 
 prova('L4: in Modifica i tre gruppi di sempre, con «Archiviato» tra le categorie', () => {
@@ -461,7 +479,7 @@ prova('L7: nome nuovo dal «+» e «Modifica» dai tre puntini: si rilegge solo 
     aggiornaRiga: async id => { letture.push(id); }, ricaricaERidisegna: () => Promise.resolve(), mostraToast() {}, chiediConferma: async () => true, domandaInvito() {}, azionePiu() {},
     document: { createElement: () => { const n = new Nodo(); fogli.push(n); return n; }, body: { appendChild() {} } } };
   vm.createContext(ctx);
-  vm.runInContext([CONTA[0], PL.match(/^const testoDoppioni = .*$/m)[0], pezzo(PL, 'async function doppioniDi'), pezzo(PL, 'async function salvaNomeNuovo'), pezzo(PL, 'function campoInteresse') + '\n' + pezzo(PL, 'function collegaInteresse') + '\n' + pezzo(PL, 'function apriModulo'), 'this.apri = apriModulo;'].join('\n'), ctx);   // L9: il nome nuovo passa da salvaNomeNuovo
+  vm.runInContext([CONTA[0], PL.match(/^const testoDoppioni = .*$/m)[0], pezzo(PL, 'async function doppioniDi'), pezzo(PL, 'async function salvaNomeNuovo'), pezzo(PL, 'function campoInteresse') + '\n' + pezzo(PL, 'function collegaInteresse') + '\n' + pezzo(PL, 'function apriModulo'), pezzo(IDX, 'function tendina5Html'), pezzo(IDX, 'function collegaTendine5'), 'this.apri = apriModulo;'].join('\n'), ctx);   // L9: il nome nuovo passa da salvaNomeNuovo
   // nuovo
   ctx.apri(null, {}); let f = fogli.pop(), $ = id => f.querySelector('#' + id);
   $('f-nome').value = 'Persona Nuova'; $('f-cat').value = 'Prospect'; $('f-cat').onchange();
@@ -700,7 +718,7 @@ prova('Nota 080 (Ignazio 24/10): «Cliente con account» — con «Sì» la data
     aggiornaRiga: async () => {}, ricaricaERidisegna: () => Promise.resolve(), mostraToast: t => avvisi.push(t), chiediConferma: async () => true, domandaInvito() {}, azionePiu() {},
     document: { createElement: () => { const n = new Nodo(); n.isConnected = true; fogli.push(n); return n; }, body: { appendChild() {} } } };
   vm.createContext(ctx);
-  vm.runInContext([CONTA[0], PL.match(/^const testoDoppioni = .*$/m)[0], pezzo(PL, 'async function doppioniDi'), pezzo(PL, 'async function salvaNomeNuovo'), pezzo(PL, 'function campoInteresse') + '\n' + pezzo(PL, 'function collegaInteresse') + '\n' + pezzo(PL, 'function apriModulo'), 'this.apri = apriModulo;'].join('\n'), ctx);
+  vm.runInContext([CONTA[0], PL.match(/^const testoDoppioni = .*$/m)[0], pezzo(PL, 'async function doppioniDi'), pezzo(PL, 'async function salvaNomeNuovo'), pezzo(PL, 'function campoInteresse') + '\n' + pezzo(PL, 'function collegaInteresse') + '\n' + pezzo(PL, 'function apriModulo'), pezzo(IDX, 'function tendina5Html'), pezzo(IDX, 'function collegaTendine5'), 'this.apri = apriModulo;'].join('\n'), ctx);
   // (nel finto DOM il menu della categoria non prende l'opzione «selected»: si mette a mano, come la vede il telefono)
   const apri = () => { ctx.apri(c); const f = fogli.pop(); f.querySelector('#f-cat').value = 'Cliente'; return { f, $: id => f.querySelector('#' + id) }; };
   // cliente da anni: la data salvata, che si cambia

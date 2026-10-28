@@ -1713,8 +1713,16 @@ function apriModulo(c, poi = {}) {
   velo.className = 'velo';
   if (poi.salvato) velo.style.zIndex = 30;   // M7: sopra la scelta del contatto dell'Agenda (25)
   // Il modulo (cantiere 34, prova approvata da Ignazio il 19/09: tools/design/confronto_modulo.html): in testa chi è, tre gruppi con un titoletto
-  // (Chi è · Dati personali · Per l'attività), la categoria a pastiglie, «Annulla · Salva» fermi in fondo. I campi e i loro id sono quelli di prima:
-  // il menu della categoria c'è ancora, nascosto, e le pastiglie scrivono lì, così il salvataggio non cambia.
+  // (Chi è · Dati personali · Per l'attività), la categoria (a pastiglie fino al 28/10, ora a tendina: nota 127), «Annulla · Salva» fermi in fondo. I campi e i loro id sono quelli di prima:
+  // il menu della categoria c'è ancora, nascosto, e la tendina scrive lì, così il salvataggio non cambia.
+  // Nota Pagine 127 (Ignazio 28/10/2026: «nella scheda Contatto… mi escono ancora tutte le categorie da cliccare. Non la leggo a tendina»): la Categoria
+  // del modulo Nuovo / Modifica contatto è la tendina del Nuovo appuntamento e di «Modifiche» (sel5 + tendina5): chiusa dice la scelta col suo pallino,
+  // aperta l'elenco con ✓ e, sotto «Non collegato», cosa vuol dire. I tre tasselli di «Da catalogare» in Oggi restano (scelta «A»).
+  const tendinaCategoria = (categorie, scelta) => {
+    const pallino = k => `<i class="mc-pallino ${classeCat(k)}"></i>`, nome = k => esc(MB21Lista.nomeCategoria(k));
+    const voci = categorie.map(k => `<button type="button" class="${k === scelta ? 'scelto' : ''}" data-cat="${esc(k)}"><span>${pallino(k)}${nome(k)}${MB21Lista.SPIEGA_CATEGORIA[k] ? `<small>${esc(MB21Lista.SPIEGA_CATEGORIA[k])}</small>` : ''}</span>${k === scelta ? '<b>✓</b>' : ''}</button>`).join('');
+    return tendina5Html(categorie.includes(scelta) ? `<b>${pallino(scelta)}${nome(scelta)}</b>` : '<small>Scegli la categoria</small>', voci);
+  };
   // Lista Nomi L4 (Ignazio 23/10): nel nuovo contatto niente «Archiviato» (resta in Modifica)
   const categorie = conStorico(MB21Lista.CATEGORIE, c && c.categoria).filter(k => !nuovo || k !== 'Archiviato');
   const campoNome = `<div class="campo"><label>Nominativo <small>Obbligatorio</small></label><input id="f-nome" placeholder="Nome Cognome" value="${esc(c ? c.nome : poi.nome || '')}"><div id="f-arch" class="f-arch" hidden></div></div>`;
@@ -1722,8 +1730,7 @@ function apriModulo(c, poi = {}) {
       <select id="f-prefisso">${prefissi.map(p => { const n = MB21Lista.PREFISSI.find(x => x[0] === p); return `<option value="${p}" ${p === (tel.prefisso || '+39') ? 'selected' : ''}>${p}${n ? ' ' + n[1] : ''}</option>`; }).join('')}</select>
       <input id="f-tel" type="tel" inputmode="tel" placeholder="(es.) 33x xxxxxxx" value="${esc(tel.numero)}"></div></div>`;
   const campoCat = `<div class="campo"><label>Categoria <small>Obbligatorio</small></label>${poi.poiAzione ? '<div class="avviso" id="f-cat-prima" style="margin:4px 0 8px">Per segnare un\'azione serve la categoria: sceglila qui sotto e tocca «Salva», poi si apre «Nuova azione».</div>' : ''}<select id="f-cat" hidden>${opz(categorie, c ? c.categoria : poi.categoria, 'Scegli qualcosa')}</select>
-      <div class="mc-cats">${categorie.map(k => `<button type="button" class="mc-cat ${classeCat(k)} ${(c ? c.categoria : poi.categoria) === k ? 'on' : ''}" data-cat="${esc(k)}">${esc(MB21Lista.nomeCategoria(k))}</button>`).join('')}</div>
-      ${categorie.filter(k => MB21Lista.SPIEGA_CATEGORIA[k]).map(k => `<small class="mc-cat-nota">${esc(MB21Lista.nomeCategoria(k))}: ${esc(MB21Lista.SPIEGA_CATEGORIA[k].toLowerCase())}</small>`).join('')}</div>`;
+      <div id="f-cat-tnd">${tendinaCategoria(categorie, c ? c.categoria : poi.categoria)}</div></div>`;
   // Nota Pagine 080 (Ignazio 24/10: «non è un cliente da oggi, è un cliente da anni»): con «Sì» la data «dal» si vede e si cambia (mai nel futuro)
   const campoAccount = `<div class="campo" id="f-account-campo"><label>Cliente con account</label>
       <div class="vn-quando"><button type="button" data-account="si">Sì</button><button type="button" data-account="no">No</button></div>
@@ -1760,13 +1767,18 @@ function apriModulo(c, poi = {}) {
   $('annulla').onclick = lascia;
   collegaInteresse(velo);   // nota 098: Interesse in due scelte
   if (poi.poiAzione && $('f-cat-prima') && $('f-cat-prima').scrollIntoView) $('f-cat-prima').scrollIntoView({ block: 'center' });   // S5c: la categoria in evidenza
-  // le pastiglie della categoria scrivono nel menu nascosto e avvisano il modulo, come se si fosse scelto dal menu
-  velo.querySelectorAll('.mc-cat').forEach(b => b.onclick = () => {
-    $('f-cat').value = b.dataset.cat;
-    velo.querySelectorAll('.mc-cat').forEach(x => x.classList.toggle('on', x === b));
-    $('mc-testa').className = 'mc-testa ' + classeCat(b.dataset.cat);
-    $('f-cat').dispatchEvent(new Event('change'));
-  });
+  // la tendina della categoria (nota Pagine 127) scrive nel menu nascosto e avvisa il modulo, come se si fosse scelto dal menu; scelta una, si richiude
+  const collegaCategoria = () => {
+    collegaTendine5($('f-cat-tnd'));
+    $('f-cat-tnd').querySelectorAll('[data-cat]').forEach(b => b.onclick = () => {
+      $('f-cat').value = b.dataset.cat;
+      $('f-cat-tnd').innerHTML = tendinaCategoria(categorie, b.dataset.cat);
+      collegaCategoria();
+      $('mc-testa').className = 'mc-testa ' + classeCat(b.dataset.cat);
+      $('f-cat').dispatchEvent(new Event('change'));
+    });
+  };
+  collegaCategoria();
   // «Elimina» dentro la scheda sta qui, in fondo a Modifica (Ignazio 19/09: in «Dati» non è il posto giusto); stessa funzione dei tre puntini
   if ($('elimina-qui')) $('elimina-qui').onclick = () => { chiudi(); elimina(c); };
   const controlla = () => {

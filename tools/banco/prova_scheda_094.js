@@ -51,6 +51,7 @@ function modulo({ esiti = {}, lettura = new Promise(() => {}), righe = [], tab =
     document: { createElement: () => { const n = new Nodo(); n.isConnected = true; n.remove = () => { n.rimosso = true; n.isConnected = false; }; fogli.push(n); return n; }, body: { appendChild() {} } } };
   vm.createContext(ctx);
   vm.runInContext([PL.match(/^const testoDoppioni = .*$/m)[0], pezzo(PL, 'async function doppioniDi'), pezzo(PL, 'async function salvaNomeNuovo'), pezzo(PL, 'function campoInteresse'), pezzo(PL, 'function collegaInteresse'), pezzo(PL, 'function apriModulo'),
+    pezzo(IDX, 'function tendina5Html'), pezzo(IDX, 'function collegaTendine5'),   // nota 127: la Categoria a tendina
     'this.apri = apriModulo;'].join('\n'), ctx);
   const apri = (c, poi) => { ctx.apri(c, poi); const f = fogli[fogli.length - 1]; return { f, $: id => f.querySelector('#' + id) }; };
   return { ctx, F, toast, aperte, apri, fogli };
@@ -127,7 +128,8 @@ prova('M5: salvato un nome nuovo si apre subito la sua scheda; M7: dall\'Agenda 
   assert.equal(b.f.style.zIndex, 30);   // sopra la scelta del contatto (25)
   assert.equal(b.$('f-nome').value, 'Persona Nuova');
   assert.equal(b.$('f-cat').innerHTML.includes('<option selected>Prospect</option>'), true);
-  assert.match(b.f.innerHTML, /class="mc-cat cat-Prospect on" data-cat="Prospect"/);
+  assert.match(b.f.innerHTML, /<button type="button" class="sel5" data-tnd5><b><i class="mc-pallino cat-Prospect"><\/i>Prospect<\/b>/);   // nota 127: la tendina chiusa dice la categoria
+  assert.match(b.f.innerHTML, /<button type="button" class="scelto" data-cat="Prospect">/);
   await b.$('invia').onclick();
   uguale(ritorni, ['nuovo1']); uguale(B.aperte, []);   // si torna all'appuntamento, non alla scheda
   const C = modulo(), c = C.apri(null, { nome: 'Persona Nuova', categoria: 'Prospect', salvato() {}, chiuso: () => ritorni.push('chiuso') });
