@@ -307,16 +307,25 @@
     const n = m.giorni, f = m.abitudini, g = finora || n;
     const vp = m.s2.vp == null ? '—' : `${formato(m.s2.vp, 0)} VP`;
     return [
-      { testo: '8 Piani Marketing', fatto: f[0], stato: f[0] ? FATTO : `mancano ${m.s1.obiettivo - m.s1.quanti}` },
-      { testo: 'Consumo personale', fatto: f[1], stato: f[1] ? FATTO : vp },
-      { testo: 'Sviluppa 100 VP (10 clienti)', fatto: f[2], stato: f[2] ? FATTO : `mancano ${formato(Math.max(0, Math.ceil(m.s3.obiettivoVp - m.s3.vp)), 0)} VP o ${m.s3.obiettivo - m.s3.quanti} clienti` },   // Ignazio 04/10; nota 097: la prima delle due
-      { testo: 'Una traccia ogni giorno', fatto: f[3], stato: f[3] ? FATTO : m.s4.aTotale ? `${m.s4.totale} ${m.s4.totale === 1 ? 'traccia' : 'tracce'} su ${m.s4.obiettivo}${m.s4.finora ? ' finora' : ''}` : `${m.s4.quanti} su ${g}${g < n ? ' giorni finora' : ''}` },
-      { testo: '10 pagine ogni giorno', fatto: f[4], stato: f[4] ? FATTO : m.s5.aTotale ? `${m.s5.pagine} pagine su ${m.s5.obiettivo}${m.s5.finora ? ' finora' : ''}` : `${m.s5.quanti} su ${g}${g < n ? ' giorni finora' : ''}` },
-      { testo: 'OPEN · WES · BBS', fatto: f[5], stato: f[5] ? FATTO : [m.s6.open < m.s6.valide ? `OPEN ${m.s6.open} su ${m.s6.valide}` : '', !m.s6.wes ? 'WES' : '', !m.s6.bbs ? 'BBS' : ''].filter(Boolean).join(' · ') },   // nota 098 (Ignazio 26/10): WES · BBS · CEP, in quest'ordine in tutta l'app
+      { testo: '8 Piani Marketing', fatto: f[0], stato: f[0] ? su(m.s1.quanti, m.s1.obiettivo) : `mancano ${m.s1.obiettivo - m.s1.quanti}` },
+      { testo: 'Consumo personale', fatto: f[1], stato: vp },
+      { testo: 'Sviluppa 100 VP (10 clienti)', fatto: f[2], stato: f[2] ? (m.s3.vp >= m.s3.obiettivoVp ? su(`${formato(m.s3.vp, 0)} VP`, `${formato(m.s3.obiettivoVp, 0)} VP`) : su(`${m.s3.quanti} clienti`, m.s3.obiettivo)) : `mancano ${formato(Math.max(0, Math.ceil(m.s3.obiettivoVp - m.s3.vp)), 0)} VP o ${m.s3.obiettivo - m.s3.quanti} clienti` },   // Ignazio 04/10; nota 097: la prima delle due
+      { testo: 'Una traccia ogni giorno', fatto: f[3], stato: m.s4.aTotale ? `${m.s4.totale} ${m.s4.totale === 1 ? 'traccia' : 'tracce'} su ${m.s4.obiettivo}${m.s4.finora ? ' finora' : ''}` : `${m.s4.quanti} su ${g}${g < n ? ' giorni finora' : ''}` },
+      { testo: '10 pagine ogni giorno', fatto: f[4], stato: m.s5.aTotale ? `${m.s5.pagine} pagine su ${m.s5.obiettivo}${m.s5.finora ? ' finora' : ''}` : `${m.s5.quanti} su ${g}${g < n ? ' giorni finora' : ''}` },
+      { testo: 'OPEN · WES · BBS', fatto: f[5], stato: f[5] ? `OPEN ${su(m.s6.open, m.s6.valide)}` : [m.s6.open < m.s6.valide ? `OPEN ${m.s6.open} su ${m.s6.valide}` : '', !m.s6.wes ? 'WES' : '', !m.s6.bbs ? 'BBS' : ''].filter(Boolean).join(' · ') },   // nota 098 (Ignazio 26/10): WES · BBS · CEP, in quest'ordine in tutta l'app
       { testo: 'Squadra', fatto: f[6], stato: f[6] ? FATTO : [!m.s7.counseling ? 'counseling' : '', m.s7.edificazione !== true ? 'edificazione' : '', m.s7.no_crossline !== true ? 'no-crossline' : ''].filter(Boolean).join(' · ') },
     ];
   }
-  const FATTO = 'fatto';   // stessa parola su tutte le righe fatte (Ignazio 27/09)
+  const FATTO = 'fatto';   // stessa parola su tutte le righe fatte (Ignazio 27/09) — dal 28/10 solo dove non c'è un numero (nota 137)
+  // Nota Pagine 137 (Ignazio 28/10: «metti la spunta verde come è adesso, ma anche il numero, perché altrimenti non mi rendo conto di quanto è l'obiettivo»):
+  // una riga fatta con un numero dice il conto vero («12 su 5», «9% su 3%») invece di «fatto»; la spunta e il verde restano (vociHtml in index.html).
+  // «fatto» resta solo dove la riga è un sì o un no (un biglietto, l'abbonamento CEP, la squadra del Core). Un modo solo di scriverlo per tutti i livelli.
+  const su = (q, t) => `${q} su ${t}`;
+  // una luce del Leader 1° livello come riga (Leader 1° livello e Pacesetter, Check e Traguardo): i VP col conto, biglietti e CEP sì o no
+  function statoLuce(x) {
+    if (!x || !x.ok) return x && x.ignoto ? 'non lo so' : (x && x.testo) || '—';
+    return x.chiave === 'vp' && x.testo ? su(x.testo, LC1_VP) : FATTO;   // «187,50 su 100»: il titolo dice già «100 VP»
+  }
   // consigli, mai ordini (Ignazio 27/09: «noi non comandiamo: diamo consigli, direzione, visione»)
   // `vai` = dove porta il tocco sul consiglio (Ignazio, stella cometa: «da qui, il passo dopo è a un tocco»): segni = i biglietti e il CEP
   // (Profilo, o la scheda di chi guardi) · agenda = MB Plan · training · core = Modulo Core · lista = Lista Nomi · mappa · scheda = quella linea
@@ -345,9 +354,9 @@
     gradini.push(g2);
     const sp = Number(sponsor) || 0, luce = k => (l.luci || []).find(x => x.chiave === k) || {};
     const voci3 = [
-      { testo: `${PACE_SPONSOR} iscritti personali`, fatto: sp >= PACE_SPONSOR, stato: sp >= PACE_SPONSOR ? FATTO : `${sp} su ${PACE_SPONSOR}` },
-      { testo: '100 VP', fatto: !!luce('vp').ok, stato: luce('vp').ok ? FATTO : luce('vp').testo || '—' },
-      { testo: 'CEP', fatto: !!luce('cep').ok, stato: luce('cep').ok ? FATTO : luce('cep').testo || '—' },
+      { testo: `${PACE_SPONSOR} iscritti personali`, fatto: sp >= PACE_SPONSOR, stato: su(sp, PACE_SPONSOR) },
+      { testo: '100 VP', fatto: !!luce('vp').ok, stato: statoLuce({ ...luce('vp'), chiave: 'vp' }) },
+      { testo: 'CEP', fatto: !!luce('cep').ok, stato: statoLuce({ ...luce('cep'), chiave: 'cep' }) },
     ];
     const accese3 = voci3.filter(v => v.fatto).length;
     const manca = PACE_SPONSOR - sp;
@@ -440,7 +449,8 @@
       iscritti, totale, cep: cep == null ? null : Number(cep), bbs, wes };
     const righe = LIVELLI.map(L => {
       const voci = [], P = L.piu;
-      const voce = (chiave, testo, ok, stato, extra) => voci.push({ chiave, testo, fatto: !!ok, stato: ok ? FATTO : stato, ...(extra || {}) });
+      // nota 137: fatta, la riga col numero tiene il suo conto («12 su 5»); senza numero «fatto»
+      const voce = (chiave, testo, ok, stato, extra) => voci.push({ chiave, testo, fatto: !!ok, stato: ok && !(extra && extra.q != null) ? FATTO : stato, ...(extra || {}) });
       for (const [k, t] of Object.entries(L.sv)) {
         const q = quanti[k];
         let ok = q != null && q >= t;
@@ -456,7 +466,7 @@
         voce(k, SV_NOMI[k], ok, q == null ? (k === 'bonus' ? 'dati Amway non arrivati' : 'non lo so') : k === 'bonus' ? `${formato(q, 0)}% su ${t}%` : `${q} su ${t}`, { q, t });
         if (sub) for (const x of sub) voce(x.chiave, x.testo, x.ok, x.stato, { q: x.q, t: x.t, sotto: true });
       }
-      if (P.mesi21) voce('mesi21', `${P.mesi21} mesi di fila al 21%`, mesi21 != null && mesi21 >= P.mesi21, mesi21 == null ? 'non lo so' : `${mesi21} su ${P.mesi21}`);
+      if (P.mesi21) voce('mesi21', `${P.mesi21} mesi di fila al 21%`, mesi21 != null && mesi21 >= P.mesi21, mesi21 == null ? 'non lo so' : `${mesi21} su ${P.mesi21}`, { q: mesi21, t: P.mesi21 });
       const fatto = voci.every(v => v.fatto);
       return { chiave: L.chiave, titolo: L.titolo, sotto: L.sotto, fatto, voci,
         stato: fatto ? 'fatto' : `${voci.filter(v => v.fatto && !v.sotto).length} su ${voci.filter(v => !v.sotto).length}` };
@@ -556,7 +566,7 @@
     return { nome: r.titolo, mancano: r.passi.map(x => x.testo) };
   }
 
-  const api = { GRUPPI, VOCI, CAMPI_GIORNO, CAMPI_STATO, andamento, valore, prepara, calcola, grafico, segniVitali, storicoLinee, LC1_VP, LC1_INIZIO, PACE_SPONSOR, LIVELLI, SCALA_BONUS, GRADINI_BONUS, obiettiviDelBonus, gradinoDalBonus, gradinoDaVpg, lc1, percorso, piuVicino, livelli, prossimoTraguardo };
+  const api = { GRUPPI, VOCI, CAMPI_GIORNO, CAMPI_STATO, andamento, valore, prepara, calcola, grafico, segniVitali, storicoLinee, LC1_VP, LC1_INIZIO, PACE_SPONSOR, LIVELLI, SCALA_BONUS, GRADINI_BONUS, obiettiviDelBonus, gradinoDalBonus, gradinoDaVpg, lc1, percorso, piuVicino, livelli, prossimoTraguardo, statoLuce };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Check = api;
 })(this);

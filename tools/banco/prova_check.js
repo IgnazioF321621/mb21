@@ -320,25 +320,44 @@ prova('Percorso: ogni gradino si accende da solo — Leader Core fatto anche se 
   assert.ok(tutto.tuttiFatti && tutto.gradini.every(g => g.consiglio === null));
 });
 
-prova('Voci delle 7 abitudini (Ignazio 27/09): «N su 15 giorni finora» nel mese in corso, «fatto» uguale su tutte le righe fatte', () => {
+prova('Voci delle 7 abitudini (Ignazio 27/09): «N su 15 giorni finora» nel mese in corso; nota 137: le righe fatte col numero dicono il conto, «fatto» solo la Squadra', () => {
   const p = C.percorso({ lc1: lc1Di(187.5, true), modulo: moduloVuoto });   // oggi 20/10, mese in corso
   const voci = p.gradini[1].voci;
   assert.equal(voci[3].stato, '0 su 20 giorni finora');
   assert.equal(voci[4].stato, '0 su 20 giorni finora');
-  assert.equal(voci[1].stato, 'fatto');   // consumo personale fatto: «fatto», non i VP
+  assert.equal(voci[1].stato, '188 VP');   // nota 137 (Ignazio 28/10: «anche il numero»): il consumo personale fatto dice i VP
   const fintoCore = { ...moduloVuoto, fatte: 7, abitudini: [true, true, true, true, true, true, true] };
   const tutte = C.percorso({ lc1: lc1Di(187.5, true), modulo: fintoCore }).gradini[1].voci;
-  assert.deepEqual([...new Set(tutte.map(v => v.stato))], ['fatto']);
+  assert.deepEqual(tutte.map(v => v.stato), ['0 su 8', '188 VP', '0 clienti su 10', '0 su 20 giorni finora', '0 su 20 giorni finora', 'OPEN 0 su 5', 'fatto']);   // (abitudini finte: i numeri sono quelli del modulo vuoto)
   // mese chiuso: i giorni sono quelli del mese, senza «finora»
   const chiuso = C.percorso({ lc1: C.lc1({ mese: '2026-10-01', oggi: '2026-12-05', obiettivi: [{ mese: '2026-10-01', vpp_amway: 187.5 }], biglietti: [], cep: cepSempre, eventi: ev }), modulo: moduloVuoto });
   assert.equal(chiuso.gradini[1].voci[3].stato, '0 su 31');
+});
+
+prova('Nota 137 (Ignazio 28/10: «la spunta verde come è adesso, ma anche il numero»): le righe fatte col numero dicono il conto; «fatto» solo per i sì o no', () => {
+  const linee = Array.from({ length: 12 }, (_, i) => ({ partner_id: 'L' + i, vpp: i < 4 ? 50 : 0, bonus: i < 2 ? 3 : 0 }));
+  const lc = C.livelli({ core: false, bonus: 12, linee, cep: 7, planner: 1, iscritti: 6, totale: 40, bbs: 12, wes: 9 }).righe[0].voci;
+  const st = k => { const v = lc.find(x => x.chiave === k); return [v.fatto, v.stato]; };
+  assert.deepEqual(st('bonus'), [true, '12% su 9%']);
+  assert.deepEqual(st('primeLinee'), [true, '12 su 5']);
+  assert.deepEqual(st('totale'), [true, '40 su 15']);
+  assert.deepEqual(st('cep'), [true, '7 su 5']);
+  assert.deepEqual(st('bbs'), [true, '12 su 10']);
+  assert.deepEqual(st('wes'), [false, '9 su 10']);
+  assert.deepEqual(st('lineeBonus'), [false, '2 su 3']);
+  // le luci del Leader 1° livello (Traguardo e Check, stessa funzione): i VP col conto; biglietti e CEP sono un sì
+  assert.equal(C.statoLuce({ chiave: 'vp', ok: true, testo: '187,50' }), '187,50 su 100');
+  assert.equal(C.statoLuce({ chiave: 'wes', ok: true, testo: '02-2027' }), 'fatto');
+  assert.equal(C.statoLuce({ chiave: 'cep', ok: true, testo: 'abbonato' }), 'fatto');
+  assert.equal(C.statoLuce({ chiave: 'wes', ok: false, testo: 'manca' }), 'manca');
+  assert.equal(C.statoLuce({ chiave: 'vp', ok: false, ignoto: true }), 'non lo so');
 });
 
 prova('Pacesetter (Ignazio 26/09): 2 iscritti personali del Check · 100 VP · CEP nello stesso mese; consiglia solo gli sponsor', () => {
   const p0 = C.percorso({ lc1: lc1Di(187.5, true), modulo: moduloVuoto, sponsor: 0 });
   const g = p0.gradini[2];
   assert.deepEqual([g.chiave, g.titolo, g.stato, g.fatto], ['pace', 'Pacesetter', '2 su 3', false]);
-  assert.deepEqual(g.voci.map(v => [v.testo, v.stato]), [['2 iscritti personali', '0 su 2'], ['100 VP', 'fatto'], ['CEP', 'fatto']]);
+  assert.deepEqual(g.voci.map(v => [v.testo, v.stato]), [['2 iscritti personali', '0 su 2'], ['100 VP', '187,50 su 100'], ['CEP', 'fatto']]);   // nota 137: i VP col conto, il CEP è un sì
   assert.deepEqual(g.consiglio, { cosa: 'sponsorizzare ancora 2 persone', peso: 1, vai: 'lista' });
   assert.equal(C.percorso({ lc1: lc1Di(187.5, true), modulo: moduloVuoto, sponsor: 1 }).gradini[2].consiglio.cosa, 'sponsorizzare ancora una persona');
   const p2 = C.percorso({ lc1: lc1Di(187.5, true), modulo: moduloVuoto, sponsor: 3 });
@@ -355,7 +374,7 @@ prova('I livelli (Ignazio 27/09, Manuale pag. 31): una lista sola «Segni Vitali
   const v = C.livelli({ core: false, bonus: 6, linee, cep: 3, planner: 0, iscritti: 0, totale: 32, bbs: 3, wes: 4, mesi21: 0 });
   assert.deepEqual(v.righe.map(r => [r.titolo, r.stato, r.fatto]), [['Leaders Club', '2 su 9', false], ['Executive Leader Club', '1 su 9', false], ['Produttore Argento', '0 su 9', false], ['Platino', '0 su 10', false]]);
   assert.deepEqual(v.righe[0].voci.map(x => [x.testo, x.stato]), [['Bonus attività', '6% su 9%'], ['Linee riceventi Bonus', '1 su 3'], ['15 Planner', '0 su 1'],
-    ['Prime linee', 'fatto'], ['Iscritti al mese gruppo', '0 su 5'], ['Totale gruppo', 'fatto'], ['Iscritti CEP', '3 su 5'], ['Biglietti BBS', '3 su 10'],
+    ['Prime linee', '13 su 5'], ['Iscritti al mese gruppo', '0 su 5'], ['Totale gruppo', '32 su 15'], ['Iscritti CEP', '3 su 5'], ['Biglietti BBS', '3 su 10'],
     ['Biglietti WES', '4 su 10']]);   // Ignazio 04/10: il Core non c'è nel Manuale, né al Leaders Club né all'Executive
   // Executive: sotto «Linee riceventi Bonus» le due righe «di cui al 6%» (almeno 3) e «di cui Leaders Club» (almeno 2), che non contano come passi a parte
   assert.deepEqual(v.righe[1].voci.filter(x => x.sotto).map(x => [x.testo, x.stato]), [['di cui al 6%', '0 su 3'], ['di cui Leaders Club', 'da segnare']]);
@@ -365,10 +384,10 @@ prova('I livelli (Ignazio 27/09, Manuale pag. 31): una lista sola «Segni Vitali
   // le linee a Leaders Club le segna l'Admin (30/09): contano solo quelle che sono prime linee della persona, con 2 la voce si accende
   const con = ids => C.livelli({ core: false, bonus: 6, linee: linee.map((x, i) => ({ ...x, partner_id: 'L' + i })), lcLinee: ids }).righe[1].voci.find(x => x.chiave === 'lineeLc');
   assert.deepEqual([con(['L0']).stato, con(['L0']).fatto], ['1 su 2', false]);
-  assert.deepEqual([con(['L0', 'L3']).stato, con(['L0', 'L3']).fatto], ['fatto', true]);
+  assert.deepEqual([con(['L0', 'L3']).stato, con(['L0', 'L3']).fatto], ['2 su 2', true]);   // nota 137
   assert.equal(con(['L0', 'ZZ']).stato, '1 su 2');   // ZZ non è una sua linea
   assert.equal(v.righe[2].voci.length, 9);   // Argento: solo la riga della tabella
-  assert.deepEqual(v.righe[3].voci[9], { chiave: 'mesi21', testo: '12 mesi di fila al 21%', fatto: false, stato: '0 su 12' });
+  assert.deepEqual(v.righe[3].voci[9], { chiave: 'mesi21', testo: '12 mesi di fila al 21%', fatto: false, stato: '0 su 12', q: 0, t: 12 });
   assert.deepEqual([v.righe[1].passi, v.righe[2].passi], [[], []]);   // i passi solo per il prossimo livello
   assert.equal(v.doveSei, null);
   // tutta la lista fatta → Leaders Club acceso, i passi passano all'Executive; senza un solo segno (qui i biglietti WES) resta spento
