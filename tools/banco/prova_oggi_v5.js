@@ -41,9 +41,9 @@ prova('095/098: «Oggi» — testata con data, titolo, feedback e foto; Contatti
   const W = mondo();
   W.ctx.disegna();
   const h = W.app.innerHTML;
-  assert.match(h, /<span class="o5-data">DOMENICA 25 OTTOBRE<\/span><h1>Oggi<\/h1>/);
-  assert.match(h, /<div class="o5-su"><button class="o5-feedback" id="o5-feedback" aria-label="Invia Feedback">\[segnala\]<\/button><\/div>/);   // nota 111: da solo, in alto a destra
-  assert.match(h, /<div class="o5-dx"><button id="ds-profilo">IF<\/button><\/div>/);
+  // nota 112 (Ignazio 28/10): riga 1 la data e, da solo, il feedback; riga 2 «Oggi» con i comandi (qui la foto) sulla stessa riga
+  assert.match(h, /<div class="o5-righe"><div class="v5-su"><span class="o5-data">DOMENICA 25 OTTOBRE<\/span><button class="o5-feedback" id="o5-feedback" aria-label="Invia Feedback">\[segnala\]<\/button><\/div>/);
+  assert.match(h, /<div class="v5-titolo"><div><h1>Oggi<\/h1><\/div><div class="o5-dx"><button id="ds-profilo">IF<\/button><\/div><\/div>/);
   assert.equal(W.sg.hidden, false);   // nota 102 (27/10): il tondo non si nasconde più a mano: lo nasconde lo stile quando la pagina ha il suo tasto (#o5-feedback)
   assert.ok(h.indexOf('o5-contatti') < h.indexOf('o5-agenda') && h.indexOf('o5-agenda') < h.indexOf('o5-training') && h.indexOf('o5-traguardo') < h.indexOf('o5-mappa'));
   assert.match(testo(h), /Contatti del giorno 2 DA SENTIRE Persona A Persona B/);
@@ -364,13 +364,13 @@ prova('095 Agenda: testata blu con «‹ Oggi», il mese, «Agenda», il chip, i
   const h = W.ctx.testaAgendaV5(true, '<div class="ag-settimana">striscia di adesso</div>');
   assert.match(h, /^<div class="v5-testa a5" style="--zc:var\(--z-agenda\)">/);
   assert.match(h, /<button class="v5-indietro" id="v5-indietro">‹ Oggi<\/button>/);
-  // nota 111 (Ignazio 28/10): in alto il feedback da solo; «Tu ▾», la lente e «+» sulla riga del mese; «Oggi» in fondo alle scale
-  assert.match(h, /‹ Oggi<\/button>\s*<button class="v5-fb" id="o5-feedback" aria-label="Invia Feedback">\[segnala\]<\/button><\/div>/);
-  assert.match(h, /<div class="v5-riga"><span class="v5-sopra">OTTOBRE 2026<\/span><div class="o5-dx"><button class="o5-ps" id="ps-scegli"[^>]*>Tu ▾<\/button><button class="v5-fb" id="ag-cerca"[^>]*>\[cerca\]<\/button><button class="v5-piu" id="ag-nuovo"/);
+  // nota 112 (Ignazio 28/10): riga 1 «‹ Oggi» e il feedback; riga 2 «Agenda» con «Tu ▾», lente e «+»; poi le scale («Oggi» in fondo), la striscia e il mese
+  assert.match(h, /‹ Oggi<\/button><button class="v5-fb" id="o5-feedback" aria-label="Invia Feedback">\[segnala\]<\/button><\/div>/);
+  assert.match(h, /<div class="v5-titolo"><div><h1>Agenda<\/h1><\/div><div class="o5-dx"><button class="o5-ps" id="ps-scegli"[^>]*>Tu ▾<\/button><button class="v5-fb" id="ag-cerca"[^>]*>\[cerca\]<\/button><button class="v5-piu" id="ag-nuovo"/);
   assert.match(h, /<button data-v5-scala="anno">Anno<\/button><\/div><button class="v5-pillola" id="ag-oggi">Oggi<\/button><\/div>/);
   assert.match(h, /<button class="v5-piu" id="ag-nuovo" aria-label="Nuovo appuntamento">/);
   assert.match(h, /<div class="v5-titolo"><div><h1>Agenda<\/h1>/);
-  assert.match(h, /<button data-v5-scala="giorno">Giorno<\/button><button data-v5-scala="settimana" class="scelta">Settimana<\/button><button data-v5-scala="mese">Mese<\/button><button data-v5-scala="anno">Anno<\/button><\/div><button class="v5-pillola" id="ag-oggi">Oggi<\/button><\/div><div class="ag-settimana">striscia di adesso<\/div><\/div>$/);
+  assert.match(h, /<button data-v5-scala="giorno">Giorno<\/button><button data-v5-scala="settimana" class="scelta">Settimana<\/button><button data-v5-scala="mese">Mese<\/button><button data-v5-scala="anno">Anno<\/button><\/div><button class="v5-pillola" id="ag-oggi">Oggi<\/button><\/div><div class="ag-settimana">striscia di adesso<\/div>\s*<span class="v5-sopra a5-mese">OTTOBRE 2026<\/span><\/div>$/);
   assert.doesNotMatch(W.ctx.testaAgendaV5(false, ''), /id="ag-oggi"/);
   const PA = leggi('pagina-agenda.js');
   assert.match(PA, /if \(typeof OGGI_V5 !== 'undefined' && OGGI_V5 && !largo\(\)\) return testaAgendaV5\(mostraOggi, dentro\);/);   // sul computer l'Agenda resta com'è
@@ -390,8 +390,8 @@ prova('095 Training: testata viola con «‹ Oggi», «Ciao …», «Training» 
   await W.m.apriTraining();
   const h = W.app.innerHTML;
   assert.match(h, /^<div class="v5-testa t5" style="--zc:var\(--z-training\)"><div class="v5-su"><button class="v5-indietro" id="v5-indietro">‹ Oggi<\/button>/);
-  assert.match(h, /\[segnala\]<\/button><\/div><div class="v5-riga"><span class="v5-sopra">Ciao Persona<\/span><\/div>/);   // nota 111
-  assert.match(h, /<h1>\[crescita\] Training<\/h1><\/div><div class="t5-conti"><button class="trn-conto fila" data-medaglie/);
+  assert.match(h, /\[segnala\]<\/button><\/div>\s*<div class="v5-titolo"><div><h1>\[crescita\] Training<\/h1><span>Ciao Persona<\/span><\/div>/);   // nota 112
+  assert.match(h, /<span>Ciao Persona<\/span><\/div><div class="o5-dx"><div class="t5-conti"><button class="trn-conto fila" data-medaglie/);
   // nota 098 (Ignazio 26/10, «sì»): Ripassa · Impara · Studia, e con carte da ripassare si apre su Ripassa
   assert.match(h, /<div class="trn-schede"><button data-vista="ripassa" class="scelta">Ripassa<span class="trn-num">15<\/span><\/button><button data-vista="impara" class="">Impara<\/button><button data-vista="studia" class="">Studia<\/button><\/div><\/div>/);
   // il riquadro grande con le parole del prototipo, e sotto «Dove sei arrivato» (dai dati già letti: nessuna lettura in più)
@@ -456,7 +456,7 @@ prova('095 Traguardo: il Mese, le aree, il traguardo e i gradini con la testata 
     W.ctx.LV.vista = vista;
     const h = W.ctx.testaCheckV5('Titolo finto', 'riga sotto');
     assert.match(h, new RegExp(`^<div class="v5-testa c5t" style="--zc:var\\(--z-check\\)"><div class="v5-su"><button class="v5-indietro" id="lv-indietro">‹ ${torna}</button>`), vista);
-    assert.match(h, /<button class="v5-fb" id="o5-feedback" aria-label="Invia Feedback">\[segnala\]<\/button><\/div><div class="v5-riga"><span class="v5-sopra"><\/span><div class="o5-dx"><button class="o5-ps" id="ps-scegli"[^>]*>Tu ▾<\/button><\/div><\/div>/);   // nota 111
+    assert.match(h, /<button class="v5-fb" id="o5-feedback" aria-label="Invia Feedback">\[segnala\]<\/button><\/div>\s*<div class="v5-titolo"><div><h1>[^<]*<\/h1>(<span>[^<]*<\/span>)?<\/div><div class="o5-dx"><button class="o5-ps" id="ps-scegli"[^>]*>Tu ▾<\/button><\/div><\/div>/);   // nota 112
     assert.match(h, /<h1>Titolo finto<\/h1><span>riga sotto<\/span>/);
   }
   assert.match(DASH, /const testaLV = \(titolo, sotto = '', colore = ''\) => \(typeof OGGI_V5 !== 'undefined' && OGGI_V5 && typeof testaCheckV5 === 'function'/);
@@ -497,7 +497,7 @@ prova('095 Mappa: testata blu notte con «‹ Oggi», chip, feedback, «N nel gr
   const W = mondo({ admin: true });
   const h = W.ctx.testaMappaV5(24, '10/2026');
   assert.match(h, /^<div class="v5-testa m5" style="--zc:var\(--z-mappa\)"><div class="v5-su"><button class="v5-indietro" id="v5-indietro">‹ Oggi<\/button>/);
-  assert.match(h, /<button class="v5-fb" id="o5-feedback" aria-label="Invia Feedback">\[segnala\]<\/button><\/div><div class="v5-riga"><span class="v5-sopra">24 nel gruppo · 10\/2026<\/span><div class="o5-dx"><button class="o5-ps" id="ps-scegli"[^>]*>Tu ▾<\/button><\/div><\/div>/);   // nota 111
+  assert.match(h, /<button class="v5-fb" id="o5-feedback" aria-label="Invia Feedback">\[segnala\]<\/button><\/div>\s*<div class="v5-titolo"><div><h1>Mappa<\/h1><span>24 nel gruppo · 10\/2026<\/span><\/div><div class="o5-dx"><button class="o5-ps" id="ps-scegli"[^>]*>Tu ▾<\/button><\/div><\/div>/);   // nota 112
   assert.match(h, /<h1>Mappa<\/h1>/);
   const PM = leggi('pagina-mappa.js');
   assert.match(PM, /let html = `\$\{v5 \? testaMappaV5\(conta\.tutti, mesePulito\(MP\.mese\), riquadriMappaV5\(conta, cime\)\) : `<h1>Mappa<\/h1>\$\{partnerSelect\(\)\}`\}/);   // nota 098: con i riquadri
@@ -507,7 +507,8 @@ prova('095 Mappa: testata blu notte con «‹ Oggi», chip, feedback, «N nel gr
 prova('095 Lista Nomi: la parte alta ferma diventa la testata verde (conto dei nomi, titolo, chip, feedback, «+», ricerca e filtri con gli stessi id); niente «‹ Oggi»', () => {
   const PL = leggi('pagina-lista.js');
   assert.match(PL, /<div class="ls-testa\$\{v5 \? ' v5-testa l5' : ''\}"\$\{v5 \? ' style="--zc:var\(--z-lista\)"' : ''\}>/);
-  assert.match(PL, /<div class="v5-su"><span><\/span>\$\{feedbackV5\(\)\}<\/div>\$\{rigaSopraV5\(`\$\{esc\(conti\.lista\.toLocaleString\('it-IT'\)\)\} NOMI`, `\$\{chipPartnerSelect\(\)\}<button class="v5-piu" id="nuovo"/);   // nota 111
+  assert.match(PL, /testataV5\(\{ sinistra: `<span class="v5-sopra">\$\{esc\(conti\.lista\.toLocaleString\('it-IT'\)\)\} NOMI<\/span>`, titolo: 'Lista Nomi',/);   // nota 112
+  assert.match(PL, /comandi: `\$\{chipPartnerSelect\(\)\}<button class="v5-piu" id="nuovo"/);
   assert.match(PL, /<button class="v5-piu" id="nuovo" aria-label="Nuovo contatto">/);
   assert.match(PL, /const fb = document\.getElementById\('o5-feedback'\); if \(fb\) fb\.onclick = \(\) => foglioSegnala\(\);/);
   const testaLista = PL.slice(PL.indexOf('function disegnaLista'), PL.indexOf('function disegnaElenco')).split('\n').filter(r => !r.trim().startsWith('//')).join('\n');   // senza i commenti
@@ -518,9 +519,9 @@ prova('095 Lista Nomi: la parte alta ferma diventa la testata verde (conto dei n
 prova('095 tessere di Esplora: Report grigio scuro («‹ Esplora»), Profilo scuro con la foto e i Segni Vitali in rosa, Admin nero «lo vedi solo tu»; stessi ritorni e tasti', () => {
   const W = mondo({ admin: true });
   const r = W.ctx.testaZonaV5({ colore: 'var(--z-report)', torna: 'Esplora', tornaId: 'rp-indietro', titolo: 'Report' });
-  assert.match(r, /^<div class="v5-testa z5" style="--zc:var\(--z-report\)"><div class="v5-su"><button class="v5-indietro" id="rp-indietro">‹ Esplora<\/button>\s*<button class="v5-fb" id="o5-feedback" aria-label="Invia Feedback">\[segnala\]<\/button><\/div><div class="v5-riga"><span class="v5-sopra"><\/span><div class="o5-dx"><button class="o5-ps" id="ps-scegli"/);
+  assert.match(r, /^<div class="v5-testa z5" style="--zc:var\(--z-report\)"><div class="v5-su"><button class="v5-indietro" id="rp-indietro">‹ Esplora<\/button><button class="v5-fb" id="o5-feedback" aria-label="Invia Feedback">\[segnala\]<\/button><\/div>\s*<div class="v5-titolo"><div><h1>Report<\/h1><\/div><div class="o5-dx"><button class="o5-ps" id="ps-scegli"/);
   const p = W.ctx.testaZonaV5({ colore: 'var(--testo)', torna: 'Oggi', tornaId: 'pf-indietro', titolo: 'Profilo', sotto: 'Il tuo quadro personale', destra: '<button id="pf-foto-apri">foto</button>', classe: 'p5t' });
-  assert.match(p, /<h1>Profilo<\/h1><span>Il tuo quadro personale<\/span><\/div><button id="pf-foto-apri">foto<\/button><\/div><\/div>$/);
+  assert.match(p, /<h1>Profilo<\/h1><span>Il tuo quadro personale<\/span><\/div><div class="o5-dx">(<button class="o5-ps"[^>]*>Tu ▾<\/button>)?<button id="pf-foto-apri">foto<\/button><\/div><\/div><\/div>$/);
   assert.match(IDX, /const testaReport = \(\) => \(typeof veste5 === 'function' && veste5\(\)/);
   assert.equal((IDX.match(/\$\{testaReport\(\)\}\$\{linguetteReport\(\)\}/g) || []).length, 2);
   assert.match(IDX, /ST\.tab = typeof veste5 === 'function' && veste5\(\) \? 'esplora' : 'oggi';/);

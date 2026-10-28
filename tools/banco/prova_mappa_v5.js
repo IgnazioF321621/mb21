@@ -142,7 +142,7 @@ prova('«Quanto rende il lavoro» (Ignazio 26/10, «A»): con la v5 non sta più
 prova('Al caricamento subito la testata v5 con «…», mai il titolo vecchio', () => {
   assert.match(PM, /if \(!MP\.squadra\) app\.innerHTML = `\$\{mappaV5\(\) \? testaMappaV5\('…', ''\) : '<h1>Mappa<\/h1>'\}<div class="vuoto">Carico il gruppo…<\/div>`;/);
   const W = mondo();
-  assert.match(W.ctx.testaMappaV5('…', ''), /<span class="v5-sopra">…<\/span>[\s\S]*<h1>Mappa<\/h1>/);
+  assert.match(W.ctx.testaMappaV5('…', ''), /<h1>Mappa<\/h1><span>…<\/span>/);
 });
 
 console.log(`\n${ok} prove superate`);

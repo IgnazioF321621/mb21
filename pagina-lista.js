@@ -229,7 +229,8 @@ function disegnaLista() {
   const v5 = typeof OGGI_V5 !== 'undefined' && OGGI_V5;
   app.innerHTML = `
     <div class="ls-testa${v5 ? ' v5-testa l5' : ''}"${v5 ? ' style="--zc:var(--z-lista)"' : ''}>
-      ${v5 ? `<div class="v5-su"><span></span>${feedbackV5()}</div>${rigaSopraV5(`${esc(conti.lista.toLocaleString('it-IT'))} NOMI`, `${chipPartnerSelect()}<button class="v5-piu" id="nuovo" aria-label="Nuovo contatto">${ic('piu')}</button>`)}<div class="v5-titolo"><div><h1>Lista Nomi</h1></div></div>`
+      ${v5 ? testataV5({ sinistra: `<span class="v5-sopra">${esc(conti.lista.toLocaleString('it-IT'))} NOMI</span>`, titolo: 'Lista Nomi',   // nota 112: le due righe di tutte le testate
+        comandi: `${chipPartnerSelect()}<button class="v5-piu" id="nuovo" aria-label="Nuovo contatto">${ic('piu')}</button>` })
         : `<div class="ag-testa"><h1>Lista Nomi</h1>
         <button class="ag-piu" id="nuovo" aria-label="Nuovo contatto">+</button></div>
       ${partnerSelect()}`}

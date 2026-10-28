@@ -38,8 +38,8 @@ prova('102 e 111: Esplora ha il tasto del feedback nella testata, da solo in alt
     const da = PO.indexOf('const ZONE_V5 = ['), a = PO.indexOf('\nfunction esploraVai');
     vm.runInContext(require('./testa_v5.js')(PO) + PO.slice(da, a) + ';this.esplora = apriEsplora;', ctx);
     ctx.esplora();
-    // nota 111 (Ignazio 28/10): il feedback da solo, in alto a destra; il profilo resta nella riga del titolo
-    assert.match(app.innerHTML, new RegExp(`^<div class="o5-su"><button class="o5-feedback${risposta ? ' con-risposta' : ''}" id="o5-feedback" aria-label="Invia Feedback">\\[segnala\\]</button></div><div class="o5-testa"><div><h1>Esplora</h1></div><div class="o5-dx"><button id="ds-profilo">PI</button></div></div>`));
+    // note 111-112 (Ignazio 28/10): riga 1 il feedback da solo, in alto a destra; riga 2 «Esplora» con il profilo sulla stessa riga
+    assert.match(app.innerHTML, new RegExp(`^<div class="o5-righe"><div class="v5-su"><span></span><button class="o5-feedback${risposta ? ' con-risposta' : ''}" id="o5-feedback" aria-label="Invia Feedback">\\[segnala\\]</button></div>\\s*<div class="v5-titolo"><div><h1>Esplora</h1></div><div class="o5-dx"><button id="ds-profilo">PI</button></div></div></div>`));
     app.clic('#o5-feedback');
     assert.deepEqual(vai, ['feedback']);
   }

@@ -2425,7 +2425,9 @@
   /* una schermata sola: i riquadri si distribuiscono fino alla barra (altezza visibile del telefono, 100dvh); sotto restano la versione e «Da seguire» */
   .o5 { display: flex; flex-direction: column; min-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 170px); }
   .o5-testa { display: flex; justify-content: space-between; align-items: flex-start; margin: 2px 0 10px; }   /* nota 111: «Tu ▾» e il profilo all'altezza della data */
-  .o5-su { display: flex; justify-content: flex-end; margin-top: 6px; }   /* nota 111: il feedback da solo, in alto a destra */
+  .o5-righe { display: flex; flex-direction: column; gap: 10px; margin: 6px 0 10px; }   /* nota 112: le due righe della testata bianca (Oggi, Esplora) */
+  .o5-righe .v5-su { border-bottom-color: var(--linea); }
+  .o5-righe .v5-titolo h1 { color: var(--testo); font-size: 34px; line-height: 1.1; }
   .o5-testa h1 { margin: 2px 0 0; font-size: 34px; font-weight: 800; line-height: 1.1; }
   .o5-data { font-size: 13px; font-weight: 700; color: var(--z-contatti); letter-spacing: .03em; }
   .o5-dx { display: flex; gap: 10px; align-items: center; }
@@ -2522,10 +2524,10 @@
   .v5-fb svg.ic { width: 18px; height: 18px; }
   .v5-fb { position: relative; }
   .v5-fb.con-risposta::after { content: ''; position: absolute; top: -2px; right: -2px; width: 11px; height: 11px; border-radius: 50%; background: var(--rosso); border: 2px solid var(--zc); }
-  /* nota 111: la riga sopra il titolo (la data, il mese, il conto) con a destra «Tu ▾», la lente e «+»; il titolo le sta subito sotto */
-  .v5-riga { display: flex; justify-content: space-between; align-items: center; gap: 10px; min-width: 0; }
-  .v5-riga .o5-dx { min-width: 0; }
-  .v5-riga + .v5-titolo { margin-top: -8px; }
+  /* nota 112: la riga 1 (data o ritorno, il feedback) staccata con una riga sottile; il mese dell'Agenda in fondo alla testata */
+  .v5-su { margin: 0 -16px; padding: 0 16px 10px; border-bottom: 1px solid rgba(255,255,255,.3); }
+  .v5-titolo .o5-dx { flex: none; }
+  .a5-mese { display: block; }
   .a5-scale { display: flex; gap: 8px; align-items: center; }
   .a5-scale .v5-scale { flex: 1; }
   .a5-scale .v5-scale button { font-size: 13px; }   /* con «Oggi» accanto, su un telefono stretto «Settimana» ci sta */

@@ -186,14 +186,20 @@ function chipPartnerSelect() {
   const chi = vediTutti() ? 'Tutti' : guardoAltri() ? o5Primo(nomeVisto()) : 'Tu';
   return `<button class="o5-ps${guardoAltri() ? ' altro' : ''}" id="ps-scegli" aria-label="Chi stai guardando: ${esc(chi)}">${esc(chi)} ▾</button>`;
 }
-// Nota 111 (Ignazio 28/10, «al contrario: in alto e staccato da tutto il feedback»): in ogni testata il feedback sta da solo nella riga più in alto, a destra
-// (stesso id #o5-feedback e stesso foglioSegnala, con il puntino rosso della risposta); «Tu ▾», il profilo, la lente e «+» scendono a destra sulla riga
-// sopra il titolo (rigaSopraV5: la data, il mese, «Ciao…», il conto; vuota a sinistra dove non c'è niente; nessuna riga se non c'è niente da mettere).
+// Nota 111 (Ignazio 28/10, «al contrario: in alto e staccato da tutto il feedback»): il feedback sta da solo nella riga più in alto, a destra
+// (stesso id #o5-feedback e stesso foglioSegnala, con il puntino rosso della risposta).
 function feedbackV5(chiaro) {
   const sg = document.getElementById('segnala'), risposta = !!(sg && sg.classList && sg.classList.contains('con-risposta'));
   return `<button class="${chiaro ? 'o5-feedback' : 'v5-fb'}${risposta ? ' con-risposta' : ''}" id="o5-feedback" aria-label="Invia Feedback">${ic('segnala')}</button>`;
 }
-const rigaSopraV5 = (sopra, destra = '') => (sopra || destra ? `<div class="v5-riga"><span class="v5-sopra">${sopra || ''}</span>${destra ? `<div class="o5-dx">${destra}</div>` : ''}</div>` : '');
+// Nota 112 (Ignazio 28/10, «meglio.. procedi»): le due righe di TUTTE le testate, una funzione sola. Riga 1: a sinistra la data o il ritorno, a destra solo
+// il feedback, con una riga sottile di stacco sotto. Riga 2: a sinistra il titolo grande (o `chi`: la sigla e il nome della scheda) con sotto la riga piccola,
+// a destra sulla stessa riga i comandi della pagina («Tu ▾», foto, lente, «+») e `destra` (l'anello, le medaglie, la foto del Profilo). `titolo`,
+// `sotto` e `sinistra` arrivano già sicuri (esc). `chiaro`: la testata bianca di Oggi ed Esplora.
+function testataV5({ sinistra = '', titolo = '', sotto = '', comandi = '', destra = '', chi = '', chiaro = false }) {
+  return `<div class="v5-su">${sinistra || '<span></span>'}${feedbackV5(chiaro)}</div>
+    <div class="v5-titolo">${chi || `<div><h1>${titolo}</h1>${sotto ? `<span>${sotto}</span>` : ''}</div>`}${comandi || destra ? `<div class="o5-dx">${comandi}${destra}</div>` : ''}</div>`;
+}
 
 // ── La pagina ──
 function disegnaOggiV5() {
@@ -204,9 +210,7 @@ function disegnaOggiV5() {
   const ora = sera ? ` · ${new Intl.DateTimeFormat('it-IT', { timeZone: 'Europe/Rome', hour: '2-digit', minute: '2-digit' }).format(new Date())}` : '';
   const clienti = o5Clienti();
   let html = `<div class="o5${sera ? ' sera' : ''}">
-    <div class="o5-su">${feedbackV5(true)}</div>
-    <div class="o5-testa"><div><span class="o5-data">${esc(dataEstesa(ST.oggi).toUpperCase() + ora)}</span><h1>Oggi</h1></div>
-      <div class="o5-dx">${chipPartnerSelect()}${cerchiettoProfilo()}</div></div>
+    <div class="o5-righe">${testataV5({ chiaro: true, sinistra: `<span class="o5-data">${esc(dataEstesa(ST.oggi).toUpperCase() + ora)}</span>`, titolo: 'Oggi', comandi: chipPartnerSelect() + cerchiettoProfilo() })}</div>
     ${dashboardTesta(true)}${ST.offline ? `<div class="avviso">Sei offline: è la coda salvata. Solo lettura.${percheHtml('offline')}</div>` : ''}${rigaTelefonoHtml()}
     <div class="o5-riquadri">${o5Contatti()}${sera ? o5Sera(fattoGiorno) : ''}${o5Agenda()}
       <div class="o5-coppia">${o5Training()}${o5Traguardo()}</div>
@@ -247,8 +251,8 @@ const ZONE_V5 = [
 ];
 function apriEsplora() {
   const zone = ZONE_V5.filter(z => (!z.soloAdmin || eAdmin()) && (z.k !== 'training' || typeof TRAINING_VISIBILE === 'undefined' || TRAINING_VISIBILE));
-  // nota 102 (Ignazio 27/10): il feedback anche qui nella testata, come in Oggi (con il puntino della risposta); nota 111: da solo, in alto a destra
-  app.innerHTML = `<div class="o5-su">${feedbackV5(true)}</div><div class="o5-testa"><div><h1>Esplora</h1></div><div class="o5-dx">${cerchiettoProfilo()}</div></div>
+  // nota 102 (Ignazio 27/10): il feedback anche qui nella testata, come in Oggi (con il puntino della risposta); note 111-112: le due righe di tutte le testate
+  app.innerHTML = `<div class="o5-righe">${testataV5({ chiaro: true, titolo: 'Esplora', comandi: cerchiettoProfilo() })}</div>
     <div class="o5-tessere">${zone.map(z => `<button class="o5-tessera" data-zona="${z.k}" style="background:${z.colore}">${ic(z.icona)}<b>${esc(z.nome)}</b>${z.soloAdmin ? '<small>solo tu</small>' : ''}</button>`).join('')}</div>` + versione();
   const su = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; };
   su('ds-profilo', () => { PF.aperte.clear(); ST.tab = 'profilo'; mostraTab(); window.scrollTo(0, 0); });
@@ -274,7 +278,6 @@ function esploraVai(k) {
 // conferme, riordini e telefonate scelte tengono la loro card di adesso, dentro la veste nuova.
 const COLORE_CAT_V5 = c => (c === 'Partner' ? 'var(--cat-partner)' : c === 'Cliente' ? 'var(--cat-cliente)' : c === 'Prospect' || !c || c === 'Referral' ? 'var(--cat-prospect)' : 'var(--cat-ex)');
 const catDi = x => (x && (x.categoria || (x.contatti && x.contatti.categoria))) || '';
-const testaV5 = (colore, sinistra, destra = '') => `<div class="v5-testa" style="--zc:${colore}"><div class="v5-su">${sinistra}${feedbackV5()}</div>${rigaSopraV5('', destra + chipPartnerSelect())}`;
 function collegaTestaV5() {
   const fb = document.getElementById('o5-feedback');   // il feedback sta nella testata; il tondo si nasconde da solo (nota 102, index.html)
   if (fb) fb.onclick = () => foglioSegnala();
@@ -309,8 +312,9 @@ function disegnaContattiV5() {
     : `<div class="vuoto">Sei in pausa: 0 contatti al giorno. Quando ti va, scegli da dove ripartire.</div><button class="primario" id="ds-riparto" ${ST.offline ? 'disabled' : ''}>Riparto</button>`;
   else if (altro && (ST.risultato || {}).coda && ST.risultato.coda.length) extra = `<div class="sotto">${ic('visione')} Gli esiti della coda li preme ${esc(nomeDi(visto()))} dalla sua app.</div>`;
   const finito = !righe.length && !inPausa;
-  app.innerHTML = testaV5('var(--z-contatti)', `<button class="v5-indietro" id="lv-indietro">‹ Oggi</button>`)
-    + `<div class="v5-titolo"><div><h1>Contatti del giorno</h1><span>${e.totale ? `Fatti ${e.fatti} su ${e.totale}${manca ? ` · ${manca === 1 ? 'ne manca 1' : `ne mancano ${manca}`}` : ''}` : esc(dataEstesa(ST.oggi))}</span></div>${e.totale ? o5Anello(e.fatti, e.totale, 62) : ''}</div>
+  app.innerHTML = `<div class="v5-testa" style="--zc:var(--z-contatti)">${testataV5({ sinistra: `<button class="v5-indietro" id="lv-indietro">‹ Oggi</button>`, titolo: 'Contatti del giorno',
+      sotto: e.totale ? `Fatti ${e.fatti} su ${e.totale}${manca ? ` · ${manca === 1 ? 'ne manca 1' : `ne mancano ${manca}`}` : ''}` : esc(dataEstesa(ST.oggi)),
+      comandi: chipPartnerSelect(), destra: e.totale ? o5Anello(e.fatti, e.totale, 62) : '' })}
       ${primo ? `<button class="v5-inizia" data-lv-persona="${primo.motivo}|${esc(primo.id)}">Inizia da ${esc(primo.nome)}</button>` : ''}</div>`
     + `<div class="c5-corpo">${ST.offline ? `<div class="avviso">Sei offline: questa è la coda salvata. Solo lettura.${percheHtml('offline')}</div>` : ''}${extra}${gruppi}${fatte}
       ${finito ? `<div class="vuoto">Per oggi hai finito. ${ic('complimenti')}</div>` : ''}
@@ -375,9 +379,9 @@ function disegnaPersonaV5() {
       <button class="link" data-scheda="${esc(id)}">${ic('persona')} Apri contatto</button></div></div>`;
   }
   const sotto = [cat || 'Senza categoria', sottoOggi({ motivo: tipo, dato })].filter(Boolean).join(' · ');
-  app.innerHTML = `<div class="v5-testa" style="--zc:${colore}"><div class="v5-su"><button class="v5-indietro" id="lv-indietro">‹ ${LV.daClienti ? 'Clienti' : 'Contatti del giorno'}</button>
-      ${feedbackV5()}</div>${rigaSopraV5('', conto && !LV.daClienti ? `<span class="v5-conto">${esc(conto)}</span>` : '')}
-    <div class="p5-chi"><span class="p5-sigla" style="color:${colore}">${esc(iniziali(nome))}</span><div><b>${esc(nome)}${segnoCoach(chiContatto, nome)}</b><small>${esc(sotto)}</small></div></div>
+  app.innerHTML = `<div class="v5-testa" style="--zc:${colore}">${testataV5({ sinistra: `<button class="v5-indietro" id="lv-indietro">‹ ${LV.daClienti ? 'Clienti' : 'Contatti del giorno'}</button>`,
+      chi: `<div class="p5-chi"><span class="p5-sigla" style="color:${colore}">${esc(iniziali(nome))}</span><div><b>${esc(nome)}${segnoCoach(chiContatto, nome)}</b><small>${esc(sotto)}</small></div></div>`,
+      comandi: conto && !LV.daClienti ? `<span class="v5-conto">${esc(conto)}</span>` : '' })}
     ${telefonata ? contattaHtml(dato.telefono) : ''}</div>
     <div class="c5-corpo lv-scheda">${corpo}${chiContatto ? schedaInPiuV5(chiContatto, cat, dato) : ''}</div>` + versione();
   attaccaIndietroLV();
@@ -402,20 +406,19 @@ function disegnaPersonaV5() {
 function testaAgendaV5(mostraOggi, dentro) {
   const mese = MB21Agenda.titoloMese(AG.giorno).toUpperCase(), vista = AG.vista || 'giorno';
   const scale = [['giorno', 'Giorno'], ['settimana', 'Settimana'], ['mese', 'Mese'], ['anno', 'Anno']];
-  return `<div class="v5-testa a5" style="--zc:var(--z-agenda)"><div class="v5-su"><button class="v5-indietro" id="v5-indietro">‹ Oggi</button>
-      ${feedbackV5()}</div>
-    ${rigaSopraV5(esc(mese), `${chipPartnerSelect()}<button class="v5-fb" id="ag-cerca" aria-label="Cerca nell'Agenda">${ic('cerca')}</button><button class="v5-piu" id="ag-nuovo" aria-label="Nuovo appuntamento">${ic('piu')}</button>`)}
-    <div class="v5-titolo"><div><h1>Agenda</h1></div></div>
-    <div class="a5-scale"><div class="v5-scale">${scale.map(([k, t]) => `<button data-v5-scala="${k}"${k === vista ? ' class="scelta"' : ''}>${t}</button>`).join('')}</div>${mostraOggi ? '<button class="v5-pillola" id="ag-oggi">Oggi</button>' : ''}</div>${dentro || ''}</div>`;   // nota 111: «Oggi» in fondo alle scale
+  // nota 112 (Ignazio 28/10): «Agenda» con «Tu ▾», lente e «+» sulla stessa riga; poi le scale (con «Oggi» in fondo, nota 111), la striscia dei giorni e il mese
+  return `<div class="v5-testa a5" style="--zc:var(--z-agenda)">${testataV5({ sinistra: '<button class="v5-indietro" id="v5-indietro">‹ Oggi</button>', titolo: 'Agenda',
+      comandi: `${chipPartnerSelect()}<button class="v5-fb" id="ag-cerca" aria-label="Cerca nell'Agenda">${ic('cerca')}</button><button class="v5-piu" id="ag-nuovo" aria-label="Nuovo appuntamento">${ic('piu')}</button>` })}
+    <div class="a5-scale"><div class="v5-scale">${scale.map(([k, t]) => `<button data-v5-scala="${k}"${k === vista ? ' class="scelta"' : ''}>${t}</button>`).join('')}</div>${mostraOggi ? '<button class="v5-pillola" id="ag-oggi">Oggi</button>' : ''}</div>${dentro || ''}
+    <span class="v5-sopra a5-mese">${esc(mese)}</span></div>`;
 }
 
 // ── v5, quarta pagina: la testata del Training (Regia 25/10 sera; solo la veste: carte, livelli, percorso, test, ripasso e salvataggi di adesso) ──
 // Viola Training, «‹ Oggi», il chip del Partner Select e il feedback; «Ciao <nome>», «Training» con le icone, i giorni di fila e le medaglie (gli stessi
 // tasti, data-medaglie), e Impara · Ripassa · Studia (gli stessi data-vista). I collegamenti di quei tasti li fa disegnaTraining, come prima.
 function testaTrainingV5(ciao, conti, schede) {
-  return `<div class="v5-testa t5" style="--zc:var(--z-training)"><div class="v5-su"><button class="v5-indietro" id="v5-indietro">‹ Oggi</button>
-      ${feedbackV5()}</div>${rigaSopraV5(esc(ciao), chipPartnerSelect())}
-    <div class="v5-titolo"><div><h1>${ic('crescita')} Training</h1></div><div class="t5-conti">${conti}</div></div>${schede}</div>`;
+  return `<div class="v5-testa t5" style="--zc:var(--z-training)">${testataV5({ sinistra: '<button class="v5-indietro" id="v5-indietro">‹ Oggi</button>',
+      titolo: `${ic('crescita')} Training`, sotto: esc(ciao), comandi: chipPartnerSelect(), destra: `<div class="t5-conti">${conti}</div>` })}${schede}</div>`;
 }
 function collegaTestaTrainingV5() {
   const su = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; };
@@ -433,9 +436,8 @@ function testaCheckV5(titolo, sotto) {
   const torna = { area: 'Il mese', gradino: 'Traguardo' }[LV.vista] || 'Oggi';
   const schede = SCHEDE_CHECK_V5.some(([k]) => k === LV.vista)
     ? `<div class="v5-scale ck5-schede">${SCHEDE_CHECK_V5.map(([k, t]) => `<button data-ck-scheda="${k}"${k === LV.vista ? ' class="scelta"' : ''}>${t}</button>`).join('')}</div>` : '';
-  return `<div class="v5-testa c5t" style="--zc:var(--z-check)"><div class="v5-su"><button class="v5-indietro" id="lv-indietro">‹ ${esc(torna)}</button>
-      ${feedbackV5()}</div>${rigaSopraV5('', chipPartnerSelect())}
-    <div class="v5-titolo"><div><h1>${esc(titolo)}</h1>${sotto ? `<span>${esc(sotto)}</span>` : ''}</div></div>${schede}</div>`;
+  return `<div class="v5-testa c5t" style="--zc:var(--z-check)">${testataV5({ sinistra: `<button class="v5-indietro" id="lv-indietro">‹ ${esc(torna)}</button>`,
+      titolo: esc(titolo), sotto: esc(sotto), comandi: chipPartnerSelect() })}${schede}</div>`;
 }
 
 // Nota 098 (Ignazio 26/10, «sì, senza 4», poi «sì» alla correzione): sotto quelli di oggi, «Prossimi riordini», i prossimi 5 dopo oggi (RIO.futuri, dalle vendite già
@@ -458,9 +460,8 @@ function disegnaClientiV5() {
   const n = rio.length;
   const sotto = n ? `${n === 1 ? '1 da sentire' : `${n} da sentire`} per il riordino`
     : 'Nessun cliente da sentire oggi';   // nota 098 (Ignazio 26/10): solo questo, via «il prossimo: Nome, giorno»
-  app.innerHTML = `<div class="v5-testa" style="--zc:var(--z-clienti)"><div class="v5-su"><button class="v5-indietro" id="lv-indietro">‹ Oggi</button>
-      ${feedbackV5()}</div>${rigaSopraV5('', chipPartnerSelect())}
-    <div class="v5-titolo"><div><h1>Clienti da sentire</h1><span>${esc(sotto)}</span></div></div></div>
+  app.innerHTML = `<div class="v5-testa" style="--zc:var(--z-clienti)">${testataV5({ sinistra: '<button class="v5-indietro" id="lv-indietro">‹ Oggi</button>',
+      titolo: 'Clienti da sentire', sotto: esc(sotto), comandi: chipPartnerSelect() })}</div>
     <div class="c5-corpo">${n ? `<div class="c5-gruppo">Da sentire oggi · ${n}</div><div class="c5-elenco">${rio.map(rigaElencoV5).join('')}</div>` : ''}
       ${fatte.length ? `<div class="c5-gruppo">Già sentiti oggi · ${fatte.length}</div><div class="c5-elenco">${fatte.map(x =>
         `<div class="c5-riga fatta"><span class="c5-spunta">${ic('fatto')}</span><span class="c5-testo"><b>${esc(x.nome)}</b><small>fatto</small></span></div>`).join('')}</div>` : ''}
@@ -476,9 +477,8 @@ function disegnaClientiV5() {
 // Blu notte Mappa, «‹ Oggi», il chip del Partner Select, il feedback, «N nel tuo gruppo · mese» (il conto e il mese che la Mappa ha già) e «Mappa».
 // Nota 098: `dentro` = i riquadri dei numeri (attivi · sotto 50 VP · fermi e WES · BBS · CEP, pagina-mappa.js); al caricamento «…» e niente riquadri
 function testaMappaV5(quanti, mese, dentro = '') {
-  return `<div class="v5-testa m5" style="--zc:var(--z-mappa)"><div class="v5-su"><button class="v5-indietro" id="v5-indietro">‹ Oggi</button>
-      ${feedbackV5()}</div>${rigaSopraV5(esc(mese ? `${quanti} nel gruppo · ${mese}` : quanti), chipPartnerSelect())}
-    <div class="v5-titolo"><div><h1>Mappa</h1></div></div>${dentro}</div>`;
+  return `<div class="v5-testa m5" style="--zc:var(--z-mappa)">${testataV5({ sinistra: '<button class="v5-indietro" id="v5-indietro">‹ Oggi</button>',
+      titolo: 'Mappa', sotto: esc(mese ? `${quanti} nel gruppo · ${mese}` : quanti), comandi: chipPartnerSelect() })}${dentro}</div>`;
 }
 
 // ── v5, le tessere di Esplora: Report, Profilo (con i Segni Vitali) e Admin (Regia 26/10; solo la veste) ──
@@ -486,9 +486,8 @@ function testaMappaV5(quanti, mese, dentro = '') {
 // il titolo, una riga sotto e, a destra del titolo, un pezzo della pagina (il Profilo ci mette la sua foto, lo stesso tasto di prima).
 // `dopo` (nota 098): quello che sta in fondo alla testata, sotto il titolo (le schede Mese · Anno di Vendite)
 function testaZonaV5({ colore, torna, tornaId, titolo, sotto = '', ps = true, destra = '', classe = '', dopo = '' }) {
-  return `<div class="v5-testa z5${classe ? ' ' + classe : ''}" style="--zc:${colore}"><div class="v5-su"><button class="v5-indietro" id="${tornaId}">‹ ${esc(torna)}</button>
-      ${feedbackV5()}</div>${rigaSopraV5('', ps ? chipPartnerSelect() : '')}
-    <div class="v5-titolo"><div><h1>${esc(titolo)}</h1>${sotto ? `<span>${esc(sotto)}</span>` : ''}</div>${destra}</div>${dopo}</div>`;
+  return `<div class="v5-testa z5${classe ? ' ' + classe : ''}" style="--zc:${colore}">${testataV5({ sinistra: `<button class="v5-indietro" id="${tornaId}">‹ ${esc(torna)}</button>`,
+      titolo: esc(titolo), sotto: esc(sotto), comandi: ps ? chipPartnerSelect() : '', destra })}${dopo}</div>`;
 }
 const veste5 = () => typeof OGGI_V5 !== 'undefined' && OGGI_V5;
 
