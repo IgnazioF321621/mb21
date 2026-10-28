@@ -569,7 +569,11 @@ prova('098: in Contatti del giorno «Già sentiti oggi» con tutti gli esiti di 
   W.ctx.contatti();
   assert.match(testo(W.app.innerHTML), /Già sentiti oggi · 1 \[fatto\] Persona E fatto/);   // prima che arrivi: come prima
   const q = W.ctx.letture.find(x => x.t === 'azioni');
-  assert.deepEqual(q.passi.map(p => p[0]), ['select', 'eq', 'eq', 'not', 'gte', 'order', 'limit']);
+  assert.deepEqual(q.passi.map(p => p[0]), ['select', 'eq', 'eq', 'not', 'or', 'order', 'limit']);
+  // nota 135: conta il giorno del contatto (esito_il, se no il giorno dell'azione), non quando è stato scritto: un contatto vecchio registrato oggi non c'è
+  const oggi = W.ctx.ST.oggi, filtro = [q.passi.find(p => p[0] === 'or')[1]].flat()[0];
+  assert.equal(filtro, `esito_il.eq.${oggi},and(esito_il.is.null,inizio.gte."${W.ctx.MB21Agenda.isoDaRoma(oggi, '00:00')}",inizio.lt."${W.ctx.MB21Agenda.isoDaRoma(W.ctx.MB21Agenda.spostaGiorno(oggi, 1), '00:00')}")`);
+  assert.doesNotMatch(JSON.stringify(q.passi), /\["gte"/);   // niente più «scritto da oggi» (creato_il)
   await new Promise(r => setImmediate(r));
   W.ctx.contatti();
   assert.match(testo(W.app.innerHTML), /Già sentiti oggi · 2 \[fatto\] Persona C Prospect · PM Fissato \[fatto\] Persona D Cliente · No Risposta/);   // una riga per persona, l'esito più recente
