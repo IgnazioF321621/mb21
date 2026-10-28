@@ -297,6 +297,15 @@ prova('Nota 127: la Categoria è una tendina (sel5 + tendina5) — chiusa dice l
   assert.match(h, /<button type="button" class="scelto" data-cat="Partner">/); assert.doesNotMatch(h, /class="scelto" data-cat="Prospect"/);
   assert.doesNotMatch(h, /class="tnd5 aperta"/);   // ridisegnata chiusa
   assert.match(apriModuloVero(null, { nome: 'Persona B' }).innerHTML, /class="sel5" data-tnd5><small>Scegli la categoria<\/small>/);   // nuovo contatto senza categoria
+  // aggiunta 127 (Ignazio 28/10: «Cliente con account deve comparire soltanto quando la categoria è cliente»): compare e sparisce subito con la tendina,
+  // e con lui «Dal» e «Ordina dal suo account…», che gli stanno dentro
+  const n = apriModuloVero(null, { nome: 'Persona C', categoria: 'Prospect' });
+  assert.equal(n.querySelector('#f-account-campo').style.display, 'none');   // Prospect: nascosto
+  const campoAcc = n.innerHTML.slice(n.innerHTML.indexOf('id="f-account-campo"'), n.innerHTML.indexOf('</div></div>', n.innerHTML.indexOf('Ordina dal suo account')));
+  assert.match(campoAcc, /f-account-dal-posto[\s\S]*Ordina dal suo account/);   // «Dal» e la riga stanno dentro il campo: spariscono con lui
+  assert.match(PL, /\$\('f-cat'\)\.addEventListener\('change', segnaAccount\);/);
+  assert.match(PL, /\$\('f-account-campo'\)\.style\.display = \$\('f-cat'\)\.value === 'Cliente' && account\.letto \? '' : 'none';/);
+  assert.match(PL, /if \(account\.letto && riga\.categoria === 'Cliente'\) \{/);   // con un'altra categoria il dato salvato non si tocca
   assert.match(IDX, /\.mc-pallino \{ display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var\(--cat\);/);
 });
 
