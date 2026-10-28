@@ -2887,6 +2887,17 @@ if (window.visualViewport) window.visualViewport.addEventListener('resize', tast
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') setTimeout(riallineaBarra, 300); });
 window.addEventListener('pageshow', () => setTimeout(riallineaBarra, 300));
 window.addEventListener('orientationchange', () => setTimeout(riallineaBarra, 400));
+// «Tocca fuori = chiudi» solo se il tocco è cominciato fuori (nota Pagine 124, Ignazio 28/10/2026: «appena provo a scrivere il feedback
+// il foglio si chiude», su ogni pagina, iPhone e iPad). Toccando un campo, il cursore entra subito, `tastieraAperta` mette la classe
+// `tastiera` e il foglio sale in cima (nota 088); il «click» dello stesso tocco arriva dopo e, dove prima c'era il campo, ora trova l'ombra
+// (.velo): ogni `velo.onclick` con `e.target === velo` chiudeva il foglio. Regola unica per tutti i fogli: un click sull'ombra conta solo se
+// anche la pressione era sull'ombra; se no si ferma qui, prima degli ascolti del foglio e di `lasciaIlCampo` (la tastiera resta aperta).
+let premutoSu = null;
+document.addEventListener('pointerdown', ev => { premutoSu = ev.target; }, true);
+document.addEventListener('click', ev => {
+  const t = ev.target;
+  if (t && t.classList && t.classList.contains('velo') && premutoSu && premutoSu !== t) ev.stopImmediatePropagation();
+}, true);
 document.addEventListener('click', ev => {
   const el = document.activeElement, t = ev.target;
   if (!el || !t.closest || t.closest('input, textarea, select, label')) return;
