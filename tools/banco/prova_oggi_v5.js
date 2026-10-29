@@ -22,12 +22,12 @@ function mondo({ stato = { contatti_al_giorno: 5, fatti_oggi: 3 }, codaNomi = ['
   sg.hidden = false; sg.classList = { contains: c => c === 'con-risposta' && !!sg.risposta };
   const ctx = { console, Promise, Date, Intl, Math, JSON, Number, String, Array, Object, Set, app, esc, ic: n => `[${n}]`,
     MB21Agenda: A, MB21Lista: L, MB21Training: T, MB21Spazi: S, MB21Coda: { oggiRoma: () => OGGI },
-    MB21Check: { piuVicino: g => g.find(x => !x.fatto) || null, LIVELLI: require('../../check.js').LIVELLI }, MB21Dashboard: require('../../dashboard.js'),
+    MB21Check: { piuVicino: g => g.find(x => !x.fatto) || null, LIVELLI: require('../../check.js').LIVELLI, SCALA_BONUS: require('../../check.js').SCALA_BONUS }, MB21Dashboard: require('../../dashboard.js'),
     ST: { tab: 'oggi', oggi: OGGI, stato, risultato: { coda: codaNomi.map((nome, i) => ({ id: 'c' + i, nome })) }, offline: false, utente: { id: 'io' } },
     LV: { vista: 'home' }, DS: { dati: { ultimoCheck: fattoGiorno ? OGGI : null }, sqLettura: Promise.resolve({ sq: [{ partner_id: 'P1' }, { partner_id: 'P2', sponsor_id: 'P1' }, { partner_id: 'P3', sponsor_id: 'P2' }, { partner_id: 'P9', sponsor_id: 'X' }] }) },
     RIO: { righe: riordini, prossimo }, AVV: { mio: nuovo ? { avvio: true } : null }, LS: {}, PF: { aperte: new Set() }, RP: {}, AD: {}, TRN: {}, ORA_CHECK: 20, PUNTI_LC1: { wes: 'Ticket WES', bbs: 'Ticket BBS' },
     visto: () => ({ id: 'io', partner_id: 'P1' }), guardoAltri: () => altro, vediTutti: () => false, eAdmin: () => admin, oraRoma: () => ora, dataEstesa: () => 'domenica 25 ottobre',
-    nuovoInAvvio: () => nuovo, percorsoDash: () => percorso, conteggioVoci: CONTEGGIO_VOCI, elencoVoci: ELENCO_VOCI, nomeGradino: g => g.titolo, mancaCorto: xs => xs.join(', '), fraseTraguardo: () => 'frase',
+    nuovoInAvvio: () => nuovo, percorsoDash: () => percorso, MB21Mappa: { nomeLeggibile: n => n }, conteggioVoci: CONTEGGIO_VOCI, elencoVoci: ELENCO_VOCI, nomeGradino: g => g.titolo, mancaCorto: xs => xs.join(', '), fraseTraguardo: () => 'frase',
     dashboardTesta: senza => `<div id="finta-testa">${senza ? '' : 'fascia'}</div>`, PS: { persone: admin ? [{ id: 'io' }, { id: 'u2' }] : [] }, nomeVisto: () => 'Persona Due Finta', rigaTelefonoHtml: () => '', daSeguireHtml: () => '<div id="finto-seguire"></div>', percheHtml: () => '', cerchiettoProfilo: () => '<button id="ds-profilo">IF</button>', versione: () => '',
     foglioSegnala: () => vai.push('feedback'), vaiLV: (v, x) => vai.push(['lv', v, x || null]), apriCheck: () => vai.push('check'), scegliNumero: () => vai.push('riparto'), caricaOggi() {},
     mostraTab: () => vai.push(['tab', ctx.ST.tab]), vaiAlPrimoLivello: () => vai.push('primo'), disegnaOggi: () => vai.push('ridisegna'), TRAINING_VISIBILE: true,
@@ -647,7 +647,7 @@ prova('148: «I tuoi traguardi» — Leader 1°, Core, Pacesetter, Leaders Club,
   W.ctx.disegna();
   const h = W.app.innerHTML, t = testo(h);
   assert.ok(h.indexOf('o5-segni') < h.indexOf('o5-traguardi') && h.indexOf('o5-traguardi') > 0);
-  assert.match(t, /I TUOI TRAGUARDI › 75% Leader 1° 40% Core Fatto Pacesetter 60% Leaders Club 20% Executive Leader Club 10% Produttore Argento $/);
+  assert.match(t, /I TUOI TRAGUARDI › 75% Leader 1° 40% Core Fatto Pacesetter 60% Leaders Club 20% Executive Leader Club 10% Produttore Argento LE TUE LINEE/);
   assert.doesNotMatch(t, /Platino/);
   assert.equal((h.match(/o5-tg-uno fatto/g) || []).length, 1);
   // Ignazio 29/10: ogni cerchio apre il SUO traguardo (la pagina del gradino, i livelli la loro riga); il titolo apre il traguardo del Check
@@ -686,6 +686,29 @@ prova('148, pezzo 5: «Il tuo ritmo» — Contatti, Piani, Tracce e Pagine degli
   // dati del Check non ancora letti (o di un altro partner): «Leggo…»
   const L = mondo(); L.ctx.CK = { giorni: [], di: 'altro' }; L.ctx.disegna(); assert.match(testo(L.app.innerHTML), /IL TUO RITMO · QUESTA SETTIMANA › Leggo il tuo ritmo…/);
   assert.match(IDX, /html\.v5 \.o5-riquadri > \.o5-ritmo \{ grid-column: 1 \/ -1; \}|\.o5-riquadri > \.o5-ritmo/);
+});
+
+prova('148, pezzo 6: «Le tue linee» — una barra per prima linea lunga quanto i punti di gruppo del mese (VPG), la linea scura ai 200 del 3%, piene quelle col bonus; «N su M al 3%»; senza punti in una riga; senza file Amway una frase; il tocco apre la Mappa', () => {
+  const squadra = [{ partner_id: 'P1', nome: 'Io Finto' }, ...['A', 'B', 'C', 'D', 'E'].map(x => ({ partner_id: 'L' + x, sponsor_id: 'P1', nome: 'Linea ' + x, data_ingresso: '2026-01-10' })),
+    { partner_id: 'LF', sponsor_id: 'P1', nome: 'Linea F', data_ingresso: '2026-11-02' }, { partner_id: 'X1', sponsor_id: 'LA', nome: 'Sotto A', data_ingresso: '2026-01-10' }];
+  const volumi = [{ partner_id: 'P1', mese: 202610, vpg: 900, bonus: 9 }, { partner_id: 'LA', mese: 202610, vpg: 420.4, bonus: 3 }, { partner_id: 'LB', mese: 202610, vpg: 310, bonus: 3 },
+    { partner_id: 'LC', mese: 202610, vpg: 180, bonus: 0 }, { partner_id: 'LD', mese: 202610, vpg: 0, bonus: 0 }, { partner_id: 'LA', mese: 202609, vpg: 5000, bonus: 21 }];
+  const W = mondo({ percorso: { lv: { righe: [], mese: 202610 }, pc: { gradini: [] }, l: {} } }); W.ctx.CK = { amway: { squadra, volumi } }; W.ctx.disegna();
+  const h = W.app.innerHTML, t = testo(h);
+  assert.ok(h.indexOf('o5-traguardi') < h.indexOf('o5-linee'));
+  // LF è entrata dopo il mese: non conta; X1 non è una prima linea; LE senza riga nel file vale 0
+  assert.match(t, /LE TUE LINEE · OTTOBRE › 2 su 5 al 3% Linea A 420 Linea B 310 Linea C 180 2 linee senza punti questo mese La linea scura è il 3%/);
+  assert.equal((h.match(/o5-ln-riga bonus/g) || []).length, 2);
+  assert.match(h, /<i style="width:100%"><\/i><em style="left:48%"><\/em>/);   // 420 è la barra più lunga; 200 / 420 = 48%
+  W.app.clic('.o5-linee'); assert.deepEqual(JSON.parse(JSON.stringify(W.vai)), [['tab', 'mappa']]);
+  // file del mese non ancora arrivato (niente volumi di ottobre per me): una frase
+  const N = mondo({ percorso: { lv: { righe: [], mese: 202611 }, pc: { gradini: [] }, l: {} } }); N.ctx.CK = { amway: { squadra, volumi } }; N.ctx.disegna();
+  assert.match(testo(N.app.innerHTML), /LE TUE LINEE · NOVEMBRE › Le tue linee arrivano con il file Amway del mese/);
+  const S = mondo({ percorso: { lv: null, pc: { gradini: [] }, l: {} } }); S.ctx.disegna();
+  assert.match(testo(S.app.innerHTML), /Le tue linee arrivano con il file Amway del mese/);
+  const L = mondo(); L.ctx.disegna(); assert.match(testo(L.app.innerHTML), /LE TUE LINEE · OTTOBRE › Leggo le tue linee…/);
+  // la lettura dei volumi del Check porta anche vpg (nessuna richiesta in più)
+  assert.match(IDX, /from\('volumi_mese'\)\.select\('partner_id, mese, vpp, vpg, bonus,/);
 });
 
 (async () => {

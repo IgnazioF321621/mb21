@@ -2502,6 +2502,20 @@
   .o5-rt-sotto small { font-size: 13px; font-weight: 700; color: #5A6475; }
   .o5-rt-sotto b { font-size: 22px; font-weight: 800; color: #1D4ED8; }
   .o5-rt-sotto b.fuori { color: #B34E00; }
+  /* nota Pagine 148, pezzo 6: «Le tue linee», una barra per prima linea lunga quanto i punti del mese, la linea scura al 3%, piene quelle col bonus */
+  .o5-linee { width: 100%; border: 0; font: inherit; text-align: left; cursor: pointer; background: #fff; color: #10151F; border-radius: 24px; padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; }
+  .o5-ln-testa { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .o5-ln-testa b { font-size: 14px; font-weight: 800; color: var(--z-mappa); white-space: nowrap; }
+  .o5-ln-righe { display: flex; flex-direction: column; gap: 10px; }
+  .o5-ln-riga { display: grid; grid-template-columns: 84px 1fr 44px; align-items: center; gap: 8px; }
+  .o5-ln-nome { font-size: 13px; font-weight: 700; color: #5A6475; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .o5-ln-barra { position: relative; height: 16px; border-radius: 8px; background: #E8EBF2; }
+  .o5-ln-barra i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 8px; background: #93A3C9; }
+  .o5-ln-barra em { position: absolute; top: -4px; bottom: -4px; border-left: 2px solid #10151F; }
+  .o5-ln-riga b { font-size: 13px; font-weight: 800; color: #5A6475; text-align: right; }
+  .o5-ln-riga.bonus .o5-ln-barra i { background: var(--z-mappa); }
+  .o5-ln-riga.bonus b { color: var(--z-mappa); }
+  .o5-ln-piede { font-size: 12px; font-weight: 700; color: #5A6475; }
   /* nota Pagine 148, secondo pezzo: «Segni Vitali» del mese verso il traguardo più vicino (linea scura) e quello dopo (colonna intera) */
   .o5-segni { width: 100%; border: 0; font: inherit; text-align: left; cursor: pointer; background: #fff; color: #10151F; border-radius: 24px; padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; }
   .o5-sv-testa { display: flex; flex-direction: column; gap: 2px; }
@@ -2829,7 +2843,7 @@
     /* poi (Regia 27/10, «sì» di Ignazio dopo la prova sull'iPad): in alto Contatti e Agenda affiancati, sotto «Com'è andata oggi?» su tutta la riga e basso
        come sull'iPhone, poi le altre a coppie; con un numero dispari di tessere l'ultima va su tutta la riga */
     html.v5 .o5-riquadri > .o5-sera { grid-column: 1 / -1; }   /* nota 148 (Ignazio 29/10): dalle 20 in cima, sopra «La tua giornata» (prima order: 1 la metteva dopo Contatti e Agenda) */
-    html.v5 .o5-riquadri > .o5-giornata, html.v5 .o5-riquadri > .o5-settimana, html.v5 .o5-riquadri > .o5-segni, html.v5 .o5-riquadri > .o5-traguardi, html.v5 .o5-riquadri > .o5-traguardo, html.v5 .o5-riquadri > .o5-ritmo { grid-column: 1 / -1; }   /* note 147-148: «La tua giornata» e «La tua settimana» in cima, su tutta la riga */
+    html.v5 .o5-riquadri > .o5-giornata, html.v5 .o5-riquadri > .o5-settimana, html.v5 .o5-riquadri > .o5-segni, html.v5 .o5-riquadri > .o5-traguardi, html.v5 .o5-riquadri > .o5-traguardo, html.v5 .o5-riquadri > .o5-ritmo, html.v5 .o5-riquadri > .o5-linee { grid-column: 1 / -1; }   /* note 147-148: «La tua giornata» e «La tua settimana» in cima, su tutta la riga */
     html.v5 .o5-coppia > .o5-r { order: 2; }
     html.v5 .o5-coppia.uno > .o5-r { grid-column: 1 / -1; }
     html.v5 .o5-tessere { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -5215,7 +5229,7 @@ async function caricaDatiCheck() {
       vediTutti() ? null : cepDiChiGuardo(visto()),
       // i livelli (27/09): le prime linee e il bonus dal file Amway, dal nuovo anno di performance
       vediTutti() ? null : lettaComune('squadra'),
-      vediTutti() ? null : dbq('volumi per i livelli', supa.from('volumi_mese').select('partner_id, mese, vpp, bonus, al_livello_successivo, dimensioni_gruppo').gte('mese', 202609)),
+      vediTutti() ? null : dbq('volumi per i livelli', supa.from('volumi_mese').select('partner_id, mese, vpp, vpg, bonus, al_livello_successivo, dimensioni_gruppo').gte('mese', 202609)),   // vpg: «Le tue linee» di Oggi (nota 148, pezzo 6, Ignazio «A»)
       vediTutti() ? null : dbq('«Non ora» dei passi', supa.from('passi_non_ora').select('partner_id, mese').eq('user_id', visto().id)),
       vediTutti() ? null : dbq('Piani Marketing del ramo', supa.rpc('pm_del_ramo', { da: 202609 })),   // «15 Planner» (27/09)
       vediTutti() ? null : dbq('linee a Leaders Club', supa.from('linee_leaders_club').select('partner_id, mese').eq('user_id', visto().id)),   // segnate dall'Admin (30/09)

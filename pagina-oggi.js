@@ -237,6 +237,37 @@ function o5TraguardiHtml(t) {
   };
   return `<div class="o5-traguardi"><button class="o5-tg-testa" data-o5="traguardo" aria-label="I tuoi traguardi">${tit}</button><span class="o5-tg-righe">${t.map(uno).join('')}</span></div>`;
 }
+// «Le tue linee» (nota Pagine 148, pezzo 6, tavola «D»; Ignazio 29/10, «A»): una barra per ogni prima linea, lunga quanto i suoi punti di gruppo del mese
+// (VPG del file Amway), la linea scura ai 200 punti del 3% (SCALA_BONUS[3].vpg); piene le linee che ricevono il bonus (≥ 3%, nota 062), in alto
+// «N su M al 3%» (M = tutte le prime linee, come il segno vitale «Prime linee», nota 136). Prima le linee con più punti; quelle senza punti nel mese
+// in una riga sola. Dati del file Amway già letti dal Check (CK.amway: squadra e volumi, con la colonna vpg), nessuna richiesta in più. Il tocco apre
+// la Mappa. Senza il file Amway del mese una frase, come i Segni Vitali.
+function lineeDelMese(amway, pid, mese) {
+  if (!amway || !pid) return null;
+  const vol = new Map(amway.volumi.filter(v => v.mese === mese).map(v => [v.partner_id, v]));
+  if (!vol.has(pid)) return null;   // il file di quel mese non c'è (o non ci sono io)
+  const ym = `${String(mese).slice(0, 4)}-${String(mese).slice(4, 6)}`;
+  const linee = amway.squadra.filter(p => p.sponsor_id === pid && p.partner_id !== pid && String(p.data_ingresso || '').slice(0, 7) <= ym).map(p => {
+    const v = vol.get(p.partner_id) || {};
+    return { nome: MB21Mappa.nomeLeggibile(p.nome), vpg: Math.round(Number(v.vpg) || 0), bonus: Number(v.bonus) || 0 };
+  }).sort((a, b) => b.vpg - a.vpg || a.nome.localeCompare(b.nome));
+  return { mese, linee, alTre: linee.filter(l => l.bonus >= 3).length };
+}
+function o5Linee() {
+  const p = percorsoDash(), mese = p && p.lv ? p.lv.mese : null;
+  return o5LineeHtml(p ? lineeDelMese(typeof CK !== 'undefined' ? CK.amway : null, visto().partner_id, mese) : null, mese || Number(ST.oggi.slice(0, 4) + ST.oggi.slice(5, 7)), !!p);
+}
+function o5LineeHtml(x, mese, letto) {
+  const nome = MB21Dashboard.nomeMese(`${String(mese).slice(0, 4)}-${String(mese).slice(4, 6)}`).toUpperCase();
+  const tit = `<span class="o5-gn-tit">LE TUE LINEE · ${esc(nome)} ›</span>`;
+  if (!x) return `<button class="o5-linee" data-o5="mappa" aria-label="Le tue linee">${tit}<span class="o5-gn-frase">${letto ? 'Le tue linee arrivano con il file Amway del mese' : 'Leggo le tue linee…'}</span></button>`;
+  const tre = MB21Check.SCALA_BONUS[3].vpg, conPunti = x.linee.filter(l => l.vpg > 0), senza = x.linee.length - conPunti.length;
+  const scala = Math.max(tre * 1.25, ...conPunti.map(l => l.vpg));
+  const riga = l => `<span class="o5-ln-riga${l.bonus >= 3 ? ' bonus' : ''}"><span class="o5-ln-nome">${esc(l.nome)}</span><span class="o5-ln-barra"><i style="width:${Math.max(3, Math.round(100 * l.vpg / scala))}%"></i><em style="left:${Math.round(100 * tre / scala)}%"></em></span><b>${l.vpg}</b></span>`;
+  return `<button class="o5-linee" data-o5="mappa" aria-label="Le tue linee: ${x.alTre} su ${x.linee.length} al 3%"><span class="o5-ln-testa">${tit}<b>${x.alTre} su ${x.linee.length} al 3%</b></span>${
+    x.linee.length ? `<span class="o5-ln-righe">${conPunti.map(riga).join('')}</span>${senza ? `<span class="o5-ln-piede">${senza === 1 ? '1 linea senza punti questo mese' : `${senza} linee senza punti questo mese`}</span>` : ''}
+    <span class="o5-ln-piede">La linea scura è il 3%: le barre piene ricevono il bonus</span>` : '<span class="o5-gn-frase">Ancora nessuna prima linea</span>'}</button>`;
+}
 // la sera (dalle ORA_CHECK, come la Dashboard): «Com'è andata oggi?» apre il Check del giorno. Nota 096 (Ignazio 25/10, «A»): scritto il giorno, il riquadro
 // resta e diventa «Check di oggi ✓ · rivedi o correggi»; il tocco apre lo stesso Check del giorno, già scritto (prima spariva e non si ritrovava)
 function o5Sera(fatto) {
@@ -281,7 +312,7 @@ function disegnaOggiV5() {
   let html = `<div class="o5${sera ? ' sera' : ''}">
     <div class="o5-righe">${testataV5({ chiaro: true, sinistra: `<span class="o5-data">${esc(dataEstesa(ST.oggi).toUpperCase() + ora)}</span>`, titolo: 'Oggi', comandi: chipPartnerSelect() + cerchiettoProfilo() })}</div>
     ${dashboardTesta(true)}${ST.offline ? `<div class="avviso">Sei offline: è la coda salvata. Solo lettura.${percheHtml('offline')}</div>` : ''}${rigaTelefonoHtml()}
-    <div class="o5-riquadri">${sera ? o5Sera(fattoGiorno) : ''}${vediTutti() ? '' : o5Giornata() + o5SettimanaHtml(O5.di === visto().id && O5.giorno === ST.oggi ? O5.settimana : null) + o5Ritmo() + o5Segni() + o5TraguardiHtml(traguardiOggi(percorsoDash()))}${nuovoInAvvio() ? o5Traguardo() : ''}</div></div>`;
+    <div class="o5-riquadri">${sera ? o5Sera(fattoGiorno) : ''}${vediTutti() ? '' : o5Giornata() + o5SettimanaHtml(O5.di === visto().id && O5.giorno === ST.oggi ? O5.settimana : null) + o5Ritmo() + o5Segni() + o5TraguardiHtml(traguardiOggi(percorsoDash())) + o5Linee()}${nuovoInAvvio() ? o5Traguardo() : ''}</div></div>`;
   // nota Pagine 148 (Ignazio 29/10, via Regia: «lo facciamo spuntare direttamente come prima cosa in alto a quell'ora»): dalle ORA_CHECK (20) «Com'è andata
   // oggi?» sta in cima, sopra «La tua giornata», anche a Check scritto («Check di oggi ✓»); prima delle 20 non c'è.
   // nota Pagine 148, pezzo 4 (Ignazio 29/10, via Regia): via i riquadri di prima (Contatti, Agenda, Training, Traguardo, Clienti, Mappa); restano i
