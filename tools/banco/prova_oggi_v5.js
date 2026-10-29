@@ -147,7 +147,7 @@ prova('095/098: le letture in più — gli impegni di oggi come l\'Agenda (pochi
   Object.assign(W.ctx, { supa: { from: q, rpc }, dbq: (_, p) => p, CAMPI_AZIONE: '*', ST: { ...W.ctx.ST, utente: { id: 'io' } } });
   await W.ctx.carica(OGGI);
   // nota 098: oggi e domani come l'Agenda (appuntamenti, Contatti, spazi, impegni ricevuti)
-  assert.deepEqual(chieste.map(x => x[0]).sort(), ['azioni', 'azioni', 'rpc:impegni_ricevuti', 'spazi', 'training_carte', 'training_carte', 'training_giorni']);   // nota 147: anche le carte risposte oggi (solo il numero)
+  assert.deepEqual(chieste.map(x => x[0]).sort(), ['azioni', 'azioni', 'azioni_conti', 'rpc:impegni_ricevuti', 'spazi', 'training_carte', 'training_carte', 'training_giorni']);   // nota 147: anche le carte risposte oggi (solo il numero); nota 148: i contatti della settimana
   assert.ok(chieste.filter(x => x[0] === 'training_carte').every(([, p]) => p.some(x => x[0] === 'select' && x[2] && x[2].head)));
   assert.ok(chieste.some(([t, p]) => t === 'training_carte' && p.some(x => x[0] === 'gte' && x[1] === 'risposta_il')));
   assert.ok(chieste.every(([, p]) => !p.some(x => x[0] === 'limit') || p.find(x => x[0] === 'limit')[1] <= 30));
@@ -677,6 +677,26 @@ prova('147: gli appuntamenti di oggi dalla lettura che c\'è già — un incontr
   Object.assign(W.ctx, { supa: { from: q, rpc: () => Promise.resolve({ data: [], error: null }) }, dbq: (_, p) => p, CAMPI_AZIONE: '*', ST: { ...W.ctx.ST, utente: { id: 'io' } } });
   await W.ctx.carica(OGGI);
   assert.deepEqual(JSON.parse(JSON.stringify(W.ctx.O5.appuntamenti)), { totale: 3, fatti: 1 });
+});
+
+prova('148: «La tua settimana» sotto la giornata — sette colonne fino a oggi (oggi pieno), il numero sopra, il totale; il tocco apre l\'Agenda; la lettura chiede solo il giorno, regola del Check, 7 giorni', async () => {
+  const W = mondo(), chieste = [];
+  // 25/10/2026 è domenica: le iniziali vanno da lunedì 19 a domenica 25
+  const righe = ['2026-10-19', '2026-10-19', '2026-10-21', '2026-10-25', '2026-10-25', '2026-10-25'].map(giorno => ({ giorno }));
+  const q = tab => { const passi = []; const c = new Proxy({}, { get: (_, p) => (p === 'then' ? (si => { chieste.push([tab, passi]); return Promise.resolve(
+    tab === 'azioni_conti' ? { data: righe, error: null } : tab === 'training_carte' ? { count: 0, error: null } : { data: [], error: null }).then(si); }) : (...a) => { passi.push([p, ...a]); return c; }) }); return c; };
+  Object.assign(W.ctx, { supa: { from: q, rpc: () => Promise.resolve({ data: [], error: null }) }, dbq: (_, p) => p, CAMPI_AZIONE: '*', ST: { ...W.ctx.ST, utente: { id: 'io' } } });
+  await W.ctx.carica(OGGI);
+  const passi = chieste.find(x => x[0] === 'azioni_conti')[1];
+  assert.deepEqual(JSON.parse(JSON.stringify(passi)), [['select', 'giorno'], ['eq', 'user_id', 'io'], ['eq', 'contatti', 1], ['gte', 'giorno', '2026-10-19'], ['lte', 'giorno', OGGI]]);
+  assert.deepEqual(W.ctx.O5.settimana.map(g => g.n), [2, 0, 1, 0, 0, 0, 3]);
+  W.ctx.disegna();
+  const h = W.app.innerHTML, t = testo(h);
+  assert.ok(h.indexOf('o5-giornata') < h.indexOf('o5-settimana') && h.indexOf('o5-settimana') < h.indexOf('o5-contatti'));
+  assert.match(t, /LA TUA SETTIMANA › 6 contatti 2 0 1 0 0 0 3 L M M G V S D/);
+  assert.equal((h.match(/o5-st-col oggi/g) || []).length, 1);
+  W.app.clic('.o5-settimana'); assert.deepEqual(JSON.parse(JSON.stringify(W.vai.filter(x => typeof x !== 'string'))), [['tab', 'agenda']]);
+  const L = mondo(); L.ctx.disegna(); assert.match(testo(L.app.innerHTML), /LA TUA SETTIMANA › Leggo la settimana…/);
 });
 
 (async () => {

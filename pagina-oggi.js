@@ -11,7 +11,7 @@ const OGGI_V5 = true;
 if (OGGI_V5 && typeof document !== 'undefined' && document.documentElement && document.documentElement.classList) document.documentElement.classList.add('v5');
 // I dati in più dei riquadri: gli impegni di oggi e di domani (`oggi`, `domani`: le voci di MB21Agenda.programmaDelGiorno) e il ripasso del Training.
 // `di`/`giorno` dicono di chi e di quando sono.
-const O5 = { di: null, giorno: null, oggi: null, domani: null, richiami: null, training: null, appuntamenti: null };
+const O5 = { di: null, giorno: null, oggi: null, domani: null, richiami: null, training: null, appuntamenti: null, settimana: null };
 
 // ── Le letture in più (nella stessa attesa della Dashboard: caricaOggi le chiama insieme alle sue) ──
 async function caricaOggiV5(oggi) {
@@ -21,7 +21,7 @@ async function caricaOggiV5(oggi) {
   // come l'Agenda (appuntamenti, Contatti con la data scelta o programmati, spazi, impegni ricevuti) e si conta con la sua stessa regola
   // (MB21Agenda.programmaDelGiorno: quello che il riquadro conta è «In programma» del Giorno di oggi). Dal 26/10 sera (riquadro come il widget
   // Calendario) anche domani, per «DOMANI»: letture piccole, solo di oggi e domani.
-  const [app1, cont, spazi, ricevuti, trn] = await Promise.all([
+  const [app1, cont, spazi, ricevuti, trn, sett] = await Promise.all([
     // gli appuntamenti di oggi e domani (anche quelli già chiusi di oggi, come in Agenda)
     dbq('Oggi: appuntamenti', supa.from('azioni').select(CAMPI_AZIONE).eq('user_id', io).neq('tipo_azione', 'Contatto')
       .gte('inizio', da).lt('inizio', a).order('inizio').limit(30)),
@@ -32,6 +32,9 @@ async function caricaOggiV5(oggi) {
     dbq('Oggi: spazi', supa.from('spazi').select('*').eq('user_id', io).gte('inizio', da).lt('inizio', a).order('inizio')),
     dbq('Oggi: impegni ricevuti', supa.rpc('impegni_ricevuti', { p_da: da, p_a: a })),
     guardoAltri() ? null : caricaTrainingOggi(oggi),
+    // nota Pagine 148 (Ignazio 29/10, «A»): i contatti fatti negli ultimi 7 giorni, con la regola del Check (vista azioni_conti: con esito, senza Partner);
+    // solo il giorno di ogni riga, per «La tua settimana»
+    dbq('Oggi: contatti della settimana', supa.from('azioni_conti').select('giorno').eq('user_id', io).eq('contatti', 1).gte('giorno', A.spostaGiorno(oggi, -6)).lte('giorno', oggi)),
   ]);
   let voci = null, vociDomani = null, richiami = null;
   if (!app1.error && !cont.error) {
@@ -56,7 +59,8 @@ async function caricaOggiV5(oggi) {
   const incontriOggi = app1.error ? null : A.incontri(A.eventiDelGiorno(A.azioniAgenda(app1.data || []), oggi));
   const appuntamenti = incontriOggi && { totale: incontriOggi.length,
     fatti: incontriOggi.filter(e => (e._persone || [e]).every(p => !!p.esito && !A.esitoDaDare(p, fattoAperto(p.id)))).length };
-  Object.assign(O5, { di: io, giorno: oggi, oggi: voci, domani: vociDomani, richiami, training: trn, aperti, appuntamenti });
+  const settimana = sett.error ? null : contattiSettimana((sett.data || []).map(r => r.giorno), oggi);
+  Object.assign(O5, { di: io, giorno: oggi, oggi: voci, domani: vociDomani, richiami, training: trn, aperti, appuntamenti, settimana });
   if (typeof aggiornaNumeroApp === 'function') aggiornaNumeroApp();
 }
 // Il ripasso di oggi senza scaricare i mazzi: quante carte tornano oggi (`prossima` passata) e i giorni di fila. null se non si legge.
@@ -132,6 +136,24 @@ function o5GiornataHtml(righe) {
   const riga = x => `<button class="o5-gn-riga${x.vuoto ? ' vuoto' : ''}" data-o5="${x.k}" style="--gn:${x.testo}"><small>${esc(x.nome.toUpperCase())}</small>${x.vuoto
     ? `<span class="o5-gn-frase">${esc(x.vuoto)}</span>` : `<b>${x.fatti} <span>su ${x.totale}${x.unita ? ' ' + esc(x.unita) : ''}</span></b>`}</button>`;
   return `<div class="o5-giornata" role="group" aria-label="La tua giornata"><span class="o5-gn-tit">LA TUA GIORNATA</span><div class="o5-gn-corpo">${svg}<div class="o5-gn-righe">${righe.map(riga).join('')}</div></div></div>`;
+}
+// «La tua settimana» (nota Pagine 148, primo pezzo; tela «Anelli del giorno», tavola «C · Oggi diventa Dashboard»): sette colonne per gli ultimi 7 giorni
+// (oggi per ultimo, pieno), alta quanto i contatti di quel giorno con il numero sopra; in alto il totale. `giorni` = [{ giorno, n }] dal più vecchio a oggi,
+// null = non ancora letto. Il tocco apre l'Agenda (o5Vai).
+const INIZIALI_GIORNO = ['D', 'L', 'M', 'M', 'G', 'V', 'S'];
+// i 7 giorni fino a oggi (dal più vecchio), ognuno con quanti contatti: `giorni` = un giorno per contatto fatto (le righe di azioni_conti)
+const contattiSettimana = (giorni, oggi) => Array.from({ length: 7 }, (_, i) => MB21Agenda.spostaGiorno(oggi, i - 6))
+  .map(g => ({ giorno: g, n: giorni.filter(x => x === g).length }));
+function o5SettimanaHtml(giorni) {
+  const tot = (giorni || []).reduce((s, g) => s + g.n, 0), max = Math.max(1, ...(giorni || []).map(g => g.n));
+  const colonne = (giorni || []).map((g, i) => {
+    const oggi = i === giorni.length - 1, h = g.n ? Math.max(8, Math.round(g.n / max * 76)) : 4;
+    return `<span class="o5-st-col${oggi ? ' oggi' : ''}"><small>${g.n}</small><i style="height:${h}px"></i></span>`;
+  }).join('');
+  const iniziali = (giorni || []).map((g, i) => `<span${i === giorni.length - 1 ? ' class="oggi"' : ''}>${INIZIALI_GIORNO[new Date(g.giorno + 'T12:00:00Z').getUTCDay()]}</span>`).join('');
+  return `<button class="o5-settimana" data-o5="agenda" aria-label="La tua settimana: ${giorni ? `${tot} contatti` : 'leggo'}"><span class="o5-st-testa"><span class="o5-gn-tit">LA TUA SETTIMANA ›</span>${
+    giorni ? `<b>${tot === 1 ? '1 contatto' : `${tot} contatti`}</b>` : ''}</span>${giorni ? `<span class="o5-st-colonne">${colonne}</span><span class="o5-st-giorni">${iniziali}</span>`
+    : '<span class="o5-gn-frase">Leggo la settimana…</span>'}</button>`;
 }
 // la sera (dalle ORA_CHECK, come la Dashboard): «Com'è andata oggi?» apre il Check del giorno. Nota 096 (Ignazio 25/10, «A»): scritto il giorno, il riquadro
 // resta e diventa «Check di oggi ✓ · rivedi o correggi»; il tocco apre lo stesso Check del giorno, già scritto (prima spariva e non si ritrovava)
@@ -259,7 +281,7 @@ function disegnaOggiV5() {
   let html = `<div class="o5${sera ? ' sera' : ''}">
     <div class="o5-righe">${testataV5({ chiaro: true, sinistra: `<span class="o5-data">${esc(dataEstesa(ST.oggi).toUpperCase() + ora)}</span>`, titolo: 'Oggi', comandi: chipPartnerSelect() + cerchiettoProfilo() })}</div>
     ${dashboardTesta(true)}${ST.offline ? `<div class="avviso">Sei offline: è la coda salvata. Solo lettura.${percheHtml('offline')}</div>` : ''}${rigaTelefonoHtml()}
-    <div class="o5-riquadri">${vediTutti() ? '' : o5Giornata()}${o5Contatti()}${sera ? o5Sera(fattoGiorno) : ''}${o5Agenda()}
+    <div class="o5-riquadri">${vediTutti() ? '' : o5Giornata() + o5SettimanaHtml(O5.di === visto().id && O5.giorno === ST.oggi ? O5.settimana : null)}${o5Contatti()}${sera ? o5Sera(fattoGiorno) : ''}${o5Agenda()}
       <div class="o5-coppia">${o5Training()}${o5Traguardo()}</div>
       <div class="o5-coppia${clienti ? '' : ' uno'}">${clienti}${o5Mappa()}</div></div></div>`;   // Ignazio 25/10: «Da seguire» non sta più in Oggi (solo i riquadri)
   app.innerHTML = html + versione();

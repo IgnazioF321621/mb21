@@ -2475,6 +2475,19 @@
   .o5-gn-riga b span { font-size: 15px; font-weight: 700; }
   .o5-gn-riga.vuoto { color: #5A6475; }
   .o5-gn-frase { font-size: 15px; font-weight: 600; line-height: 1.3; }
+  /* nota Pagine 148 (tavola «C · Oggi diventa Dashboard»): «La tua settimana», sette colonne dei contatti fatti, oggi pieno */
+  .o5-settimana { width: 100%; border: 0; font: inherit; text-align: left; cursor: pointer; background: #fff; color: #10151F; border-radius: 24px; padding: 18px 20px; display: flex; flex-direction: column; gap: 12px; }
+  .o5-st-testa { display: flex; justify-content: space-between; align-items: baseline; }
+  .o5-st-testa b { font-size: 14px; font-weight: 800; color: #B34E00; }
+  .o5-st-colonne, .o5-st-giorni { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 10px; }
+  .o5-st-colonne { align-items: end; height: 96px; }
+  .o5-st-col { display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 96px; gap: 4px; }
+  .o5-st-col small { font-size: 12px; font-weight: 700; color: #5A6475; }
+  .o5-st-col i { width: 100%; border-radius: 8px; background: var(--z-contatti); opacity: .45; }
+  .o5-st-col.oggi small { font-weight: 800; color: #B34E00; }
+  .o5-st-col.oggi i { opacity: 1; }
+  .o5-st-giorni { text-align: center; font-size: 13px; font-weight: 700; color: #5A6475; }
+  .o5-st-giorni .oggi { color: #B34E00; font-weight: 800; }
   .o5-col { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
   .o5-tit { font-size: 13px; font-weight: 800; display: flex; align-items: center; gap: 6px; }
   .o5-tit svg.ic { width: 18px; height: 18px; }
@@ -2778,7 +2791,7 @@
     /* poi (Regia 27/10, «sì» di Ignazio dopo la prova sull'iPad): in alto Contatti e Agenda affiancati, sotto «Com'è andata oggi?» su tutta la riga e basso
        come sull'iPhone, poi le altre a coppie; con un numero dispari di tessere l'ultima va su tutta la riga */
     html.v5 .o5-riquadri > .o5-sera { grid-column: 1 / -1; order: 1; }
-    html.v5 .o5-riquadri > .o5-giornata { grid-column: 1 / -1; }   /* nota 147: «La tua giornata» in cima, su tutta la riga */
+    html.v5 .o5-riquadri > .o5-giornata, html.v5 .o5-riquadri > .o5-settimana { grid-column: 1 / -1; }   /* note 147-148: «La tua giornata» e «La tua settimana» in cima, su tutta la riga */
     html.v5 .o5-coppia > .o5-r { order: 2; }
     html.v5 .o5-coppia.uno > .o5-r { grid-column: 1 / -1; }
     html.v5 .o5-tessere { grid-template-columns: repeat(3, minmax(0, 1fr)); }
