@@ -127,6 +127,50 @@ function o5SettimanaHtml(giorni) {
     giorni ? `<b>${tot === 1 ? '1 contatto' : `${tot} contatti`}</b>` : ''}</span>${giorni ? `<span class="o5-st-colonne">${colonne}</span><span class="o5-st-giorni">${iniziali}</span>`
     : '<span class="o5-gn-frase">Leggo la settimana…</span>'}</button>`;
 }
+// «Il tuo ritmo» (nota Pagine 148, pezzo 5, tavola «D»; Ignazio 29/10, «A» e quattro pallini): Contatti e Piani (fare), Tracce e Pagine (crescere).
+// Il ritmo di adesso sono gli ultimi 7 giorni (come «La tua settimana»); il solito è la media delle 4 settimane prima (7 giorni ciascuna); nella fascia
+// azzurra = tra 3/4 e 1 volta e 1/4 della media; fuori = arancione. Sotto una frase a parole. Dati del Check già letti (CK.giorni, check_giorni_conti:
+// le stesse regole del Check), nessuna lettura nuova. `giorni` = righe { data, contatti, pm, tracce, pagine } (anche più righe per giorno: si sommano).
+const RITMO = [['contatti', 'Contatti', 'fare'], ['pm', 'Piani', 'fare'], ['tracce', 'Tracce', 'crescere'], ['pagine', 'Pagine', 'crescere']];
+function ritmoSettimana(giorni, oggi) {
+  if (!Array.isArray(giorni)) return null;
+  const sp = MB21Agenda.spostaGiorno, inizio = sp(oggi, -34);
+  const somma = (k, da, a) => giorni.reduce((t, g) => t + (g.data >= da && g.data <= a ? Number(g[k]) || 0 : 0), 0);
+  const voci = RITMO.map(([k, nome, lato]) => {
+    const ora = somma(k, sp(oggi, -6), oggi);
+    const solito = [1, 2, 3, 4].reduce((t, w) => t + somma(k, sp(oggi, -6 - 7 * w), sp(oggi, -7 * w)), 0) / 4;
+    const dove = solito === 0 ? (ora > 0 ? 'sopra' : 'dentro') : ora < solito * 0.75 ? 'sotto' : ora > solito * 1.25 ? 'sopra' : 'dentro';
+    return { k, nome, lato, ora, solito, dove };
+  });
+  // senza niente nelle 4 settimane prima il solito non c'è ancora
+  const storia = giorni.some(g => g.data >= inizio && g.data < sp(oggi, -6) && RITMO.some(([k]) => Number(g[k]) > 0));
+  return { voci, storia };
+}
+function fraseRitmo(r) {
+  if (!r.storia) return 'Il tuo solito si vede dopo qualche settimana';
+  const sotto = r.voci.filter(v => v.dove === 'sotto'), sopra = r.voci.filter(v => v.dove === 'sopra');
+  if (!sotto.length && !sopra.length) return 'Nel tuo ritmo';
+  // Ignazio 29/10 («per esempio»): fai tanto ma cresci poco, e il contrario
+  const lato = (l, d) => r.voci.filter(v => v.lato === l).every(v => v.dove === d);
+  if (lato('crescere', 'sotto') && !r.voci.some(v => v.lato === 'fare' && v.dove === 'sotto')) return 'Fai tanto, ma ascolti e leggi poco';
+  if (lato('fare', 'sotto') && !r.voci.some(v => v.lato === 'crescere' && v.dove === 'sotto')) return 'Cresci tanto, ma fai poco';
+  if (sotto.length) return `${elencoVoci(sotto.map(v => v.nome))} sotto il solito`;
+  return `${elencoVoci(sopra.map(v => v.nome))} sopra il solito`;
+}
+function o5Ritmo() {
+  const mio = typeof CK !== 'undefined' && CK.giorni && CK.di === visto().id;
+  return o5RitmoHtml(mio ? ritmoSettimana(CK.giorni, ST.oggi) : null);
+}
+function o5RitmoHtml(r) {
+  const tit = '<span class="o5-gn-tit">IL TUO RITMO · QUESTA SETTIMANA ›</span>';
+  if (!r) return `<button class="o5-ritmo" data-o5="mese" aria-label="Il tuo ritmo">${tit}<span class="o5-gn-frase">Leggo il tuo ritmo…</span></button>`;
+  // l'altezza del pallino: al centro il solito, i bordi della fascia a 3/4 e 1 volta e 1/4 (fascia da 30 a 70 su 100)
+  const su = v => (!r.storia ? 50 : v.solito === 0 ? (v.ora > 0 ? 12 : 50) : Math.max(10, Math.min(90, 50 - (v.ora / v.solito - 1) * 80)));
+  const frase = fraseRitmo(r), fuori = r.storia && r.voci.some(v => v.dove !== 'dentro');
+  const uno = v => `<span class="o5-rt-uno${r.storia && v.dove !== 'dentro' ? ' fuori' : ''}"><span class="o5-rt-asse"><i style="top:${Math.round(su(v))}px"></i></span><small>${esc(v.nome)}</small></span>`;
+  return `<button class="o5-ritmo" data-o5="mese" aria-label="Il tuo ritmo questa settimana: ${esc(frase)}">${tit}<span class="o5-rt-pallini">${r.storia ? '<span class="o5-rt-fascia"></span>' : ''}${r.voci.map(uno).join('')}</span>
+    <span class="o5-rt-sotto"><small>La fascia azzurra è il tuo solito</small><b${fuori ? ' class="fuori"' : ''}>${esc(frase)}</b></span></button>`;
+}
 // «Segni Vitali del mese» (nota Pagine 148, secondo pezzo, tavola «C»): «Verso il <traguardo più vicino>», quattro colonne WES, BBS, CEP, 15 Planner.
 // Gli stessi numeri del Check: `lv` = i livelli del mese (percorsoDash → livelliCheck → MB21Check.livelli), il traguardo più vicino è il primo non fatto
 // sopra il più alto raggiunto (come il Check); la linea scura sta al suo numero (LIVELLI.sv), la colonna intera vale il numero del traguardo dopo
@@ -236,7 +280,7 @@ function disegnaOggiV5() {
   let html = `<div class="o5${sera ? ' sera' : ''}">
     <div class="o5-righe">${testataV5({ chiaro: true, sinistra: `<span class="o5-data">${esc(dataEstesa(ST.oggi).toUpperCase() + ora)}</span>`, titolo: 'Oggi', comandi: chipPartnerSelect() + cerchiettoProfilo() })}</div>
     ${dashboardTesta(true)}${ST.offline ? `<div class="avviso">Sei offline: è la coda salvata. Solo lettura.${percheHtml('offline')}</div>` : ''}${rigaTelefonoHtml()}
-    <div class="o5-riquadri">${sera ? o5Sera(fattoGiorno) : ''}${vediTutti() ? '' : o5Giornata() + o5SettimanaHtml(O5.di === visto().id && O5.giorno === ST.oggi ? O5.settimana : null) + o5Segni() + o5TraguardiHtml(traguardiOggi(percorsoDash()))}${nuovoInAvvio() ? o5Traguardo() : ''}</div></div>`;
+    <div class="o5-riquadri">${sera ? o5Sera(fattoGiorno) : ''}${vediTutti() ? '' : o5Giornata() + o5SettimanaHtml(O5.di === visto().id && O5.giorno === ST.oggi ? O5.settimana : null) + o5Ritmo() + o5Segni() + o5TraguardiHtml(traguardiOggi(percorsoDash()))}${nuovoInAvvio() ? o5Traguardo() : ''}</div></div>`;
   // nota Pagine 148 (Ignazio 29/10, via Regia: «lo facciamo spuntare direttamente come prima cosa in alto a quell'ora»): dalle ORA_CHECK (20) «Com'è andata
   // oggi?» sta in cima, sopra «La tua giornata», anche a Check scritto («Check di oggi ✓»); prima delle 20 non c'è.
   // nota Pagine 148, pezzo 4 (Ignazio 29/10, via Regia): via i riquadri di prima (Contatti, Agenda, Training, Traguardo, Clienti, Mappa); restano i
@@ -258,6 +302,7 @@ function o5Vai(go) {
   if (go === 'avvio') { AVV.mioAperto = true; return vaiLV('avvio'); }
   if (go.startsWith('gradino:')) return vaiLV('gradino', { gradino: go.slice(8) });
   if (go === 'traguardo') return vaiLV('traguardo');
+  if (go === 'mese') return vaiLV('mese');   // «Il tuo ritmo»: il Mese («Come sto andando questo mese?»), da lì le aree del Check
   if (go === 'clienti') return vaiLV('clienti');   // v5: la pagina «Clienti da sentire» (disegnaClientiV5)
   if (go === 'mappa') return tab('mappa');
 }

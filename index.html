@@ -2488,6 +2488,20 @@
   .o5-st-col.oggi i { opacity: 1; }
   .o5-st-giorni { text-align: center; font-size: 13px; font-weight: 700; color: #5A6475; }
   .o5-st-giorni .oggi { color: #B34E00; font-weight: 800; }
+  /* nota Pagine 148, pezzo 5: «Il tuo ritmo», quattro pallini sulla fascia azzurra del solito; fuori dalla fascia arancione */
+  .o5-ritmo { width: 100%; border: 0; font: inherit; text-align: left; cursor: pointer; background: #fff; color: #10151F; border-radius: 24px; padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; }
+  .o5-rt-pallini { position: relative; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
+  .o5-rt-fascia { position: absolute; left: 0; right: 0; top: 30px; height: 40px; border-radius: 12px; background: #DBEAFE; }
+  .o5-rt-uno { position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .o5-rt-asse { position: relative; width: 100%; height: 100px; }
+  .o5-rt-asse i { position: absolute; left: 50%; width: 18px; height: 18px; margin: -9px 0 0 -9px; border-radius: 50%; background: #1D4ED8; border: 4px solid #fff; box-shadow: 0 0 0 2px #1D4ED8; box-sizing: border-box; }
+  .o5-rt-uno small { font-size: 12px; font-weight: 800; color: #5A6475; text-align: center; }
+  .o5-rt-uno.fuori i { background: #B34E00; box-shadow: 0 0 0 2px #B34E00; }
+  .o5-rt-uno.fuori small { color: #B34E00; }
+  .o5-rt-sotto { display: flex; flex-direction: column; gap: 2px; }
+  .o5-rt-sotto small { font-size: 13px; font-weight: 700; color: #5A6475; }
+  .o5-rt-sotto b { font-size: 22px; font-weight: 800; color: #1D4ED8; }
+  .o5-rt-sotto b.fuori { color: #B34E00; }
   /* nota Pagine 148, secondo pezzo: «Segni Vitali» del mese verso il traguardo più vicino (linea scura) e quello dopo (colonna intera) */
   .o5-segni { width: 100%; border: 0; font: inherit; text-align: left; cursor: pointer; background: #fff; color: #10151F; border-radius: 24px; padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; }
   .o5-sv-testa { display: flex; flex-direction: column; gap: 2px; }
@@ -2815,7 +2829,7 @@
     /* poi (Regia 27/10, «sì» di Ignazio dopo la prova sull'iPad): in alto Contatti e Agenda affiancati, sotto «Com'è andata oggi?» su tutta la riga e basso
        come sull'iPhone, poi le altre a coppie; con un numero dispari di tessere l'ultima va su tutta la riga */
     html.v5 .o5-riquadri > .o5-sera { grid-column: 1 / -1; }   /* nota 148 (Ignazio 29/10): dalle 20 in cima, sopra «La tua giornata» (prima order: 1 la metteva dopo Contatti e Agenda) */
-    html.v5 .o5-riquadri > .o5-giornata, html.v5 .o5-riquadri > .o5-settimana, html.v5 .o5-riquadri > .o5-segni, html.v5 .o5-riquadri > .o5-traguardi, html.v5 .o5-riquadri > .o5-traguardo { grid-column: 1 / -1; }   /* note 147-148: «La tua giornata» e «La tua settimana» in cima, su tutta la riga */
+    html.v5 .o5-riquadri > .o5-giornata, html.v5 .o5-riquadri > .o5-settimana, html.v5 .o5-riquadri > .o5-segni, html.v5 .o5-riquadri > .o5-traguardi, html.v5 .o5-riquadri > .o5-traguardo, html.v5 .o5-riquadri > .o5-ritmo { grid-column: 1 / -1; }   /* note 147-148: «La tua giornata» e «La tua settimana» in cima, su tutta la riga */
     html.v5 .o5-coppia > .o5-r { order: 2; }
     html.v5 .o5-coppia.uno > .o5-r { grid-column: 1 / -1; }
     html.v5 .o5-tessere { grid-template-columns: repeat(3, minmax(0, 1fr)); }

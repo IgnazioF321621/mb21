@@ -9,6 +9,7 @@ const leggi = f => fs.readFileSync(path.join(BASE, f), 'utf8');
 const PO = leggi('pagina-oggi.js'), IDX = leggi('index.html'), DASH = leggi('pagina-dashboard.js');
 // il conto dei passi dei livelli della pagina dei traguardi (pagina-dashboard.js), lo stesso di «I tuoi traguardi»
 const CONTEGGIO_VOCI = vm.runInNewContext(DASH.slice(DASH.indexOf('const conteggioVoci'), DASH.indexOf('function disegnaTraguardoLV')) + ';conteggioVoci');
+const ELENCO_VOCI = vm.runInNewContext(DASH.slice(DASH.indexOf('const elencoVoci'), DASH.indexOf('const conteggioVoci')) + ';elencoVoci');
 const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const OGGI = '2026-10-25';
 let ok = 0;
@@ -26,7 +27,7 @@ function mondo({ stato = { contatti_al_giorno: 5, fatti_oggi: 3 }, codaNomi = ['
     LV: { vista: 'home' }, DS: { dati: { ultimoCheck: fattoGiorno ? OGGI : null }, sqLettura: Promise.resolve({ sq: [{ partner_id: 'P1' }, { partner_id: 'P2', sponsor_id: 'P1' }, { partner_id: 'P3', sponsor_id: 'P2' }, { partner_id: 'P9', sponsor_id: 'X' }] }) },
     RIO: { righe: riordini, prossimo }, AVV: { mio: nuovo ? { avvio: true } : null }, LS: {}, PF: { aperte: new Set() }, RP: {}, AD: {}, TRN: {}, ORA_CHECK: 20, PUNTI_LC1: { wes: 'Ticket WES', bbs: 'Ticket BBS' },
     visto: () => ({ id: 'io', partner_id: 'P1' }), guardoAltri: () => altro, vediTutti: () => false, eAdmin: () => admin, oraRoma: () => ora, dataEstesa: () => 'domenica 25 ottobre',
-    nuovoInAvvio: () => nuovo, percorsoDash: () => percorso, conteggioVoci: CONTEGGIO_VOCI, nomeGradino: g => g.titolo, mancaCorto: xs => xs.join(', '), fraseTraguardo: () => 'frase',
+    nuovoInAvvio: () => nuovo, percorsoDash: () => percorso, conteggioVoci: CONTEGGIO_VOCI, elencoVoci: ELENCO_VOCI, nomeGradino: g => g.titolo, mancaCorto: xs => xs.join(', '), fraseTraguardo: () => 'frase',
     dashboardTesta: senza => `<div id="finta-testa">${senza ? '' : 'fascia'}</div>`, PS: { persone: admin ? [{ id: 'io' }, { id: 'u2' }] : [] }, nomeVisto: () => 'Persona Due Finta', rigaTelefonoHtml: () => '', daSeguireHtml: () => '<div id="finto-seguire"></div>', percheHtml: () => '', cerchiettoProfilo: () => '<button id="ds-profilo">IF</button>', versione: () => '',
     foglioSegnala: () => vai.push('feedback'), vaiLV: (v, x) => vai.push(['lv', v, x || null]), apriCheck: () => vai.push('check'), scegliNumero: () => vai.push('riparto'), caricaOggi() {},
     mostraTab: () => vai.push(['tab', ctx.ST.tab]), vaiAlPrimoLivello: () => vai.push('primo'), disegnaOggi: () => vai.push('ridisegna'), TRAINING_VISIBILE: true,
@@ -658,6 +659,33 @@ prova('148: «I tuoi traguardi» — Leader 1°, Core, Pacesetter, Leaders Club,
   const N = mondo({ percorso: { lv: null, pc: { gradini: [gradini[0], { chiave: 'core', fatti: 0, totale: 7, pronto: false }, gradini[2]] }, l: {} } }); N.ctx.disegna();
   assert.match(testo(N.app.innerHTML), /I TUOI TRAGUARDI › 75% Leader 1° — Core Fatto Pacesetter — Leaders Club — Executive Leader Club — Produttore Argento/);
   const L = mondo(); L.ctx.disegna(); assert.match(testo(L.app.innerHTML), /I TUOI TRAGUARDI › Leggo i traguardi…/);
+});
+
+prova('148, pezzo 5: «Il tuo ritmo» — Contatti, Piani, Tracce e Pagine degli ultimi 7 giorni contro la media delle 4 settimane prima (dati del Check); fascia da 3/4 a 1 volta e 1/4; fuori = arancione; una frase; il tocco apre il Mese', () => {
+  // una riga per settimana (anche due righe nello stesso giorno si sommano): le 4 settimane prima 20 contatti, 2 piani, 7 tracce, 70 pagine
+  const sp = A.spostaGiorno, prima = w => [{ data: sp(OGGI, -7 * w), contatti: 12, pm: 2, tracce: 7, pagine: 70 }, { data: sp(OGGI, -7 * w), contatti: 8 }];
+  const giorni = (ora) => [...[1, 2, 3, 4].flatMap(prima), { data: sp(OGGI, -2), ...ora }, { data: sp(OGGI, -60), contatti: 500 }];   // oltre le 5 settimane non conta
+  const W = mondo(); W.ctx.CK = { giorni: giorni({ contatti: 21, pm: 2, tracce: 2, pagine: 10 }), di: 'io' }; W.ctx.disegna();
+  const h = W.app.innerHTML, t = testo(h);
+  assert.ok(h.indexOf('o5-settimana') < h.indexOf('o5-ritmo') && h.indexOf('o5-ritmo') < h.indexOf('o5-segni'));
+  assert.match(t, /IL TUO RITMO · QUESTA SETTIMANA › Contatti Piani Tracce Pagine La fascia azzurra è il tuo solito Fai tanto, ma ascolti e leggi poco/);
+  assert.equal((h.match(/o5-rt-uno fuori/g) || []).length, 2);
+  assert.match(h, /<b class="fuori">/);
+  // il pallino: al centro il solito (Contatti 21 su 20 → un po' sopra il centro; Piani 2 su 2 al centro), fuori più in basso (fino al bordo)
+  assert.deepEqual([...h.matchAll(/top:(\d+)px/g)].map(x => Number(x[1])), [46, 50, 90, 90]);   // Tracce 2 su 7 e Pagine 10 su 70: in fondo
+  W.app.clic('[data-o5="mese"]'); assert.deepEqual(JSON.parse(JSON.stringify(W.vai)), [['lv', 'mese', null]]);
+  const R = W.ctx;
+  const frase = ora => R.fraseRitmo(R.ritmoSettimana(giorni(ora), OGGI));
+  assert.equal(frase({ contatti: 20, pm: 2, tracce: 7, pagine: 70 }), 'Nel tuo ritmo');
+  assert.equal(frase({ contatti: 5, pm: 0, tracce: 7, pagine: 70 }), 'Cresci tanto, ma fai poco');
+  assert.equal(frase({ contatti: 5, pm: 2, tracce: 2, pagine: 70 }), 'Contatti e Tracce sotto il solito');
+  assert.equal(frase({ contatti: 30, pm: 2, tracce: 7, pagine: 70 }), 'Contatti sopra il solito');
+  // senza niente nelle 4 settimane prima: niente fascia, una frase
+  const N = mondo(); N.ctx.CK = { giorni: [{ data: OGGI, contatti: 3 }], di: 'io' }; N.ctx.disegna();
+  assert.match(testo(N.app.innerHTML), /Il tuo solito si vede dopo qualche settimana/); assert.doesNotMatch(N.app.innerHTML, /o5-rt-fascia|o5-rt-uno fuori/);
+  // dati del Check non ancora letti (o di un altro partner): «Leggo…»
+  const L = mondo(); L.ctx.CK = { giorni: [], di: 'altro' }; L.ctx.disegna(); assert.match(testo(L.app.innerHTML), /IL TUO RITMO · QUESTA SETTIMANA › Leggo il tuo ritmo…/);
+  assert.match(IDX, /html\.v5 \.o5-riquadri > \.o5-ritmo \{ grid-column: 1 \/ -1; \}|\.o5-riquadri > \.o5-ritmo/);
 });
 
 (async () => {
