@@ -327,7 +327,7 @@
   const FRASE_OSPITI = 'Hai ospiti? Scrivi i loro nomi qui. Puoi aggiungerli anche più tardi: riapri questa serata e li trovi ancora qui.';
   const conOspiti = r => !!r && r.origine === 'spazio' && r.tipo === 'SdS/OPEN';
   // La carta «Consegna» (nota Pagine 051, Ignazio 12/10/2026): il promemoria che la vendita «Più avanti» scrive in Agenda (trigger
-  // mb21_vendita_agenda: Contatto · Presenza, nota «Consegna · prodotto») non è una telefonata: niente «Com'è andata la telefonata?»,
+  // mb21_vendita_agenda: Contatto · Presenza, nota «Consegna · prodotto») non è una telefonata: niente «Com'è andato il contatto?»,
   // solo «Ordine fatto» (lo stesso tasto della vendita, V1 22/10; prima «Consegnato») e «Sposta la consegna» (cambia vendite.consegna; il promemoria lo segue da solo).
   const eConsegna = a => !!a && a.tipo_azione === 'Contatto' && a.modalita === 'Presenza' && /^Consegna · /.test(a.note || '');
   const OSPITE_MAX = 60, OSPITI_MAX = 30;
@@ -552,7 +552,7 @@
   };
   const daChiudere = a => !a.completata && !a.esito && !(a.tipo_azione === 'Contatto' && a.data_scelta);
   // La domanda sopra i bottoni dice di cosa parla (Ignazio 29/09, cantiere 48: con l'incontro ancora da fissare «Com'è andata?» non ha senso)
-  const DOMANDA_ESITO = { 'Contatto': 'Com\'è andata la telefonata?', 'Piano Marketing': 'Com\'è andato il piano?', 'Follow Up': 'Com\'è andato il follow up?',
+  const DOMANDA_ESITO = { 'Contatto': 'Com\'è andato il contatto?', 'Piano Marketing': 'Com\'è andato il piano?', 'Follow Up': 'Com\'è andato il follow up?',
     'Appuntamento': 'Com\'è andato l\'incontro?', 'Consulenza PRD': 'Com\'è andata la consulenza?' };
   const domandaEsito = tipo => DOMANDA_ESITO[tipo] || 'Com\'è andata?';
   // Restituisce i gruppi di bottoni da mostrare (null = niente): { passo, titolo, bottoni, attuale }.

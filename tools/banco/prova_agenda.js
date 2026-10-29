@@ -514,11 +514,16 @@ prova('Azione di più di 7 giorni fa (storico, 02/10): niente domande da coach; 
   assert.equal(A.nelPassato(null, '2026-10-02'), false); assert.equal(A.nelPassato('2020-05-05T10:00:00Z', null), false);
 });
 
+prova('Nota Pagine 145 (29/10): un Contatto chiede «Com\'è andato il contatto?» con Telefonata, Messaggio e Presenza', () => {
+  for (const modalita of ['Telefonata', 'Messaggio', 'Presenza'])
+    assert.equal(A.passiEsito({ tipo_azione: 'Contatto', modalita, categoria: 'Prospect' }, 'Prospect')[0].titolo, 'Com\'è andato il contatto?');
+});
+
 prova('Cantiere 48 (29/09): la domanda dice di cosa parla; dopo una telefonata si apre lo stesso foglio della coda', () => {
-  assert.equal(A.domandaEsito('Contatto'), 'Com\'è andata la telefonata?'); assert.equal(A.domandaEsito('Appuntamento'), 'Com\'è andato l\'incontro?');
+  assert.equal(A.domandaEsito('Contatto'), 'Com\'è andato il contatto?'); assert.equal(A.domandaEsito('Appuntamento'), 'Com\'è andato l\'incontro?');
   assert.equal(A.domandaEsito('Piano Marketing'), 'Com\'è andato il piano?'); assert.equal(A.domandaEsito('Consulenza PRD'), 'Com\'è andata la consulenza?');
   assert.equal(A.domandaEsito('Boh'), 'Com\'è andata?');
-  assert.equal(A.passiEsito({ tipo_azione: 'Contatto', modalita: 'Telefonata', categoria: 'Prospect' }, 'Prospect')[0].titolo, 'Com\'è andata la telefonata?');
+  assert.equal(A.passiEsito({ tipo_azione: 'Contatto', modalita: 'Telefonata', categoria: 'Prospect' }, 'Prospect')[0].titolo, 'Com\'è andato il contatto?');
   assert.equal(A.passiEsito({ tipo_azione: 'Piano Marketing', modalita: 'PM 1a1', categoria: 'Prospect' }, 'Prospect', true)[1].titolo, 'Com\'è andato il piano?');
   assert.deepEqual(A.dopoTelefonata('Prospect', 'PM Fissato'), { cosa: 'appuntamento', proposta: { categoria: 'Prospect', tipo: 'Piano Marketing', modalita: 'PM 1a1' } });
   assert.deepEqual(A.dopoTelefonata('Partner', 'Appuntamento'), { cosa: 'appuntamento', proposta: { categoria: 'Partner', tipo: 'Appuntamento', modalita: null } });
