@@ -2488,6 +2488,22 @@
   .o5-st-col.oggi i { opacity: 1; }
   .o5-st-giorni { text-align: center; font-size: 13px; font-weight: 700; color: #5A6475; }
   .o5-st-giorni .oggi { color: #B34E00; font-weight: 800; }
+  /* nota Pagine 148, secondo pezzo: «Segni Vitali» del mese verso il traguardo più vicino (linea scura) e quello dopo (colonna intera) */
+  .o5-segni { width: 100%; border: 0; font: inherit; text-align: left; cursor: pointer; background: #fff; color: #10151F; border-radius: 24px; padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; }
+  .o5-sv-testa { display: flex; flex-direction: column; gap: 2px; }
+  .o5-sv-testa b { font-size: 15px; font-weight: 800; }
+  .o5-sv-colonne { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+  .o5-sv-col { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .o5-sv-col > b { font-size: 18px; font-weight: 800; color: #BE123C; }
+  .o5-sv-barra { position: relative; width: 38px; height: 112px; border-radius: 12px; background: #FCE7EC; overflow: hidden; }
+  .o5-sv-barra i { position: absolute; left: 0; right: 0; bottom: 0; background: var(--z-segni); border-radius: 12px; }
+  .o5-sv-barra em { position: absolute; left: 0; right: 0; border-top: 3px solid #10151F; }
+  .o5-sv-col small { font-size: 12px; font-weight: 800; color: #5A6475; text-align: center; }
+  .o5-sv-col > span:last-child { font-size: 12px; font-weight: 700; color: #5A6475; }
+  .o5-sv-legenda { display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 700; color: #5A6475; }
+  .o5-sv-legenda > span { display: flex; align-items: center; gap: 8px; }
+  .o5-sv-legenda i.linea { width: 22px; border-top: 3px solid #10151F; flex: none; }
+  .o5-sv-legenda i.pieno { width: 22px; height: 10px; border-radius: 4px; background: #FCE7EC; flex: none; }
   .o5-col { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
   .o5-tit { font-size: 13px; font-weight: 800; display: flex; align-items: center; gap: 6px; }
   .o5-tit svg.ic { width: 18px; height: 18px; }
@@ -2791,7 +2807,7 @@
     /* poi (Regia 27/10, «sì» di Ignazio dopo la prova sull'iPad): in alto Contatti e Agenda affiancati, sotto «Com'è andata oggi?» su tutta la riga e basso
        come sull'iPhone, poi le altre a coppie; con un numero dispari di tessere l'ultima va su tutta la riga */
     html.v5 .o5-riquadri > .o5-sera { grid-column: 1 / -1; order: 1; }
-    html.v5 .o5-riquadri > .o5-giornata, html.v5 .o5-riquadri > .o5-settimana { grid-column: 1 / -1; }   /* note 147-148: «La tua giornata» e «La tua settimana» in cima, su tutta la riga */
+    html.v5 .o5-riquadri > .o5-giornata, html.v5 .o5-riquadri > .o5-settimana, html.v5 .o5-riquadri > .o5-segni { grid-column: 1 / -1; }   /* note 147-148: «La tua giornata» e «La tua settimana» in cima, su tutta la riga */
     html.v5 .o5-coppia > .o5-r { order: 2; }
     html.v5 .o5-coppia.uno > .o5-r { grid-column: 1 / -1; }
     html.v5 .o5-tessere { grid-template-columns: repeat(3, minmax(0, 1fr)); }

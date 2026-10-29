@@ -19,7 +19,7 @@ function mondo({ stato = { contatti_al_giorno: 5, fatti_oggi: 3 }, codaNomi = ['
   sg.hidden = false; sg.classList = { contains: c => c === 'con-risposta' && !!sg.risposta };
   const ctx = { console, Promise, Date, Intl, Math, JSON, Number, String, Array, Object, Set, app, esc, ic: n => `[${n}]`,
     MB21Agenda: A, MB21Lista: L, MB21Training: T, MB21Spazi: S, MB21Coda: { oggiRoma: () => OGGI },
-    MB21Check: { piuVicino: g => g.find(x => !x.fatto) || null },
+    MB21Check: { piuVicino: g => g.find(x => !x.fatto) || null, LIVELLI: require('../../check.js').LIVELLI }, MB21Dashboard: require('../../dashboard.js'),
     ST: { tab: 'oggi', oggi: OGGI, stato, risultato: { coda: codaNomi.map((nome, i) => ({ id: 'c' + i, nome })) }, offline: false, utente: { id: 'io' } },
     LV: { vista: 'home' }, DS: { dati: { ultimoCheck: fattoGiorno ? OGGI : null }, sqLettura: Promise.resolve({ sq: [{ partner_id: 'P1' }, { partner_id: 'P2', sponsor_id: 'P1' }, { partner_id: 'P3', sponsor_id: 'P2' }, { partner_id: 'P9', sponsor_id: 'X' }] }) },
     RIO: { righe: riordini, prossimo }, AVV: { mio: nuovo ? { avvio: true } : null }, LS: {}, PF: { aperte: new Set() }, RP: {}, AD: {}, TRN: {}, ORA_CHECK: 20, PUNTI_LC1: { wes: 'Ticket WES', bbs: 'Ticket BBS' },
@@ -697,6 +697,29 @@ prova('148: «La tua settimana» sotto la giornata — sette colonne fino a oggi
   assert.equal((h.match(/o5-st-col oggi/g) || []).length, 1);
   W.app.clic('.o5-settimana'); assert.deepEqual(JSON.parse(JSON.stringify(W.vai.filter(x => typeof x !== 'string'))), [['tab', 'agenda']]);
   const L = mondo(); L.ctx.disegna(); assert.match(testo(L.app.innerHTML), /LA TUA SETTIMANA › Leggo la settimana…/);
+});
+
+prova('148: «Segni Vitali» del mese — verso il traguardo più vicino del Check (la linea), la colonna intera vale quello dopo, il rosso è il mese; «su N»; senza file Amway una frase; il tocco apre il traguardo', () => {
+  const C = require('../../check.js');
+  const lv = C.livelli({ core: true, bonus: 6, linee: [], cep: 4, planner: 0, iscritti: 1, totale: 8, bbs: 6, wes: 8, mesi21: 0 });
+  const W = mondo({ percorso: { lv, pc: { gradini: [] }, l: {} } });
+  const S = W.ctx.segniDelMese(lv);
+  assert.deepEqual(JSON.parse(JSON.stringify(S)), { verso: 'Leaders Club', dopo: 'Executive Leader Club', colonne: [
+    { k: 'wes', nome: 'WES', q: 8, t: 10, max: 20 }, { k: 'bbs', nome: 'BBS', q: 6, t: 10, max: 20 }, { k: 'cep', nome: 'CEP', q: 4, t: 5, max: 15 }, { k: 'planner', nome: '15 Planner', q: 0, t: 1, max: 3 }] });
+  W.ctx.disegna();
+  const h = W.app.innerHTML, t = testo(h);
+  assert.ok(h.indexOf('o5-settimana') < h.indexOf('o5-segni') && h.indexOf('o5-segni') < h.indexOf('o5-contatti'));
+  assert.match(t, /SEGNI VITALI · OTTOBRE › Verso il Leaders Club 8 WES su 10 6 BBS su 10 4 CEP su 5 0 15 Planner su 1/);
+  assert.match(t, /la linea: il traguardo più vicino, Leaders Club la colonna piena: il traguardo dopo, Executive Leader Club/);
+  assert.match(h, /<i style="height:45px"><\/i><em style="bottom:56px">/);   // WES 8 su 20 alto 112: 45; la linea a 10 su 20: 56
+  W.app.clic('.o5-segni'); assert.deepEqual(JSON.parse(JSON.stringify(W.vai.filter(x => typeof x !== 'string'))), [['lv', 'traguardo', null]]);
+  // il Platino è l'ultimo: la colonna vale il suo numero, niente «il traguardo dopo»
+  const sopra = { righe: C.LIVELLI.map((L, i) => ({ fatto: i < 3, voci: [{ chiave: 'wes', q: 70 }, { chiave: 'bbs', q: 80 }, { chiave: 'cep', q: null }, { chiave: 'planner', q: 4 }] })) };
+  const P = W.ctx.segniDelMese(sopra);
+  assert.equal(P.verso, 'Platino'); assert.equal(P.dopo, null); assert.deepEqual(JSON.parse(JSON.stringify(P.colonne.map(c => [c.q, c.t, c.max]))), [[70, 80, 80], [80, 80, 80], [null, 50, 50], [4, 10, 10]]);
+  const N = mondo({ percorso: { lv: null, pc: { gradini: [] }, l: {} } }); N.ctx.disegna();
+  assert.match(testo(N.app.innerHTML), /SEGNI VITALI · OTTOBRE › I Segni Vitali arrivano con il file Amway del mese/);
+  const L = mondo(); L.ctx.disegna(); assert.match(testo(L.app.innerHTML), /SEGNI VITALI · OTTOBRE › Leggo i Segni Vitali…/);
 });
 
 (async () => {

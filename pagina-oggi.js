@@ -155,6 +155,40 @@ function o5SettimanaHtml(giorni) {
     giorni ? `<b>${tot === 1 ? '1 contatto' : `${tot} contatti`}</b>` : ''}</span>${giorni ? `<span class="o5-st-colonne">${colonne}</span><span class="o5-st-giorni">${iniziali}</span>`
     : '<span class="o5-gn-frase">Leggo la settimana…</span>'}</button>`;
 }
+// «Segni Vitali del mese» (nota Pagine 148, secondo pezzo, tavola «C»): «Verso il <traguardo più vicino>», quattro colonne WES, BBS, CEP, 15 Planner.
+// Gli stessi numeri del Check: `lv` = i livelli del mese (percorsoDash → livelliCheck → MB21Check.livelli), il traguardo più vicino è il primo non fatto
+// sopra il più alto raggiunto (come il Check); la linea scura sta al suo numero (LIVELLI.sv), la colonna intera vale il numero del traguardo dopo
+// (per il Platino, l'ultimo, la colonna vale il suo numero), il rosso è il valore del mese. Dà null se i livelli non ci sono ancora.
+const SEGNI_OGGI = [['wes', 'WES'], ['bbs', 'BBS'], ['cep', 'CEP'], ['planner', '15 Planner']];
+const CON_ARTICOLO = t => (/^[AEIOU]/.test(t) ? 'l\'' : 'il ') + t;   // «il Leaders Club», «l'Executive Leader Club», «il Platino»
+function segniDelMese(lv) {
+  if (!lv || !lv.righe) return null;
+  const L = MB21Check.LIVELLI, ultimo = lv.righe.reduce((u, r, i) => (r.fatto ? i : u), -1);
+  const i = lv.righe.findIndex((r, j) => j > ultimo && !r.fatto);
+  if (i < 0) return null;
+  const qui = L[i], dopo = L[i + 1] || null, riga = lv.righe[i];
+  return { verso: qui.titolo, dopo: dopo ? dopo.titolo : null, colonne: SEGNI_OGGI.map(([k, nome]) => {
+    const v = riga.voci.find(x => x.chiave === k), t = qui.sv[k], max = dopo ? dopo.sv[k] : t;
+    return { k, nome, q: v && v.q != null ? Number(v.q) : null, t, max };
+  }) };
+}
+// il riquadro con i dati di adesso: i livelli del Check (percorsoDash); senza il file Amway del mese i livelli non ci sono e lo si dice
+function o5Segni() {
+  const p = percorsoDash();
+  return o5SegniHtml(p ? segniDelMese(p.lv) : null, ST.oggi, p && !p.lv ? 'I Segni Vitali arrivano con il file Amway del mese' : '');
+}
+function o5SegniHtml(s, mese, vuoto) {
+  const tit = `<span class="o5-gn-tit">SEGNI VITALI · ${esc(MB21Dashboard.nomeMese(mese).toUpperCase())} ›</span>`;
+  if (!s) return `<button class="o5-segni" data-o5="traguardo" aria-label="Segni Vitali del mese">${tit}<span class="o5-gn-frase">${esc(vuoto || 'Leggo i Segni Vitali…')}</span></button>`;
+  const col = c => {
+    const alto = 112, h = c.q == null ? 0 : Math.round(Math.min(1, c.q / c.max) * alto), linea = Math.round(c.t / c.max * alto);
+    return `<span class="o5-sv-col"><b>${c.q == null ? '—' : c.q}</b><span class="o5-sv-barra"><i style="height:${h}px"></i><em style="bottom:${Math.min(alto - 3, linea)}px"></em></span><small>${esc(c.nome)}</small><span>su ${c.t}</span></span>`;
+  };
+  const voce = c => `${c.nome} ${c.q == null ? 'non lo so' : `${c.q} su ${c.t}`}`;
+  return `<button class="o5-segni" data-o5="traguardo" aria-label="Segni Vitali verso ${esc(CON_ARTICOLO(s.verso))}: ${esc(s.colonne.map(voce).join(', '))}"><span class="o5-sv-testa">${tit}<b>Verso ${esc(CON_ARTICOLO(s.verso))}</b></span>
+    <span class="o5-sv-colonne">${s.colonne.map(col).join('')}</span><span class="o5-sv-legenda"><span><i class="linea"></i>la linea: il traguardo più vicino, ${esc(s.verso)}</span>${
+    s.dopo ? `<span><i class="pieno"></i>la colonna piena: il traguardo dopo, ${esc(s.dopo)}</span>` : ''}</span></button>`;
+}
 // la sera (dalle ORA_CHECK, come la Dashboard): «Com'è andata oggi?» apre il Check del giorno. Nota 096 (Ignazio 25/10, «A»): scritto il giorno, il riquadro
 // resta e diventa «Check di oggi ✓ · rivedi o correggi»; il tocco apre lo stesso Check del giorno, già scritto (prima spariva e non si ritrovava)
 function o5Sera(fatto) {
@@ -281,7 +315,7 @@ function disegnaOggiV5() {
   let html = `<div class="o5${sera ? ' sera' : ''}">
     <div class="o5-righe">${testataV5({ chiaro: true, sinistra: `<span class="o5-data">${esc(dataEstesa(ST.oggi).toUpperCase() + ora)}</span>`, titolo: 'Oggi', comandi: chipPartnerSelect() + cerchiettoProfilo() })}</div>
     ${dashboardTesta(true)}${ST.offline ? `<div class="avviso">Sei offline: è la coda salvata. Solo lettura.${percheHtml('offline')}</div>` : ''}${rigaTelefonoHtml()}
-    <div class="o5-riquadri">${vediTutti() ? '' : o5Giornata() + o5SettimanaHtml(O5.di === visto().id && O5.giorno === ST.oggi ? O5.settimana : null)}${o5Contatti()}${sera ? o5Sera(fattoGiorno) : ''}${o5Agenda()}
+    <div class="o5-riquadri">${vediTutti() ? '' : o5Giornata() + o5SettimanaHtml(O5.di === visto().id && O5.giorno === ST.oggi ? O5.settimana : null) + o5Segni()}${o5Contatti()}${sera ? o5Sera(fattoGiorno) : ''}${o5Agenda()}
       <div class="o5-coppia">${o5Training()}${o5Traguardo()}</div>
       <div class="o5-coppia${clienti ? '' : ' uno'}">${clienti}${o5Mappa()}</div></div></div>`;   // Ignazio 25/10: «Da seguire» non sta più in Oggi (solo i riquadri)
   app.innerHTML = html + versione();
