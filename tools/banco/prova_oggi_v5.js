@@ -60,10 +60,11 @@ prova('098/148: in pausa la riga Contatti di «La tua giornata» fa ripartire (s
   P.app.clic('[data-o5="contatti"]'); assert.deepEqual(P.vai, ['riparto']);
 });
 
-prova('095: la sera (dalle 20) «Com\'è andata oggi?» sotto i riquadri, finché il giorno non è scritto; tutto più stretto; il tocco apre il Check del giorno', () => {
+prova('095/148: la sera (dalle 20) «Com\'è andata oggi?» in cima, sopra «La tua giornata» (Ignazio 29/10), finché il giorno non è scritto; tutto più stretto; il tocco apre il Check del giorno', () => {
   const W = mondo({ ora: 20 }); W.ctx.disegna();
   assert.match(W.app.innerHTML, /<div class="o5 sera">/);
-  assert.ok(W.app.innerHTML.indexOf('o5-sera') > W.app.innerHTML.indexOf('o5-traguardi'));
+  assert.ok(W.app.innerHTML.indexOf('o5-sera') > 0 && W.app.innerHTML.indexOf('o5-sera') < W.app.innerHTML.indexOf('o5-giornata'));
+  assert.match(W.app.innerHTML, /<div class="o5-riquadri"><button class="o5-r o5-sera"/);   // la prima cosa dei riquadri
   assert.match(testo(W.app.innerHTML), /Com'è andata oggi\? È ora: scrivi la tua giornata nel Check/);
   W.app.clic('[data-o5="sera"]'); assert.deepEqual(JSON.parse(JSON.stringify(W.vai)), [['lv', 'ckgiorno', { ckData: null }]]);   // nota 098: la scheda Giorno del Check
   for (const X of [mondo({ ora: 19 }), mondo({ ora: 21, altro: true })]) { X.ctx.disegna(); assert.doesNotMatch(X.app.innerHTML, /o5-sera/); }
@@ -71,6 +72,7 @@ prova('095: la sera (dalle 20) «Com\'è andata oggi?» sotto i riquadri, finch�
   const F = mondo({ ora: 21, fattoGiorno: true }); F.ctx.disegna();
   assert.match(F.app.innerHTML, /class="o5-r o5-sera fatto" data-o5="sera"><span class="o5-tondo">\[fatto\]<\/span>/);
   assert.match(testo(F.app.innerHTML), /Check di oggi ✓ Rivedi o correggi la tua giornata/);
+  assert.match(F.app.innerHTML, /<div class="o5-riquadri"><button class="o5-r o5-sera fatto"/);   // scritto il giorno resta in cima
   F.app.clic('[data-o5="sera"]'); assert.deepEqual(JSON.parse(JSON.stringify(F.vai)), [['lv', 'ckgiorno', { ckData: null }]]);
 });
 

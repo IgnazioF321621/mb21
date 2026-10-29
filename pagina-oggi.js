@@ -236,7 +236,9 @@ function disegnaOggiV5() {
   let html = `<div class="o5${sera ? ' sera' : ''}">
     <div class="o5-righe">${testataV5({ chiaro: true, sinistra: `<span class="o5-data">${esc(dataEstesa(ST.oggi).toUpperCase() + ora)}</span>`, titolo: 'Oggi', comandi: chipPartnerSelect() + cerchiettoProfilo() })}</div>
     ${dashboardTesta(true)}${ST.offline ? `<div class="avviso">Sei offline: è la coda salvata. Solo lettura.${percheHtml('offline')}</div>` : ''}${rigaTelefonoHtml()}
-    <div class="o5-riquadri">${vediTutti() ? '' : o5Giornata() + o5SettimanaHtml(O5.di === visto().id && O5.giorno === ST.oggi ? O5.settimana : null) + o5Segni() + o5TraguardiHtml(traguardiOggi(percorsoDash()))}${nuovoInAvvio() ? o5Traguardo() : ''}${sera ? o5Sera(fattoGiorno) : ''}</div></div>`;
+    <div class="o5-riquadri">${sera ? o5Sera(fattoGiorno) : ''}${vediTutti() ? '' : o5Giornata() + o5SettimanaHtml(O5.di === visto().id && O5.giorno === ST.oggi ? O5.settimana : null) + o5Segni() + o5TraguardiHtml(traguardiOggi(percorsoDash()))}${nuovoInAvvio() ? o5Traguardo() : ''}</div></div>`;
+  // nota Pagine 148 (Ignazio 29/10, via Regia: «lo facciamo spuntare direttamente come prima cosa in alto a quell'ora»): dalle ORA_CHECK (20) «Com'è andata
+  // oggi?» sta in cima, sopra «La tua giornata», anche a Check scritto («Check di oggi ✓»); prima delle 20 non c'è.
   // nota Pagine 148, pezzo 4 (Ignazio 29/10, via Regia): via i riquadri di prima (Contatti, Agenda, Training, Traguardo, Clienti, Mappa); restano i
   // riquadri nuovi e «Com'è andata oggi?». Le parti si aprono dai riquadri nuovi (anello Contatti, Appuntamenti, Ripasso, settimana, traguardi) e da Esplora;
   // i clienti da sentire stanno nei Contatti del giorno. «Il mio avvio» resta solo per chi è nuovo e in avvio (o5Traguardo, Ignazio «A»)

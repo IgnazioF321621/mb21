@@ -2814,7 +2814,7 @@
     html.v5 .o5-riquadri .o5-r:not(.o5-sera) { min-height: 170px; }
     /* poi (Regia 27/10, «sì» di Ignazio dopo la prova sull'iPad): in alto Contatti e Agenda affiancati, sotto «Com'è andata oggi?» su tutta la riga e basso
        come sull'iPhone, poi le altre a coppie; con un numero dispari di tessere l'ultima va su tutta la riga */
-    html.v5 .o5-riquadri > .o5-sera { grid-column: 1 / -1; order: 1; }
+    html.v5 .o5-riquadri > .o5-sera { grid-column: 1 / -1; }   /* nota 148 (Ignazio 29/10): dalle 20 in cima, sopra «La tua giornata» (prima order: 1 la metteva dopo Contatti e Agenda) */
     html.v5 .o5-riquadri > .o5-giornata, html.v5 .o5-riquadri > .o5-settimana, html.v5 .o5-riquadri > .o5-segni, html.v5 .o5-riquadri > .o5-traguardi, html.v5 .o5-riquadri > .o5-traguardo { grid-column: 1 / -1; }   /* note 147-148: «La tua giornata» e «La tua settimana» in cima, su tutta la riga */
     html.v5 .o5-coppia > .o5-r { order: 2; }
     html.v5 .o5-coppia.uno > .o5-r { grid-column: 1 / -1; }
