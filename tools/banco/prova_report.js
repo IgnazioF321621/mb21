@@ -7,7 +7,11 @@ const R = require('../../report.js');
 let ok = 0;
 function prova(nome, fn) { fn(); ok++; console.log('OK  ' + nome); }
 
-const az = (id, tipo, esito, inizio, extra = {}) => ({ id, contatto_id: 'c' + id, tipo_azione: tipo, esito, inizio, contatti: { nome: 'Nome ' + id }, ...extra });
+// Nota 139: un Contatto con l'esito ha sempre `esito_il` (il trigger quando nasce o si chiude; le righe di prima riempite col loro giorno il 29/10/2026):
+// qui, se la prova non lo dice, è il giorno dell'azione (ora di Roma). Una prova che vuole un esito senza `esito_il` lo scrive: { esito_il: null }.
+const giornoDi = iso => new Date(iso).toLocaleDateString('sv-SE', { timeZone: 'Europe/Rome' });
+const az = (id, tipo, esito, inizio, extra = {}) => ({ id, contatto_id: 'c' + id, tipo_azione: tipo, esito, inizio, contatti: { nome: 'Nome ' + id },
+  ...(tipo === 'Contatto' && esito && inizio ? { esito_il: giornoDi(inizio) } : {}), ...extra });
 const oggi = '2026-09-15';
 
 prova('Periodi: mese, Performance Year settembre → agosto, frecce', () => {
@@ -132,7 +136,7 @@ prova('contaAzione: la stessa regola della vista azioni_conti (cantiere 27)', ()
   for (const e of ['Presentazione', 'Dare Seguito', 'Iscrizione', 'No BuonFine', 'Prodotti']) assert.equal(p(e), true, e);   // anche all'ospite di un partner
   for (const e of ['Rimandato', 'No Show', null]) assert.equal(p(e), false, String(e));
   assert.equal(R.contaAzione({ tipo_azione: 'Follow Up', esito: null }), true);   // gli altri gruppi come prima
-  const g = R.numeri([{ id: 1, tipo_azione: 'Contatto', categoria: 'Partner', esito: 'Richiamare', inizio: '2026-09-02T10:00:00Z' }], R.periodoMese(oggi), oggi)[0];
+  const g = R.numeri([{ id: 1, tipo_azione: 'Contatto', categoria: 'Partner', esito: 'Richiamare', inizio: '2026-09-02T10:00:00Z', esito_il: '2026-09-02' }], R.periodoMese(oggi), oggi)[0];
   assert.deepEqual([g.totale, g.nonContano, g.esiti.find(e => e.n).esito], [0, 1, 'Verso un Partner']);
 });
 
@@ -146,7 +150,7 @@ prova('Il giorno reale (nota Azioni 030): la telefonata conta nel giorno dell\'e
   const o = '2026-10-12';
   const tel = { id: 1, tipo_azione: 'Contatto', categoria: 'Cliente', esito: 'No Interesse', completata: true, inizio: '2026-09-29T08:00:00Z', esito_il: '2026-10-02' };
   const pm = { id: 2, tipo_azione: 'Piano Marketing', categoria: 'Prospect', esito: 'Presentazione', completata: true, inizio: '2026-09-29T17:00:00Z', esito_il: '2026-10-02' };
-  const vecchia = { id: 3, tipo_azione: 'Contatto', categoria: 'Prospect', esito: 'Richiamare', inizio: '2026-09-29T08:00:00Z' };
+  const vecchia = { id: 3, tipo_azione: 'Contatto', categoria: 'Prospect', esito: 'Richiamare', inizio: '2026-09-29T08:00:00Z', esito_il: '2026-09-29' };   // nota 139: riempita col suo giorno
   const conti = periodo => Object.fromEntries(R.numeri([tel, pm, vecchia], periodo, o).map(g => [g.chiave, g.totale]));
   const sett = conti(R.periodoMese('2026-09-01')), ott = conti(R.periodoMese('2026-10-01'));
   assert.equal(sett.pm, 1); assert.equal(ott.pm, 0);               // il PM resta il 29/09, giorno dell'incontro
@@ -155,6 +159,25 @@ prova('Il giorno reale (nota Azioni 030): la telefonata conta nel giorno dell\'e
   assert.equal(contattiSett.totale, 1); assert.equal(contattiOtt.totale, 1);   // la vecchia a settembre, la telefonata chiusa in ritardo a ottobre
   // un esito dato «domani» (orologio avanti) non conta oggi
   assert.equal(R.numeri([{ ...tel, esito_il: '2026-10-13' }], R.periodoMese(o), o).find(g => g.tipi.includes('Contatto')).totale, 0);
+});
+
+prova('Nota 139 (Ignazio 29/10: «calcolare i contatti solo quando sono realmente fatti, anche dopo essere arrivati»): un esito senza esito_il non conta in nessun giorno', () => {
+  const o = '2026-11-10';
+  // il promemoria Riordino di Glide (esito già scritto, non completato, creato_il = inizio) e un esito scritto in anticipo: il loro giorno è arrivato
+  const promemoria = az(1, 'Contatto', 'Riordino', '2026-11-04T09:00:00Z', { categoria: 'Cliente', completata: null, esito_il: null });
+  const anticipo = az(2, 'Contatto', 'Consulenza Prodotti', '2026-11-02T09:00:00Z', { categoria: 'Cliente', completata: true, esito_il: null });
+  const fatto = az(3, 'Contatto', 'Ordine', '2026-11-05T09:00:00Z', { categoria: 'Cliente', completata: true });   // fatto davvero: esito_il = 05/11
+  const g = R.numeri([promemoria, anticipo, fatto], R.periodoMese(o), o).find(x => x.chiave === 'contatti');
+  assert.equal(g.totale, 1); assert.equal(g.nonContano, 0);
+  assert.deepEqual(g.esiti.filter(e => e.n).map(e => [e.esito, e.n]), [['Ordine', 1]]);   // il promemoria e l'anticipo non compaiono nemmeno fra quelli che non contano
+  // il promemoria fatto davvero (completata, il trigger scrive esito_il) conta nel giorno in cui è stato fatto
+  const fattoDavvero = { ...promemoria, completata: true, esito_il: '2026-11-08' };
+  assert.equal(R.numeri([fattoDavvero], R.periodoMese(o), o).find(x => x.chiave === 'contatti').totale, 1);
+  // un contatto senza esito resta nel suo giorno, fra i «senza esito», come prima
+  const senza = az(4, 'Contatto', null, '2026-11-06T09:00:00Z', { categoria: 'Cliente' });
+  assert.deepEqual(R.numeri([senza], R.periodoMese(o), o).find(x => x.chiave === 'contatti').esiti.filter(e => e.n).map(e => e.esito), ['Senza esito']);
+  // gli appuntamenti e i PM restano nel giorno dell'incontro
+  assert.equal(R.numeri([az(5, 'Piano Marketing', 'Iscrizione', '2026-11-03T17:00:00Z')], R.periodoMese(o), o).find(x => x.chiave === 'pm').totale, 1);
 });
 
 prova('Nota 110 (Ignazio 28/10): un Piano Marketing con più persone conta 1 PM nel Report, nella Griglia e nel Modulo Core; ogni persona tiene la sua azione e il suo esito', () => {

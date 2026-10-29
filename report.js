@@ -85,10 +85,11 @@
     : `${p.etichetta} · ${dataBreve(p.da)} → ${p.inCorso ? 'in corso' : dataBreve(spostaGiorno(p.a, -1))}`;
 
   // Solo le azioni fatte, fino a oggi compreso, nel giorno in cui contano (nota Azioni 030, Ignazio 12/10/2026: «quello che conta è il reale,
-  // non il previsto»): un Contatto (telefonata, messaggio…) nel giorno in cui è stato dato l'esito (`esito_il`; vuoto per le azioni di prima:
-  // allora il giorno dell'azione); Piano Marketing e appuntamenti nel giorno dell'incontro. ⚠️ La stessa regola è nella vista `azioni_conti`
-  // (migrazione 20261012185700): si cambiano insieme.
-  const giornoAzione = a => (a.tipo_azione === 'Contatto' && a.esito_il ? a.esito_il : a.inizio ? giornoRoma(a.inizio) : null);
+  // non il previsto»): un Contatto (telefonata, messaggio…) nel giorno in cui è stato dato l'esito (`esito_il`); Piano Marketing e appuntamenti nel
+  // giorno dell'incontro. Nota Pagine 139 (Ignazio 29/10: «calcolare i contatti solo quando sono realmente fatti, anche dopo essere arrivati»): un Contatto
+  // con l'esito ma senza `esito_il` (un promemoria Riordino di Glide, un esito scritto in anticipo) non conta in nessun giorno; uno senza esito resta nel
+  // suo giorno, fra i «senza esito». ⚠️ La stessa regola è nella vista `azioni_conti` (migrazione 20261029063500): si cambiano insieme.
+  const giornoAzione = a => (a.tipo_azione === 'Contatto' && a.esito ? a.esito_il || null : a.inizio ? giornoRoma(a.inizio) : null);
 
   // Nota Pagine 110 (Ignazio 28/10: «1 PM a 1 persona = 1 dato; 1 PM a N persone = 1 PM in Report, Core, Griglia; ogni persona ha la sua azione»; e anche nel
   // Check): un Piano Marketing con più persone (stesso partner, stessa ora d'inizio, stesso sottotipo) conta UNO. `pmIncontri(righe)`: un elemento per incontro,

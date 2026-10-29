@@ -548,16 +548,16 @@ function schedaInPiuV5(contattoId, cat, dato) {
 }
 // «Già sentiti oggi» in Contatti del giorno: gli esiti delle telefonate di oggi (nome, categoria, esito); null finché non arrivano (allora resta l'elenco di prima).
 // Nota Pagine 135 (Ignazio 28/10: catalogando e registrando contatti vecchi «mi dà come sentiti oggi tutte quelle persone»): conta il giorno del contatto,
-// non quando è stato scritto. La regola è quella di stato_oggi, del Check e del Report (vista azioni_conti, report.js giornoAzione): `esito_il` se c'è,
-// se no il giorno dell'azione. Un contatto vecchio registrato oggi ha `esito_il` = il suo giorno (trigger mb21_azione_esito_il, migrazione 20261028210000).
+// non quando è stato scritto. La regola è quella di stato_oggi, del Check e del Report (vista azioni_conti, report.js giornoAzione): conta solo `esito_il`
+// (nota 139: un esito senza `esito_il`, come un promemoria Riordino il cui giorno è arrivato, non è un contatto fatto). Un contatto vecchio registrato
+// oggi ha `esito_il` = il suo giorno (trigger mb21_azione_esito_il, migrazioni 20261028210000 e 20261029063500).
 function sentitiOggiV5() {
   if (vediTutti() || ST.offline) return null;
   const chiave = `${visto().id}|${ST.oggi}`, f = P5.fatti;
   if (!(f && f.chiave === chiave && fresco5(f))) {
     P5.fatti = { chiave, letta: Date.now(), righe: f && f.chiave === chiave ? f.righe : null };
-    const da = MB21Agenda.isoDaRoma(ST.oggi, '00:00'), a = MB21Agenda.isoDaRoma(MB21Agenda.spostaGiorno(ST.oggi, 1), '00:00');
     dbq('contatti del giorno: sentiti oggi', supa.from('azioni').select('contatto_id, esito, creato_il, contatti(nome, categoria)').eq('user_id', visto().id)
-      .eq('tipo_azione', 'Contatto').not('esito', 'is', null).or(`esito_il.eq.${ST.oggi},and(esito_il.is.null,inizio.gte."${da}",inizio.lt."${a}")`)
+      .eq('tipo_azione', 'Contatto').not('esito', 'is', null).eq('esito_il', ST.oggi)
       .order('creato_il', { ascending: false }).limit(50))
       .then(({ data, error }) => { if (P5.fatti && P5.fatti.chiave === chiave) { P5.fatti.righe = error ? null : data || []; P5.fatti.letta = Date.now(); ridisegna5('oggi'); } });
   }
