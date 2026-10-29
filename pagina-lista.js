@@ -225,11 +225,12 @@ function disegnaLista() {
   const altriScelto = f.altri ? `Altri: ${f.etichetta} ${quanti(LS.filtro)} ▾` : 'Altri ▾';
   // cantiere 30: parte alta compatta e ferma in alto (scorrono solo i nomi); «+» tondo come in Agenda
   // v5 (nota 095, Regia 26/10): la parte alta ferma diventa la testata verde della Lista Nomi, con dentro gli stessi pezzi (stessi id): il conto dei nomi,
-  // il titolo, il chip del Partner Select al posto della fascia, il feedback, «+», la ricerca e i filtri. È una voce della barra: niente «‹ Oggi»
+  // il titolo, il chip del Partner Select al posto della fascia, il feedback, «+», la ricerca e i filtri.
+  // Nota Pagine 143 (Ignazio 29/10): nella prima riga «‹ Oggi» come Agenda, Mappa, Training e Clienti, al posto del conto dei nomi (lo dice già la pila «Lista»)
   const v5 = typeof OGGI_V5 !== 'undefined' && OGGI_V5;
   app.innerHTML = `
     <div class="ls-testa${v5 ? ' v5-testa l5' : ''}"${v5 ? ' style="--zc:var(--z-lista)"' : ''}>
-      ${v5 ? testataV5({ sinistra: `<span class="v5-sopra">${esc(conti.lista.toLocaleString('it-IT'))} NOMI</span>`, titolo: 'Lista Nomi',   // nota 112: le due righe di tutte le testate
+      ${v5 ? testataV5({ sinistra: '<button class="v5-indietro" id="v5-indietro">‹ Oggi</button>', titolo: 'Lista Nomi',   // nota 112: le due righe di tutte le testate
         comandi: `${chipPartnerSelect()}<button class="v5-piu" id="nuovo" aria-label="Nuovo contatto">${ic('piu')}</button>` })
         : `<div class="ag-testa"><h1>Lista Nomi</h1>
         <button class="ag-piu" id="nuovo" aria-label="Nuovo contatto">+</button></div>
@@ -251,6 +252,8 @@ function disegnaLista() {
   if (rigaCat) rigaCat.onclick = () => { ST.vistaCatalogo = true; window.scrollTo(0, 0); disegnaCatalogo(); };   // «Da catalogare» (ex Dashboard, 01/10)
   collegaPartnerSelect();
   const fb = document.getElementById('o5-feedback'); if (fb) fb.onclick = () => foglioSegnala();   // v5: il feedback nella testata
+  const indietro = document.getElementById('v5-indietro');   // nota 143: come Agenda e Mappa
+  if (indietro) indietro.onclick = () => { ST.tab = 'oggi'; LS.ritorno = null; vaiAlPrimoLivello(); mostraTab(); window.scrollTo(0, 0); };
   const nuovo = document.getElementById('nuovo');
   if (nuovo) nuovo.onclick = scegliAggiungi;   // nuovo contatto o tutta la rubrica (pagina-rubrica.js)
   app.querySelectorAll('.chips button[data-filtro]').forEach(b => b.onclick = () => { LS.filtro = b.dataset.filtro; LS.mostrate = BLOCCO; disegnaLista(); });

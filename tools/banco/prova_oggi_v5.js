@@ -504,15 +504,16 @@ prova('095 Mappa: testata blu notte con «‹ Oggi», chip, feedback, «N nel gr
   assert.match(PM, /su\('v5-indietro', \(\) => \{ ST\.tab = 'oggi';/); assert.match(PM, /su\('o5-feedback', \(\) => foglioSegnala\(\)\);/);
 });
 
-prova('095 Lista Nomi: la parte alta ferma diventa la testata verde (conto dei nomi, titolo, chip, feedback, «+», ricerca e filtri con gli stessi id); niente «‹ Oggi»', () => {
+prova('095 Lista Nomi: la parte alta ferma diventa la testata verde (titolo, chip, feedback, «+», ricerca e filtri con gli stessi id); dalla nota 143 «‹ Oggi» al posto del conto dei nomi', () => {
   const PL = leggi('pagina-lista.js');
   assert.match(PL, /<div class="ls-testa\$\{v5 \? ' v5-testa l5' : ''\}"\$\{v5 \? ' style="--zc:var\(--z-lista\)"' : ''\}>/);
-  assert.match(PL, /testataV5\(\{ sinistra: `<span class="v5-sopra">\$\{esc\(conti\.lista\.toLocaleString\('it-IT'\)\)\} NOMI<\/span>`, titolo: 'Lista Nomi',/);   // nota 112
+  assert.match(PL, /testataV5\(\{ sinistra: '<button class="v5-indietro" id="v5-indietro">‹ Oggi<\/button>', titolo: 'Lista Nomi',/);   // nota 143
+  assert.doesNotMatch(PL, /NOMI<\/span>/);   // il conto resta sulla pila «Lista»
   assert.match(PL, /comandi: `\$\{chipPartnerSelect\(\)\}<button class="v5-piu" id="nuovo"/);
   assert.match(PL, /<button class="v5-piu" id="nuovo" aria-label="Nuovo contatto">/);
   assert.match(PL, /const fb = document\.getElementById\('o5-feedback'\); if \(fb\) fb\.onclick = \(\) => foglioSegnala\(\);/);
   const testaLista = PL.slice(PL.indexOf('function disegnaLista'), PL.indexOf('function disegnaElenco')).split('\n').filter(r => !r.trim().startsWith('//')).join('\n');   // senza i commenti
-  assert.doesNotMatch(testaLista, /v5-indietro|‹ Oggi/);   // è una voce della barra
+  assert.match(testaLista, /indietro\.onclick = \(\) => \{ ST\.tab = 'oggi'; LS\.ritorno = null; vaiAlPrimoLivello\(\); mostraTab\(\); window\.scrollTo\(0, 0\); \};/);   // nota 143: come Agenda e Mappa
   assert.match(IDX, /\.ls-testa\.l5 \{ background: var\(--zc\);/);
 });
 
