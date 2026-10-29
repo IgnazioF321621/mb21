@@ -676,7 +676,8 @@ prova('Scheda contatto S3+S6 (Ignazio 22/10): azioni chiuse in una riga; aperta,
   const q = { select() { return q; }, eq() { return q; }, order() { letture++; return Promise.resolve({ data: note, error: null }); } };
   const ctx = { COACH_YES: true, LS: { contatto: c, sezione: 'azioni', azioni }, RICORDI: {}, PRIME_VOLTE: {}, MB21Coach: { ricordi: () => ({}) }, batteriaCoach: async () => {},
     document: { getElementById: id => (id === 'sezione' ? box : null) }, ic: n => `[${n}]`, esc: x => String(x), classeCat: () => 'cat', dbq: (_, p) => p, supa: { from: () => q },
-    MB21Lista: { data: i => i.slice(8, 10) + '/' + i.slice(5, 7), azioniENote: L.azioniENote }, MB21Agenda: { nomePasso: e => e, eConsegna: () => false },
+    MB21Lista: { data: i => i.slice(8, 10) + '/' + i.slice(5, 7), azioniENote: L.azioniENote }, MB21Agenda: { nomePasso: e => e, eConsegna: () => false, esitoDaDare: require('../../agenda.js').esitoDaDare },
+    FATTO_APERTO: new Set(),
     bloccoEsiti: a => (a.esito ? '<i data-apri-esiti></i>' : '<div class="bottoni">ESITI</div>'), ricordoHtml: () => '', preparaPresentazioneHtml: () => '', preparaChiamataHtml: () => '',
     rigaPortato: () => '', statoAzione: () => '', collegaEsiti: () => {}, soloGuardo: () => false, leggiNota: n => { letto = n; }, quandoNota: x => x };
   vm.createContext(ctx); vm.runInContext(src.slice(da, a) + ';this.sez = sezioneAzioni;', ctx);
@@ -700,6 +701,52 @@ prova('Scheda contatto S3+S6 (Ignazio 22/10): azioni chiuse in una riga; aperta,
   ctx.COACH_YES = false; ctx.LS.note = null; ctx.LS.azAperta = null; letture = 0;
   await ctx.sez();
   assert.equal(letture, 0); assert.doesNotMatch(box.innerHTML, /az-coach|Coach Yes/);
+});
+
+prova('Nota 144: dalla scheda un PM del 2021 «Fatto» (esito Presentazione, risultato da dare) resta una card aperta col risultato, senza ⌃, e dopo l\'esito si porta in vista', async () => {
+  const vm = require('node:vm'), fs = require('node:fs'), path = require('node:path');
+  const src = fs.readFileSync(path.join(__dirname, '../../pagina-lista.js'), 'utf8');
+  const L = require('../../lista.js'), A = require('../../agenda.js');
+  const da = src.indexOf('async function sezioneAzioni'), a = src.indexOf('\n}\n', da) + 3;
+  const c = { id: 'c1', user_id: 'io', nome: 'Contatto A', categoria: 'Prospect' };
+  const azioni = [
+    { id: 'a1', contatto_id: 'c1', tipo_azione: 'Contatto', modalita: 'Telefonata', inizio: '2026-10-23T16:00:00Z', esito: 'Relazione', completata: true },
+    { id: 'pm', contatto_id: 'c1', tipo_azione: 'Piano Marketing', modalita: 'PM 1a1', inizio: '2021-03-10T18:00:00Z', esito: 'Presentazione', completata: true },
+    { id: 'fu', contatto_id: 'c1', tipo_azione: 'Follow Up', modalita: null, inizio: '2021-03-12T18:00:00Z', esito: null, completata: false },
+  ];
+  let collegati = [], scorsa = null;
+  const blocchi = () => [...box.innerHTML.matchAll(/class="blocco-esiti[^"]*" data-blocco="([^"]+)"/g)].map(m => ({ dataset: { blocco: m[1] }, id: m[1] }));
+  const box = { innerHTML: '', querySelectorAll: sel => (sel === '.blocco-esiti[data-blocco]' ? blocchi() : []),
+    querySelector: sel => { const m = sel.match(/data-blocco="([^"]+)"/); return m && box.innerHTML.includes(`data-blocco="${m[1]}"`) ? { scrollIntoView: () => { scorsa = m[1]; } } : null; } };
+  const ctx = { COACH_YES: false, LS: { contatto: c, sezione: 'azioni', azioni, note: [] }, RICORDI: {}, PRIME_VOLTE: {}, MB21Coach: { ricordi: () => ({}) }, batteriaCoach: async () => {},
+    document: { getElementById: id => (id === 'sezione' ? box : null) }, ic: n => `[${n}]`, esc: x => String(x), classeCat: () => 'cat',
+    MB21Lista: { data: i => i.slice(8, 10) + '/' + i.slice(0, 4), azioniENote: L.azioniENote }, MB21Agenda: { nomePasso: e => e, eConsegna: () => false, esitoDaDare: A.esitoDaDare },
+    FATTO_APERTO: new Set(), bloccoEsiti: a => `<div class="blocco-esiti" data-blocco="${a.id}">${A.esitoDaDare(a) ? 'RISULTATO' : '<i data-apri-esiti></i>'}</div>`,
+    ricordoHtml: () => '', preparaPresentazioneHtml: () => '', preparaChiamataHtml: () => '', rigaPortato: () => '', statoAzione: () => '',
+    collegaEsiti: (div, az, cc, dopo) => collegati.push([az.id, dopo]), soloGuardo: () => false, ricaricaERidisegna: async () => { ctx.LS.azioni = azioni; await ctx.sez(); } };
+  vm.createContext(ctx); vm.runInContext(src.slice(da, a) + ';this.sez = sezioneAzioni;', ctx);
+  await ctx.sez();
+  const h = box.innerHTML;
+  assert.match(h, /data-az-apri="a1"/);   // la telefonata chiusa: una riga, come prima
+  assert.doesNotMatch(h, /data-az-apri="pm"/);   // il PM col risultato da dare: niente riga chiusa, niente ⌃
+  assert.match(h, /<small class="az-data">10\/2021<\/small>Piano Marketing · PM 1a1<\/div><div class="q"><\/div>[\s\S]*?data-blocco="pm">RISULTATO/);
+  assert.match(h, /data-blocco="fu">RISULTATO/);   // da chiudere: aperta come sempre
+  // dopo un esito toccato nella card del PM si ridisegna e la card, se aspetta ancora, viene in vista
+  const dopoPm = collegati.find(x => x[0] === 'pm')[1];
+  collegati = []; await dopoPm();
+  assert.equal(scorsa, 'pm'); assert.equal(ctx.LS.azScorri, null);
+  // la regola condivisa (agenda.js): Presentazione = risultato da dare; Iscrizione, Rimandato, telefonate chiuse no; Follow Up con «Fatto» toccato sì
+  assert.equal(A.esitoDaDare({ tipo_azione: 'Piano Marketing', esito: 'Presentazione', completata: true }), true);
+  assert.equal(A.esitoDaDare({ tipo_azione: 'Piano Marketing', esito: 'Iscrizione', completata: true }), false);
+  assert.equal(A.esitoDaDare({ tipo_azione: 'Piano Marketing', esito: 'Rimandato', completata: true }), false);
+  assert.equal(A.esitoDaDare({ tipo_azione: 'Contatto', esito: 'Relazione', completata: true }), false);
+  assert.equal(A.esitoDaDare({ tipo_azione: 'Follow Up', esito: null, completata: false }, true), true);
+  // l'Agenda usa la stessa regola per riaprire il foglio
+  assert.match(fs.readFileSync(path.join(__dirname, '../../pagina-agenda.js'), 'utf8'), /if \(agg && A\.esitoDaDare\(agg, FATTO_APERTO\.has\(e\.id\)\)\) foglioEvento/);
+  // il risultato dopo «Fatto» parte già aperto (stessa tendina in Agenda e scheda)
+  const idx = fs.readFileSync(path.join(__dirname, '../../index.html'), 'utf8');
+  assert.match(idx, /`data-azione="\$\{esc\(a\.id\)\}" data-passo="\$\{p\.passo\}"`, p\.passo === 'risultato' && !p\.attuale\)/);
+  assert.match(idx, /return `<div class="tnd5\$\{aperta \? ' aperta' : ''\}">/);
 });
 
 prova('Scheda contatto S6: «+ Nuova azione» propone prima «Nota del coach (prima dell\'azione)», poi i tipi; con il coach spento va dritta all\'azione', async () => {

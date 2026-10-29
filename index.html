@@ -3490,8 +3490,9 @@ function bottoniEsiti(bottoni, attuale, attr, classe) {
 // Nota Pagine 116 (Ignazio 28/10, «ok così», disegno docs/prototipi/schizzo_esiti_tendina_116.png): gli esiti e Modifica · Sposta · Elimina come le
 // tendine della scheda nuova (sel5 + tendina5, note 105-107): chiusa dice cosa c'è dentro, un tocco la apre verso il basso. Dentro ci sono gli stessi
 // bottoni di prima con i loro data-…, quindi gli stessi tocchi. `attr`: attributi della lista (gli esiti ci tengono data-azione e data-passo).
-function tendina5Html(etichetta, voci, attr = '') {
-  return `<div class="tnd5"><button type="button" class="sel5" data-tnd5>${etichetta}<em>▾</em></button><div class="ag-scelte tendina5" ${attr}>${voci}</div></div>`;
+// `aperta` (nota 144): la tendina parte già aperta (il risultato dopo «Fatto»: la domanda segue subito, senza un tocco in più)
+function tendina5Html(etichetta, voci, attr = '', aperta = false) {
+  return `<div class="tnd5${aperta ? ' aperta' : ''}"><button type="button" class="sel5" data-tnd5>${etichetta}<em>▾</em></button><div class="ag-scelte tendina5" ${attr}>${voci}</div></div>`;
 }
 function collegaTendine5(el) {
   el.querySelectorAll('[data-tnd5]').forEach(b => { b.onclick = () => b.parentElement.classList.toggle('aperta'); });
@@ -3564,7 +3565,7 @@ function bloccoEsiti(a, categoria, aperto = false) {
     : gruppi.map(p => `<div class="come-andata">${esc(p.titolo)}</div>
     ${tendina5Html(p.attuale ? `<b>${esc(MB21Agenda.nomePasso(p.attuale))}</b>` : '<small>Scegli</small>',   // nota 116: prima una fila di tasti (bottoniEsiti)
       MB21Agenda.esitiInDueRighe(p.bottoni).flat().map(f => `<button type="button" data-esito="${esc(f)}" class="${p.attuale === f ? 'scelto' : ''}"><span>${esc(MB21Agenda.nomePasso(f))}</span>${p.attuale === f ? '<b>✓</b>' : ''}</button>`).join(''),
-      `data-azione="${esc(a.id)}" data-passo="${p.passo}"`)}`).join('');
+      `data-azione="${esc(a.id)}" data-passo="${p.passo}"`, p.passo === 'risultato' && !p.attuale)}`).join('');   // nota 144: dopo «Fatto» il risultato è già aperto
   return `<div class="blocco-esiti" data-blocco="${esc(a.id)}">${dentro}</div>`;
 }
 // Stato scritto accanto all'azione

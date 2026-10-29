@@ -2183,7 +2183,7 @@ function foglioEvento(e, solo) {
       chiudi();
       await apriAgenda(giorno);
       const agg = AG.azioni.find(x => x.id === e.id);   // se manca un passo (PM «Fatto» → risultato) si riapre
-      if (agg && (A.daChiudere(agg) || FATTO_APERTO.has(e.id) || agg.esito === A.fattoDi(agg.tipo_azione))) foglioEvento({ ...agg, quando: e.quando }, solo);
+      if (agg && A.esitoDaDare(agg, FATTO_APERTO.has(e.id))) foglioEvento({ ...agg, quando: e.quando }, solo);   // nota 144: regola condivisa con la scheda
     }, disegna);
   };
   disegna();

@@ -965,7 +965,9 @@ async function sezioneAzioni() {
   // Azione già chiusa: il blocco degli esiti resta vuoto e «Cambia esito» sta nella riga dei comandi; al tocco il blocco si apre lì sopra.
   // S6: l'azione chiusa aperta al tocco ha la ⌃ per richiuderla dentro la card, accanto alla data (niente più riga del titolo sopra)
   // Nota Pagine 131 (Ignazio 28/10, «ok»: «io metterei la data sempre come prima cosa»): anche nella card aperta la data viene per prima, piccola come nelle righe
-  const testa = (titolo, a) => `<div class="testa"><div class="t"><small class="az-data">${esc(MB21Lista.data(a.inizio, true))}</small>${titolo}</div><div class="q">${a.esito ? `<button class="az-su" data-az-apri="${esc(a.id)}" aria-label="Richiudi">⌃</button>` : ''}</div></div>`;
+  // Nota Pagine 144 (Ignazio 29/10): un'azione che aspetta l'esito (anche il PM «Fatto» col risultato da dare) resta una card aperta, senza ⌃
+  const daDare = a => a.contatto_id === c.id && MB21Agenda.esitoDaDare(a, FATTO_APERTO.has(a.id));
+  const testa = (titolo, a) => `<div class="testa"><div class="t"><small class="az-data">${esc(MB21Lista.data(a.inizio, true))}</small>${titolo}</div><div class="q">${a.esito && !daDare(a) ? `<button class="az-su" data-az-apri="${esc(a.id)}" aria-label="Richiudi">⌃</button>` : ''}</div></div>`;
   const dettagli = parti => { const p = parti.filter(Boolean); return p.length ? `<div class="s">${p.join(' · ')}</div>` : ''; };
   const link = (attr, id, testo, rosso) => `<button class="link" ${attr}="${esc(id)}"${rosso ? ' style="color:var(--rosso)"' : ''}>${testo}</button>`;
   // Verifica Scheda contatto S3 (Ignazio 22/10): un'azione già chiusa (con l'esito) è UNA riga «data · tipo · esito ›»; al tocco si apre
@@ -981,7 +983,7 @@ async function sezioneAzioni() {
   const voci = MB21Lista.azioniENote(LS.azioni, LS.note || []);
   box.innerHTML = piuHtml + (LS.note === null ? '<div class="avviso">Non riesco a caricare le note del coach.</div>' : '')
     + (voci.length ? `<div class="arancio ${classeCat(c.categoria)}">${voci.map(v => v.nota ? rigaNota(v.nota)
-      : v.azione.esito && LS.azAperta !== v.azione.id ? rigaChiusa(v.azione) : cardAzione(v.azione)).join('')}</div>` : '<div class="vuoto">Nessuna azione.</div>');
+      : v.azione.esito && !daDare(v.azione) && LS.azAperta !== v.azione.id ? rigaChiusa(v.azione) : cardAzione(v.azione)).join('')}</div>` : '<div class="vuoto">Nessuna azione.</div>');
   function cardAzione(a) {
     if (a.contatto_id !== c.id) return `
     <div class="azione">
@@ -1008,7 +1010,9 @@ async function sezioneAzioni() {
   const piu = document.getElementById('azione-piu');
   if (piu) piu.onclick = azionePiu;
   const dopo = async () => { LS.azioni = null; await ricaricaERidisegna(); };
-  const collega = div => collegaEsiti(div, LS.azioni.find(x => x.id === div.dataset.blocco), c, dopo);
+  // nota 144: dopo un esito si torna alla stessa azione (un PM del 2021 sta in fondo all'elenco): se aspetta ancora il risultato la si porta in vista
+  const dopoDi = id => async () => { LS.azScorri = id; await dopo(); };
+  const collega = div => collegaEsiti(div, LS.azioni.find(x => x.id === div.dataset.blocco), c, dopoDi(div.dataset.blocco));
   box.querySelectorAll('.blocco-esiti[data-blocco]').forEach(collega);
   box.querySelectorAll('[data-cambia-esito]').forEach(b => b.onclick = () => {   // stesso blocco dell'Agenda, aperto sul posto
     const a = LS.azioni.find(x => x.id === b.dataset.cambiaEsito);
@@ -1020,6 +1024,11 @@ async function sezioneAzioni() {
   });
   box.querySelectorAll('[data-modifica-azione]').forEach(b => b.onclick = () => foglioAzione(b.dataset.modificaAzione, { dopo: async () => { LS.azioni = null; await ricaricaERidisegna(); } }));
   box.querySelectorAll('[data-elimina-azione]').forEach(b => b.onclick = () => { if (!soloGuardo()) eliminaAppuntamento(LS.azioni.find(x => x.id === b.dataset.eliminaAzione), dopo); });
+  if (LS.azScorri) {   // nota 144: l'azione appena toccata, se aspetta ancora il risultato, si porta in vista
+    const az = LS.azioni.find(x => x.id === LS.azScorri), qui = az && daDare(az) ? box.querySelector(`.blocco-esiti[data-blocco="${az.id}"]`) : null;
+    LS.azScorri = null;
+    if (qui && qui.scrollIntoView) qui.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }
 }
 
 // «＋ Nuova azione» (Ignazio 17/09, allora «Azione +»): apre subito «Nuovo appuntamento» con la persona già scelta e tutti i tipi della sua categoria.
