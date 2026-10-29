@@ -11,7 +11,7 @@ const OGGI_V5 = true;
 if (OGGI_V5 && typeof document !== 'undefined' && document.documentElement && document.documentElement.classList) document.documentElement.classList.add('v5');
 // I dati in più dei riquadri: gli impegni di oggi e di domani (`oggi`, `domani`: le voci di MB21Agenda.programmaDelGiorno) e il ripasso del Training.
 // `di`/`giorno` dicono di chi e di quando sono.
-const O5 = { di: null, giorno: null, oggi: null, domani: null, richiami: null, training: null };
+const O5 = { di: null, giorno: null, oggi: null, domani: null, richiami: null, training: null, appuntamenti: null };
 
 // ── Le letture in più (nella stessa attesa della Dashboard: caricaOggi le chiama insieme alle sue) ──
 async function caricaOggiV5(oggi) {
@@ -49,20 +49,30 @@ async function caricaOggiV5(oggi) {
   // nota 132/133: gli appuntamenti di oggi ancora senza esito ({ id, inizio }), per il numero sull'icona dell'app (dalla stessa lettura, niente richieste
   // in più); quelli già iniziati li toglie il conto (MB21Dashboard.numeroApp), così l'ora che passa li fa uscire anche senza rileggere
   const aperti = app1.error ? null : (app1.data || []).filter(x => !x.esito && x.inizio && A.partiRoma(x.inizio).giorno === oggi).map(x => ({ id: x.id, inizio: x.inizio }));
-  Object.assign(O5, { di: io, giorno: oggi, oggi: voci, domani: vociDomani, richiami, training: trn, aperti });
+  // nota Pagine 147 (Ignazio 29/10, «A»): gli appuntamenti veri di oggi per «La tua giornata», dalla stessa lettura; un incontro con più persone vale 1
+  // (MB21Agenda.incontri, come in Agenda); fatto = chiuso con l'esito, per tutti (un PM «Fatto» col risultato ancora da dare non è chiuso, esitoDaDare);
+  // il totale tiene anche quelli passati da chiudere. Serate e impegni ricevuti non contano (non hanno esito).
+  const fattoAperto = id => typeof FATTO_APERTO !== 'undefined' && FATTO_APERTO.has(id);
+  const incontriOggi = app1.error ? null : A.incontri(A.eventiDelGiorno(A.azioniAgenda(app1.data || []), oggi));
+  const appuntamenti = incontriOggi && { totale: incontriOggi.length,
+    fatti: incontriOggi.filter(e => (e._persone || [e]).every(p => !!p.esito && !A.esitoDaDare(p, fattoAperto(p.id)))).length };
+  Object.assign(O5, { di: io, giorno: oggi, oggi: voci, domani: vociDomani, richiami, training: trn, aperti, appuntamenti });
   if (typeof aggiornaNumeroApp === 'function') aggiornaNumeroApp();
 }
 // Il ripasso di oggi senza scaricare i mazzi: quante carte tornano oggi (`prossima` passata) e i giorni di fila. null se non si legge.
 async function caricaTrainingOggi(oggi) {
   if (typeof TRAINING_VISIBILE !== 'undefined' && !TRAINING_VISIBILE) return null;
-  const io = ST.utente.id;
-  const [carte, giorni] = await Promise.all([
+  const io = ST.utente.id, A = MB21Agenda;
+  const [carte, giorni, fatte] = await Promise.all([
     dbq('Oggi: carte da ripassare', supa.from('training_carte').select('carta', { count: 'exact', head: true }).eq('user_id', io).lte('prossima', oggi)),
     dbq('Oggi: giorni di Training', supa.from('training_giorni').select('giorno').eq('user_id', io).gte('giorno', MB21Training.piuGiorni(oggi, -400))),
+    // nota Pagine 147 (Ignazio 29/10, «A»): solo il numero delle carte risposte oggi (anche le nuove), per «La tua giornata»; se non si legge, null
+    dbq('Oggi: carte risposte oggi', supa.from('training_carte').select('carta', { count: 'exact', head: true }).eq('user_id', io)
+      .gte('risposta_il', A.isoDaRoma(oggi, '00:00')).lt('risposta_il', A.isoDaRoma(A.spostaGiorno(oggi, 1), '00:00'))),
   ]);
   if (carte.error || giorni.error) return null;
   const fila = MB21Training.giorniDiFila((giorni.data || []).map(g => g.giorno), oggi);
-  return { daRipassare: Number(carte.count) || 0, fila: fila.n, fattoOggi: fila.oggi };
+  return { daRipassare: Number(carte.count) || 0, fila: fila.n, fattoOggi: fila.oggi, fatteOggi: fatte.error ? null : Number(fatte.count) || 0 };
 }
 
 // ── I pezzi ──
@@ -89,6 +99,39 @@ function o5Contatti() {
     : `<span class="o5-pw-vuoto">Per oggi la coda è finita</span>`;
   return `<button class="o5-r o5-contatti${finito ? ' festa' : ''}" data-o5="contatti" aria-label="Contatti del giorno: ${fatti} su ${totale}">
     <span class="o5-tit">Contatti del giorno</span><span class="o5-pw">${sx}${dx}</span></button>`;
+}
+// «La tua giornata» (nota Pagine 147, Ignazio 29/10, tela «Anelli del giorno», tavola «B · Riquadro chiaro»): in cima a Oggi, un riquadro bianco con tre
+// anelli uno dentro l'altro (da fuori: Contatti, Appuntamenti, Ripasso) e accanto il conto a parole. Solo dati già letti in Oggi. `righe` =
+// [{ k, nome, colore, testo, fatti, totale, vuoto }]: `vuoto` (la frase) al posto del conto quando non c'è niente da fare, e l'anello resta grigio.
+// Ogni riga è un tasto e apre la sua parte (o5Vai: contatti, agenda, training).
+const GIORNATA_ANELLI = [58, 40, 22];
+// i conti di oggi, solo da dati già letti: Contatti (sentiti su contatti del giorno, come il riquadro Contatti), Appuntamenti (O5.appuntamenti),
+// Ripasso (carte risposte oggi su risposte + ancora da ripassare, nota 147 «A»: anche le nuove). Un dato non ancora letto: «Leggo…»
+function o5Giornata() {
+  const st = ST.stato || {}, totC = st.contatti_al_giorno || 0, mio = O5.di === visto().id && O5.giorno === ST.oggi;
+  const ap = mio ? O5.appuntamenti : null, t = mio ? O5.training : null, trnOk = typeof TRAINING_VISIBILE === 'undefined' || TRAINING_VISIBILE;
+  const righe = [
+    { k: 'contatti', nome: 'Contatti', colore: 'var(--z-contatti)', testo: '#B34E00', fatti: Math.min(st.fatti_oggi || 0, totC), totale: totC,
+      vuoto: totC ? '' : (guardoAltri() ? 'In pausa · 0 contatti al giorno' : 'Sei in pausa oggi') },
+    { k: 'agenda', nome: 'Appuntamenti', colore: 'var(--z-agenda)', testo: '#0866D6', fatti: ap ? ap.fatti : 0, totale: ap ? ap.totale : 0,
+      vuoto: !ap ? 'Leggo l\'Agenda…' : ap.totale ? '' : 'Nessun appuntamento oggi' },
+  ];
+  if (trnOk) {
+    const fatte = t && t.fatteOggi != null ? t.fatteOggi : null, tot = fatte == null ? 0 : fatte + t.daRipassare;
+    righe.push({ k: 'training', nome: 'Ripasso', colore: 'var(--z-training)', testo: '#7E22CE', unita: 'carte', fatti: fatte || 0, totale: tot,
+      vuoto: guardoAltri() ? 'Il Training è personale' : fatte == null ? (t ? 'Apri il Training' : 'Leggo il Training…') : tot ? '' : 'Nessuna carta da ripassare oggi' });
+  }
+  return o5GiornataHtml(righe);
+}
+function o5GiornataHtml(righe) {
+  const anello = (x, r) => {
+    const giro = 2 * Math.PI * r, pieno = x.vuoto || !x.totale ? 0 : Math.min(1, x.fatti / x.totale), colore = x.vuoto ? 'var(--grigio-chiaro)' : x.colore;
+    return `<circle cx="70" cy="70" r="${r}" fill="none" stroke="${colore}" stroke-opacity="${x.vuoto ? '.35' : '.18'}" stroke-width="14"/>${pieno ? `<circle cx="70" cy="70" r="${r}" fill="none" stroke="${colore}" stroke-width="14" stroke-linecap="round" stroke-dasharray="${(giro * pieno).toFixed(1)} ${giro.toFixed(1)}" transform="rotate(-90 70 70)"/>` : ''}`;
+  };
+  const svg = `<svg class="o5-gn-anelli" width="140" height="140" viewBox="0 0 140 140" aria-hidden="true">${righe.map((x, i) => anello(x, GIORNATA_ANELLI[i])).join('')}</svg>`;
+  const riga = x => `<button class="o5-gn-riga${x.vuoto ? ' vuoto' : ''}" data-o5="${x.k}" style="--gn:${x.testo}"><small>${esc(x.nome.toUpperCase())}</small>${x.vuoto
+    ? `<span class="o5-gn-frase">${esc(x.vuoto)}</span>` : `<b>${x.fatti} <span>su ${x.totale}${x.unita ? ' ' + esc(x.unita) : ''}</span></b>`}</button>`;
+  return `<div class="o5-giornata" role="group" aria-label="La tua giornata"><span class="o5-gn-tit">LA TUA GIORNATA</span><div class="o5-gn-corpo">${svg}<div class="o5-gn-righe">${righe.map(riga).join('')}</div></div></div>`;
 }
 // la sera (dalle ORA_CHECK, come la Dashboard): «Com'è andata oggi?» apre il Check del giorno. Nota 096 (Ignazio 25/10, «A»): scritto il giorno, il riquadro
 // resta e diventa «Check di oggi ✓ · rivedi o correggi»; il tocco apre lo stesso Check del giorno, già scritto (prima spariva e non si ritrovava)
@@ -216,7 +259,7 @@ function disegnaOggiV5() {
   let html = `<div class="o5${sera ? ' sera' : ''}">
     <div class="o5-righe">${testataV5({ chiaro: true, sinistra: `<span class="o5-data">${esc(dataEstesa(ST.oggi).toUpperCase() + ora)}</span>`, titolo: 'Oggi', comandi: chipPartnerSelect() + cerchiettoProfilo() })}</div>
     ${dashboardTesta(true)}${ST.offline ? `<div class="avviso">Sei offline: è la coda salvata. Solo lettura.${percheHtml('offline')}</div>` : ''}${rigaTelefonoHtml()}
-    <div class="o5-riquadri">${o5Contatti()}${sera ? o5Sera(fattoGiorno) : ''}${o5Agenda()}
+    <div class="o5-riquadri">${vediTutti() ? '' : o5Giornata()}${o5Contatti()}${sera ? o5Sera(fattoGiorno) : ''}${o5Agenda()}
       <div class="o5-coppia">${o5Training()}${o5Traguardo()}</div>
       <div class="o5-coppia${clienti ? '' : ' uno'}">${clienti}${o5Mappa()}</div></div></div>`;   // Ignazio 25/10: «Da seguire» non sta più in Oggi (solo i riquadri)
   app.innerHTML = html + versione();

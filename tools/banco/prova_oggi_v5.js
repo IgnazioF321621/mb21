@@ -147,11 +147,13 @@ prova('095/098: le letture in più — gli impegni di oggi come l\'Agenda (pochi
   Object.assign(W.ctx, { supa: { from: q, rpc }, dbq: (_, p) => p, CAMPI_AZIONE: '*', ST: { ...W.ctx.ST, utente: { id: 'io' } } });
   await W.ctx.carica(OGGI);
   // nota 098: oggi e domani come l'Agenda (appuntamenti, Contatti, spazi, impegni ricevuti)
-  assert.deepEqual(chieste.map(x => x[0]).sort(), ['azioni', 'azioni', 'rpc:impegni_ricevuti', 'spazi', 'training_carte', 'training_giorni']);
+  assert.deepEqual(chieste.map(x => x[0]).sort(), ['azioni', 'azioni', 'rpc:impegni_ricevuti', 'spazi', 'training_carte', 'training_carte', 'training_giorni']);   // nota 147: anche le carte risposte oggi (solo il numero)
+  assert.ok(chieste.filter(x => x[0] === 'training_carte').every(([, p]) => p.some(x => x[0] === 'select' && x[2] && x[2].head)));
+  assert.ok(chieste.some(([t, p]) => t === 'training_carte' && p.some(x => x[0] === 'gte' && x[1] === 'risposta_il')));
   assert.ok(chieste.every(([, p]) => !p.some(x => x[0] === 'limit') || p.find(x => x[0] === 'limit')[1] <= 30));
   assert.ok(chieste.find(x => x[0] === 'spazi')[1].some(x => x[0] === 'lt'));   // gli spazi solo di oggi
   assert.deepEqual(W.ctx.O5.oggi, []);
-  assert.deepEqual(JSON.parse(JSON.stringify(W.ctx.O5.training)), { daRipassare: 22, fila: 2, fattoOggi: true });
+  assert.deepEqual(JSON.parse(JSON.stringify(W.ctx.O5.training)), { daRipassare: 22, fila: 2, fattoOggi: true, fatteOggi: 22 });
   const X = mondo({ altro: true }); chieste.length = 0;
   Object.assign(X.ctx, { supa: { from: q, rpc }, dbq: (_, p) => p, CAMPI_AZIONE: '*' });
   await X.ctx.carica(OGGI);
@@ -640,6 +642,41 @@ prova('098 «Da seguire» nell\'Agenda: in fondo al Giorno di oggi, stesso blocc
   assert.match(PS, /const da = TRC\.daAgenda \? 'Agenda' : 'Oggi';/);
   assert.match(PS, /document\.getElementById\('tr-indietro'\)\.onclick = \(\) => \(TRC\.daAgenda \? apriAgenda\(\) : caricaOggi\(\)\);/);
   assert.doesNotMatch(PO, /\$\{daSeguireHtml\(\)\}/);
+});
+
+prova('147: «La tua giornata» in cima a Oggi — tre anelli e il conto a parole; 0 su 0 è una frase con l\'anello grigio; ogni riga apre la sua parte', async () => {
+  const W = mondo({ stato: { contatti_al_giorno: 5, fatti_oggi: 4 }, training: { daRipassare: 8, fila: 3, fattoOggi: true, fatteOggi: 12 } });
+  W.ctx.O5.appuntamenti = { fatti: 1, totale: 2 };
+  W.ctx.disegna();
+  const h = W.app.innerHTML, t = testo(h);
+  assert.ok(h.indexOf('o5-giornata') < h.indexOf('o5-contatti'));   // in cima, prima dei riquadri
+  assert.match(t, /LA TUA GIORNATA CONTATTI 4 su 5 APPUNTAMENTI 1 su 2 RIPASSO 12 su 20 carte/);
+  assert.equal((h.match(/stroke-dasharray/g) || []).length, 3);   // tre anelli pieni in parte
+  W.app.clic('.o5-gn-riga', 0); W.app.clic('.o5-gn-riga', 1); W.app.clic('.o5-gn-riga', 2);
+  assert.deepEqual(JSON.parse(JSON.stringify(W.vai.filter(x => typeof x !== 'string'))), [['lv', 'oggi', null], ['tab', 'agenda'], ['tab', 'training']]);
+  const V = mondo({ stato: { contatti_al_giorno: 0, fatti_oggi: 0 }, training: { daRipassare: 0, fila: 0, fattoOggi: false, fatteOggi: 0 } });
+  V.ctx.O5.appuntamenti = { fatti: 0, totale: 0 }; V.ctx.disegna();
+  const tv = testo(V.app.innerHTML);
+  assert.match(tv, /CONTATTI Sei in pausa oggi APPUNTAMENTI Nessun appuntamento oggi RIPASSO Nessuna carta da ripassare oggi/);
+  assert.doesNotMatch(tv, /0 su 0/); assert.equal((V.app.innerHTML.match(/stroke-dasharray/g) || []).length, 0);
+  assert.equal((V.app.innerHTML.match(/o5-gn-riga vuoto/g) || []).length, 3);
+  const L = mondo(); L.ctx.O5.appuntamenti = null; L.ctx.disegna(); assert.match(testo(L.app.innerHTML), /APPUNTAMENTI Leggo l'Agenda…/);
+});
+
+prova('147: gli appuntamenti di oggi dalla lettura che c\'è già — un incontro con più persone vale 1, fatto solo con l\'esito per tutti, i passati da chiudere nel totale', async () => {
+  const W = mondo(), chieste = [], ini = h => `${OGGI}T${h}:00:00Z`;
+  const app = [
+    { id: 1, user_id: 'io', contatto_id: 'a', tipo_azione: 'Appuntamento', modalita: 'Laboratorio', inizio: ini('07'), esito: 'Fatto', completata: true },
+    { id: 2, user_id: 'io', contatto_id: 'b', tipo_azione: 'Appuntamento', modalita: 'Laboratorio', inizio: ini('07'), esito: 'Fatto', completata: true },
+    { id: 3, user_id: 'io', contatto_id: 'c', tipo_azione: 'Follow Up', modalita: null, inizio: ini('08'), esito: null, completata: false },   // passato, da chiudere
+    { id: 4, user_id: 'io', contatto_id: 'd', tipo_azione: 'Piano Marketing', modalita: 'PM 1a1', inizio: ini('16'), esito: null, completata: false },
+    { id: 5, user_id: 'io', contatto_id: 'e', tipo_azione: 'Appuntamento', modalita: null, inizio: '2026-10-26T09:00:00Z', esito: null },   // domani
+  ];
+  const q = tab => { const c = new Proxy({}, { get: (_, p) => (p === 'then' ? (si => { chieste.push(tab); return Promise.resolve(
+    tab === 'azioni' && chieste.filter(x => x === 'azioni').length === 1 ? { data: app, error: null } : tab === 'training_carte' ? { count: 3, error: null } : { data: [], error: null }).then(si); }) : () => c) }); return c; };
+  Object.assign(W.ctx, { supa: { from: q, rpc: () => Promise.resolve({ data: [], error: null }) }, dbq: (_, p) => p, CAMPI_AZIONE: '*', ST: { ...W.ctx.ST, utente: { id: 'io' } } });
+  await W.ctx.carica(OGGI);
+  assert.deepEqual(JSON.parse(JSON.stringify(W.ctx.O5.appuntamenti)), { totale: 3, fatti: 1 });
 });
 
 (async () => {
