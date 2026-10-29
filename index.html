@@ -2460,7 +2460,7 @@
   .o5-ps { height: 34px; padding: 0 11px; border-radius: 17px; background: var(--superficie); border: 1px solid var(--linea); color: var(--testo); font: inherit; font-size: 14px; font-weight: 800; white-space: nowrap; }
   .o5-ps.altro { background: var(--z-contatti); border-color: var(--z-contatti); color: #fff; }   /* guardando un altro partner si vede subito */
   .o5-feedback.con-risposta::after { content: ''; position: absolute; top: -2px; right: -2px; width: 11px; height: 11px; border-radius: 50%; background: var(--rosso); border: 2px solid var(--superficie); }
-  .o5-riquadri { flex: 1; display: flex; flex-direction: column; justify-content: space-between; gap: 12px; }
+  .o5-riquadri { flex: 1; display: flex; flex-direction: column; justify-content: flex-start; gap: 12px; }   /* nota 148, pezzo 4: tolti i riquadri di prima, i nuovi stanno in fila dall'alto (prima allargati su tutta l'altezza) */
   .o5-r { width: 100%; border: 0; font: inherit; color: #fff; text-align: left; cursor: pointer; border-radius: 22px; padding: 12px 14px;
     display: flex; flex-direction: column; justify-content: space-between; gap: 6px; }
   /* nota Pagine 147 (Ignazio 29/10, tavola «B · Riquadro chiaro»): «La tua giornata», bianco con i tre anelli; solo chiaro (scelta di Ignazio) */
@@ -2506,8 +2506,9 @@
   .o5-sv-legenda i.pieno { width: 22px; height: 10px; border-radius: 4px; background: #FCE7EC; flex: none; }
   /* nota Pagine 148, terzo pezzo: «I tuoi traguardi», un cerchio per traguardo con la % dei passi; raggiunto = spunta verde e «Fatto» */
   .o5-traguardi { width: 100%; border: 0; font: inherit; text-align: left; cursor: pointer; background: #fff; color: #10151F; border-radius: 24px; padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; }
-  .o5-tg-righe { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
-  .o5-tg-uno { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .o5-tg-righe { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px 6px; }   /* sei cerchi, due righe da tre (Ignazio 29/10 sera) */
+  .o5-tg-uno { display: flex; flex-direction: column; align-items: center; gap: 6px; border: 0; background: none; font: inherit; color: inherit; padding: 0; cursor: pointer; min-width: 0; }   /* Ignazio 29/10: ogni cerchio apre il suo traguardo */
+  .o5-tg-testa { border: 0; background: none; font: inherit; color: inherit; padding: 0; text-align: left; cursor: pointer; }
   .o5-tg-uno b { font-size: 18px; font-weight: 800; color: #007C85; }
   .o5-tg-uno.fatto b { color: #15803D; }
   .o5-tg-uno small { font-size: 12px; font-weight: 700; color: #5A6475; text-align: center; }
@@ -2814,7 +2815,7 @@
     /* poi (Regia 27/10, «sì» di Ignazio dopo la prova sull'iPad): in alto Contatti e Agenda affiancati, sotto «Com'è andata oggi?» su tutta la riga e basso
        come sull'iPhone, poi le altre a coppie; con un numero dispari di tessere l'ultima va su tutta la riga */
     html.v5 .o5-riquadri > .o5-sera { grid-column: 1 / -1; order: 1; }
-    html.v5 .o5-riquadri > .o5-giornata, html.v5 .o5-riquadri > .o5-settimana, html.v5 .o5-riquadri > .o5-segni, html.v5 .o5-riquadri > .o5-traguardi { grid-column: 1 / -1; }   /* note 147-148: «La tua giornata» e «La tua settimana» in cima, su tutta la riga */
+    html.v5 .o5-riquadri > .o5-giornata, html.v5 .o5-riquadri > .o5-settimana, html.v5 .o5-riquadri > .o5-segni, html.v5 .o5-riquadri > .o5-traguardi, html.v5 .o5-riquadri > .o5-traguardo { grid-column: 1 / -1; }   /* note 147-148: «La tua giornata» e «La tua settimana» in cima, su tutta la riga */
     html.v5 .o5-coppia > .o5-r { order: 2; }
     html.v5 .o5-coppia.uno > .o5-r { grid-column: 1 / -1; }
     html.v5 .o5-tessere { grid-template-columns: repeat(3, minmax(0, 1fr)); }
