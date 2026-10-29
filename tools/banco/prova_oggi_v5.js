@@ -722,6 +722,22 @@ prova('148: «Segni Vitali» del mese — verso il traguardo più vicino del Che
   const L = mondo(); L.ctx.disegna(); assert.match(testo(L.app.innerHTML), /SEGNI VITALI · OTTOBRE › Leggo i Segni Vitali…/);
 });
 
+prova('148: «I tuoi traguardi» — Leader 1°, Core, Pacesetter, Platino: % dei passi fatti come nel Check, raggiunto = spunta e «Fatto», non letto = «—»; il tocco apre il traguardo', () => {
+  const gradini = [{ chiave: 'leader1', fatti: 3, totale: 4, fatto: false, pronto: true }, { chiave: 'core', fatti: 2, totale: 5, fatto: false, pronto: true }, { chiave: 'pace', fatti: 3, totale: 3, fatto: true, pronto: true }];
+  const plat = { chiave: 'plat', fatto: false, voci: [...Array.from({ length: 10 }, (_, i) => ({ fatto: i === 0 })), { fatto: true, sotto: true }] };
+  const W = mondo({ percorso: { lv: { righe: [plat] }, pc: { gradini }, l: {} } });
+  W.ctx.disegna();
+  const h = W.app.innerHTML, t = testo(h);
+  assert.ok(h.indexOf('o5-segni') < h.indexOf('o5-traguardi') && h.indexOf('o5-traguardi') < h.indexOf('o5-contatti'));
+  assert.match(t, /I TUOI TRAGUARDI › 75% Leader 1° 40% Core Fatto Pacesetter 10% Platino/);
+  assert.equal((h.match(/o5-tg-uno fatto/g) || []).length, 1);
+  W.app.clic('.o5-traguardi'); assert.deepEqual(JSON.parse(JSON.stringify(W.vai.filter(x => typeof x !== 'string'))), [['lv', 'traguardo', null]]);
+  // Core non ancora letto e niente file Amway (niente Platino): «—»
+  const N = mondo({ percorso: { lv: null, pc: { gradini: [gradini[0], { chiave: 'core', fatti: 0, totale: 7, pronto: false }, gradini[2]] }, l: {} } }); N.ctx.disegna();
+  assert.match(testo(N.app.innerHTML), /I TUOI TRAGUARDI › 75% Leader 1° — Core Fatto Pacesetter — Platino/);
+  const L = mondo(); L.ctx.disegna(); assert.match(testo(L.app.innerHTML), /I TUOI TRAGUARDI › Leggo i traguardi…/);
+});
+
 (async () => {
   for (const [nome, fn] of coda) { await fn(); ok++; console.log('OK  ' + nome); }
   console.log(`\n${ok} prove superate`);

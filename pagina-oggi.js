@@ -189,6 +189,30 @@ function o5SegniHtml(s, mese, vuoto) {
     <span class="o5-sv-colonne">${s.colonne.map(col).join('')}</span><span class="o5-sv-legenda"><span><i class="linea"></i>la linea: il traguardo più vicino, ${esc(s.verso)}</span>${
     s.dopo ? `<span><i class="pieno"></i>la colonna piena: il traguardo dopo, ${esc(s.dopo)}</span>` : ''}</span></button>`;
 }
+// «I tuoi traguardi» (nota Pagine 148, terzo pezzo, tavola «C»; Ignazio 29/10, «A»): Leader 1°, Core, Pacesetter e Platino, un cerchio ciascuno con la
+// percentuale dei passi fatti sul totale, gli stessi del Check («Core 2 su 5» = 40%); raggiunto = spunta verde e «Fatto». Dati del Check (percorsoDash:
+// i gradini di MB21Check.percorso e, per il Platino, la sua riga dei livelli); un traguardo non ancora letto: «—». Il tocco apre il traguardo del Check.
+function traguardiOggi(p) {
+  if (!p) return null;
+  const g = k => (p.pc && p.pc.gradini || []).find(x => x.chiave === k);
+  const plat = p.lv && p.lv.righe ? p.lv.righe.find(r => r.chiave === 'plat') : null;
+  const daGradino = (x, nome) => (!x || x.pronto === false ? { nome, fatto: false, pc: null } : { nome, fatto: !!x.fatto, pc: x.totale ? Math.round(100 * Math.min(x.fatti, x.totale) / x.totale) : null });
+  const vociPlat = plat ? plat.voci.filter(v => !v.sotto) : [];
+  return [daGradino(g('leader1'), 'Leader 1°'), daGradino(g('core'), 'Core'), daGradino(g('pace'), 'Pacesetter'),
+    plat ? { nome: 'Platino', fatto: !!plat.fatto, pc: vociPlat.length ? Math.round(100 * vociPlat.filter(v => v.fatto).length / vociPlat.length) : null } : { nome: 'Platino', fatto: false, pc: null }];
+}
+function o5TraguardiHtml(t) {
+  const tit = '<span class="o5-gn-tit">I TUOI TRAGUARDI ›</span>';
+  if (!t) return `<button class="o5-traguardi" data-o5="traguardo" aria-label="I tuoi traguardi">${tit}<span class="o5-gn-frase">Leggo i traguardi…</span></button>`;
+  const giro = 2 * Math.PI * 26;
+  const uno = x => {
+    const cerchio = x.fatto ? '<circle cx="32" cy="32" r="26" fill="none" stroke="#15803D" stroke-width="8"/><path d="M22 33 L29 40 L43 25" fill="none" stroke="#15803D" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>'
+      : `<circle cx="32" cy="32" r="26" fill="none" stroke="var(--z-check)" stroke-opacity=".18" stroke-width="8"/>${x.pc ? `<circle cx="32" cy="32" r="26" fill="none" stroke="var(--z-check)" stroke-width="8" stroke-linecap="round" stroke-dasharray="${(giro * x.pc / 100).toFixed(1)} ${giro.toFixed(1)}" transform="rotate(-90 32 32)"/>` : ''}`;
+    return `<span class="o5-tg-uno${x.fatto ? ' fatto' : ''}"><svg width="64" height="64" viewBox="0 0 64 64" aria-hidden="true">${cerchio}</svg><b>${x.fatto ? 'Fatto' : x.pc == null ? '—' : `${x.pc}%`}</b><small>${esc(x.nome)}</small></span>`;
+  };
+  const voce = x => `${x.nome} ${x.fatto ? 'fatto' : x.pc == null ? 'non lo so' : `${x.pc}%`}`;
+  return `<button class="o5-traguardi" data-o5="traguardo" aria-label="I tuoi traguardi: ${esc(t.map(voce).join(', '))}">${tit}<span class="o5-tg-righe">${t.map(uno).join('')}</span></button>`;
+}
 // la sera (dalle ORA_CHECK, come la Dashboard): «Com'è andata oggi?» apre il Check del giorno. Nota 096 (Ignazio 25/10, «A»): scritto il giorno, il riquadro
 // resta e diventa «Check di oggi ✓ · rivedi o correggi»; il tocco apre lo stesso Check del giorno, già scritto (prima spariva e non si ritrovava)
 function o5Sera(fatto) {
@@ -315,7 +339,7 @@ function disegnaOggiV5() {
   let html = `<div class="o5${sera ? ' sera' : ''}">
     <div class="o5-righe">${testataV5({ chiaro: true, sinistra: `<span class="o5-data">${esc(dataEstesa(ST.oggi).toUpperCase() + ora)}</span>`, titolo: 'Oggi', comandi: chipPartnerSelect() + cerchiettoProfilo() })}</div>
     ${dashboardTesta(true)}${ST.offline ? `<div class="avviso">Sei offline: è la coda salvata. Solo lettura.${percheHtml('offline')}</div>` : ''}${rigaTelefonoHtml()}
-    <div class="o5-riquadri">${vediTutti() ? '' : o5Giornata() + o5SettimanaHtml(O5.di === visto().id && O5.giorno === ST.oggi ? O5.settimana : null) + o5Segni()}${o5Contatti()}${sera ? o5Sera(fattoGiorno) : ''}${o5Agenda()}
+    <div class="o5-riquadri">${vediTutti() ? '' : o5Giornata() + o5SettimanaHtml(O5.di === visto().id && O5.giorno === ST.oggi ? O5.settimana : null) + o5Segni() + o5TraguardiHtml(traguardiOggi(percorsoDash()))}${o5Contatti()}${sera ? o5Sera(fattoGiorno) : ''}${o5Agenda()}
       <div class="o5-coppia">${o5Training()}${o5Traguardo()}</div>
       <div class="o5-coppia${clienti ? '' : ' uno'}">${clienti}${o5Mappa()}</div></div></div>`;   // Ignazio 25/10: «Da seguire» non sta più in Oggi (solo i riquadri)
   app.innerHTML = html + versione();
