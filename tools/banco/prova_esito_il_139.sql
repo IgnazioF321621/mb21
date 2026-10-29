@@ -1,9 +1,10 @@
 -- Prova della nota Pagine 139 (29/10/2026): applica la migrazione 20261029063500 e lo script tools/banco/dati_139_esito_il.sql dentro una prova annullata
 -- (raise exception alla fine: nel database non resta niente). Confronta azioni_conti, stato_oggi, il giorno del Report e «Già sentiti oggi» prima e dopo,
--- poi un promemoria Riordino arrivato oggi e le azioni che nascono fatte. Esito del 29/10 mattina: 1609 righe, tutti i conti identici (0 differenze).
+-- poi un promemoria Riordino arrivato oggi, le azioni che nascono fatte, un promemoria Riordino chiuso con «Ordine» (conta oggi) e il suo «annulla»
+-- (torna senza esito_il). Esito del 29/10 mattina: 1609 righe, tutti i conti identici (0 differenze).
 -- Uso: supabase db query --linked -f tools/banco/prova_esito_il_139.sql (il risultato è nel messaggio d'errore «RISULTATO …»)
 do $prova$
-declare r text; n int; u uuid; c uuid; a1 uuid; a2 uuid; a3 uuid; a4 uuid;
+declare r text; n int; u uuid; c uuid; a1 uuid; a2 uuid; a3 uuid; a4 uuid; a5 uuid;
 begin
   create temp table p_conti as select user_id, giorno, tipo_azione, count(*) n, sum(contatti) c, sum(pm) pm from public.azioni_conti group by 1,2,3;
   create temp table p_stato as select id, public.stato_oggi(id)::text s from public.utenti;
@@ -32,8 +33,12 @@ begin
   end if;
   if new.esito is null then
     new.esito_il := null;
+  elsif coalesce(old.completata, false) and not coalesce(new.completata, false) then
+    new.esito_il := null;   -- nota 139: riaperta («annulla» di chiudi_appuntamento → riapri_appuntamento): non è più fatta
   elsif old.esito is null
-     or (old.esito = new.esito and not coalesce(old.completata, false) and coalesce(new.completata, false) and new.esito_il is null) then
+     or (new.esito_il is null   -- nota 139: se il chiamante non l'ha già scritto
+         and (old.esito is distinct from new.esito   -- es. il promemoria «Riordino» chiuso con «Ordine» dalla card del riordino
+              or (not coalesce(old.completata, false) and coalesce(new.completata, false)))) then
     new.esito_il := case
       when new.creato_il is not null and (new.creato_il at time zone 'Europe/Rome')::date = oggi
        and new.inizio is not null and (new.inizio at time zone 'Europe/Rome')::date < oggi
@@ -120,5 +125,15 @@ where esito is not null and esito_il is null and inizio is not null
   -- il promemoria viene fatto davvero: completata = true → conta oggi
   update public.azioni set completata = true where id = a1;
   r := r || ' · promemoria fatto: esito_il=' || coalesce((select esito_il::text from public.azioni where id=a1),'vuoto') || ' in azioni_conti=' || (select count(*) from public.azioni_conti where id = a1);
+  -- un altro promemoria Riordino chiuso dalla card del riordino con «Ordine» (chiudi_appuntamento: esito e completata insieme) → conta oggi
+  insert into public.azioni(user_id, contatto_id, tipo_azione, modalita, esito, inizio, completata, categoria) values (u, c, 'Contatto', 'Telefonata', 'Riordino', date_trunc('day', now() at time zone 'Europe/Rome') at time zone 'Europe/Rome' + interval '1 minute', null, 'Cliente') returning id into a5;
+  update public.azioni set esito = 'Ordine', completata = true where id = a5;
+  r := r || ' · Riordino chiuso con Ordine: esito_il=' || coalesce((select esito_il::text from public.azioni where id=a5),'vuoto') || ' in azioni_conti=' || (select count(*) from public.azioni_conti where id = a5);
+  -- «annulla»: riapri_appuntamento rimette esito e completata di prima → non è più fatto
+  update public.azioni set esito = 'Riordino', completata = null where id = a5;
+  r := r || ' · annullato: esito_il=' || coalesce((select esito_il::text from public.azioni where id=a5),'vuoto') || ' in azioni_conti=' || (select count(*) from public.azioni_conti where id = a5);
+  -- esito cambiato su una riga che esito_il l'ha già (ieri): resta ieri (nota Azioni 030)
+  update public.azioni set esito = 'Iscrizione' where id = a4;
+  r := r || ' · esito cambiato su riga di ieri: esito_il=' || coalesce((select esito_il::text from public.azioni where id=a4),'vuoto');
   raise exception 'RISULTATO %', r;
 end $prova$;

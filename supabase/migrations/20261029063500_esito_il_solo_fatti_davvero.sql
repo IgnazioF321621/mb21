@@ -8,6 +8,9 @@
 -- La correzione:
 -- 1) il trigger scatta anche quando l'azione nasce, se nasce fatta (completata) con l'esito e senza esito_il; stessa regola della nota 135
 --    (giorno passato → quel giorno, se no oggi). Se esito_il arriva già scritto (es. «annulla» che rimette un passo) non si tocca.
+--    Nelle modifiche, se esito_il è vuoto, si scrive anche quando l'esito cambia (il promemoria «Riordino» di Glide chiuso con «Ordine» o «Nessun
+--    ordine» da chiudi_appuntamento) e quando completata passa a true; un'azione riaperta (completata da true a non true, «annulla») torna senza
+--    esito_il. Un esito cambiato su una riga che esito_il l'ha già resta com'era (nota Azioni 030).
 -- 2) un Contatto conta come fatto SOLO nel giorno di esito_il: niente più «se no il giorno dell'azione» (vista azioni_conti e stato_oggi qui; in JS
 --    report.js giornoAzione e pagina-oggi.js sentitiOggiV5). Piano Marketing e appuntamenti restano nel giorno dell'incontro, come prima.
 -- Stesse colonne, stessi tipi e stesso ordine: i permessi e le opzioni della vista e della funzione restano quelli di prima.
@@ -35,8 +38,12 @@ begin
   end if;
   if new.esito is null then
     new.esito_il := null;
+  elsif coalesce(old.completata, false) and not coalesce(new.completata, false) then
+    new.esito_il := null;   -- nota 139: riaperta («annulla» di chiudi_appuntamento → riapri_appuntamento): non è più fatta
   elsif old.esito is null
-     or (old.esito = new.esito and not coalesce(old.completata, false) and coalesce(new.completata, false) and new.esito_il is null) then
+     or (new.esito_il is null   -- nota 139: se il chiamante non l'ha già scritto
+         and (old.esito is distinct from new.esito   -- es. il promemoria «Riordino» chiuso con «Ordine» dalla card del riordino
+              or (not coalesce(old.completata, false) and coalesce(new.completata, false)))) then
     new.esito_il := case
       when new.creato_il is not null and (new.creato_il at time zone 'Europe/Rome')::date = oggi
        and new.inizio is not null and (new.inizio at time zone 'Europe/Rome')::date < oggi
