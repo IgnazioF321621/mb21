@@ -27,14 +27,38 @@ export type Azione = { id: string; contatto_id: string | null; tipo_azione: stri
 // il posto, dal vivo (nota 028, 05/10): LOCATION, così il Calendario mostra la mappa (vale per i propri appuntamenti, le serate e gli impegni ricevuti)
 const rigaLuogo = (luogo: unknown) => { const l = String(luogo ?? '').replace(/\s+/g, ' ').trim(); return l ? [`LOCATION:${testoIcs(l)}`] : []; };
 
-export function evento(a: Azione, adesso: Date) {
+const nomeDi = (a: Azione) => (a.contatti as { nome?: string } | null)?.nome || '—';
+// Nota Pagine 142 (Ignazio 29/10: «mi fa comparire cinque appuntamenti. Mi dovrebbe comparire solo un appuntamento generale»): un incontro con più persone
+// è un evento solo. Stessa regola di MB21Agenda.incontri e della riga dell'Agenda (agenda.js, nota 109): stessa ora d'inizio, stesso tipo e sottotipo, solo
+// gli appuntamenti (le telefonate e la coda restano una per riga); la stessa persona una volta sola (nota 120). Nel database restano le righe per persona.
+export function incontriCalendario(azioni: Azione[]) {
+  const fuori: Azione[][] = [], per = new Map<string, Azione[]>();
+  for (const a of azioni) {
+    if (!a.tipo_azione || a.tipo_azione === 'Contatto' || !a.inizio) { fuori.push([a]); continue; }
+    const k = [Date.parse(a.inizio), a.tipo_azione, a.modalita || ''].join('|'), g = per.get(k);
+    if (g) { if (!a.contatto_id || !g.some(x => x.contatto_id === a.contatto_id)) g.push(a); continue; }
+    const n = [a]; per.set(k, n); fuori.push(n);
+  }
+  return fuori;
+}
+// I nomi come nella riga dell'Agenda (agenda.js `riga`, nota 109): «Persona A, Persona B», da quattro in su «Persona A, Persona B (+3)». Si cambiano insieme.
+export const nomiIncontro = (persone: Azione[]) => persone.length > 3
+  ? `${persone.slice(0, 2).map(nomeDi).join(', ')} (+${persone.length - 2})` : persone.map(nomeDi).join(', ');
+
+// `persone`: tutte le righe dello stesso incontro (la prima è `a`); l'UID è quello dell'id più piccolo, così resta lo stesso a ogni rilettura
+export function evento(a: Azione, adesso: Date, persone: Azione[] = [a]) {
   const dallaCoda = a.tipo_azione === 'Contatto' && !!a.data_scelta;
   const inizio = dallaCoda ? a.data_scelta! : a.inizio;
   const fine = !dallaCoda && a.fine ? a.fine : Date.parse(inizio) + 3600000;
-  const nome = (a.contatti as { nome?: string } | null)?.nome || '—';
+  const piu = persone.length > 1;
+  const nome = piu ? nomiIncontro(persone) : nomeDi(a);
   const cosa = dallaCoda ? (a.esito === 'PM Fissato' ? 'PM' : 'Appuntamento') : (a.modalita || a.tipo_azione || '');
-  const dettagli = [a.ospite ? `Ospite: ${a.ospite}` : '', a.note || ''].filter(Boolean).join('\n');
-  return ['BEGIN:VEVENT', `UID:azione-${a.id}@mb21`, `DTSTAMP:${compatto(adesso)}`,
+  // con più persone: prima tutti i nomi, poi ospite e note di ognuno col suo nome davanti
+  const dettagli = (piu
+    ? [`Persone: ${persone.map(nomeDi).join(', ')}`, ...persone.flatMap(p => [p.ospite ? `${nomeDi(p)} · Ospite: ${p.ospite}` : '', p.note ? `${nomeDi(p)}: ${p.note}` : ''])]
+    : [a.ospite ? `Ospite: ${a.ospite}` : '', a.note || '']).filter(Boolean).join('\n');
+  const uid = persone.map(p => p.id).reduce((x, y) => (y < x ? y : x));
+  return ['BEGIN:VEVENT', `UID:azione-${uid}@mb21`, `DTSTAMP:${compatto(adesso)}`,
     `DTSTART;TZID=Europe/Rome:${aRoma(inizio)}`, `DTEND;TZID=Europe/Rome:${aRoma(fine)}`,
     `SUMMARY:${testoIcs(`MB21 · ${cosa} · ${nome}`)}`,
     ...rigaLuogo(a.luogo),
@@ -82,7 +106,7 @@ export function eventoRicevuto(r: Ricevuto, adesso: Date) {
 export function calendario(azioni: Azione[], spazi: Spazio[], adesso: Date, ricevuti: Ricevuto[] = []) {
   const righe = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//MB21//Agenda//IT', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH',
     'X-WR-CALNAME:MB21', 'X-WR-TIMEZONE:Europe/Rome', ...FUSO_ROMA_ICS,
-    ...azioni.flatMap(a => evento(a, adesso)),
+    ...incontriCalendario(azioni).flatMap(g => evento(g[0], adesso, g)),   // nota 142: un incontro, un evento
     ...spazi.filter(s => TIPI_SPAZIO_NEL_CALENDARIO.includes(s.tipo)).flatMap(s => eventoSpazio(s, adesso)),
     ...ricevuti.flatMap(r => eventoRicevuto(r, adesso)),
     'END:VCALENDAR', ''];

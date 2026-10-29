@@ -114,5 +114,27 @@ const fs = require('node:fs'), path = require('node:path');
     assert.equal(campo(F.eventoSpazio(sp({}), ADESSO), 'LOCATION'), null);
   });
 
+  prova('Nota 142: un incontro con 5 persone è UN evento solo («Persona A, Persona B (+3)»), i nomi tutti nella descrizione; telefonate e altri orari restano a parte', () => {
+    const lab = (id, n, o) => ({ id, contatto_id: 'c' + id, tipo_azione: 'Piano Marketing', modalita: 'Laboratorio', esito: null, inizio: '2026-10-29T20:30:00Z',
+      fine: '2026-10-29T21:00:00Z', data_scelta: null, ospite: null, note: null, contatti: { nome: 'Persona ' + n }, ...o });
+    const cinque = [lab('1', 'A', { note: 'porta il quaderno' }), lab('2', 'B'), lab('3', 'C', { ospite: 'il marito' }), lab('4', 'D'), lab('5', 'E')];
+    // l'ordine in cui arrivano non cambia l'evento: UID dell'id più piccolo
+    assert.equal(campo(F.evento(cinque[2], ADESSO, [cinque[2], cinque[0], cinque[4]]), 'UID'), 'UID:azione-1@mb21');
+    const tel = { id: 't1', contatto_id: 'c9', tipo_azione: 'Contatto', modalita: null, esito: null, inizio: '2026-10-29T20:30:00Z', fine: null, data_scelta: null, ospite: null, note: null, contatti: { nome: 'Persona F' } };
+    const altraOra = lab('6', 'G', { inizio: '2026-10-29T21:00:00Z' }), altroTipo = lab('7', 'H', { modalita: 'PM 1a1' }), doppia = lab('8', 'A', { contatto_id: 'c1' });
+    const righe = F.calendario([...cinque, doppia, tel, altraOra, altroTipo], [], ADESSO).replace(/\r\n /g, '').split('\r\n');
+    assert.deepEqual(righe.filter(r => r.startsWith('UID:')), ['UID:azione-1@mb21', 'UID:azione-t1@mb21', 'UID:azione-6@mb21', 'UID:azione-7@mb21']);
+    const somm = righe.filter(r => r.startsWith('SUMMARY:'));
+    assert.equal(somm[0], 'SUMMARY:MB21 · Laboratorio · Persona A\\, Persona B (+3)');   // come la riga dell'Agenda (nota 109)
+    assert.deepEqual(somm.slice(1), ['SUMMARY:MB21 · Contatto · Persona F', 'SUMMARY:MB21 · Laboratorio · Persona G', 'SUMMARY:MB21 · PM 1a1 · Persona H']);
+    assert.equal(righe.find(r => r.startsWith('DESCRIPTION:')),
+      'DESCRIPTION:Persone: Persona A\\, Persona B\\, Persona C\\, Persona D\\, Persona E\\nPersona A: porta il quaderno\\nPersona C · Ospite: il marito');
+    // due o tre persone: tutti i nomi nel titolo
+    assert.equal(F.nomiIncontro(cinque.slice(0, 3)), 'Persona A, Persona B, Persona C');
+    assert.equal(F.nomiIncontro(cinque.slice(0, 2)), 'Persona A, Persona B');
+    // una persona sola: come prima
+    assert.equal(campo(F.evento(cinque[0], ADESSO), 'DESCRIPTION'), 'DESCRIPTION:porta il quaderno');
+  });
+
   console.log(`\n${ok} prove superate`);
 })().catch(e => { console.error(e); process.exit(1); });
