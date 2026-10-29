@@ -22,7 +22,7 @@ function mondo({ stato = { contatti_al_giorno: 5, fatti_oggi: 3 }, codaNomi = ['
   sg.hidden = false; sg.classList = { contains: c => c === 'con-risposta' && !!sg.risposta };
   const ctx = { console, Promise, Date, Intl, Math, JSON, Number, String, Array, Object, Set, app, esc, ic: n => `[${n}]`,
     MB21Agenda: A, MB21Lista: L, MB21Training: T, MB21Spazi: S, MB21Coda: { oggiRoma: () => OGGI },
-    MB21Check: { piuVicino: g => g.find(x => !x.fatto) || null, LIVELLI: require('../../check.js').LIVELLI, SCALA_BONUS: require('../../check.js').SCALA_BONUS }, MB21Dashboard: require('../../dashboard.js'),
+    MB21Check: { ...require('../../check.js'), piuVicino: g => g.find(x => !x.fatto) || null }, MB21Dashboard: require('../../dashboard.js'),
     ST: { tab: 'oggi', oggi: OGGI, stato, risultato: { coda: codaNomi.map((nome, i) => ({ id: 'c' + i, nome })) }, offline: false, utente: { id: 'io' } },
     LV: { vista: 'home' }, DS: { dati: { ultimoCheck: fattoGiorno ? OGGI : null }, sqLettura: Promise.resolve({ sq: [{ partner_id: 'P1' }, { partner_id: 'P2', sponsor_id: 'P1' }, { partner_id: 'P3', sponsor_id: 'P2' }, { partner_id: 'P9', sponsor_id: 'X' }] }) },
     RIO: { righe: riordini, prossimo }, AVV: { mio: nuovo ? { avvio: true } : null }, LS: {}, PF: { aperte: new Set() }, RP: {}, AD: {}, TRN: {}, ORA_CHECK: 20, PUNTI_LC1: { wes: 'Ticket WES', bbs: 'Ticket BBS' },
@@ -616,7 +616,7 @@ prova('148: «La tua settimana» sotto la giornata — sette colonne fino a oggi
   const L = mondo(); L.ctx.disegna(); assert.match(testo(L.app.innerHTML), /LA TUA SETTIMANA › Leggo la settimana…/);
 });
 
-prova('148: «Segni Vitali» del mese — verso il traguardo più vicino del Check (la linea), la colonna intera vale quello dopo, il rosso è il mese; «su N»; senza file Amway una frase; il tocco apre il traguardo', () => {
+prova('148/150: «Segni Vitali» del mese — verso il prossimo gradino del bonus (la linea; prima il traguardo più vicino, che resta per sopra il 21%), la colonna intera vale il gradino dopo, il rosso è il mese; «su N»; senza file Amway una frase; il tocco apre il traguardo', () => {
   const C = require('../../check.js');
   const lv = C.livelli({ core: true, bonus: 6, linee: [], cep: 4, planner: 0, iscritti: 1, totale: 8, bbs: 6, wes: 8, mesi21: 0 });
   const W = mondo({ percorso: { lv, pc: { gradini: [] }, l: {} } });
@@ -626,14 +626,33 @@ prova('148: «Segni Vitali» del mese — verso il traguardo più vicino del Che
   W.ctx.disegna();
   const h = W.app.innerHTML, t = testo(h);
   assert.ok(h.indexOf('o5-settimana') < h.indexOf('o5-segni') && h.indexOf('o5-segni') < h.indexOf('o5-traguardi'));
-  assert.match(t, /SEGNI VITALI · OTTOBRE › Verso il Leaders Club 8 WES su 10 6 BBS su 10 4 CEP su 5 0 15 Planner su 1/);
-  assert.match(t, /la linea: il traguardo più vicino, Leaders Club la colonna piena: il traguardo dopo, Executive Leader Club/);
-  assert.match(h, /<i style="height:45px"><\/i><em style="bottom:56px">/);   // WES 8 su 20 alto 112: 45; la linea a 10 su 20: 56
+  // nota 150: al 6% si mira al gradino dopo, il 9% (Leaders Club); la colonna intera vale il 12% (WES 15)
+  assert.match(t, /SEGNI VITALI · OTTOBRE › Verso il Leaders Club \(9%\) 8 WES su 10 6 BBS su 10 4 CEP su 5 0 15 Planner su 1/);
+  assert.match(t, /la linea: il prossimo gradino, Leaders Club \(9%\) la colonna piena: il gradino dopo, 12%/);
+  assert.match(h, /<i style="height:60px"><\/i><em style="bottom:75px">/);   // WES 8 su 15 alto 112: 60; la linea a 10 su 15: 75
   W.app.clic('.o5-segni'); assert.deepEqual(JSON.parse(JSON.stringify(W.vai.filter(x => typeof x !== 'string'))), [['lv', 'traguardo', null]]);
   // il Platino è l'ultimo: la colonna vale il suo numero, niente «il traguardo dopo»
   const sopra = { righe: C.LIVELLI.map((L, i) => ({ fatto: i < 3, voci: [{ chiave: 'wes', q: 70 }, { chiave: 'bbs', q: 80 }, { chiave: 'cep', q: null }, { chiave: 'planner', q: 4 }] })) };
   const P = W.ctx.segniDelMese(sopra);
   assert.equal(P.verso, 'Platino'); assert.equal(P.dopo, null); assert.deepEqual(JSON.parse(JSON.stringify(P.colonne.map(c => [c.q, c.t, c.max]))), [[70, 80, 80], [80, 80, 80], [null, 50, 50], [4, 10, 10]]);
+  // nota 150: il prossimo gradino del bonus (SCALA_BONUS); il bonus del mese, se no quello del mese prima, se no il 3%
+  const G = (bonus, prima) => { const x = W.ctx.segniDelGradino(C.livelli({ core: true, bonus, linee: [], cep: 1, planner: 0, bbs: 2, wes: 3, mesi21: 0 }), prima); return x && [x.verso, x.dopo, x.colonne.map(c => [c.t, c.max, !!c.nonServe])]; };
+  assert.deepEqual(JSON.parse(JSON.stringify(G(3))), ['il 6%', 'il Leaders Club (9%)', [[5, 10, false], [5, 10, false], [3, 5, false], [0, 1, true]]]);
+  assert.deepEqual(JSON.parse(JSON.stringify(G(null, null))), ['il 3%', 'il 6%', [[2, 5, false], [2, 5, false], [1, 3, false], [0, 0, true]]]);
+  assert.equal(G(null, 6)[0], 'il Leaders Club (9%)');
+  assert.equal(G(4.5)[0], 'il 6%');   // un bonus fra due gradini: il gradino subito sopra
+  assert.deepEqual(G(12).slice(0, 2), ['l\'Executive Leader Club (15%)', 'il 18%']);
+  assert.deepEqual(G(18).slice(0, 2), ['il Produttore Argento (21%)', null]);
+  const X = W.ctx.segniDelGradino(sopra, 21); assert.equal(X.verso, 'Platino');   // sopra il 21%: verso il livello
+  // al 3%: «Verso il 6%», il 15 Planner «—» e «non ancora»
+  const T = mondo({ percorso: { lv: C.livelli({ core: true, bonus: 3, linee: [], cep: 1, planner: 0, bbs: 2, wes: 3, mesi21: 0 }), pc: { gradini: [] }, l: {} } }); T.ctx.disegna();
+  assert.match(testo(T.app.innerHTML), /Verso il 6% 3 WES su 5 2 BBS su 5 1 CEP su 3 — 15 Planner non ancora la linea: il prossimo gradino, 6% la colonna piena: il gradino dopo, Leaders Club \(9%\)/);
+  assert.match(T.app.innerHTML, /class="o5-sv-col spento"/);
+  // il bonus del mese prima dal file Amway del Check
+  const B = mondo({ percorso: { lv: { ...C.livelli({ core: true, bonus: null, linee: [], cep: 1, planner: 0, bbs: 2, wes: 3, mesi21: 0 }), mese: 202610 }, pc: { gradini: [] }, l: {} } });
+  B.ctx.CK = { amway: { squadra: [], volumi: [{ partner_id: 'P1', mese: 202609, bonus: 9 }] } }; B.ctx.disegna();
+  assert.match(testo(B.app.innerHTML), /Verso il 12%/);
+  assert.match(PO, /const SEGNI_A_GRADINI = true;/);   // l'interruttore per tornare ai livelli
   const N = mondo({ percorso: { lv: null, pc: { gradini: [] }, l: {} } }); N.ctx.disegna();
   assert.match(testo(N.app.innerHTML), /SEGNI VITALI · OTTOBRE › I Segni Vitali arrivano con il file Amway del mese/);
   const L = mondo(); L.ctx.disegna(); assert.match(testo(L.app.innerHTML), /SEGNI VITALI · OTTOBRE › Leggo i Segni Vitali…/);

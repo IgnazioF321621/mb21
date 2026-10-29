@@ -191,22 +191,52 @@ function segniDelMese(lv) {
     return { k, nome, q: v && v.q != null ? Number(v.q) : null, t, max };
   }) };
 }
+// Nota Pagine 150 (Ignazio 29/10, via Regia: «Sì, al prossimo gradino. Anche se sono indeciso»): i Segni Vitali mirano al prossimo gradino del bonus
+// (MB21Check.SCALA_BONUS, la tabella del foglio obiettivi: 3, 6, 9, 12…), non sempre al livello. Per tornare indietro: SEGNI_A_GRADINI = false
+// (riprende segniDelMese, verso il livello più vicino). Il bonus da cui si parte: quello del mese (file Amway), se no quello del mese prima, se no
+// nessuno (→ il 3%). La linea scura sta al gradino subito sopra, la colonna intera vale il gradino dopo ancora (al 21%, l'ultimo, il suo numero).
+// Dove il gradino è un livello del Manuale lo si dice: «Verso il Leaders Club (9%)», «Verso l'Executive Leader Club (15%)», «Verso il Produttore
+// Argento (21%)»; gli altri «Verso il 6%». Un segno che a quel gradino vale 0 (15 Planner al 3% e al 6%) mostra «—». Sopra il 21%: verso il livello.
+const SEGNI_A_GRADINI = true;
+const nomeGradinoBonus = g => { const L = MB21Check.LIVELLI.find(x => x.sv.bonus === g); return L ? `${CON_ARTICOLO(L.titolo)} (${g}%)` : `il ${g}%`; };
+function segniDelGradino(lv, bonusPrima) {
+  if (!lv || !lv.righe || !lv.righe.length) return null;
+  const voci = lv.righe[0].voci, q = k => { const v = voci.find(x => x.chiave === k); return v && v.q != null ? Number(v.q) : null; };
+  const bonus = q('bonus') != null ? q('bonus') : bonusPrima != null ? Number(bonusPrima) : 0;
+  const G = MB21Check.GRADINI_BONUS, qui = G.find(g => g > bonus);
+  if (!qui) return segniDelMese(lv);   // sopra il 21%: verso il livello (il Platino)
+  const dopo = G.find(g => g > qui) || null, S = MB21Check.SCALA_BONUS;
+  return { verso: nomeGradinoBonus(qui), dopo: dopo ? nomeGradinoBonus(dopo) : null, gradini: true, colonne: SEGNI_OGGI.map(([k, nome]) => {
+    const t = S[qui][k], max = dopo ? S[dopo][k] : t;
+    return { k, nome, q: q(k), t, max, nonServe: !t };
+  }) };
+}
 // il riquadro con i dati di adesso: i livelli del Check (percorsoDash); senza il file Amway del mese i livelli non ci sono e lo si dice
 function o5Segni() {
   const p = percorsoDash();
-  return o5SegniHtml(p ? segniDelMese(p.lv) : null, ST.oggi, p && !p.lv ? 'I Segni Vitali arrivano con il file Amway del mese' : '');
+  return o5SegniHtml(p ? (SEGNI_A_GRADINI ? segniDelGradino(p.lv, bonusMesePrima(p.lv)) : segniDelMese(p.lv)) : null, ST.oggi, p && !p.lv ? 'I Segni Vitali arrivano con il file Amway del mese' : '');
+}
+// il bonus del mese prima dal file Amway già letto dal Check (CK.amway), null se non c'è
+function bonusMesePrima(lv) {
+  const pid = visto().partner_id, m = lv && lv.mese, a = typeof CK !== 'undefined' ? CK.amway : null;
+  if (!a || !pid || !m) return null;
+  const prima = m % 100 === 1 ? m - 89 : m - 1, v = a.volumi.find(x => x.partner_id === pid && x.mese === prima);
+  return v && v.bonus != null ? Number(v.bonus) : null;
 }
 function o5SegniHtml(s, mese, vuoto) {
   const tit = `<span class="o5-gn-tit">SEGNI VITALI · ${esc(MB21Dashboard.nomeMese(mese).toUpperCase())} ›</span>`;
   if (!s) return `<button class="o5-segni" data-o5="traguardo" aria-label="Segni Vitali del mese">${tit}<span class="o5-gn-frase">${esc(vuoto || 'Leggo i Segni Vitali…')}</span></button>`;
   const col = c => {
+    if (c.nonServe) return `<span class="o5-sv-col spento"><b>—</b><span class="o5-sv-barra"></span><small>${esc(c.nome)}</small><span>non ancora</span></span>`;   // nota 150: a questo gradino vale 0
     const alto = 112, h = c.q == null ? 0 : Math.round(Math.min(1, c.q / c.max) * alto), linea = Math.round(c.t / c.max * alto);
     return `<span class="o5-sv-col"><b>${c.q == null ? '—' : c.q}</b><span class="o5-sv-barra"><i style="height:${h}px"></i><em style="bottom:${Math.min(alto - 3, linea)}px"></em></span><small>${esc(c.nome)}</small><span>su ${c.t}</span></span>`;
   };
-  const voce = c => `${c.nome} ${c.q == null ? 'non lo so' : `${c.q} su ${c.t}`}`;
-  return `<button class="o5-segni" data-o5="traguardo" aria-label="Segni Vitali verso ${esc(CON_ARTICOLO(s.verso))}: ${esc(s.colonne.map(voce).join(', '))}"><span class="o5-sv-testa">${tit}<b>Verso ${esc(CON_ARTICOLO(s.verso))}</b></span>
-    <span class="o5-sv-colonne">${s.colonne.map(col).join('')}</span><span class="o5-sv-legenda"><span><i class="linea"></i>la linea: il traguardo più vicino, ${esc(s.verso)}</span>${
-    s.dopo ? `<span><i class="pieno"></i>la colonna piena: il traguardo dopo, ${esc(s.dopo)}</span>` : ''}</span></button>`;
+  const voce = c => `${c.nome} ${c.nonServe ? 'non ancora' : c.q == null ? 'non lo so' : `${c.q} su ${c.t}`}`;
+  const verso = s.gradini ? s.verso : CON_ARTICOLO(s.verso), cosa = s.gradini ? 'il prossimo gradino' : 'il traguardo più vicino', poi = s.gradini ? 'il gradino dopo' : 'il traguardo dopo';
+  const nudo = t => t.replace(/^(il |l')/, '');
+  return `<button class="o5-segni" data-o5="traguardo" aria-label="Segni Vitali verso ${esc(verso)}: ${esc(s.colonne.map(voce).join(', '))}"><span class="o5-sv-testa">${tit}<b>Verso ${esc(verso)}</b></span>
+    <span class="o5-sv-colonne">${s.colonne.map(col).join('')}</span><span class="o5-sv-legenda"><span><i class="linea"></i>la linea: ${cosa}, ${esc(s.gradini ? nudo(s.verso) : s.verso)}</span>${
+    s.dopo ? `<span><i class="pieno"></i>la colonna piena: ${poi}, ${esc(s.gradini ? nudo(s.dopo) : s.dopo)}</span>` : ''}</span></button>`;
 }
 // «I tuoi traguardi» (nota Pagine 148, terzo pezzo, tavola «C»; Ignazio 29/10, «A»): Leader 1°, Core, Pacesetter e (Ignazio 29/10 sera: «quando ci
 // avvicineremo a Platinum lo inseriremo») Leaders Club, Executive Leader Club e Produttore Argento, sei cerchi in due righe, ognuno con la
