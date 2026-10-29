@@ -164,8 +164,9 @@ function o5Ritmo() {
 function o5RitmoHtml(r) {
   const tit = '<span class="o5-gn-tit">IL TUO RITMO · QUESTA SETTIMANA ›</span>';
   if (!r) return `<button class="o5-ritmo" data-o5="mese" aria-label="Il tuo ritmo">${tit}<span class="o5-gn-frase">Leggo il tuo ritmo…</span></button>`;
-  // l'altezza del pallino: al centro il solito, i bordi della fascia a 3/4 e 1 volta e 1/4 (fascia da 30 a 70 su 100)
-  const su = v => (!r.storia ? 50 : v.solito === 0 ? (v.ora > 0 ? 12 : 50) : Math.max(10, Math.min(90, 50 - (v.ora / v.solito - 1) * 80)));
+  // l'altezza del pallino: al centro il solito, i bordi della fascia a 3/4 e 1 volta e 1/4 (fascia da 30 a 70 su 100); molto sopra o molto sotto si ferma
+  // a 14 e a 86, con la stessa aria sopra e sotto la fascia, lontano dalle scritte (Regia 29/10)
+  const su = v => (!r.storia ? 50 : v.solito === 0 ? (v.ora > 0 ? 14 : 50) : Math.max(14, Math.min(86, 50 - (v.ora / v.solito - 1) * 80)));
   const frase = fraseRitmo(r), fuori = r.storia && r.voci.some(v => v.dove !== 'dentro');
   const uno = v => `<span class="o5-rt-uno${r.storia && v.dove !== 'dentro' ? ' fuori' : ''}"><span class="o5-rt-asse"><i style="top:${Math.round(su(v))}px"></i></span><small>${esc(v.nome)}</small></span>`;
   return `<button class="o5-ritmo" data-o5="mese" aria-label="Il tuo ritmo questa settimana: ${esc(frase)}">${tit}<span class="o5-rt-pallini">${r.storia ? '<span class="o5-rt-fascia"></span>' : ''}${r.voci.map(uno).join('')}</span>

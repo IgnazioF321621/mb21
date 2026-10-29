@@ -672,7 +672,7 @@ prova('148, pezzo 5: «Il tuo ritmo» — Contatti, Piani, Tracce e Pagine degli
   assert.equal((h.match(/o5-rt-uno fuori/g) || []).length, 2);
   assert.match(h, /<b class="fuori">/);
   // il pallino: al centro il solito (Contatti 21 su 20 → un po' sopra il centro; Piani 2 su 2 al centro), fuori più in basso (fino al bordo)
-  assert.deepEqual([...h.matchAll(/top:(\d+)px/g)].map(x => Number(x[1])), [46, 50, 90, 90]);   // Tracce 2 su 7 e Pagine 10 su 70: in fondo
+  assert.deepEqual([...h.matchAll(/top:(\d+)px/g)].map(x => Number(x[1])), [46, 50, 86, 86]);   // Tracce 2 su 7 e Pagine 10 su 70: in fondo, ma lontano dalle scritte (si ferma a 86, come sopra a 14)
   W.app.clic('[data-o5="mese"]'); assert.deepEqual(JSON.parse(JSON.stringify(W.vai)), [['lv', 'mese', null]]);
   const R = W.ctx;
   const frase = ora => R.fraseRitmo(R.ritmoSettimana(giorni(ora), OGGI));
