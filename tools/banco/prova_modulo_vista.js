@@ -681,6 +681,36 @@ prova('141 (Ignazio 29/10: «quando clicco su un codice, quindi su un nome, in a
   P.finto.codici = undefined;
 });
 
+prova('141 (Ignazio 29/10: «sì.. ma bisogna farlo per ogni tipo di appuntamento»): «Scegli dalla tua lista» e «Aggiungi un\'altra persona» portano anche chi ha lo stesso codice, per ogni tipo; togliibile con la ✕', async () => {
+  pulisci();
+  P.finto.codici = [{ id: 'c-isa', nome: 'Fiammetta Rossi', categoria: 'Partner', codice_amway: 'AB1' }, { id: 'c-socio', nome: 'Persona Socio', categoria: 'Partner', codice_amway: 'AB1' },
+    { id: 'c-tre', nome: 'Persona Tre', categoria: 'Partner', codice_amway: 'CD2' }, { id: 'c-tre-b', nome: 'Persona Tre B', categoria: 'Partner', codice_amway: 'CD2' }];
+  for (const tipo of ['Contatto', 'Piano Marketing', 'Follow Up', 'Appuntamento']) {
+    pulisci();
+    const { v } = await apri({});
+    await contatto(v, 'Fiammetta Rossi'); await attendi();   // «Scegli dalla tua lista»: entra anche chi ha il suo codice
+    assert.match(v.innerHTML, /<b>Fiammetta Rossi<\/b>[\s\S]*data-togli-persona="c-socio"/, tipo);
+    await altro(v); if (!v.querySelector('[data-scelta="tipo"]')) await v.clic('[data-tendina="tipo"]');
+    const bt = v.querySelectorAll('[data-scelta="tipo"] button').find(b => b.dataset.v === tipo); await bt.onclick({ target: bt, preventDefault() {} }); await attendi();   // «Piano Marketing»: il banco non cerca valori con lo spazio
+    P.scelta.persona = { id: 'c-tre', nome: 'Persona Tre', categoria: 'Partner' };
+    await v.clic('#na-piu-persona'); await attendi(); await attendi();   // «Aggiungi un'altra persona»: lei e chi ha il suo codice
+    assert.match(v.innerHTML, /data-togli-persona="c-tre"[\s\S]*data-togli-persona="c-tre-b"/, tipo);
+    assert.match(v.innerHTML, new RegExp(`data-tendina="tipo"[^>]*><b>${tipo}</b>`), tipo);   // il tipo resta
+    await v.clic('[data-togli-persona="c-tre-b"]');   // «tutt'al più io lo posso togliere»
+    assert.doesNotMatch(v.innerHTML, /c-tre-b/, tipo); assert.match(v.innerHTML, /data-togli-persona="c-socio"/, tipo);
+    // la stessa persona di nuovo non si ripete
+    P.scelta.persona = { id: 'c-socio', nome: 'Persona Socio', categoria: 'Partner' };
+    await v.clic('#na-piu-persona'); await attendi(); await attendi();
+    assert.equal((v.innerHTML.match(/data-togli-persona="c-socio"/g) || []).length, 1, tipo);
+  }
+  // senza codice (Prospect): come prima, una persona sola
+  pulisci();
+  const { v } = await apri({});
+  await contatto(v, 'Tito Rovere'); await attendi();
+  assert.doesNotMatch(v.innerHTML, /c-socio|c-tre/);
+  P.finto.codici = undefined; P.scelta.persona = null;
+});
+
 prova('107: in «Altro» lo stesso «Condividi con» del foglio — «Nell\'app MB21» solo per chi usa l\'app; per gli altri Telegram o WhatsApp; al Salva si apre «Manda il messaggio», uno per persona', async () => {
   pulisci(); P.finto.usaApp = false;   // questa persona non usa MB21
   const persona = { id: 'c-senza-app', nome: 'Persona Nove', categoria: 'Partner', telefono: '+39 333 9998888' };

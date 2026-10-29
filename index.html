@@ -4407,12 +4407,22 @@ async function nuovoAppuntamento(opz = {}) {
       if (tp) tp.onclick = () => { leggiCampi(); st.portato = null; disegna(); };
       // note 103 e 104: un'altra persona nello stesso appuntamento (dallo stesso foglio di «Portato da»), togliere una persona, l'Area, «Altro»
       const tipoAncoraBuono = () => { if (st.tipo && !tipiDiTutti().includes(st.tipo)) { st.tipo = null; st.modalita = null; } };
+      // nota 141 (Ignazio 29/10: «sì.. ma bisogna farlo per ogni tipo di appuntamento»): una persona scelta porta con sé chi ha il suo stesso codice Amway
+      // (titolare e collaboratore), in ogni punto e per ogni tipo; ognuno si toglie con la ✕. Una lettura piccola delle schede col codice, una volta per modulo.
+      const conLoStessoCodice = async c => {
+        if (!c || !c.id) return [];
+        if (!st.codici) st.codici = leggiCodiciSchede(visto().id).then(r => (r.error ? [] : r.data || []));
+        return (A.stessoCodiceDi(c, await st.codici)).map(x => ({ id: x.id, nome: x.nome, categoria: x.categoria || 'Partner' }));
+      };
+      const accoda = persone => {   // chi c'è già non si ripete (con la scheda conta la scheda; le schede nuove dal codice)
+        for (const p of persone) if (!persone5().some(x => (p.id ? x.id === p.id : x.codice && x.codice === p.codice))) st.altri.push(p);
+      };
       const piu = velo.querySelector('#na-piu-persona');
       if (piu) piu.onclick = async () => {
         leggiCampi();
         const c = await sceltaContatto('Con chi altro?', '', persone5().map(p => p.id), 'è già nell\'appuntamento');
         if (!c) return;
-        st.altri.push(c); tipoAncoraBuono(); disegna();
+        accoda([c, ...await conLoStessoCodice(c)]); tipoAncoraBuono(); disegna();
       };
       velo.querySelectorAll('[data-togli-persona]').forEach(b => { b.onclick = () => {
         leggiCampi();
@@ -4431,20 +4441,18 @@ async function nuovoAppuntamento(opz = {}) {
         leggiCampi();
         const scelte = await sceltaLinea(persone5().map(p => p.id).filter(Boolean));
         if (!scelte || !scelte.length) return;
-        for (const p of scelte) {
-          if (persone5().some(x => (p.id ? x.id === p.id : x.codice && x.codice === p.codice))) continue;   // nota 141: con la scheda conta la scheda (stesso codice, due persone)
-          if (!st.contatto) { st.contatto = p; st.categoria = p.categoria; } else st.altri.push(p);
-        }
-        tipoAncoraBuono(); disegna();
+        if (!st.contatto) { const p = scelte.shift(); st.contatto = p; st.categoria = p.categoria; }
+        accoda(scelte); tipoAncoraBuono(); disegna();
       };
       const area = velo.querySelector('#na-area');
       if (area) area.onclick = () => { leggiCampi(); st.area = st.area === 'Prodotti' ? 'Attività' : 'Prodotti'; disegna(); };
       const altro = velo.querySelector('#na-altro-apri');
       if (altro) altro.onclick = () => { leggiCampi(); st.altroAperto = !st.altroAperto; disegna(); };
-      const prendi = trovato => {
+      const prendi = async trovato => {
         st.contatto = trovato || null; st.categoria = trovato ? trovato.categoria : null;
         if (!A.tipiPer(st.categoria).includes(st.tipo)) { st.tipo = tipoPer(st.categoria); st.modalita = null; }
         leggiCampi(); tipoAncoraBuono(); disegna();
+        if (trovato) { const altri = await conLoStessoCodice(trovato); if (altri.length && st.contatto === trovato) { accoda(altri); tipoAncoraBuono(); disegna(); } }   // nota 141
       };
       const inp = velo.querySelector('#na-contatto');
       if (inp) inp.onchange = () => prendi(elenco.find(c => c.nome.toLowerCase() === inp.value.trim().toLowerCase()));
@@ -4882,7 +4890,7 @@ async function sceltaLinea(gia = []) {
   if (!io) { mostraToast('Per scegliere una linea serve il tuo codice nella Mappa'); return null; }
   const [sq, cod, lista] = await Promise.all([
     dbq('squadra per la linea', supa.from('squadra').select('partner_id, sponsor_id, nome, telefono')),
-    dbq('codici delle schede', supa.from('contatti').select('id, nome, categoria, codice_amway').eq('user_id', chi.id).not('codice_amway', 'is', null).is('eliminato_il', null)),
+    leggiCodiciSchede(chi.id),
     leggiContattiMiei().catch(() => []),
   ]);
   if (sq.error || !Array.isArray(sq.data)) { mostraToast('Mappa non caricata: riprova.'); return null; }
@@ -4894,8 +4902,7 @@ async function sceltaLinea(gia = []) {
   // si toglie con la ✕ come le altre. Senza schede col codice: quella col suo nome, se no una scheda nuova.
   const persone = r => {
     const s = sq.data.find(x => x.partner_id === r.partner_id) || {}, nome = leggibile(r.nome);
-    const conCodice = (cod.data || []).filter(x => x.codice_amway === r.partner_id)
-      .sort((x, y) => (piega(y.nome) === piega(nome)) - (piega(x.nome) === piega(nome)));
+    const conCodice = A.schedeDelCodice(r.partner_id, cod.data, nome);
     const trovate = conCodice.length ? conCodice : lista.filter(x => !x.codice_amway && piega(x.nome) === piega(nome)).slice(0, 1);
     const tel = String(s.telefono || '').replace(/\s+/g, '');
     return trovate.length ? trovate.map(c => ({ id: c.id, nome: c.nome, categoria: c.categoria || 'Partner', codice: r.partner_id }))
@@ -4926,6 +4933,10 @@ async function sceltaLinea(gia = []) {
     };
     disegna();
   });
+}
+// Le schede con il codice Amway di chi guardi (nota 108 «Una linea», nota 141 «stesso codice»): una lettura piccola, solo le schede dei partner con il codice.
+function leggiCodiciSchede(utenteId) {
+  return dbq('codici delle schede', supa.from('contatti').select('id, nome, categoria, codice_amway').eq('user_id', utenteId).not('codice_amway', 'is', null).is('eliminato_il', null));
 }
 // Le schede nuove della linea (nota 108), al Salva del modulo: una riga di contatti per persona (Partner, nome, codice e telefono dalla Mappa). false se una non si salva.
 async function creaSchedeNuove(persone, utenteId) {

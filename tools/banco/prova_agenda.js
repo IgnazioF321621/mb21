@@ -840,4 +840,14 @@ prova('Nota 120 (Ignazio 28/10): la stessa persona non entra due volte nello ste
   assert.equal(A.puntiGiorni([p('a', 'c1', 'Persona A', 'ListaNomi'), p('b', 'c1', 'Persona A', 'Telefonate')], ['2026-09-21'])['2026-09-21'].quanti, 1);
 });
 
+prova('Nota 141: le schede con lo stesso codice Amway (titolare e collaboratore), prima quella col nome della Mappa; le altre della persona scelta', () => {
+  const schede = [{ id: 's1', nome: 'Persona Socio', codice_amway: 'AB1' }, { id: 's2', nome: 'Carla  rossi', codice_amway: 'AB1' }, { id: 's3', nome: 'Persona Tre', codice_amway: 'CD2' }];
+  assert.deepEqual(A.schedeDelCodice('AB1', schede, 'Carla Rossi').map(x => x.id), ['s2', 's1']);
+  assert.deepEqual(A.schedeDelCodice(null, schede), []);
+  assert.deepEqual(A.stessoCodiceDi({ id: 's1' }, schede).map(x => x.id), ['s2']);
+  assert.deepEqual(A.stessoCodiceDi({ id: 's3' }, schede), []);              // solo lei con quel codice
+  assert.deepEqual(A.stessoCodiceDi({ id: 'senza-codice' }, schede), []);   // un Prospect, una scheda senza codice
+  assert.deepEqual(A.stessoCodiceDi({ id: null, nome: 'scheda nuova' }, schede), []);
+});
+
 console.log(`\n${ok} prove superate`);

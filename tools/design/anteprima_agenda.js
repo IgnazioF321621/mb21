@@ -35,7 +35,7 @@ const codice = [
   // P5b: l'interruttore, qui cambiabile dalle prove (impostaLinee)
   'let CONDIVISIONE_LINEE = false; let PUNTI_CONDIVISI = false; let SERATA_DA_MANDARE = false;',   // nota 106: «Serata da mandare» spenta (impostaSerata)
     // note 103 e 104: i punti non si condividono (impostaPunti per provarli accesi)
-  funzione('puoSerataTeam'), funzione('nuovoAppuntamento'), funzione('sceltaLinea'), funzione('creaSchedeNuove'),   // nota 108: la linea dalla Mappa
+  funzione('puoSerataTeam'), funzione('nuovoAppuntamento'), funzione('sceltaLinea'), funzione('leggiCodiciSchede'), funzione('creaSchedeNuove'),   // nota 108: la linea dalla Mappa; nota 141: le schede col codice
   funzione('parteLineaHtml'), riga('const parteDopoTocco'),   // nota 005: una persona dentro la Linea   // il modulo «+» vero (dal 05/10, nota 027: «Condividi con», la serata Team/Linea)
   fra("// ── Come si guarda l'Agenda (cantiere 37)", '// Prima si cerca la persona'),
   'return { impostaLinee: v => { CONDIVISIONE_LINEE = v; }, impostaPunti: v => { PUNTI_CONDIVISI = v; }, impostaSerata: v => { SERATA_DA_MANDARE = v; }, impostaCoachYes: v => { COACH_YES = v; }, CY, foglioCoachYes, caricaCoachYes, foglioAggiungi, disegnaAgenda, avvisoSovrapposti, grigliaGiorno, grigliaSettimana, menuAgendaHtml, foglioSpazio, preparaSettimana, rigaSpazioHtml, programmaSettimanaHtml, foglioCosa, collegaCose, spuntaCosa, foglioEvento, foglioRicevuto, controllaImpegniNuovi, nuovoAppuntamento, foglioCercaAgenda: typeof foglioCercaAgenda === \'function\' ? foglioCercaAgenda : null, apriCampoCosa: typeof apriCampoCosa === \'function\' ? apriCampoCosa : null };',

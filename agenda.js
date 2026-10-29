@@ -651,6 +651,21 @@
     const fine = i + 1 + righe[i].sotto;   // nell'ordine dall'alto in basso, chi sta sotto viene subito dopo
     return new Set(righe.slice(i, fine).map(r => r.partner_id));
   }
+  // Nota Pagine 141 (Ignazio 29/10: «quando clicco su un codice, quindi su un nome, in automatico mi compare anche il partner già aggregato. Tutt'al più io lo
+  // posso togliere»; «per ogni tipo di appuntamento»): le schede con lo stesso codice Amway (titolare e collaboratore hanno lo stesso). `schede` = le schede
+  // con `codice_amway` ({ id, nome, categoria, codice_amway }). `schedeDelCodice`: tutte quelle del codice, prima quella col nome dato (il nome della Mappa);
+  // `stessoCodiceDi`: le altre schede col codice della persona scelta (vuoto se non ha codice). Le usa il modulo dell'appuntamento in ogni punto dove si
+  // scelgono le persone («Scegli dalla tua lista», «Aggiungi un'altra persona», «Una linea»).
+  const piegaNome = t => String(t || '').trim().toLowerCase().replace(/\s+/g, ' ');
+  function schedeDelCodice(codice, schede, nome) {
+    if (!codice) return [];
+    return (schede || []).filter(c => c.codice_amway === codice)
+      .sort((x, y) => (piegaNome(y.nome) === piegaNome(nome)) - (piegaNome(x.nome) === piegaNome(nome)));
+  }
+  function stessoCodiceDi(persona, schede) {
+    const sua = persona && persona.id ? (schede || []).find(c => c.id === persona.id) : null;
+    return sua ? schedeDelCodice(sua.codice_amway, schede).filter(c => c.id !== persona.id) : [];
+  }
   // Il frontale (chi ha `me` come sponsor) sopra un codice: per ritrovare la Linea di un impegno condiviso con una parte. null se non è sotto `me`.
   // Agenda P5b (Ignazio 23/10/2026: «si manda solo alla persona che usa l'app con me»): le persone del gruppo che usano l'app. `utenti` = gli utenti
   // attivi { partner_id, nome_cognome }; si tengono quelli nel ramo di `me` (il codice di chi manda, in `squadra`), mai chi ha il codice di `me`
@@ -959,7 +974,7 @@
     oraProposta, passatiSenzaEsito, validaAppuntamento, tipoDaCoda, senzaDoppioniCoda, ORE_CONFERMA, confermeDaFare, testoConferma, rispostaValida, confermeConRisposte, quandoBreve, risposteNuove, riordiniDaSentire, INIZIO_RIORDINI_GLIDE, ESITO_ATTESA_ORDINE,
     ORA_DA, ORA_A, PASSO_MIN, MINIMO_VISTA, DURATA_CONTATTO, DURATA_NORMALE, durataPredefinita, avvisoFissato, inMinuti, daMinuti, alQuarto,
     fascia, disposizioneGiorno, estremiGriglia, oreUtili, puntiGiorni, contaPerTipo, ORDINE_TIPI, sovrapposti, stessoIncontro, incontri, fasceLibere, oreProposte,
-    AVVENUTO, RISULTATI, daChiudere, passiEsito, passiIncontro, vociIncontro, esitoDaVoci, ESITO_ALTRO, passiFatti, esitoDaiPassi, senzaApp, ramoDellaLinea, parteDi, frontaleDi, personeConApp, domandaEsito, dopoTelefonata, fattoDi, ESITI_CHIUSURA, GIORNI_CHIUSURA, GIORNI_RELAZIONE, GIORNI_NO_RISPOSTA, GIORNI_TELEFONO_SPENTO, GIORNI_STORICO, nelPassato, chiudeRelazione, giorniRisentire, proponeVendita, ICONE_TIPO, controllaGiorno,
+    AVVENUTO, RISULTATI, daChiudere, passiEsito, passiIncontro, vociIncontro, esitoDaVoci, ESITO_ALTRO, passiFatti, esitoDaiPassi, senzaApp, ramoDellaLinea, parteDi, schedeDelCodice, stessoCodiceDi, frontaleDi, personeConApp, domandaEsito, dopoTelefonata, fattoDi, ESITI_CHIUSURA, GIORNI_CHIUSURA, GIORNI_RELAZIONE, GIORNI_NO_RISPOSTA, GIORNI_TELEFONO_SPENTO, GIORNI_STORICO, nelPassato, chiudeRelazione, giorniRisentire, proponeVendita, ICONE_TIPO, controllaGiorno,
     coseDelGiorno, LEGAMI, legameDi, campiLegame, coseDelMese, coseDellaScala, senzaPeriodo, numeroSettimana, meseAccanto, mesiTra, giorniTra, testoCosa, testoTroppoLungo, MAX_COSA, MAX_VOCE, daMBPlan, MAX_PUNTO, MAX_PUNTI, MAX_LINK, puntiDi, aggiungiPunto, puntiDaRighe, spuntaPunto, togliPunto, contoPunti, linkChiamata, legamePunti, conPunti, MAX_LUOGO, doveDa, testoDove, linkMappa,
     RISPOSTE, nomeRisposta, nomeRispostaDiLui, CONDIVISIONI_SPAZIO, SDS_DEL_TEAM, FRASE_OSPITI, conOspiti, eConsegna, aggiungiOspite, ospitiPerChiOrganizza, chiaveRicevuto, ricevutiDelGiorno, ricevutiComeEventi, titoloRicevuto, eRichiamo, azioniAgenda, passatoSenzaEsito, programmaDelGiorno, ricevutiNuovi, contoRisposte, nomiPerRisposta, puoCondividereAzione, puoCondividereSpazio, RIPETIZIONI, ripetizioniPer, prossimaRipetizione, SCALE, inizioScala, GIORNI_SETTIMANA, giornoSettimana };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
