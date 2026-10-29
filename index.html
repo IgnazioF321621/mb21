@@ -2488,7 +2488,7 @@
   .o5-st-col.oggi i { opacity: 1; }
   .o5-st-giorni { text-align: center; font-size: 13px; font-weight: 700; color: #5A6475; }
   .o5-st-giorni .oggi { color: #B34E00; font-weight: 800; }
-  /* nota Pagine 148, pezzo 5: «Il tuo ritmo», quattro pallini sulla fascia azzurra del solito; fuori dalla fascia arancione */
+  /* nota Pagine 148, pezzo 5: «Il tuo ritmo», quattro pallini sulla fascia azzurra del solito; nota 149: sopra verdi, sotto rossi */
   .o5-ritmo { width: 100%; border: 0; font: inherit; text-align: left; cursor: pointer; background: #fff; color: #10151F; border-radius: 24px; padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; }
   .o5-rt-pallini { position: relative; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
   .o5-rt-fascia { position: absolute; left: 0; right: 0; top: 30px; height: 40px; border-radius: 12px; background: #DBEAFE; }
@@ -2496,12 +2496,15 @@
   .o5-rt-asse { position: relative; width: 100%; height: 100px; }
   .o5-rt-asse i { position: absolute; left: 50%; width: 18px; height: 18px; margin: -9px 0 0 -9px; border-radius: 50%; background: #1D4ED8; border: 4px solid #fff; box-shadow: 0 0 0 2px #1D4ED8; box-sizing: border-box; }
   .o5-rt-uno small { font-size: 12px; font-weight: 800; color: #5A6475; text-align: center; }
-  .o5-rt-uno.fuori i { background: #B34E00; box-shadow: 0 0 0 2px #B34E00; }
-  .o5-rt-uno.fuori small { color: #B34E00; }
+  .o5-rt-uno.sopra i { background: var(--ok); box-shadow: 0 0 0 2px var(--ok); }   /* nota 149: sopra la fascia verde, sotto rosso (contrasto sul bianco 5,0 e 5,9) */
+  .o5-rt-uno.sopra small { color: var(--ok); }
+  .o5-rt-uno.sotto i { background: var(--pericolo); box-shadow: 0 0 0 2px var(--pericolo); }
+  .o5-rt-uno.sotto small { color: var(--pericolo); }
   .o5-rt-sotto { display: flex; flex-direction: column; gap: 2px; }
   .o5-rt-sotto small { font-size: 13px; font-weight: 700; color: #5A6475; }
   .o5-rt-sotto b { font-size: 22px; font-weight: 800; color: #1D4ED8; }
-  .o5-rt-sotto b.fuori { color: #B34E00; }
+  .o5-rt-sotto b.sotto { color: var(--pericolo); }
+  .o5-rt-sotto b.sopra { color: var(--ok); }
   /* nota Pagine 148, pezzo 6: «Le tue linee», una barra per prima linea lunga quanto i punti del mese, la linea scura al 3%, piene quelle col bonus */
   .o5-linee { width: 100%; border: 0; font: inherit; text-align: left; cursor: pointer; background: #fff; color: #10151F; border-radius: 24px; padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; }
   .o5-ln-testa { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }

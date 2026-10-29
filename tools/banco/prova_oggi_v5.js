@@ -661,7 +661,7 @@ prova('148: «I tuoi traguardi» — Leader 1°, Core, Pacesetter, Leaders Club,
   const L = mondo(); L.ctx.disegna(); assert.match(testo(L.app.innerHTML), /I TUOI TRAGUARDI › Leggo i traguardi…/);
 });
 
-prova('148, pezzo 5: «Il tuo ritmo» — Contatti, Piani, Tracce e Pagine degli ultimi 7 giorni contro la media delle 4 settimane prima (dati del Check); fascia da 3/4 a 1 volta e 1/4; fuori = arancione; una frase; il tocco apre il Mese', () => {
+prova('148, pezzo 5: «Il tuo ritmo» — Contatti, Piani, Tracce e Pagine degli ultimi 7 giorni contro la media delle 4 settimane prima (dati del Check); fascia da 3/4 a 1 volta e 1/4; sopra verde, sotto rosso (nota 149); una frase; il tocco apre il Mese', () => {
   // una riga per settimana (anche due righe nello stesso giorno si sommano): le 4 settimane prima 20 contatti, 2 piani, 7 tracce, 70 pagine
   const sp = A.spostaGiorno, prima = w => [{ data: sp(OGGI, -7 * w), contatti: 12, pm: 2, tracce: 7, pagine: 70 }, { data: sp(OGGI, -7 * w), contatti: 8 }];
   const giorni = (ora) => [...[1, 2, 3, 4].flatMap(prima), { data: sp(OGGI, -2), ...ora }, { data: sp(OGGI, -60), contatti: 500 }];   // oltre le 5 settimane non conta
@@ -669,8 +669,9 @@ prova('148, pezzo 5: «Il tuo ritmo» — Contatti, Piani, Tracce e Pagine degli
   const h = W.app.innerHTML, t = testo(h);
   assert.ok(h.indexOf('o5-settimana') < h.indexOf('o5-ritmo') && h.indexOf('o5-ritmo') < h.indexOf('o5-segni'));
   assert.match(t, /IL TUO RITMO · QUESTA SETTIMANA › Contatti Piani Tracce Pagine La fascia azzurra è il tuo solito Fai tanto, ma ascolti e leggi poco/);
-  assert.equal((h.match(/o5-rt-uno fuori/g) || []).length, 2);
-  assert.match(h, /<b class="fuori">/);
+  // nota 149 (Ignazio 29/10): sotto rossi, sopra verdi, dentro azzurri; la frase rossa se c'è un «sotto»
+  assert.equal((h.match(/o5-rt-uno sotto/g) || []).length, 2); assert.doesNotMatch(h, /o5-rt-uno sopra/);
+  assert.match(h, /<b class="sotto">Fai tanto/);
   // il pallino: al centro il solito (Contatti 21 su 20 → un po' sopra il centro; Piani 2 su 2 al centro), fuori più in basso (fino al bordo)
   assert.deepEqual([...h.matchAll(/top:(\d+)px/g)].map(x => Number(x[1])), [46, 50, 86, 86]);   // Tracce 2 su 7 e Pagine 10 su 70: in fondo, ma lontano dalle scritte (si ferma a 86, come sopra a 14)
   W.app.clic('[data-o5="mese"]'); assert.deepEqual(JSON.parse(JSON.stringify(W.vai)), [['lv', 'mese', null]]);
@@ -680,9 +681,15 @@ prova('148, pezzo 5: «Il tuo ritmo» — Contatti, Piani, Tracce e Pagine degli
   assert.equal(frase({ contatti: 5, pm: 0, tracce: 7, pagine: 70 }), 'Cresci tanto, ma fai poco');
   assert.equal(frase({ contatti: 5, pm: 2, tracce: 2, pagine: 70 }), 'Contatti e Tracce sotto il solito');
   assert.equal(frase({ contatti: 30, pm: 2, tracce: 7, pagine: 70 }), 'Contatti sopra il solito');
+  const colori = ora => { const X = mondo(); X.ctx.CK = { giorni: giorni(ora), di: 'io' }; X.ctx.disegna(); const hh = X.app.innerHTML;
+    return [[...hh.matchAll(/class="o5-rt-uno( \w+)?"/g)].map(x => (x[1] || ' dentro').trim()), (hh.match(/<b( class="(\w+)")?>[^<]*<\/b><\/span><\/button>/) || [])[2] || 'dentro']; };
+  assert.deepEqual(colori({ contatti: 30, pm: 2, tracce: 7, pagine: 70 }), [['sopra', 'dentro', 'dentro', 'dentro'], 'sopra']);   // solo sopra: verde
+  assert.deepEqual(colori({ contatti: 30, pm: 2, tracce: 2, pagine: 70 }), [['sopra', 'dentro', 'sotto', 'dentro'], 'sotto']);   // sopra e sotto: rosso (l'avviso)
+  assert.deepEqual(colori({ contatti: 20, pm: 2, tracce: 7, pagine: 70 }), [['dentro', 'dentro', 'dentro', 'dentro'], 'dentro']);   // «Nel tuo ritmo»: azzurro
+  assert.match(IDX, /\.o5-rt-uno\.sopra i \{ background: var\(--ok\);/); assert.match(IDX, /\.o5-rt-uno\.sotto i \{ background: var\(--pericolo\);/);
   // senza niente nelle 4 settimane prima: niente fascia, una frase
   const N = mondo(); N.ctx.CK = { giorni: [{ data: OGGI, contatti: 3 }], di: 'io' }; N.ctx.disegna();
-  assert.match(testo(N.app.innerHTML), /Il tuo solito si vede dopo qualche settimana/); assert.doesNotMatch(N.app.innerHTML, /o5-rt-fascia|o5-rt-uno fuori/);
+  assert.match(testo(N.app.innerHTML), /Il tuo solito si vede dopo qualche settimana/); assert.doesNotMatch(N.app.innerHTML, /o5-rt-fascia|o5-rt-uno s/);
   // dati del Check non ancora letti (o di un altro partner): «Leggo…»
   const L = mondo(); L.ctx.CK = { giorni: [], di: 'altro' }; L.ctx.disegna(); assert.match(testo(L.app.innerHTML), /IL TUO RITMO · QUESTA SETTIMANA › Leggo il tuo ritmo…/);
   assert.match(IDX, /html\.v5 \.o5-riquadri > \.o5-ritmo \{ grid-column: 1 \/ -1; \}|\.o5-riquadri > \.o5-ritmo/);

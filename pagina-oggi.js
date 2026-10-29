@@ -129,7 +129,7 @@ function o5SettimanaHtml(giorni) {
 }
 // «Il tuo ritmo» (nota Pagine 148, pezzo 5, tavola «D»; Ignazio 29/10, «A» e quattro pallini): Contatti e Piani (fare), Tracce e Pagine (crescere).
 // Il ritmo di adesso sono gli ultimi 7 giorni (come «La tua settimana»); il solito è la media delle 4 settimane prima (7 giorni ciascuna); nella fascia
-// azzurra = tra 3/4 e 1 volta e 1/4 della media; fuori = arancione. Sotto una frase a parole. Dati del Check già letti (CK.giorni, check_giorni_conti:
+// azzurra = tra 3/4 e 1 volta e 1/4 della media; sopra = verde, sotto = rosso (nota 149). Sotto una frase a parole. Dati del Check già letti (CK.giorni, check_giorni_conti:
 // le stesse regole del Check), nessuna lettura nuova. `giorni` = righe { data, contatti, pm, tracce, pagine } (anche più righe per giorno: si sommano).
 const RITMO = [['contatti', 'Contatti', 'fare'], ['pm', 'Piani', 'fare'], ['tracce', 'Tracce', 'crescere'], ['pagine', 'Pagine', 'crescere']];
 function ritmoSettimana(giorni, oggi) {
@@ -167,10 +167,12 @@ function o5RitmoHtml(r) {
   // l'altezza del pallino: al centro il solito, i bordi della fascia a 3/4 e 1 volta e 1/4 (fascia da 30 a 70 su 100); molto sopra o molto sotto si ferma
   // a 14 e a 86, con la stessa aria sopra e sotto la fascia, lontano dalle scritte (Regia 29/10)
   const su = v => (!r.storia ? 50 : v.solito === 0 ? (v.ora > 0 ? 14 : 50) : Math.max(14, Math.min(86, 50 - (v.ora / v.solito - 1) * 80)));
-  const frase = fraseRitmo(r), fuori = r.storia && r.voci.some(v => v.dove !== 'dentro');
-  const uno = v => `<span class="o5-rt-uno${r.storia && v.dove !== 'dentro' ? ' fuori' : ''}"><span class="o5-rt-asse"><i style="top:${Math.round(su(v))}px"></i></span><small>${esc(v.nome)}</small></span>`;
+  // nota Pagine 149 (Ignazio 29/10: «quando alziamo il ritmo, facciamo diventare i pallini verdi; sotto la linea rossi. Nella linea sono azzurri»):
+  // sopra = verde, sotto = rosso, dentro = azzurro; la frase uguale, rossa se c'è almeno un «sotto» (è l'avviso), verde se ci sono solo «sopra»
+  const frase = fraseRitmo(r), tono = !r.storia ? '' : r.voci.some(v => v.dove === 'sotto') ? 'sotto' : r.voci.some(v => v.dove === 'sopra') ? 'sopra' : '';
+  const uno = v => `<span class="o5-rt-uno${r.storia && v.dove !== 'dentro' ? ` ${v.dove}` : ''}"><span class="o5-rt-asse"><i style="top:${Math.round(su(v))}px"></i></span><small>${esc(v.nome)}</small></span>`;
   return `<button class="o5-ritmo" data-o5="mese" aria-label="Il tuo ritmo questa settimana: ${esc(frase)}">${tit}<span class="o5-rt-pallini">${r.storia ? '<span class="o5-rt-fascia"></span>' : ''}${r.voci.map(uno).join('')}</span>
-    <span class="o5-rt-sotto"><small>La fascia azzurra è il tuo solito</small><b${fuori ? ' class="fuori"' : ''}>${esc(frase)}</b></span></button>`;
+    <span class="o5-rt-sotto"><small>La fascia azzurra è il tuo solito</small><b${tono ? ` class="${tono}"` : ''}>${esc(frase)}</b></span></button>`;
 }
 // «Segni Vitali del mese» (nota Pagine 148, secondo pezzo, tavola «C»): «Verso il <traguardo più vicino>», quattro colonne WES, BBS, CEP, 15 Planner.
 // Gli stessi numeri del Check: `lv` = i livelli del mese (percorsoDash → livelliCheck → MB21Check.livelli), il traguardo più vicino è il primo non fatto
