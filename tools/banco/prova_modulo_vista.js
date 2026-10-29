@@ -654,6 +654,33 @@ prova('108: «＋ Una linea» — l\'albero della Mappa sotto di te; un tocco ac
   P.finto.codici = undefined;
 });
 
+prova('141 (Ignazio 29/10: «quando clicco su un codice, quindi su un nome, in automatico mi compare anche il partner già aggregato»): «Una linea» porta tutte le schede con quel codice, togliibili con la ✕', async () => {
+  pulisci();
+  // il collaboratore ha il codice del titolare: due schede col codice FR1, quella col nome della Mappa per prima
+  P.finto.codici = [{ id: 'c-collab', nome: 'Persona Collab', categoria: 'Partner', codice_amway: 'FR1' }, { id: 'c-carla', nome: 'Carla Rossi', categoria: 'Partner', codice_amway: 'FR1' }];
+  const { v, p } = await apri({});
+  await contatto(v, 'Fiammetta Rossi');
+  v.querySelector('#na-linea').onclick(); await attendi(); await attendi();
+  const l = P.fogli.at(-1);
+  await l.clic('[data-linea="FR1"]');
+  assert.match(l.innerHTML, /<b>3 persone<\/b> · Dario Verdi non ha ancora una scheda/);   // Carla, il suo collaboratore e Dario sotto di lei
+  await l.clic('#sl-si'); await attendi(); await attendi();
+  assert.match(v.innerHTML, /<b>Carla Rossi<\/b>[\s\S]*<b>Persona Collab<\/b>[\s\S]*<b>Dario Verdi/);
+  assert.match(v.innerHTML, /data-togli-persona="c-collab"/);
+  await v.clic('[data-togli-persona="c-collab"]');   // «tutt'al più io lo posso togliere»
+  assert.doesNotMatch(v.innerHTML, /Persona Collab/); assert.match(v.innerHTML, /<b>Carla Rossi<\/b>/);
+  // riaprendo «Una linea» chi c'è già non si ripete; il collaboratore tolto torna se si riaccende
+  v.querySelector('#na-linea').onclick(); await attendi(); await attendi();
+  const l2 = P.fogli.at(-1); await l2.clic('[data-linea="FR1"]');
+  assert.match(l2.innerHTML, /<b>2 persone<\/b> · Dario Verdi/);   // Carla c'è già (stessa scheda); Persona Collab e Dario (scheda nuova: si riconosce dal codice all'aggiunta)
+  await l2.clic('#sl-si'); await attendi(); await attendi();
+  assert.equal((v.innerHTML.match(/<b>Carla Rossi<\/b>/g) || []).length, 1); assert.equal((v.innerHTML.match(/<b>Dario Verdi/g) || []).length, 1); assert.match(v.innerHTML, /<b>Persona Collab<\/b>/);
+  await scegli(v, 'tipo', 'Appuntamento'); await scegli(v, 'modalita', 'Counseling');
+  await v.clic('#na-si'); await p;
+  assert.deepEqual(scritte('azioni', 'insert').at(-1).args[0].map(r => r.contatto_id), ['c-isa', 'c-carla', 'scheda-SOTTO1', 'c-collab']);
+  P.finto.codici = undefined;
+});
+
 prova('107: in «Altro» lo stesso «Condividi con» del foglio — «Nell\'app MB21» solo per chi usa l\'app; per gli altri Telegram o WhatsApp; al Salva si apre «Manda il messaggio», uno per persona', async () => {
   pulisci(); P.finto.usaApp = false;   // questa persona non usa MB21
   const persona = { id: 'c-senza-app', nome: 'Persona Nove', categoria: 'Partner', telefono: '+39 333 9998888' };
