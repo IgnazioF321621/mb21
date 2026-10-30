@@ -33,9 +33,13 @@ async function apriProfiloDiAltro(p) {
   app.innerHTML = `${testa}<h1>Profilo di ${esc(nome)}</h1>${partnerSelect()}<div class="vuoto">Carico…</div>`;
   const torna = () => { document.getElementById('pf-indietro').onclick = () => { ST.tab = 'oggi'; mostraTab(); }; collegaPartnerSelect(); };
   torna();
-  const [dati, sc] = await Promise.all([
+  const [dati, sc, perc, trn, disp] = await Promise.all([
     dbq('profilo di un altro', supa.from('utenti').select('nome, nome_cognome, email, partner_id, telefono, foto, contatti_al_giorno').eq('id', p.id).maybeSingle()),
     p.partner_id ? dbq('scheda del partner', supa.from('contatti').select('id, user_id, nome, categoria').eq('user_id', ST.utente.id).eq('codice_amway', p.partner_id).is('eliminato_il', null).limit(1)) : { data: [] },
+    // nota Admin 006 (Ignazio 30/10/2026): l'Admin vede anche il resto del Profilo di chi guarda (Perché ho iniziato, avvio, Training, avvisi), in sola lettura
+    dbq('percorso di un altro', supa.rpc('mio_percorso_di', { p_utente: p.id })).catch(() => ({ error: true })),
+    TRAINING_VISIBILE ? trnMioRiepilogo(p.id).catch(() => null) : null,
+    dbq('avvisi di un altro', supa.from('avvisi_dispositivi').select('dispositivo').eq('user_id', p.id)).catch(() => ({ error: true })),
   ]);
   if (dati.error || !dati.data) { app.innerHTML = `${testa}<h1>Profilo di ${esc(nome)}</h1>${partnerSelect()}<div class="avviso">Non riesco a caricare il profilo. Controlla la connessione e riprova.</div>${versione()}`; return torna(); }
   const d = dati.data, scheda = sc.data && sc.data[0];
@@ -54,8 +58,31 @@ async function apriProfiloDiAltro(p) {
       <div class="pf-riga"><span>Contatti al giorno</span><b>${n === 0 ? 'In pausa' : esc(String(n == null ? '—' : n))}</b></div></div></div>
     <div class="pf-box"><div class="pf-corpo"><b>${ic('segnivitali')} Segni Vitali</b>
       ${scheda ? `<div class="pf-targhe">${targhe}</div>` : '<small>Non c\'è ancora una scheda col suo codice Amway nella tua lista.</small>'}</div></div>
+    ${restoProfiloDiAltro(d, perc && !perc.error ? perc.data : null, trn, disp && !disp.error ? disp.data || [] : null)}
     ${versione()}`;
   torna();
+}
+
+// Il resto del Profilo di un altro partner, da guardare soltanto (nota Admin 006): Perché ha iniziato, il suo avvio (passi fatti), il Training e gli avvisi.
+// Ogni pezzo non letto semplicemente non si mostra. `m` = mio_percorso_di; `trn` = riepilogo del Training; `disp` = i suoi dispositivi con gli avvisi.
+function restoProfiloDiAltro(d, m, trn, disp) {
+  const L = MB21Lista, nome = esc(nomeDi(d).split(/\s+/)[0] || 'questa persona'), pezzi = [];
+  const box = (titolo, corpo) => `<div class="pf-box"><div class="pf-corpo"><b>${titolo}</b>${corpo}</div></div>`;
+  if (m) {
+    const righe = percheRigheHtml(m.perche);
+    pezzi.push(box(`${ic('perche')} Perché ha iniziato`, righe.length ? `<div class="pf-perche">${righe.join('')}</div>` : `<small>${nome} non l'ha ancora scelto.</small>`));
+    const { fatti, totale } = L.contatoreOnboarding(m), stato = m.avvio_concluso_il ? `${ic('fatto')} concluso il ${L.data(m.avvio_concluso_il)}` : m.avvio_in_pausa_dal ? `${ic('pausa')} in pausa dal ${L.data(m.avvio_in_pausa_dal)}` : `${fatti} su ${totale} passi`;
+    pezzi.push(box(`${ic('avvio')} Il suo avvio · ${stato}`, `<div class="barra"><div style="width:${Math.round(fatti / totale * 100)}%"></div></div>
+      <div class="avv-passi">${L.PASSI_ONBOARDING.map(([col, nomePasso]) => `<span class="${m[col] ? 'fatto' : ''}">${m[col] ? ic('fatto') : '<i class="ic-vuoto"></i>'} ${esc(nomePasso)}</span>`).join('')}</div>`));
+  }
+  if (trn) {
+    const n = (k, uno, tanti) => `${k} ${k === 1 ? uno : tanti}`;
+    pezzi.push(box(`${ic('medaglia')} Il suo Training`, `<small>${esc(trn.livello)} · ${n(trn.totale, 'medaglia', 'medaglie')} · ${n(trn.stelle, 'stella', 'stelle')} · ${n(trn.fila, 'giorno', 'giorni')} di fila</small>`));
+  }
+  if (disp) {
+    pezzi.push(box(`${ic('avvisi')} Avvisi`, disp.length ? `<small>Accesi su: ${esc([...new Set(disp.map(x => x.dispositivo || 'dispositivo'))].join(' · '))}</small>` : `<small>${nome} non ha ancora acceso gli avvisi.</small>`));
+  }
+  return pezzi.join('');
 }
 
 async function apriProfilo() {

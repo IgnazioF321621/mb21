@@ -71,9 +71,14 @@ async function trnArchivio() {
     catalogo: righe.training ? righe.training.batteria : null };
 }
 
+// Nota Admin 006 (Ignazio 30/10/2026): con il Partner Select su un altro partner l'Admin vede il Training di quel partner (carte, giorni, test, fascia):
+// le letture usano `trnDi()`; le risposte, i test e la fascia restano di chi è entrato (trnSoloGuardo: mai scritti al posto suo).
+const trnDi = () => (typeof visto === 'function' && visto() && !vediTutti() ? visto().id : ST.utente && ST.utente.id);
+const trnSoloGuardo = () => typeof guardoAltri === 'function' && guardoAltri();
+function trnAvvisoSoloGuardo() { mostraToast(`Stai guardando il Training di ${nomeProprio()}: qui si guarda soltanto`); }
 async function apriTraining() {
   app.innerHTML = `<h1>${ic('crescita')} Training</h1><div class="vuoto">Carico…</div>`;
-  const io = ST.utente && ST.utente.id, oggi = trnOggi();
+  const io = trnDi(), oggi = trnOggi();
   MB21Training.inProva(true);   // 28/09: i percorsi in prova (solo_admin), anche nei conti dei livelli; dal 24/10 (nota 085) li vedono tutti
   const [mat, archivio, carte, giorni, test, azioni] = await Promise.all([
     TRN.voci ? null : dbq('biblioteca', supa.from('materiali').select('id, tipo, titolo, autore, argomenti, minuti, riassunto, punti_chiave, link, pack_id, solo_n21, fuori_catalogo')),
@@ -240,8 +245,8 @@ function trnMedaglie() {
   velo.querySelector('.trn-x').onclick = chiudi;
 }
 // Per la riga «Il mio Training» del Profilo: livello, medaglie, stelle e giorni di fila (null se non si riesce a leggere)
-async function trnMioRiepilogo() {
-  const io = ST.utente && ST.utente.id, oggi = trnOggi();
+async function trnMioRiepilogo(chi) {
+  const io = chi || trnDi(), oggi = trnOggi();
   const [test, giorni] = await Promise.all([
     dbq('training: test', supa.from('training_test').select('percorso, giuste, totale, fatto_il').eq('user_id', io)),
     dbq('training: giorni', supa.from('training_giorni').select('giorno').eq('user_id', io).gte('giorno', MB21Training.piuGiorni(oggi, -400))),
@@ -468,6 +473,7 @@ const TRN_FASCE = [
   { k: 'indipendenza', nome: 'L\'indipendenza economica', euro: '8.000-10.000 € al mese', sotto: 'Cambia la vita, non solo per l\'importo ma per la libertà', rif: 10200, livello: 'Leader Argento',
     strada: 'Con 51 persone a 200 punti sei a 10.200 punti, il 21%: 5.057 € di bonus al mese. In più il Bonus Leader (il 6% sul volume dei gruppi che arrivano al 21%) e le qualifiche: lo Smeraldo Fondatori ha un reddito medio in Europa di 8.230 € al mese.' }];
 async function trnDoveSei() {
+  if (trnSoloGuardo()) return trnAvvisoSoloGuardo();
   const velo = document.createElement('div');
   velo.className = 'velo';
   velo.innerHTML = `<div class="foglio trn-corr"><h3>Dove sei, dove vuoi andare</h3><div id="trn-ds-corpo"><p class="sotto">Un momento…</p></div></div>`;
@@ -643,6 +649,7 @@ function trnDoveArrivato(sc) {
 // le sbagliate si ripropongono una volta in fondo, senza contare. Test: nessun aiuto finché non è finito, poi il punteggio, le stelle,
 // «la volta scorsa» e tutte le risposte con quella giusta. Ogni risposta si salva subito (anche se si chiude a metà resta quello fatto).
 function trnSessione(carte, modo, titolo, dopo) {
+  if (trnSoloGuardo()) return trnAvvisoSoloGuardo();
   if (!carte || !carte.length) return mostraToast('Nessuna carta da fare adesso.');
   const coda = carte.map(c => ({ carta: c, ancora: false })), fatte = [];
   const test = modo === 'test', percorso = test ? (TRN.mazzi.find(m => m.carte.includes(carte[0])) || {}).percorso : null;
@@ -826,6 +833,7 @@ function trnCollegaFonte(el, carta, visto) { el.querySelectorAll('[data-fonte]')
 
 // Ogni risposta si salva subito: la carta (scatola e prossimo ripasso) e il giorno di allenamento
 async function trnSalva(carta, giusta, modo) {
+  if (trnSoloGuardo()) return;   // nota Admin 006: mai una risposta scritta al posto di un altro
   const oggi = trnOggi(), ora = new Date().toISOString(), io = ST.utente.id;
   const nuovo = MB21Training.dopoRisposta(TRN.stati[carta.id], giusta, oggi, { test: modo === 'test' });
   TRN.stati[carta.id] = { carta: carta.id, ...nuovo, risposta_il: ora };
@@ -998,6 +1006,7 @@ function trnNuovaVariante(carta, visto, nome) {
 // il colore di «come si sente»: dal verde (sereno) al giallo al rosso (sta per chiudere), secondo la tensione da 0 a 1
 const trnColoreUmore = t => (t < 0.5 ? `color-mix(in srgb, var(--proposta-tinta) ${Math.round(t * 200)}%, var(--ok-tinta))` : `color-mix(in srgb, var(--pericolo-tinta) ${Math.round((t - 0.5) * 200)}%, var(--proposta-tinta))`);
 function trnConversazione(convs) {
+  if (trnSoloGuardo()) return trnAvvisoSoloGuardo();
   let conv = convs[0], st = null, nome = '';
   const velo = document.createElement('div');
   velo.className = 'velo';

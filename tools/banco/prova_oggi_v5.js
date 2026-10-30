@@ -83,7 +83,7 @@ prova('148: «Il mio avvio» resta in Oggi solo per chi è nuovo e in avvio; il 
   N.app.clic('.o5-traguardo'); assert.deepEqual(JSON.parse(JSON.stringify(N.vai)), [['lv', 'avvio', null]]);
 });
 
-prova('095/098/148: le letture in più — appuntamenti e Contatti di oggi (pochi; dal pezzo 4 niente spazi, impegni ricevuti né domani), il ripasso senza scaricare i mazzi; con un altro partner niente Training', async () => {
+prova('095/098/148: le letture in più — appuntamenti e Contatti di oggi (pochi; dal pezzo 4 niente spazi, impegni ricevuti né domani), il ripasso senza scaricare i mazzi; con un altro partner il suo Training (nota Admin 006)', async () => {
   const W = mondo(), chieste = [];
   const q = t => { const passi = []; const c = new Proxy({}, { get: (_, p) => (p === 'then' ? (si => { chieste.push([t, passi]); return Promise.resolve(t === 'training_carte' ? { count: 22, error: null } : { data: t === 'training_giorni' ? [{ giorno: OGGI }, { giorno: '2026-10-24' }] : [], error: null }).then(si); })
     : (...a) => { passi.push([p, ...a]); return c; }) }); return c; };
@@ -102,7 +102,9 @@ prova('095/098/148: le letture in più — appuntamenti e Contatti di oggi (poch
   const X = mondo({ altro: true }); chieste.length = 0;
   Object.assign(X.ctx, { supa: { from: q, rpc }, dbq: (_, p) => p, CAMPI_AZIONE: '*' });
   await X.ctx.carica(OGGI);
-  assert.ok(!chieste.some(x => x[0].startsWith('training')));
+  // nota Admin 006 (30/10): con un altro partner l'Admin vede il suo Ripasso (prima «personale»): le stesse letture, sull'id del partner guardato
+  assert.ok(chieste.some(x => x[0] === 'training_carte') && chieste.some(x => x[0] === 'training_giorni'));
+  assert.ok(chieste.filter(x => x[0].startsWith('training')).every(([, p]) => p.some(y => y[0] === 'eq' && y[1] === 'user_id' && y[2] === 'io')));
   assert.match(DASH, /const v5 = typeof caricaOggiV5 === 'function' \? caricaOggiV5\(oggi\)\.catch\(\(\) => \{\}\) : null;/);   // parte prima della coda (nota 098: i «Richiamare» di oggi)
   assert.match(DASH, /await Promise\.all\(\[leggiCandidati\(oggi\), caricaScelte\(oggi\), v5\]\);/);
 });

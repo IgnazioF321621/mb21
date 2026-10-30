@@ -26,7 +26,7 @@ async function caricaOggiV5(oggi) {
     // i Contatti di oggi, con la stessa regola dell'Agenda: la data scelta dalla coda (PM Fissato, Richiamare…) o la telefonata programmata
     dbq('Oggi: contatti in agenda', supa.from('azioni').select(CAMPI_AZIONE).eq('user_id', io).eq('tipo_azione', 'Contatto')
       .or(`and(data_scelta.gte."${da}",data_scelta.lt."${a}"),and(data_scelta.is.null,completata.eq.false,inizio.gte."${da}",inizio.lt."${a}")`).limit(30)),
-    guardoAltri() ? null : caricaTrainingOggi(oggi),
+    vediTutti() ? null : caricaTrainingOggi(oggi),   // nota Admin 006: col Partner Select su un altro, il suo Ripasso (non più «personale»)
     // nota Pagine 148 (Ignazio 29/10, «A»): i contatti fatti negli ultimi 7 giorni, con la regola del Check (vista azioni_conti: con esito, senza Partner);
     // solo il giorno di ogni riga, per «La tua settimana»
     dbq('Oggi: contatti della settimana', supa.from('azioni_conti').select('giorno').eq('user_id', io).eq('contatti', 1).gte('giorno', A.spostaGiorno(oggi, -6)).lte('giorno', oggi)),
@@ -54,7 +54,7 @@ async function caricaOggiV5(oggi) {
 // Il ripasso di oggi senza scaricare i mazzi: quante carte tornano oggi (`prossima` passata) e i giorni di fila. null se non si legge.
 async function caricaTrainingOggi(oggi) {
   if (typeof TRAINING_VISIBILE !== 'undefined' && !TRAINING_VISIBILE) return null;
-  const io = ST.utente.id, A = MB21Agenda;
+  const io = visto().id, A = MB21Agenda;
   const [carte, giorni, fatte] = await Promise.all([
     dbq('Oggi: carte da ripassare', supa.from('training_carte').select('carta', { count: 'exact', head: true }).eq('user_id', io).lte('prossima', oggi)),
     dbq('Oggi: giorni di Training', supa.from('training_giorni').select('giorno').eq('user_id', io).gte('giorno', MB21Training.piuGiorni(oggi, -400))),
@@ -95,7 +95,7 @@ function o5Giornata() {
   if (trnOk) {
     const fatte = t && t.fatteOggi != null ? t.fatteOggi : null, tot = fatte == null ? 0 : fatte + t.daRipassare;
     righe.push({ k: 'training', nome: 'Ripasso', colore: 'var(--z-training)', testo: '#7E22CE', unita: 'carte', fatti: fatte || 0, totale: tot,
-      vuoto: guardoAltri() ? 'Il Training è personale' : fatte == null ? (t ? 'Apri il Training' : 'Leggo il Training…') : tot ? '' : 'Nessuna carta da ripassare oggi' });
+      vuoto: vediTutti() ? 'Il Training è personale' : fatte == null ? (t ? 'Apri il Training' : 'Leggo il Training…') : tot ? '' : 'Nessuna carta da ripassare oggi' });
   }
   return o5GiornataHtml(righe);
 }
