@@ -299,6 +299,9 @@ prova('Il controllo di un mazzo: va bene quello giusto, trova id doppi, risposte
   const lunga = 'Una risposta giusta scritta in modo molto, molto più lungo e dettagliato di tutte le altre';
   assert.equal(T.controllaMazzo({ ...mazzo, carte: [...mazzo.carte, scena('l1', { versioni: [{ scena: 'x', risposte: [lunga, 'corta uno', 'corta due'] }] })] }).length, 1);
   assert.deepEqual(T.controllaMazzo({ ...mazzo, carte: [...mazzo.carte, scena('l2', { versioni: [{ scena: 'x', risposte: ['una risposta abbastanza lunga', 'un\'altra risposta lunga uguale', 'e una terza dello stesso tipo'] }] })] }), []);
+  // 30/10 (nota Training 019): due sbagliate con «sempre»/«mai»/«solo» e la giusta sfumata
+  assert.equal(T.controllaMazzo({ ...mazzo, carte: [...mazzo.carte, scena('a1', { versioni: [{ scena: 'x', risposte: ['una risposta sfumata uno', 'sempre così senza cambiare', 'solo quando serve a me'] }] })] }).length, 1);
+  assert.deepEqual(T.controllaMazzo({ ...mazzo, carte: [...mazzo.carte, scena('a2', { versioni: [{ scena: 'x', risposte: ['una risposta sfumata uno', 'sempre così senza cambiare', 'una sbagliata più morbida'] }] })] }), []);
   assert.equal(T.controllaMazzo({ ...mazzo, carte: [...mazzo.carte, { id: 'l3', tipo: 'frase', tema: 'x', davanti: 'Cosa?', dietro: lunga, sbagliate: ['no uno', 'no due', 'no tre'], fonte: { tipo: 'manuale', pag: '1' } }] }).length, 1);
   assert.deepEqual(T.controllaMazzo({ ...mazzo, percorso: { id: 'boh' } }), ['percorso sconosciuto: boh']);
   assert.ok(T.controllaMazzo({ ...mazzo, situazione: 'carte_x' })[0].startsWith('situazione'));

@@ -315,6 +315,11 @@
   function livelliVisibili() { return IN_PROVA ? LIVELLI : LIVELLI.map(l => ({ ...l, percorsi: l.percorsi.filter(p => !p.solo_admin) })); }
 
   // La giusta è la prima. «Molto più lunga»: oltre 1,4 volte la media delle sbagliate e di almeno 15 caratteri più lunga della più lunga di loro.
+  // 30/10 (Ignazio, nota Training 019): le sbagliate non devono tradirsi con parole assolute mentre la giusta è sfumata
+  const ASSOLUTE = /\b(sempre|mai|solo|soltanto|tutti|tutte|niente|nulla|nessuno|nessuna|nessun|qualunque|qualsiasi|assolutamente)\b/i;
+  function sbagliateTroppoAssolute(r) {
+    return Array.isArray(r) && r.length > 2 && r.every(x => typeof x === 'string') && !ASSOLUTE.test(r[0]) && r.slice(1).filter(x => ASSOLUTE.test(x)).length >= 2;
+  }
   function giustaTroppoLunga(r) {
     if (!Array.isArray(r) || r.length < 2 || !r.every(x => typeof x === 'string')) return false;
     const altre = r.slice(1).map(x => x.length), media = altre.reduce((t, x) => t + x, 0) / altre.length;
@@ -362,6 +367,7 @@
       // 08/10 (Ignazio, nota Training 017): la risposta giusta non si deve riconoscere dalla lunghezza
       const scelte = c.tipo === 'scena' ? (c.versioni || []).map(v => v && v.risposte) : c.tipo === 'frase' && Array.isArray(c.sbagliate) ? [[c.dietro, ...c.sbagliate]] : [];
       for (const r of scelte.filter(giustaTroppoLunga)) p.push(`${chi}: la risposta giusta è molto più lunga delle altre (${r[0].length} caratteri contro ${Math.round(r.slice(1).reduce((t, x) => t + x.length, 0) / (r.length - 1))} di media): accorciarla o allungare le sbagliate`);
+      for (const r of scelte.filter(sbagliateTroppoAssolute)) p.push(`${chi}: due o più risposte sbagliate usano parole assolute («sempre», «mai», «solo», «niente»…) e la giusta no: si riconosce dal tono`);
     }
     if ((m.carte || []).filter(aRisposta).length < MINIMO_MAZZO) p.push(`servono almeno ${MINIMO_MAZZO} carte a risposta per il test`);
     return p;
