@@ -386,13 +386,15 @@ const MIO = { righe: null, conScheda: false, libri: [], letti: [], aperto: false
 
 async function caricaMioPercorso() {
   MIO.righe = null;
-  if (vediTutti() || guardoAltri() || ST.offline) return;
+  if (vediTutti() || ST.offline) return;
+  // Nota Admin 006 (30/10/2026): con il Partner Select su un altro l'Admin vede il percorso di quel partner, da guardare soltanto (`mio_sharing_di`, niente tasti)
+  const altro = guardoAltri();
   try {
     const [mio, materiali, libri, letti] = await Promise.all([   // dalla Dashboard arrivano con apri_oggi() (pagina-dashboard.js)
-      letta('mio_sharing', 'il mio percorso', () => supa.rpc('mio_sharing')),
+      altro ? dbq('il percorso di un altro', supa.rpc('mio_sharing_di', { p_utente: visto().id })) : letta('mio_sharing', 'il mio percorso', () => supa.rpc('mio_sharing')),
       leggiMateriali(),
       letta('libri', 'libri del percorso', () => supa.from('materiali').select('id, tipo, titolo, autore, ordine_libro, solo_n21').not('ordine_libro', 'is', null).order('ordine_libro').order('titolo')),
-      letta('letti', 'libri letti', () => supa.from('check_giorno').select('libro').eq('user_id', ST.utente.id).not('libro', 'is', null)),
+      letta('letti', 'libri letti', () => supa.from('check_giorno').select('libro').eq('user_id', visto().id).not('libro', 'is', null)),
     ]);
     if (mio.error || !materiali) return;
     const righe = (mio.data || []);
@@ -406,6 +408,7 @@ async function caricaMioPercorso() {
 }
 
 function mioPercorsoHtml() {
+  const altro = guardoAltri() && !vediTutti(), chi = altro ? nomeProprio() : '';   // nota Admin 006: del partner guardato, senza tasti
   if (!MIO.righe || !MIO.conScheda || !MIO.righe.length) return '';
   const S = MB21Sharing, materiali = SH.materiali || [], oggi = ST.oggi || MB21Coda.oggiRoma();
   const traccia = id => materiali.find(m => m.id === id);
@@ -417,24 +420,24 @@ function mioPercorsoHtml() {
   const mieFase = fase ? MIO.righe.filter(r => { const t = traccia(r.materiale_id); return t && t.fase === fase; }) : [];
   const fatteFase = new Set(mieFase.filter(r => r.ascoltata).map(r => r.materiale_id)).size;
   const prossimoLibro = MIO.libri.find(l => l.tipo === 'libro' && !MIO.letti.includes(l.titolo));
-  const sponsor = (daAscoltare[0] || MIO.righe[0]).sponsor;
+  const sponsor = (daAscoltare[0] || MIO.righe[0]).sponsor, suo = altro ? 'il suo sponsor' : 'il tuo sponsor';
   const testa = daAscoltare.length
     ? `${ic('audio')} ${daAscoltare.length === 1 ? 'Una traccia da ascoltare' : daAscoltare.length + ' tracce da ascoltare'}`
     : `${ic('fatto')} Tutte le tracce ascoltate`;
   const sotto = daAscoltare.length
-    ? `${esc(traccia(daAscoltare[0].materiale_id) ? traccia(daAscoltare[0].materiale_id).titolo : 'traccia')} · da ${esc(sponsor || 'il tuo sponsor')}${S.giorniDa(daAscoltare[0].condivisa_il, oggi) >= 2 ? ' · scade presto' : ''}`
-    : `La prossima te la manda ${esc(sponsor || 'il tuo sponsor')}${prossimoLibro ? ` · intanto: ${esc(prossimoLibro.titolo)}` : ''}`;
+    ? `${esc(traccia(daAscoltare[0].materiale_id) ? traccia(daAscoltare[0].materiale_id).titolo : 'traccia')} · da ${esc(sponsor || suo)}${S.giorniDa(daAscoltare[0].condivisa_il, oggi) >= 2 ? ' · scade presto' : ''}`
+    : `La prossima ${altro ? 'la manda ' : 'te la manda '}${esc(sponsor || suo)}${prossimoLibro ? ` · intanto: ${esc(prossimoLibro.titolo)}` : ''}`;
   return `<div class="riquadro avv-partner mio percorso ${daAscoltare.length ? 'attivo' : ''}">
-    <button class="avv-testa" id="mio-percorso"><span><b>${ic('crescita')} Il mio percorso</b><small>${testa} · ${sotto}</small></span>
+    <button class="avv-testa" id="mio-percorso"><span><b>${ic('crescita')} ${altro ? 'Il percorso di ' + esc(chi) : 'Il mio percorso'}</b><small>${testa} · ${sotto}</small></span>
       <span class="avv-conta">${fase ? `Fase ${fase}` : ''}</span></button>
     ${fase ? `<div class="sh-fase"><div class="barra"><i style="width:${tot ? Math.round(100 * fatteFase / tot) : 0}%"></i></div><span>${fatteFase} di ${tot} ascoltate</span></div>` : ''}
     ${MIO.aperto ? `<div class="mio-elenco">
       ${daAscoltare.map(r => { const t = traccia(r.materiale_id); return `<div class="sh-riga">
         <div class="sh-riga-testo"><div class="sh-riga-titolo">${t ? esc(t.titolo) : 'traccia'}</div>
           <div class="sh-riga-sotto">${t && t.autore ? esc(t.autore) + ' · ' : ''}${t && t.minuti ? t.minuti + ' min · ' : ''}da ${esc(r.sponsor || '')} il ${esc(MB21Lista.data(r.condivisa_il))}</div></div>
-        <button class="sh-ok" data-mia-ascoltata="${esc(r.id)}">${ic('fatto', 16)} Ascoltata</button></div>`; }).join('')}
-      ${daAscoltare.length ? '' : '<div class="sotto" style="margin:8px 0 4px">Niente da ascoltare: hai fatto tutto quello che ti è arrivato.</div>'}
-      ${ascoltate ? `<div class="sotto" style="margin:8px 0 0">${ic('fatto', 14)} ${ascoltate === 1 ? '1 traccia ascoltata' : ascoltate + ' tracce ascoltate'} in tutto · contano nelle Tracce del tuo Check</div>` : ''}
+        ${altro ? '' : `<button class="sh-ok" data-mia-ascoltata="${esc(r.id)}">${ic('fatto', 16)} Ascoltata</button>`}</div>`; }).join('')}
+      ${daAscoltare.length ? '' : `<div class="sotto" style="margin:8px 0 4px">${altro ? 'Niente da ascoltare: ha fatto tutto quello che gli è arrivato.' : 'Niente da ascoltare: hai fatto tutto quello che ti è arrivato.'}</div>`}
+      ${ascoltate ? `<div class="sotto" style="margin:8px 0 0">${ic('fatto', 14)} ${ascoltate === 1 ? '1 traccia ascoltata' : ascoltate + ' tracce ascoltate'} in tutto · contano nelle Tracce ${altro ? 'del suo' : 'del tuo'} Check</div>` : ''}
       ${prossimoLibro ? `<button class="mio-libro" id="mio-libri">${ic('libro')} <span><b>Prossimo libro:</b> ${esc(prossimoLibro.titolo)}${prossimoLibro.autore ? ' — ' + esc(prossimoLibro.autore) : ''}${prossimoLibro.solo_n21 ? '<br><small>Lo trovi solo da Network 21 o al prossimo evento</small>' : ''}</span><span class="sh-riga-freccia">›</span></button>` : ''}
     </div>` : ''}
   </div>`;

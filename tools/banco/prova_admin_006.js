@@ -46,4 +46,22 @@ prova('Training: guardando un altro, la seduta, la conversazione, il «Dove sei�
   for (const f of ['function trnSessione(', 'function trnConversazione(', 'async function trnDoveSei(']) { const da = TR.indexOf(f); assert.ok(da >= 0, f); assert.match(TR.slice(da, da + 160), /if \(trnSoloGuardo\(\)\) return trnAvvisoSoloGuardo\(\);/, f); }
   const da = TR.indexOf('async function trnSalva('); assert.match(TR.slice(da, da + 200), /if \(trnSoloGuardo\(\)\) return;/);
 });
+
+// Il percorso tracce del partner guardato (pagina-sharing.js): del partner, senza tasti che scrivono
+const SH = leggi('pagina-sharing.js');
+const ctxSH = { MB21Sharing: require('../../sharing.js'), MB21Lista: L, MB21Coda: { oggiRoma: () => '2026-10-30' }, esc, ic: n => `[${n}]`, ST: { oggi: '2026-10-30' }, SH: { materiali: [{ id: 'm1', tipo: 'traccia', fase: 1, titolo: 'Traccia Uno', minuti: 10 }, { id: 'm2', tipo: 'traccia', fase: 1, titolo: 'Traccia Due' }] },
+  MIO: { conScheda: true, libri: [], letti: [], aperto: true, righe: [{ id: 'r1', materiale_id: 'm1', condivisa_il: '2026-10-28', ascoltata: false, sponsor: 'Ignazio' }, { id: 'r2', materiale_id: 'm2', condivisa_il: '2026-10-20', ascoltata: true, sponsor: 'Ignazio' }] },
+  guardoAltri: () => true, vediTutti: () => false, nomeProprio: () => 'Persona' };
+vm.createContext(ctxSH);
+vm.runInContext(pezzo(SH, 'function mioPercorsoHtml') + '\nthis.f = mioPercorsoHtml;', ctxSH);
+prova('Percorso tracce del partner guardato: «Il percorso di Persona», il suo sponsor, nessun tasto «Ascoltata»', () => {
+  const h = ctxSH.f();
+  assert.match(h, /Il percorso di Persona/); assert.match(h, /Traccia Uno/); assert.doesNotMatch(h, /data-mia-ascoltata|Ascoltata<\/button>/); assert.match(h, /1 traccia ascoltata in tutto · contano nelle Tracce del suo Check/);
+  ctxSH.guardoAltri = () => false;
+  const mio = ctxSH.f(); assert.match(mio, /Il mio percorso/); assert.match(mio, /data-mia-ascoltata="r1"/);   // per sé stessi nulla cambia
+});
+const cm = pezzo(SH, 'async function caricaMioPercorso');
+prova('Il percorso del partner guardato si legge con mio_sharing_di sull\'id guardato; con «Tutti» o offline niente', () => {
+  assert.match(cm, /if \(vediTutti\(\) \|\| ST\.offline\) return;/); assert.match(cm, /supa\.rpc\('mio_sharing_di', \{ p_utente: visto\(\)\.id \}\)/); assert.match(cm, /\.eq\('user_id', visto\(\)\.id\)\.not\('libro'/);
+});
 console.log(`\n${ok} prove superate`);

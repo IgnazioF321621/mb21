@@ -333,7 +333,7 @@ function daSeguireHtml() {
   if (!tracce && !percorso) return '';
   const daControllare = TRC.righe.length, daAscoltare = (MIO.righe || []).filter(r => !r.ascoltata).length;
   const sotto = [daControllare ? `${daControllare} ${daControllare === 1 ? 'traccia condivisa da controllare' : 'tracce condivise da controllare'}` : tracce ? 'tracce condivise' : '',
-    daAscoltare ? `${daAscoltare} ${daAscoltare === 1 ? 'traccia da ascoltare' : 'tracce da ascoltare'}` : percorso ? 'il mio percorso' : ''].filter(Boolean).join(' · ');
+    daAscoltare ? `${daAscoltare} ${daAscoltare === 1 ? 'traccia da ascoltare' : 'tracce da ascoltare'}` : percorso ? (guardoAltri() ? 'il suo percorso' : 'il mio percorso') : ''].filter(Boolean).join(' · ');
   return rigaApribile('dash-seguire', 'catalogare', 'crescita', 'Da seguire', esc(sotto), DSG.aperto, daControllare + daAscoltare)
     + (DSG.aperto ? `<div class="da-seguire">${tracce}${percorso}</div>` : '');
 }
