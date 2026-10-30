@@ -35,7 +35,11 @@ import { avvisoSpostato, MINUTI_SPOSTATO, scelta, riepilogoDomani, complimentiDe
 const URL_SUPABASE = Deno.env.get('SUPABASE_URL')!;
 const CHIAVE_SERVIZIO = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const SEGRETO = Deno.env.get('AVVISI_SEGRETO') ?? '';
-webpush.setVapidDetails('mailto:ignazio.f@me.com', Deno.env.get('VAPID_PUBLIC')!, Deno.env.get('VAPID_PRIVATE')!);
+// il contatto per i servizi degli avvisi sta nel segreto VAPID_MAILTO, non nel codice pubblico (nota Avvisi 077);
+// se manca si usa un indirizzo finto: web-push lo mette solo nelle intestazioni e senza un contatto non manda nulla
+const CONTATTO = (Deno.env.get('VAPID_MAILTO') ?? '').trim();
+const MAILTO = !CONTATTO ? 'mailto:avvisi@example.com' : /^(mailto:|https:)/.test(CONTATTO) ? CONTATTO : 'mailto:' + CONTATTO;
+webpush.setVapidDetails(MAILTO, Deno.env.get('VAPID_PUBLIC')!, Deno.env.get('VAPID_PRIVATE')!);
 
 const db = createClient(URL_SUPABASE, CHIAVE_SERVIZIO, { auth: { persistSession: false } });
 
