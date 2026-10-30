@@ -596,7 +596,7 @@ prova('147: gli appuntamenti di oggi dalla lettura che c\'è già — un incontr
   assert.deepEqual(JSON.parse(JSON.stringify(W.ctx.O5.appuntamenti)), { totale: 3, fatti: 1 });
 });
 
-prova('148: «La tua settimana» sotto la giornata — sette colonne fino a oggi (oggi pieno), il numero sopra, il totale; il tocco apre l\'Agenda; la lettura chiede solo il giorno, regola del Check, 7 giorni', async () => {
+prova('148/153: «Gli ultimi 7 giorni» sotto la giornata — sette colonne fino a oggi (oggi pieno), il numero sopra, il totale; il tocco apre l\'Agenda; la lettura chiede solo il giorno, regola del Check, 7 giorni', async () => {
   const W = mondo(), chieste = [];
   // 25/10/2026 è domenica: le iniziali vanno da lunedì 19 a domenica 25
   const righe = ['2026-10-19', '2026-10-19', '2026-10-21', '2026-10-25', '2026-10-25', '2026-10-25'].map(giorno => ({ giorno }));
@@ -610,10 +610,13 @@ prova('148: «La tua settimana» sotto la giornata — sette colonne fino a oggi
   W.ctx.disegna();
   const h = W.app.innerHTML, t = testo(h);
   assert.ok(h.indexOf('o5-giornata') < h.indexOf('o5-settimana') && h.indexOf('o5-settimana') < h.indexOf('o5-segni'));
-  assert.match(t, /LA TUA SETTIMANA › 6 contatti 2 0 1 0 0 0 3 L M M G V S D/);
+  assert.match(t, /GLI ULTIMI 7 GIORNI › 6 contatti 2 0 1 0 0 0 3 L 19 M 20 M 21 G 22 V 23 S 24 D 25/);   // nota 153: lettera e numero del giorno
+  assert.match(h, /aria-label="Gli ultimi 7 giorni: 6 contatti"/);
+  assert.match(h, /<span class="oggi"><span>D<\/span> <span>25<\/span><\/span>/);
+  assert.doesNotMatch(t, /LA TUA SETTIMANA/);
   assert.equal((h.match(/o5-st-col oggi/g) || []).length, 1);
   W.app.clic('.o5-settimana'); assert.deepEqual(JSON.parse(JSON.stringify(W.vai.filter(x => typeof x !== 'string'))), [['tab', 'agenda']]);
-  const L = mondo(); L.ctx.disegna(); assert.match(testo(L.app.innerHTML), /LA TUA SETTIMANA › Leggo la settimana…/);
+  const L = mondo(); L.ctx.disegna(); assert.match(testo(L.app.innerHTML), /GLI ULTIMI 7 GIORNI › Leggo la settimana…/);
 });
 
 prova('148: «Segni Vitali» del mese — verso il traguardo più vicino del Check (la linea), la colonna intera vale quello dopo, il rosso è il mese; «su N»; senza file Amway una frase; il tocco apre il traguardo', () => {

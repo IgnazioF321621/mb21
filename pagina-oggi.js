@@ -109,7 +109,7 @@ function o5GiornataHtml(righe) {
     ? `<span class="o5-gn-frase">${esc(x.vuoto)}</span>` : `<b>${x.fatti} <span>su ${x.totale}${x.unita ? ' ' + esc(x.unita) : ''}</span></b>`}</button>`;
   return `<div class="o5-giornata" role="group" aria-label="La tua giornata"><span class="o5-gn-tit">LA TUA GIORNATA</span><div class="o5-gn-corpo">${svg}<div class="o5-gn-righe">${righe.map(riga).join('')}</div></div></div>`;
 }
-// «La tua settimana» (nota Pagine 148, primo pezzo; tela «Anelli del giorno», tavola «C · Oggi diventa Dashboard»): sette colonne per gli ultimi 7 giorni
+// «Gli ultimi 7 giorni» (prima «La tua settimana»; nota Pagine 153, Ignazio 30/10) (nota Pagine 148, primo pezzo; tela «Anelli del giorno», tavola «C · Oggi diventa Dashboard»): sette colonne per gli ultimi 7 giorni
 // (oggi per ultimo, pieno), alta quanto i contatti di quel giorno con il numero sopra; in alto il totale. `giorni` = [{ giorno, n }] dal più vecchio a oggi,
 // null = non ancora letto. Il tocco apre l'Agenda (o5Vai).
 const INIZIALI_GIORNO = ['D', 'L', 'M', 'M', 'G', 'V', 'S'];
@@ -122,8 +122,9 @@ function o5SettimanaHtml(giorni) {
     const oggi = i === giorni.length - 1, h = g.n ? Math.max(8, Math.round(g.n / max * 76)) : 4;
     return `<span class="o5-st-col${oggi ? ' oggi' : ''}"><small>${g.n}</small><i style="height:${h}px"></i></span>`;
   }).join('');
-  const iniziali = (giorni || []).map((g, i) => `<span${i === giorni.length - 1 ? ' class="oggi"' : ''}>${INIZIALI_GIORNO[new Date(g.giorno + 'T12:00:00Z').getUTCDay()]}</span>`).join('');
-  return `<button class="o5-settimana" data-o5="agenda" aria-label="La tua settimana: ${giorni ? `${tot} contatti` : 'leggo'}"><span class="o5-st-testa"><span class="o5-gn-tit">LA TUA SETTIMANA ›</span>${
+  // nota Pagine 153: sotto ogni colonna lettera e numero del giorno («V 24»; se non ci stanno su una riga, il numero va sotto)
+  const iniziali = (giorni || []).map((g, i) => `<span${i === giorni.length - 1 ? ' class="oggi"' : ''}><span>${INIZIALI_GIORNO[new Date(g.giorno + 'T12:00:00Z').getUTCDay()]}</span> <span>${Number(g.giorno.slice(8))}</span></span>`).join('');
+  return `<button class="o5-settimana" data-o5="agenda" aria-label="Gli ultimi 7 giorni: ${giorni ? `${tot} contatti` : 'leggo'}"><span class="o5-st-testa"><span class="o5-gn-tit">GLI ULTIMI 7 GIORNI ›</span>${
     giorni ? `<b>${tot === 1 ? '1 contatto' : `${tot} contatti`}</b>` : ''}</span>${giorni ? `<span class="o5-st-colonne">${colonne}</span><span class="o5-st-giorni">${iniziali}</span>`
     : '<span class="o5-gn-frase">Leggo la settimana…</span>'}</button>`;
 }
