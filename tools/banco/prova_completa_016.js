@@ -44,4 +44,17 @@ prova('la pagina: riga sotto «Da catalogare», nessun campo nuovo, «Salta» e 
   assert.match(PL, /mostraToast\('Annullato'\)/);
   assert.match(PL, /ST\.completa = null; apriLista\(\)/);   // «Aggiorna i nomi» rilegge anche questa
 });
+prova('la città si salva con la provincia, se il comune è nell\'elenco ISTAT', () => {
+  const C = require('../../dati/comuni.json');
+  assert.equal(L.cittaConProvincia('Scicli', C), 'Scicli (RG)');
+  assert.equal(L.cittaConProvincia('  Santa  Croce Camerina ', C), 'Santa Croce Camerina (RG)');
+  assert.equal(L.cittaConProvincia('Cefalù', C), 'Cefalù (PA)');
+  assert.equal(L.cittaConProvincia('L’Aquila', C), 'L’Aquila (AQ)');
+  assert.equal(L.cittaConProvincia('Modica (RG)', C), 'Modica (RG)');     // già con la sigla: com'è
+  assert.equal(L.cittaConProvincia('Londra', C), 'Londra');               // estero: com'è
+  assert.equal(L.cittaConProvincia('Marina di Ragusa', C), 'Marina di Ragusa');   // frazione: com'è
+  assert.equal(L.cittaConProvincia('Scicli', null), 'Scicli');            // elenco non letto: com'è
+  assert.ok(Object.keys(C).length > 7000);
+  assert.match(PL, /if \(campo === 'citta'\) valore = MB21Lista\.cittaConProvincia\(valore, await leggiComuni\(\)\)/);
+});
 console.log(`\n${n} prove passate`);

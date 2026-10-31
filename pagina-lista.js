@@ -321,9 +321,14 @@ function disegnaDaCompletare() {
     salva.onclick = () => salvaCompleta(r, 'citta', campo.value.trim());
   }
 }
+// L'elenco dei comuni (dati/comuni.json, ~150 kB) si legge solo la prima volta che si salva una città; senza rete la città resta come è scritta
+let comuniLetti = null;
+const leggiComuni = () => (comuniLetti = comuniLetti || fetch('dati/comuni.json').then(r => (r.ok ? r.json() : null)).catch(() => null)
+  .then(c => { if (!c) comuniLetti = null; return c; }));
 // Un tocco = un campo scritto (solo se è ancora vuoto), con «Annulla» nel messaggio, come in «Da catalogare»
 async function salvaCompleta(r, campo, valore) {
   app.querySelectorAll('.card button').forEach(b => { b.disabled = true; });
+  if (campo === 'citta') valore = MB21Lista.cittaConProvincia(valore, await leggiComuni());   // «Scicli» → «Scicli (RG)», come le altre schede
   const scrivi = v => dbq('completa ' + campo, supa.from('contatti').update({ [campo]: v, aggiornato_il: new Date().toISOString() }).eq('id', r.id));
   const { error } = await scrivi(valore);
   if (error) { mostraToast('Non salvato: controlla la connessione e riprova.'); return disegnaDaCompletare(); }

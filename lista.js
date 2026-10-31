@@ -456,6 +456,16 @@
       .map(r => ({ id: r.id, nome: r.nome, campo }));
     return [...per('sesso', senzaSesso ? mie.filter(r => senzaSesso.has(r.id)) : []), ...per('citta', mie.filter(r => !(r.citta || '').trim()))];
   }
+  // La provincia tra parentesi dopo la città (Ignazio 31/10: «Scicli (RG)»), dall'elenco ISTAT dei comuni (`dati/comuni.json`: nome senza accenti
+  // e in minuscolo → sigla; i nomi che stanno in più province non ci sono). Già con le parentesi, o non nell'elenco (frazione, estero): resta come è scritta.
+  const chiaveComune = t => String(t || '').normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[’]/g, "'").replace(/-/g, ' ')
+    .replace(/\s*'\s*/g, "'").replace(/\s+/g, ' ').trim();
+  function cittaConProvincia(testo, comuni) {
+    const t = String(testo || '').replace(/\s+/g, ' ').trim();
+    if (!t || /[()]/.test(t) || !comuni) return t;
+    const sigla = comuni[chiaveComune(t)];
+    return sigla ? `${t} (${sigla})` : t;
+  }
   // Le città già scritte più spesso nella sua Lista, per il tocco veloce (le stesse parole, come le ha scritte)
   function cittaFrequenti(righe, utenteId, n = 5) {
     const conti = new Map();
@@ -692,7 +702,7 @@
   const nomeCategoria = c => NOMI_CATEGORIA[c] || c;
 
   const api = { cepPerCodice, importo, rigaPrezzo, QUOTA_PROVVIGIONE, IVA, contiVendita, contiStimati, scontoCalcolato, scontoAMano, NOMI_CATEGORIA, SPIEGA_CATEGORIA, nomeCategoria, CATEGORIE, FASCE_ETA, AREE, QUALI_PRODOTTI, interesseDa, areaDa, testoInteresse, PREFISSI, PASSI_ONBOARDING, AVVIO_DA_INCONTRO, passoAvvioDa, situazioneAvvio, FILTRI, GIORNI_NEW, eNuovo, piega, corrisponde, filtraContatti,
-    contaFiltri, cercaNomi, segnoOmonimi, compieOggi, azioniENote, MESI_RIORDINO, riordinoFra, mesiFra, modoRiordino, propostaRiordino, sezioneIniziale, giorniFermo, SENZA_PARLARE, fraseCard, ORDINI, componiTelefono, separaTelefono, trovaDoppioni, archiviatiUguali, contatoreOnboarding, prossimoPasso, entratoDa, partnerDaAvviare, partnerInPausa, proposteAvvio, pausaLunga, PASSI_SPENTI, postiBiglietto, postoSuo, momento, meseEvento, etichettaEvento, eventoAttivo, eventoDaMostrare, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, cepDaTogliere, cepDaAccendere, descrizioneCep, data, DATI_PERSONA, SESSI, LAVORI, nomeScelta, daCompletare, cittaFrequenti, BRAND, coloreBrand, brandComprati, haVendite, daConsegnare, daConfermare, GIORNI_CONSEGNA_LONTANA, consegnaLontana, totaliVendite, momentoNelMese, momentiVendita, pagataSulSito, provvigioniMese, scontiMese, MESI_ANNO, provvigioniAnno, prossimoRiordino, rigaVendita, rigaFattore, numeroFattore, numero };
+    contaFiltri, cercaNomi, segnoOmonimi, compieOggi, azioniENote, MESI_RIORDINO, riordinoFra, mesiFra, modoRiordino, propostaRiordino, sezioneIniziale, giorniFermo, SENZA_PARLARE, fraseCard, ORDINI, componiTelefono, separaTelefono, trovaDoppioni, archiviatiUguali, contatoreOnboarding, prossimoPasso, entratoDa, partnerDaAvviare, partnerInPausa, proposteAvvio, pausaLunga, PASSI_SPENTI, postiBiglietto, postoSuo, momento, meseEvento, etichettaEvento, eventoAttivo, eventoDaMostrare, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, cepDaTogliere, cepDaAccendere, descrizioneCep, data, DATI_PERSONA, SESSI, LAVORI, nomeScelta, daCompletare, cittaFrequenti, cittaConProvincia, BRAND, coloreBrand, brandComprati, haVendite, daConsegnare, daConfermare, GIORNI_CONSEGNA_LONTANA, consegnaLontana, totaliVendite, momentoNelMese, momentiVendita, pagataSulSito, provvigioniMese, scontiMese, MESI_ANNO, provvigioniAnno, prossimoRiordino, rigaVendita, rigaFattore, numeroFattore, numero };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Lista = api;
 })(this);
