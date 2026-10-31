@@ -376,7 +376,7 @@ prova('L5: «Vai a «Da catalogare»» apre la pagina nella Lista Nomi, rifatta 
   assert.match(PR, /ST\.catalogo = null; ST\.catalogoDi = null;   \/\/ L5/);
   assert.match(PR, /getElementById\('rb-catalogare'\)\.onclick = async \(\) => \{ ST\.vistaCatalogo = true; window\.scrollTo\(0, 0\); await caricaCatalogo\(\); disegnaCatalogo\(\); \};/);
   assert.doesNotMatch(PR, /ST\.tab = 'oggi'; mostraTab\(\)/);
-  assert.match(PL, /getElementById\('ls-aggiorna'\)\.onclick = \(\) => \{ LS\.righe = \[\]; LS\.letta = 0; ST\.catalogo = null; apriLista\(\); \};/);
+  assert.match(PL, /getElementById\('ls-aggiorna'\)\.onclick = \(\) => \{ LS\.righe = \[\]; LS\.letta = 0; ST\.catalogo = null; ST\.completa = null; apriLista\(\); \};/);
 });
 
 prova('L5: la riga e la pagina dicono «Senza categoria: 120 · oggi 5 da sistemare»; il conto viene dalla Lista già letta (la Dashboard non lo calcola più)', () => {
@@ -473,7 +473,7 @@ prova('L7: una funzione sola legge tutta la Lista (nomi, targhette, coppie, codi
 
 prova('L7: «Aggiorna i nomi» sta in alto, accanto al conto (anche con l\'elenco vuoto); in fondo non c\'è più', () => {
   assert.doesNotMatch(PL, /<button class="link" id="ls-aggiorna">Aggiorna i nomi<\/button>\n    \$\{versione\(\)\}/);
-  assert.match(PL, /document\.getElementById\('ls-aggiorna'\)\.onclick = \(\) => \{ LS\.righe = \[\]; LS\.letta = 0; ST\.catalogo = null; apriLista\(\); \};/);
+  assert.match(PL, /document\.getElementById\('ls-aggiorna'\)\.onclick = \(\) => \{ LS\.righe = \[\]; LS\.letta = 0; ST\.catalogo = null; ST\.completa = null; apriLista\(\); \};/);
   assert.match(IDX, /\.ls-ordina \{[^}]*flex-wrap: wrap;/);
 });
 

@@ -448,6 +448,20 @@
   const SESSI = [['M', 'Uomo'], ['F', 'Donna']];
   const LAVORI = [['dipendente', 'Dipendente'], ['autonomo', 'Autonomo'], ['altro', 'Altro']];   // «Altro» (nota 098, Ignazio 27/10): migrazione 20261027055000
   const nomeScelta = (elenco, v) => (elenco.find(x => x[0] === v) || [v, v])[1];   // il valore salvato → la parola che si legge
+  // «Da completare» (nota Fondamenta 016, Ignazio 31/10): le schede a cui manca il sesso o la città, una domanda per volta.
+  // Prima il sesso (`senzaSesso` = gli id letti da `contatti`: la Lista non ha il campo), poi la città; mai gli archiviati, mai chi è stato saltato.
+  function daCompletare(righe, { utenteId, senzaSesso, saltati } = {}) {
+    const mie = (righe || []).filter(r => r.user_id === utenteId && r.categoria !== 'Archiviato' && !r.eliminato), via = saltati || new Set();
+    const per = (campo, scelte) => scelte.filter(r => !via.has(r.id + ':' + campo)).sort((a, b) => (a.nome || '').localeCompare(b.nome || '', 'it', { sensitivity: 'base' }))
+      .map(r => ({ id: r.id, nome: r.nome, campo }));
+    return [...per('sesso', senzaSesso ? mie.filter(r => senzaSesso.has(r.id)) : []), ...per('citta', mie.filter(r => !(r.citta || '').trim()))];
+  }
+  // Le città già scritte più spesso nella sua Lista, per il tocco veloce (le stesse parole, come le ha scritte)
+  function cittaFrequenti(righe, utenteId, n = 5) {
+    const conti = new Map();
+    (righe || []).forEach(r => { const c = (r.citta || '').trim(); if (c && r.user_id === utenteId) conti.set(c, (conti.get(c) || 0) + 1); });
+    return [...conti].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'it')).slice(0, n).map(x => x[0]);
+  }
 
   // ── Vendite (cantiere 26) ──
   // I 5 brand del modulo «Vendita» di Glide, con il colore della targhetta.
@@ -678,7 +692,7 @@
   const nomeCategoria = c => NOMI_CATEGORIA[c] || c;
 
   const api = { cepPerCodice, importo, rigaPrezzo, QUOTA_PROVVIGIONE, IVA, contiVendita, contiStimati, scontoCalcolato, scontoAMano, NOMI_CATEGORIA, SPIEGA_CATEGORIA, nomeCategoria, CATEGORIE, FASCE_ETA, AREE, QUALI_PRODOTTI, interesseDa, areaDa, testoInteresse, PREFISSI, PASSI_ONBOARDING, AVVIO_DA_INCONTRO, passoAvvioDa, situazioneAvvio, FILTRI, GIORNI_NEW, eNuovo, piega, corrisponde, filtraContatti,
-    contaFiltri, cercaNomi, segnoOmonimi, compieOggi, azioniENote, MESI_RIORDINO, riordinoFra, mesiFra, modoRiordino, propostaRiordino, sezioneIniziale, giorniFermo, SENZA_PARLARE, fraseCard, ORDINI, componiTelefono, separaTelefono, trovaDoppioni, archiviatiUguali, contatoreOnboarding, prossimoPasso, entratoDa, partnerDaAvviare, partnerInPausa, proposteAvvio, pausaLunga, PASSI_SPENTI, postiBiglietto, postoSuo, momento, meseEvento, etichettaEvento, eventoAttivo, eventoDaMostrare, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, cepDaTogliere, cepDaAccendere, descrizioneCep, data, DATI_PERSONA, SESSI, LAVORI, nomeScelta, BRAND, coloreBrand, brandComprati, haVendite, daConsegnare, daConfermare, GIORNI_CONSEGNA_LONTANA, consegnaLontana, totaliVendite, momentoNelMese, momentiVendita, pagataSulSito, provvigioniMese, scontiMese, MESI_ANNO, provvigioniAnno, prossimoRiordino, rigaVendita, rigaFattore, numeroFattore, numero };
+    contaFiltri, cercaNomi, segnoOmonimi, compieOggi, azioniENote, MESI_RIORDINO, riordinoFra, mesiFra, modoRiordino, propostaRiordino, sezioneIniziale, giorniFermo, SENZA_PARLARE, fraseCard, ORDINI, componiTelefono, separaTelefono, trovaDoppioni, archiviatiUguali, contatoreOnboarding, prossimoPasso, entratoDa, partnerDaAvviare, partnerInPausa, proposteAvvio, pausaLunga, PASSI_SPENTI, postiBiglietto, postoSuo, momento, meseEvento, etichettaEvento, eventoAttivo, eventoDaMostrare, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, cepDaTogliere, cepDaAccendere, descrizioneCep, data, DATI_PERSONA, SESSI, LAVORI, nomeScelta, daCompletare, cittaFrequenti, BRAND, coloreBrand, brandComprati, haVendite, daConsegnare, daConfermare, GIORNI_CONSEGNA_LONTANA, consegnaLontana, totaliVendite, momentoNelMese, momentiVendita, pagataSulSito, provvigioniMese, scontiMese, MESI_ANNO, provvigioniAnno, prossimoRiordino, rigaVendita, rigaFattore, numeroFattore, numero };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Lista = api;
 })(this);

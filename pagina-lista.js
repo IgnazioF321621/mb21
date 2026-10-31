@@ -173,6 +173,7 @@ async function apriLista() {
     if (!listaFresca()) await leggiTuttaLaLista();
     segnaApp();
     await caricaCatalogo();   // «Da catalogare» del partner visto (nota 019): se c'è già, non rilegge niente
+    await caricaCompleta();   // «Da completare» (nota Fondamenta 016): chi è senza sesso, una lettura piccola
   } catch (e) {
     // L7 (Ignazio 23/10): sotto l'avviso il bottone «Riprova», che rifà la lettura (prima si toccava di nuovo il tab)
     app.innerHTML = `<h1>Lista Nomi</h1><div class="avviso">Non riesco a caricare i nomi. Controlla la connessione e riprova.</div>
@@ -244,12 +245,14 @@ function disegnaLista() {
         <button id="altri" class="${f.altri ? 'scelto' : ''}">${altriScelto}</button>
       </div>
     </div>
-    ${catalogoRigaHtml()}
+    ${catalogoRigaHtml()}${completaRigaHtml()}
     <div id="elenco"></div>
     <div id="fondo"></div>
     ${versione()}`;
   const rigaCat = document.getElementById('lista-catalogo');
   if (rigaCat) rigaCat.onclick = () => { ST.vistaCatalogo = true; window.scrollTo(0, 0); disegnaCatalogo(); };   // «Da catalogare» (ex Dashboard, 01/10)
+  const rigaCompleta = document.getElementById('lista-completa');
+  if (rigaCompleta) rigaCompleta.onclick = () => { window.scrollTo(0, 0); disegnaDaCompletare(); };
   collegaPartnerSelect();
   const fb = document.getElementById('o5-feedback'); if (fb) fb.onclick = () => foglioSegnala();   // v5: il feedback nella testata
   const indietro = document.getElementById('v5-indietro');   // nota 143: come Agenda e Mappa
@@ -268,6 +271,73 @@ function disegnaLista() {
   disegnaElenco();
 }
 
+// ── DA COMPLETARE (nota Fondamenta 016, Ignazio 31/10: «se ci sono dubbi, creiamo uno spazio in cui, uno per uno, vedo i dubbi») ──
+// Il sesso si è scritto in automatico dal nome di battesimo e la città dal vecchio file; restano le schede senza: una domanda per volta, un tocco.
+// Niente campi nuovi: si mostrano le schede con il campo vuoto. «Salta» vale finché non si riapre l'app (`ST.completa.saltati`).
+// La Lista non ha il sesso: si leggono solo gli id di chi non l'ha (una lettura piccola, una volta per persona guardata).
+async function caricaCompleta() {
+  if (ST.completa && ST.completa.di === visto().id) return;
+  ST.completa = null;
+  if (vediTutti() || ST.offline) return;
+  const { data, error } = await dbq('schede senza sesso', supa.from('contatti').select('id').eq('user_id', visto().id).is('sesso', null).is('eliminato_il', null));
+  if (error) return;   // senza la riga la Lista va lo stesso
+  ST.completa = { di: visto().id, senzaSesso: new Set(data.map(r => r.id)), saltati: new Set() };
+}
+const codaCompleta = () => (ST.completa ? MB21Lista.daCompletare(LS.righe, { utenteId: ST.completa.di, ...ST.completa }) : []);
+function completaRigaHtml() {
+  const coda = codaCompleta();
+  if (!coda.length) return '';
+  const sesso = coda.filter(x => x.campo === 'sesso').length, citta = coda.length - sesso;
+  const sotto = [sesso ? `Sesso: ${sesso.toLocaleString('it-IT')}` : '', citta ? `Città: ${citta.toLocaleString('it-IT')}` : ''].filter(Boolean).join(' · ');
+  return `<div class="ls-catalogo">${rigaApribile('lista-completa', 'catalogare', 'persona', 'Da completare', sotto, false, coda.length)}</div>`;
+}
+function disegnaDaCompletare() {
+  const coda = codaCompleta(), d = coda[0];
+  const r = d && LS.righe.find(x => x.id === d.id);
+  const indietro = '<button class="indietro" id="indietro">‹ Lista Nomi</button><h1>Da completare</h1>';
+  if (!r) {
+    app.innerHTML = `${indietro}<div class="vuoto">Per ora è tutto completo. ${ic('complimenti')}</div>${versione()}`;
+    document.getElementById('indietro').onclick = () => { window.scrollTo(0, 0); disegnaLista(); };
+    return;
+  }
+  const chi = [r.professione, r.citta, r.categoria ? MB21Lista.nomeCategoria(r.categoria) : ''].filter(Boolean).join(' · ');
+  const scelte = d.campo === 'sesso'
+    ? `<div class="bottoni">${MB21Lista.SESSI.map(([v, t]) => `<button data-valore="${v}">${esc(t)}</button>`).join('')}</div>`
+    : `<div class="bottoni">${MB21Lista.cittaFrequenti(LS.righe, r.user_id).map(c => `<button data-valore="${esc(c)}">${esc(c)}</button>`).join('')}</div>
+       <div class="campo" style="margin-top:12px"><label>Altra città</label><input id="dc-citta" type="text" autocomplete="off" placeholder="Es. Catania"></div>
+       <button class="primario" id="dc-salva" disabled>Salva la città</button>`;
+  app.innerHTML = `${indietro}<div class="sotto" style="margin-bottom:8px">Ne ${coda.length === 1 ? 'resta 1' : `restano ${coda.length.toLocaleString('it-IT')}`}</div>
+    <div class="card" style="padding:16px"><div class="nome" style="font-size:19px;font-weight:700">${esc(r.nome)}</div>${chi ? `<div class="luogo">${esc(chi)}</div>` : ''}
+      <p style="margin:14px 0 0;font-weight:600">${d.campo === 'sesso' ? 'È un uomo o una donna?' : 'Di che città è?'}</p>${scelte}
+      <div class="cat-comandi"><button class="link" id="dc-scheda">${ic('persona')} Apri contatto</button><button class="link" id="dc-salta">Salta</button></div>
+    </div>${versione()}`;
+  document.getElementById('indietro').onclick = () => { window.scrollTo(0, 0); disegnaLista(); };
+  document.getElementById('dc-scheda').onclick = () => apriScheda(r.id);
+  document.getElementById('dc-salta').onclick = () => { ST.completa.saltati.add(r.id + ':' + d.campo); disegnaDaCompletare(); };
+  app.querySelectorAll('.bottoni button[data-valore]').forEach(b => b.onclick = () => salvaCompleta(r, d.campo, b.dataset.valore));
+  const campo = document.getElementById('dc-citta'), salva = document.getElementById('dc-salva');
+  if (campo) {
+    campo.oninput = () => { salva.disabled = !campo.value.trim(); };
+    salva.onclick = () => salvaCompleta(r, 'citta', campo.value.trim());
+  }
+}
+// Un tocco = un campo scritto (solo se è ancora vuoto), con «Annulla» nel messaggio, come in «Da catalogare»
+async function salvaCompleta(r, campo, valore) {
+  app.querySelectorAll('.card button').forEach(b => { b.disabled = true; });
+  const scrivi = v => dbq('completa ' + campo, supa.from('contatti').update({ [campo]: v, aggiornato_il: new Date().toISOString() }).eq('id', r.id));
+  const { error } = await scrivi(valore);
+  if (error) { mostraToast('Non salvato: controlla la connessione e riprova.'); return disegnaDaCompletare(); }
+  if (campo === 'sesso') ST.completa.senzaSesso.delete(r.id); else await aggiornaRiga(r.id);
+  disegnaDaCompletare();
+  mostraToast(`${r.nome} · ${campo === 'sesso' ? MB21Lista.nomeScelta(MB21Lista.SESSI, valore) : valore}`, async () => {
+    const { error: e } = await scrivi(null);
+    if (e) return mostraToast('Annullamento non riuscito: riprova.');
+    if (campo === 'sesso') ST.completa.senzaSesso.add(r.id); else await aggiornaRiga(r.id);
+    disegnaDaCompletare();
+    mostraToast('Annullato');
+  });
+}
+
 function disegnaElenco() {
   const trovati = MB21Lista.filtraContatti(LS.righe, { filtro: LS.filtro, testo: LS.testo, utenteId: utentiLista(), admin: eAdmin(), oggi: MB21Coda.oggiRoma(), ordine: LS.ordine });
   const elenco = document.getElementById('elenco');
@@ -281,7 +351,7 @@ function disegnaElenco() {
     ? ordina + trovati.slice(0, LS.mostrate).map(cardNome).join('')
     : `<div class="vuoto">${LS.testo ? 'Nessun nome trovato.' : 'Nessun nome qui.'}${LS.testo.trim() && !soloGuardo() ? `<button class="link ls-aggiungi-cercato" id="aggiungi-cercato">${ic('piu')} Aggiungi «${esc(LS.testo.trim())}» alla Lista</button>` : ''}${aggiorna}</div>`;
   // «Aggiorna i nomi»: rilegge tutta la Lista (e «Da catalogare», L5)
-  document.getElementById('ls-aggiorna').onclick = () => { LS.righe = []; LS.letta = 0; ST.catalogo = null; apriLista(); };
+  document.getElementById('ls-aggiorna').onclick = () => { LS.righe = []; LS.letta = 0; ST.catalogo = null; ST.completa = null; apriLista(); };
   // Lista Nomi L1 (Ignazio 23/10): Cerca senza risultati → un tocco apre il modulo del nuovo contatto con il nome già scritto
   const aggiungiCercato = document.getElementById('aggiungi-cercato');
   if (aggiungiCercato) aggiungiCercato.onclick = () => apriModulo(null, { nome: LS.testo.trim() });
