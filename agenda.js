@@ -590,6 +590,9 @@
   const ESITO_ALTRO = 'Altro';
   // `aperto`: un appuntamento già chiuso con «Cambia esito ›» toccato (nota Azioni 032, Ignazio 19/10: «la lista come abbiamo fatto prima»):
   // lo stesso elenco, con `fatti` = l'esito già dato (le altre voci dello stesso incontro le aggiunge chi disegna, dopo averle lette).
+  // «Rimandato» e «No Show» (nota Azioni 080, Ignazio 30/10/2026: la persona non è potuta venire e non c'era un esito giusto): in fondo all'elenco,
+  // sotto «Non è avvenuto», come nel «È avvenuto?» di PM e Follow Up. Escludono le altre voci; non spuntano passi e nel Report non contano (report.js).
+  const NON_AVVENUTI_INCONTRO = AVVENUTO.filter(x => x !== 'Fatto');
   function vociIncontro(a, categoria, aperto) {
     const chiuso = !!a && !daChiudere(a);
     if (!a || a.tipo_azione !== 'Appuntamento' || (chiuso && !aperto)) return null;
@@ -598,11 +601,14 @@
     if (!ordine.length) return null;
     const previsti = ordine.filter(x => Array.isArray(a.su_cosa) && a.su_cosa.includes(x));
     return { titolo: chiuso ? 'Esito' : domandaEsito(a.tipo_azione), voci: [...previsti, ...ordine.filter(x => !previsti.includes(x))], previsti, ordine,
-      chiuso, fatti: chiuso && a.esito ? [a.esito] : [] };
+      nonAvvenuti: NON_AVVENUTI_INCONTRO, chiuso, fatti: chiuso && a.esito ? [a.esito] : [] };
   }
   // Dalle voci spuntate all'esito: il primo nell'ordine delle fasi è l'esito, gli altri una riga ciascuno (come prima, `chiudi_azione`).
   // Solo «Altro» (con la frase) → esito «Altro», che non spunta passi dell'Avvio e non entra nei conti di contatti e PM.
+  // «Rimandato» o «No Show» (nota 080) → quell'esito da solo.
   function esitoDaVoci(ordine, fatti, altro) {
+    const non = NON_AVVENUTI_INCONTRO.find(x => (fatti || []).includes(x));
+    if (non) return { esito: non, extra: [] };
     const scelti = (ordine || []).filter(x => (fatti || []).includes(x));
     if (scelti.length) return { esito: scelti[0], extra: scelti.slice(1) };
     return altro ? { esito: ESITO_ALTRO, extra: [] } : { esito: null, extra: [] };
@@ -978,7 +984,7 @@
     oraProposta, passatiSenzaEsito, validaAppuntamento, tipoDaCoda, senzaDoppioniCoda, ORE_CONFERMA, confermeDaFare, testoConferma, rispostaValida, confermeConRisposte, quandoBreve, risposteNuove, riordiniDaSentire, INIZIO_RIORDINI_GLIDE, ESITO_ATTESA_ORDINE,
     ORA_DA, ORA_A, PASSO_MIN, MINIMO_VISTA, DURATA_CONTATTO, DURATA_NORMALE, durataPredefinita, avvisoFissato, inMinuti, daMinuti, alQuarto,
     fascia, disposizioneGiorno, estremiGriglia, oreUtili, puntiGiorni, contaPerTipo, ORDINE_TIPI, sovrapposti, stessoIncontro, incontri, fasceLibere, oreProposte,
-    AVVENUTO, RISULTATI, daChiudere, passiEsito, passiIncontro, vociIncontro, esitoDaVoci, ESITO_ALTRO, passiFatti, esitoDaiPassi, senzaApp, ramoDellaLinea, parteDi, schedeDelCodice, stessoCodiceDi, frontaleDi, personeConApp, domandaEsito, dopoTelefonata, fattoDi, esitoDaDare, ESITI_CHIUSURA, GIORNI_CHIUSURA, GIORNI_RELAZIONE, GIORNI_NO_RISPOSTA, GIORNI_TELEFONO_SPENTO, GIORNI_STORICO, nelPassato, chiudeRelazione, giorniRisentire, proponeVendita, ICONE_TIPO, controllaGiorno,
+    AVVENUTO, RISULTATI, daChiudere, passiEsito, passiIncontro, vociIncontro, esitoDaVoci, ESITO_ALTRO, NON_AVVENUTI_INCONTRO, passiFatti, esitoDaiPassi, senzaApp, ramoDellaLinea, parteDi, schedeDelCodice, stessoCodiceDi, frontaleDi, personeConApp, domandaEsito, dopoTelefonata, fattoDi, esitoDaDare, ESITI_CHIUSURA, GIORNI_CHIUSURA, GIORNI_RELAZIONE, GIORNI_NO_RISPOSTA, GIORNI_TELEFONO_SPENTO, GIORNI_STORICO, nelPassato, chiudeRelazione, giorniRisentire, proponeVendita, ICONE_TIPO, controllaGiorno,
     coseDelGiorno, LEGAMI, legameDi, campiLegame, coseDelMese, coseDellaScala, senzaPeriodo, numeroSettimana, meseAccanto, mesiTra, giorniTra, testoCosa, testoTroppoLungo, MAX_COSA, MAX_VOCE, daMBPlan, MAX_PUNTO, MAX_PUNTI, MAX_LINK, puntiDi, aggiungiPunto, puntiDaRighe, spuntaPunto, togliPunto, contoPunti, linkChiamata, legamePunti, conPunti, MAX_LUOGO, doveDa, testoDove, linkMappa,
     RISPOSTE, nomeRisposta, nomeRispostaDiLui, CONDIVISIONI_SPAZIO, SDS_DEL_TEAM, FRASE_OSPITI, conOspiti, eConsegna, aggiungiOspite, ospitiPerChiOrganizza, chiaveRicevuto, ricevutiDelGiorno, ricevutiComeEventi, titoloRicevuto, eRichiamo, azioniAgenda, passatoSenzaEsito, programmaDelGiorno, ricevutiNuovi, contoRisposte, nomiPerRisposta, puoCondividereAzione, puoCondividereSpazio, RIPETIZIONI, ripetizioniPer, prossimaRipetizione, SCALE, inizioScala, GIORNI_SETTIMANA, giornoSettimana };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

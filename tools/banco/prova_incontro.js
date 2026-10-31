@@ -43,7 +43,7 @@ prova('Toccare l\'elenco (nota Azioni 031): spunte multiple → un esito e le ri
     consegnaDaCarta: () => {}, cambiaEsito: () => {} };
   vm.createContext(ctx);
   vm.runInContext(pezzo('const daChiudere = MB21Agenda.daChiudere;', '// La carta «Consegna» (nota Pagine 051)') + ';this.bloccoEsiti = bloccoEsiti; this.collegaEsiti = collegaEsiti', ctx);
-  const giro = () => { const n = new Nodo(); n.innerHTML = ctx.bloccoEsiti(incontro, 'Partner'); ctx.collegaEsiti(n, incontro, { nome: 'Valentina', categoria: 'Partner' }, async () => {}); n.querySelector('[data-il-apri]').setAttribute = () => {}; return n; };   // il finto DOM non ha setAttribute
+  const giro = () => { const n = new Nodo(); n.innerHTML = ctx.bloccoEsiti(incontro, 'Partner'); ctx.collegaEsiti(n, incontro, { nome: 'Persona A', categoria: 'Partner' }, async () => {}); n.querySelector('[data-il-apri]').setAttribute = () => {}; return n; };   // il finto DOM non ha setAttribute
   const spunta = (n, v) => { const i = n.querySelectorAll('input[value]').find(x => x.value === v); i.checked = true; i.onchange(); };
   let n = giro();
   n.querySelector('[data-il-apri]').onclick();
@@ -70,7 +70,7 @@ prova('Toccare l\'elenco (nota Azioni 031): spunte multiple → un esito e le ri
   assert.deepEqual(JSON.parse(JSON.stringify(chiusure.pop())), ['Telefonate', [], 'Telefonate · Altro', 'Ha chiamato due persone']);
 });
 
-prova('Già chiuso (nota Azioni 032, Fiammetta Moretti · Lista/Contatti chiuso con «Telefonate»): «Cambia esito» apre lo stesso elenco, spuntato com\'era, «Salva» solo se cambia; si aggiunge, si toglie, Annulla rimette', async () => {
+prova('Già chiuso (nota Azioni 032, Persona B · Lista/Contatti chiuso con «Telefonate»): «Cambia esito» apre lo stesso elenco, spuntato com\'era, «Salva» solo se cambia; si aggiunge, si toglie, Annulla rimette', async () => {
   const { Nodo } = require('../design/mini_dom.js');
   const chiuso = { id: 'b1', contatto_id: 'c9', user_id: 'u1', tipo_azione: 'Appuntamento', modalita: 'Lista/Contatti', categoria: 'Partner', area: 'Attività',
     inizio: '2026-10-19T16:00:00Z', fine: '2026-10-19T17:00:00Z', esito: 'Telefonate', completata: true, su_cosa: null, portato_da: null, note: null };
@@ -93,7 +93,7 @@ prova('Già chiuso (nota Azioni 032, Fiammetta Moretti · Lista/Contatti chiuso 
   assert.match(h, /incontro-lista/); assert.match(h, /data-il-voci>/); assert.match(h, />Salva</); assert.ok(!h.includes('esito-btn'));   // l'elenco aperto, niente tasti
   const n = new Nodo(); n.innerHTML = h;
   let ridisegni = 0;
-  ctx.collegaEsiti(n, chiuso, { nome: 'Fiammetta', categoria: 'Partner' }, async () => { ridisegni++; });
+  ctx.collegaEsiti(n, chiuso, { nome: 'Persona B', categoria: 'Partner' }, async () => { ridisegni++; });
   n.querySelector('[data-il-apri]').setAttribute = () => {};
   await new Promise(r => setTimeout(r, 0));
   const casella = v => n.querySelectorAll('input[value]').find(x => x.value === v);
@@ -121,7 +121,7 @@ prova('Già chiuso (nota Azioni 032, Fiammetta Moretti · Lista/Contatti chiuso 
 prova('Il foglio «Modifica» (nota Azioni 032, Ignazio 19/10: «mettilo anche in modifica»): l\'elenco al posto dei tasti, spuntato com\'era; Salva cambia esito e passi; Annulla rimette tutto', async () => {
   const { Nodo } = require('../design/mini_dom.js');
   const az = { id: 'b1', contatto_id: 'c9', user_id: 'u1', portato_da: null, categoria: 'Partner', tipo_azione: 'Appuntamento', modalita: 'Lista/Contatti', esito: 'Telefonate', completata: true,
-    su_cosa: null, area: 'Attività', inizio: '2026-10-19T16:00:00Z', fine: '2026-10-19T17:00:00Z', data_scelta: null, ospite: null, note: 'Portare la lista', senza_ora: false, contatti: { nome: 'Fiammetta Moretti', categoria: 'Partner' } };
+    su_cosa: null, area: 'Attività', inizio: '2026-10-19T16:00:00Z', fine: '2026-10-19T17:00:00Z', data_scelta: null, ospite: null, note: 'Portare la lista', senza_ora: false, contatti: { nome: 'Persona B', categoria: 'Partner' } };
   const altraRiga = { id: 'x1', esito: 'Lista nomi', user_id: 'u1', contatto_id: 'c9', categoria: 'Partner', tipo_azione: 'Appuntamento', modalita: 'Lista/Contatti', area: 'Attività', inizio: az.inizio, fine: az.fine, portato_da: null };
   const chiamate = [], fogli = [];
   let toastAnnulla = null, toastTesto = '';
@@ -380,6 +380,38 @@ prova('«Annulla» di un esito dalla coda (nota 045): prima l\'esito, poi l\'app
   log.length = 0; errore = true;
   const r = await ctx.annullaEsito({ azione_id: 'e1', appuntamento_id: 'p1' });
   assert.deepEqual(log, [['rpc', 'annulla_esito']]); assert.ok(r.error);                      // l'appuntamento non si tocca
+});
+
+prova('Nota Azioni 080 (Ignazio 30/10, la persona non è potuta venire): in fondo all\'elenco «Non è avvenuto» con «Rimandato» e «No Show»; escludono le altre voci; «Fatto» chiude con quell\'esito', () => {
+  const { Nodo } = require('../design/mini_dom.js');
+  const chiusure = [];
+  const ctx = { MB21Agenda: A, esc, FATTO_APERTO: new Set(), ic: () => '', soloGuardo: () => false, chiudiAppuntamento: (e, esito, o) => chiusure.push([esito, o.extra, o.testo, o.nota]),
+    consegnaDaCarta: () => {}, cambiaEsito: () => {} };
+  vm.createContext(ctx);
+  vm.runInContext(pezzo('const daChiudere = MB21Agenda.daChiudere;', '// La carta «Consegna» (nota Pagine 051)') + ';this.bloccoEsiti = bloccoEsiti; this.collegaEsiti = collegaEsiti', ctx);
+  const app = { ...incontro, modalita: 'Counseling', su_cosa: null };
+  const h = ctx.bloccoEsiti(app, 'Partner');
+  assert.ok(h.indexOf('class="il-non">Non è avvenuto') > h.indexOf('data-il-altro'));                       // in fondo, dopo «Altro»
+  assert.match(h, /value="Rimandato" data-il-non><span>Rimandato</); assert.match(h, /value="No Show" data-il-non><span>No Show</);
+  const giro = () => { const n = new Nodo(); n.innerHTML = ctx.bloccoEsiti(app, 'Partner'); ctx.collegaEsiti(n, app, { nome: 'Persona A', categoria: 'Partner' }, async () => {}); n.querySelector('[data-il-apri]').setAttribute = () => {}; return n; };
+  const casella = (n, v) => n.querySelectorAll('input[value]').find(x => x.value === v);
+  const spunta = (n, v) => { const i = casella(n, v); i.checked = true; i.onchange(); };
+  let n = giro();
+  spunta(n, 'c/Upline'); spunta(n, 'Rimandato');
+  assert.equal(casella(n, 'c/Upline').checked, false);                                                      // «Rimandato» toglie quello che era spuntato
+  assert.equal(n.querySelector('[data-il-conto]').textContent, 'Rimandato');
+  n.querySelector('[data-il-fatto]').onclick();
+  assert.deepEqual(JSON.parse(JSON.stringify(chiusure.pop())), ['Rimandato', [], 'Rimandato', '']);
+  n = giro();
+  spunta(n, 'Rimandato'); spunta(n, 'No Show');
+  assert.equal(casella(n, 'Rimandato').checked, false);                                                     // uno solo dei due
+  const altro = n.querySelector('[data-il-altro]'); altro.checked = true; altro.onchange();
+  assert.equal(casella(n, 'No Show').checked, false);                                                       // «Altro» toglie «No Show»
+  altro.checked = false; altro.onchange(); spunta(n, 'No Show'); spunta(n, 'Motivazione');
+  assert.equal(casella(n, 'No Show').checked, false);                                                       // una cosa fatta toglie «No Show»
+  spunta(n, 'No Show');
+  n.querySelector('[data-il-fatto]').onclick();
+  assert.deepEqual(JSON.parse(JSON.stringify(chiusure.pop())), ['No Show', [], 'No Show', '']);
 });
 
 coda.then(() => console.log(`\n${ok} prove superate`));

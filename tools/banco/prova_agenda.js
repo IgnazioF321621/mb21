@@ -784,6 +784,24 @@ prova('«Cosa avete fatto?» a elenco (nota Azioni 031): le voci del tipo, prima
   assert.equal(g[0].attuale, 'Altro'); assert.ok(g[0].bottoni.includes('Altro'));
 });
 
+prova('Nota Azioni 080 (Ignazio 30/10): nell\'elenco degli appuntamenti «Rimandato» e «No Show»; da soli danno quell\'esito, senza passi; PM e Follow Up come prima', () => {
+  const a = { tipo_azione: 'Appuntamento', categoria: 'Partner', modalita: 'Counseling', su_cosa: null, inizio: '2026-10-30T08:00:00Z', esito: null, completata: false };
+  for (const m of ['Avvio', 'Laboratorio', 'Counseling', 'Lista/Contatti', 'Meeting/Evento', 'Ordine']) {
+    const v = A.vociIncontro({ ...a, modalita: m }, 'Partner');
+    assert.deepEqual(v.nonAvvenuti, ['Rimandato', 'No Show'], m);
+    assert.ok(!v.voci.includes('Rimandato') && !v.ordine.includes('No Show'), m);   // stanno a parte, non tra le cose fatte
+  }
+  const v = A.vociIncontro(a, 'Partner');
+  assert.deepEqual(A.esitoDaVoci(v.ordine, ['Rimandato'], ''), { esito: 'Rimandato', extra: [] });
+  assert.deepEqual(A.esitoDaVoci(v.ordine, ['No Show'], ''), { esito: 'No Show', extra: [] });
+  assert.deepEqual(A.esitoDaVoci(v.ordine, ['c/Upline', 'Rimandato'], 'x'), { esito: 'Rimandato', extra: [] });   // se arrivano insieme vince «non è avvenuto»
+  // chiuso con «Rimandato» e «Cambia esito» toccato: l'elenco con «Rimandato» spuntato
+  assert.deepEqual(A.vociIncontro({ ...a, esito: 'Rimandato', completata: true }, 'Partner', true).fatti, ['Rimandato']);
+  // PM e Follow Up: il loro «È avvenuto?», com'era
+  assert.deepEqual(A.passiEsito({ ...a, tipo_azione: 'Piano Marketing', categoria: 'Prospect', modalita: 'PM 1a1' }, 'Prospect')[0].bottoni, ['Fatto', 'Rimandato', 'No Show']);
+  assert.deepEqual(A.passiEsito({ ...a, tipo_azione: 'Follow Up', categoria: 'Prospect', modalita: 'Personale' }, 'Prospect')[0].bottoni, ['Fatto', 'Rimandato', 'No Show']);
+});
+
 prova('Nota Pagine 066 (Ignazio 19/10): le risposte nuove a chi ha fissato: partecipa e non può; le serate in una riga; quelle già viste non tornano', () => {
   const adesso = '2026-10-19T10:00:00Z';
   const a1 = { id: 'a1', modalita: 'Avvio', inizio: A.isoDaRoma('2026-10-20', '17:15') }, a2 = { id: 'a2', tipo_azione: 'Follow Up', inizio: A.isoDaRoma('2026-10-19', '18:00') };

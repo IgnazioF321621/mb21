@@ -198,4 +198,17 @@ prova('Nota 110 (Ignazio 28/10): un Piano Marketing con più persone conta 1 PM 
   assert.equal(R.pmIncontri([...insieme, az('q1', 'Piano Marketing', 'Iscrizione', ora, { user_id: 'lei', modalita: 'PM 1a1' }), az('q2', 'Piano Marketing', 'Iscrizione', ora, { user_id: 'io', modalita: 'PM Open' })]).length, 4);
 });
 
+prova('Nota Azioni 080 (Ignazio 30/10): un appuntamento «Rimandato» o «No Show» non conta negli Appuntamenti; si vede nella riga di quelli che non contano', () => {
+  assert.equal(R.contaAzione({ tipo_azione: 'Appuntamento', esito: 'Rimandato' }), false);
+  assert.equal(R.contaAzione({ tipo_azione: 'Appuntamento', esito: 'No Show' }), false);
+  assert.equal(R.contaAzione({ tipo_azione: 'Appuntamento', esito: 'Motivazione' }), true);
+  assert.equal(R.contaAzione({ tipo_azione: 'Appuntamento', esito: 'Altro' }), true);
+  assert.equal(R.contaAzione({ tipo_azione: 'Piano Marketing', esito: 'No Show' }), false);   // il PM come prima
+  const azioni = [az(1, 'Appuntamento', 'Motivazione', '2026-09-07T10:00:00Z'), az(2, 'Appuntamento', 'Rimandato', '2026-09-08T10:00:00Z'), az(3, 'Appuntamento', 'No Show', '2026-09-09T10:00:00Z')];
+  const g = R.numeri(azioni, R.periodoMese(oggi), oggi).find(x => x.chiave === 'appuntamenti');
+  assert.equal(g.totale, 1); assert.equal(g.nonContano, 2);
+  assert.deepEqual(g.esiti.filter(e => !e.conta).map(e => e.esito).sort(), ['No Show', 'Rimandato']);
+  assert.equal(R.grafico(azioni, R.periodoAnno(oggi), oggi, 'appuntamenti')[0].azioni, 1);   // il grafico con la stessa regola
+});
+
 console.log(`\n${ok} prove superate`);

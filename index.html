@@ -768,6 +768,7 @@
   .incontro-lista .il-voce input { width: 20px; height: 20px; margin: 0; accent-color: var(--accento); flex: none; }
   .incontro-lista .il-voce span { flex: 1; }
   .incontro-lista .il-voce small { color: var(--testo-tenue); font-size: 12px; }
+  .incontro-lista .il-non { padding: 10px 14px 4px; font-size: 12.5px; font-weight: 600; color: var(--testo-tenue); border-bottom: 1px solid var(--bordo); }   /* nota Azioni 080 */
   .incontro-lista textarea { margin: 0 14px 12px; width: calc(100% - 28px); font-size: 16px; padding: 10px; border-radius: 12px; border: 1px solid var(--linea); }
   .incontro-lista .primario { align-self: stretch; }
     @keyframes cch-entra { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
@@ -3589,6 +3590,7 @@ function elencoEsitoHtml(a, inc, bottone) {
       <div class="il-voci" data-il-voci${inc.chiuso ? '' : ' hidden'}>${inc.voci.map(voce).join('')}
         <label class="il-voce"><input type="checkbox" data-il-altro><span>Altro</span></label>
         <textarea data-il-testo rows="2" maxlength="200" placeholder="Com'è andata, in una frase (es. ci siamo sentiti, ci vediamo alla serata)" hidden></textarea>
+        ${(inc.nonAvvenuti || []).length ? `<div class="il-non">Non è avvenuto</div>${inc.nonAvvenuti.map(x => `<label class="il-voce"><input type="checkbox" value="${esc(x)}" data-il-non><span>${esc(MB21Agenda.nomePasso(x))}</span></label>`).join('')}` : ''}
       </div>
       ${bottone ? `<button type="button" class="primario" data-il-fatto disabled>${inc.chiuso ? 'Salva' : 'Fatto'}</button>` : ''}
     </div>`;
@@ -3627,7 +3629,12 @@ function collegaElenco(box, a, poi = () => {}) {
       .then(({ data }) => { righe = (data || []).filter(r => ordine.includes(r.esito)); spunta(righe.map(r => r.esito)); prima = firma(); aggiorna(); }, () => {});
   }
   apriL.onclick = () => { voci.hidden = !voci.hidden; apriL.setAttribute('aria-expanded', String(!voci.hidden)); };
-  voci.querySelectorAll('input').forEach(i => i.onchange = () => { aggiorna(); if (i === altro && altro.checked) testo.focus(); });
+  // «Rimandato» / «No Show» (nota Azioni 080): da soli; una voce di quello che si è fatto li toglie, e viceversa
+  const nonAvv = i => i.dataset.ilNon != null;
+  voci.querySelectorAll('input').forEach(i => i.onchange = () => {
+    if (i.checked) voci.querySelectorAll('input').forEach(x => { if (x !== i && (nonAvv(i) || nonAvv(x))) x.checked = false; });
+    aggiorna(); if (i === altro && altro.checked) testo.focus();
+  });
   testo.oninput = aggiorna;
   return { scelta, cambiato: () => firma() !== prima, altreRighe: () => righe, manca: () => altro.checked && !frase() && !giaAltro(), nomi: r => [r.esito, ...r.extra].map(MB21Agenda.nomePasso).concat(r.frase && r.esito !== ESITO_ALTRO ? ['Altro'] : []).join(' · ') };
 }

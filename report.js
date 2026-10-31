@@ -17,9 +17,11 @@
   const CONTATTO_PARLATO = ['PM Fissato', 'Appuntamento', 'Ordine', 'Ordina da solo', 'Richiamare', 'Relazione', 'No Interesse', 'Consulenza Prodotti'];   // «Ordina da solo» dall'08/10 (nota Azioni 025, migrazione 20261008142000)
   const PM_AVVENUTO = ['Presentazione', 'Dare Seguito', 'Iscrizione', 'No BuonFine', 'Prodotti'];
   const VERSO_PARTNER = 'Verso un Partner';
+  const APPUNTAMENTO_NON_AVVENUTO = ['Rimandato', 'No Show'];   // gli stessi di agenda.js → NON_AVVENUTI_INCONTRO (nota Azioni 080)
   function contaAzione(a) {
     if (a.tipo_azione === 'Contatto') return a.categoria !== 'Partner' && (CONTATTO_PARLATO.includes(a.esito) || (a.esito === 'Riordino' && !!a.completata));
     if (a.tipo_azione === 'Piano Marketing') return PM_AVVENUTO.includes(a.esito);
+    if (a.tipo_azione === 'Appuntamento') return !APPUNTAMENTO_NON_AVVENUTO.includes(a.esito);   // nota Azioni 080: rimandato o non presentato, non è fatto
     return true;   // gli altri gruppi del Report contano tutte le azioni fatte
   }
   const MAX_NOMI = 50;
