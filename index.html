@@ -446,9 +446,15 @@
   .dt .dt-val .mc-pallino { margin-right: 6px; }
   .dt [data-dt="nome"] { font-weight: 700; }
   .dt .dt-in::placeholder, .dt .dt-val.dt-vuota { color: #A0A7B4; font-size: 14px; }
-  @media (hover: hover) { .dt .dt-in:not(:disabled):hover, .dt .dt-val:not(:disabled):hover { background: var(--superficie-2); } }
+  @media (hover: hover) { .dt .dt-in:not(:disabled):hover, .dt .dt-val.dt-vuota:not(:disabled):hover { background: var(--superficie-2); } }
   .dt .dt-in:focus { outline: none; border: 2px solid var(--cat); background: var(--superficie); padding: 1px 5px; }
   .dt .dt-in:disabled, .dt .dt-val:disabled { color: var(--testo); -webkit-text-fill-color: var(--testo); opacity: 1; }
+  /* seguito della 160 (Ignazio 31/10, «1» sulla foto stacco_160.png): a scheda chiusa i valori scelti sono pastiglie nella tinta della categoria col testo
+     scuro dello stesso colore (senza categoria grigio); i campi scritti restano testo */
+  .dt .dt-val:not(.dt-vuota), .dt .dt-val:not(.dt-vuota):disabled { display: inline-block; width: auto; margin: 0; background: var(--cat-tinta); color: var(--cat-scuro); -webkit-text-fill-color: var(--cat-scuro);
+    border-radius: 999px; padding: 3px 11px; font-size: 15px; font-weight: 600; }
+  .dt.cat-nessuna .dt-val:not(.dt-vuota) { background: #EEF0F3; color: #363E4C; -webkit-text-fill-color: #363E4C; }
+  .dt .dt-val:not(.dt-vuota) em { color: inherit; opacity: .6; }
   .dt-pil { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; } .dt-pil[hidden], .dt-comp[hidden] { display: none; }
   .dt-pil button { border: 0; font-size: 13.5px; font-weight: 600; padding: 6px 11px; border-radius: 999px; background: #F2F4F7; color: #3A4150; min-height: 34px; }
   .dt-pil button.si { background: var(--cat); color: #fff; }

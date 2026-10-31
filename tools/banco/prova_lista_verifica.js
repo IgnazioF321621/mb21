@@ -813,6 +813,11 @@ prova('160 (seguito): le scelte si leggono come testo con ▾ e al tocco aprono 
   assert.match(IDX, /\.dt \.dt-in:focus \{ outline: none; border: 2px solid var\(--cat\);/);
   assert.match(IDX, /\.cat-nessuna \{ --cat: var\(--testo-tenue\);/);   // non catalogato: grigio
   assert.match(PL, /<div class="riquadro dt \$\{classeCat\(c\.categoria\)\}">/);
+  // a scheda chiusa (Ignazio 31/10, «1»): i valori scelti sono pastiglie nella tinta della categoria, senza categoria grigio; le voci vuote no
+  assert.match(IDX, /\.dt \.dt-val:not\(\.dt-vuota\), \.dt \.dt-val:not\(\.dt-vuota\):disabled \{[^}]*background: var\(--cat-tinta\); color: var\(--cat-scuro\);/);
+  assert.match(IDX, /\.dt\.cat-nessuna \.dt-val:not\(\.dt-vuota\) \{ background: #EEF0F3;/);
+  assert.match(IDX, /\.dt \.dt-val\.dt-vuota:not\(:disabled\):hover/);   // il passaggio del mouse non copre la tinta
+  for (const k of ['prospect', 'cliente', 'partner', 'ex', 'unlinked', 'archiviato']) assert.match(IDX, new RegExp(`\\.cat-${k} \\{ --cat: var\\(--cat-${k}\\); --cat-tinta: var\\(--cat-${k}-tinta\\); --cat-scuro: #`));
 });
 
 prova('160: il nome — prima/dopo: si salva da solo lasciando il campo, «Salvato · Annulla» lo rimette; vuoto no; un doppione chiede «Salvo lo stesso?»', async () => {
