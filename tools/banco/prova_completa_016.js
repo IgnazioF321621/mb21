@@ -57,4 +57,10 @@ prova('la città si salva con la provincia, se il comune è nell\'elenco ISTAT',
   assert.ok(Object.keys(C).length > 7000);
   assert.match(PL, /if \(campo === 'citta'\) valore = MB21Lista\.cittaConProvincia\(valore, await leggiComuni\(\)\)/);
 });
+prova('anche la Località della scheda (nuovo contatto e Modifica) si salva con la provincia', () => {
+  assert.match(PL, /if \(riga\.citta && !\/\[\(\)\]\/\.test\(riga\.citta\)\) riga\.citta = MB21Lista\.cittaConProvincia\(riga\.citta, await leggiComuni\(\)\);/);
+  // nessun altro punto dell'app scrive la città: solo il modulo e «Da completare»
+  const scritture = PL.match(/citta: \$\('f-citta'\)|salvaCompleta\(r, 'citta'/g) || [];
+  assert.equal(scritture.length, 2);
+});
 console.log(`\n${n} prove passate`);

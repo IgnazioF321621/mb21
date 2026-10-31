@@ -1927,6 +1927,7 @@ function apriModulo(c, poi = {}) {
   segnaAccount();
   // Un numero incollato con il prefisso («+39 338 1234567», «0039…») non resta «+39» accanto a «+39…»: il prefisso va nella casella del prefisso,
   // nel campo resta il numero (nota 080). Il salvataggio comunque lo componeva giusto; era solo la vista che sembrava doppia.
+  $('f-citta').addEventListener('input', () => { leggiComuni(); }, { once: true });   // l'elenco dei comuni arriva mentre si scrive, non al Salva
   $('f-tel').addEventListener('input', () => {
     const v = $('f-tel').value;
     if (!/^\s*(\+|00)/.test(v)) return;
@@ -1943,6 +1944,9 @@ function apriModulo(c, poi = {}) {
       categoria: $('f-cat').value, referral_di: $('f-ref').value.trim() || null,
       area: $('f-area').value || null, note: $('f-note').value.trim() || null,
     };
+    // Località con la provincia (nota Fondamenta 016, Ignazio 31/10 «sì, in automatico»): la stessa regola di «Da completare»; l'elenco si legge solo
+    // se la città non ha già le parentesi (frazioni, estero e città non trovate restano come scritte)
+    if (riga.citta && !/[()]/.test(riga.citta)) riga.citta = MB21Lista.cittaConProvincia(riga.citta, await leggiComuni());
     const compleanno = MB21Rubrica.compleannoDalModulo($('f-cg').value, $('f-cm').value, $('f-ca').value);
     if (compleanno === 'errore') return mostraToast('Compleanno: scegli giorno e mese di una data che esiste (l\'anno di 4 cifre, se lo sai)');
     if (account.letto && riga.categoria === 'Cliente') {   // V4: solo se letto e cambiato (prima della migrazione la colonna non si tocca)
