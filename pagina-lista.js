@@ -524,7 +524,7 @@ async function menuCard(id) {
   const apri = LS.esporta ? [{ etichetta: 'Apri la scheda', icona: 'persona', tono: 'blu', fai: () => apriScheda(r.id, { daLista: true }) }] : [];
   // Lista Nomi L3 (Ignazio 23/10): con «Tutti» una riga fissa nel foglio al posto dell'avviso a ogni apertura (va via con il Partner Select)
   const guardo = soloLettura();
-  const voci = [...apri, ...(guardo ? [] : [{ etichetta: 'Modifica', icona: 'modifica', tono: 'blu', fai: () => apriModulo(r) }, ...comandiContatto(r)])];
+  const voci = [...apri, ...(guardo ? [] : [{ etichetta: 'Modifica i dati', icona: 'modifica', tono: 'blu', fai: () => apriDatiDi(r) }, ...comandiContatto(r)])];
   const v = await sceltaDa(r.nome, voci, contattaHtml(r.telefono) + (guardo ? `<p class="scelta-nota">${esc(MB21Perche.perche('tutti'))}</p>` : ''));
   if (v) v.fai();
 }
@@ -607,7 +607,7 @@ function apriScheda(id, { daLista = false, giro = false } = {}) {
   if (!LS.contatto) return;
   LS.sezione = MB21Lista.sezioneIniziale(LS.contatto);
   if (LS.apriSezione) { if (sezioniPer(LS.contatto).some(([k]) => k === LS.apriSezione)) LS.sezione = LS.apriSezione; LS.apriSezione = null; }   // chiesta da un avviso o dalla Dashboard
-  LS.azioni = null; LS.azAperta = null; LS.note = null; LS.sv = null; LS.vendite = null; LS.avvio = null; LS.account = null; LS.accountLettura = null; LS.stessoOrdine = null;
+  LS.dopoCategoria = null; LS.azioni = null; LS.azAperta = null; LS.note = null; LS.sv = null; LS.vendite = null; LS.avvio = null; LS.account = null; LS.accountLettura = null; LS.stessoOrdine = null;
   if (!giro) {
     LS.scrollLista = ST.tab === 'lista' && !LS.ritorno ? window.scrollY : 0;   // per tornare al punto della Lista da cui si è aperta
     LS.giro = daLista ? nomiDellElenco().map(r => r.id) : null;   // nota 158: l'elenco di quel momento, nello stesso ordine
@@ -731,7 +731,6 @@ function disegnaScheda() {
             <h1>${esc(c.nome)}${nuovoBadge(c)}<span class="sv-targhe" id="sv-targhe">${targaAppHtml(c.app)}${targaAccountHtml(c.categoria, accountDellaScheda(c))}${segniInAlto(c.categoria, null) ? targheHtml(null) : ''}</span></h1>
             <div class="sotto" style="margin:0">${esc(c.telefono || '')}</div>
           </div>
-          <button class="modifica" id="modifica">Modifica</button>
         </div>
         ${contattaHtml(c.telefono)}
         ${eAdmin() && c.user_id !== ST.utente.id ? `<div class="sotto" style="margin:10px 0 0">Nome di ${esc(c.partner)}</div>` : ''}
@@ -765,8 +764,6 @@ function disegnaScheda() {
     document.querySelectorAll('#tab button').forEach(b => b.classList.toggle('attiva', b.dataset.tab === 'report'));
     RP.vista === 'griglia' ? disegnaGriglia() : disegnaReport();
   };
-  const m = document.getElementById('modifica');
-  if (m) m.onclick = () => apriModulo(c);
   mostraInvito(c);
   mostraAvvio(c);
   mostraAccountCliente(c);
@@ -931,37 +928,198 @@ async function collegaUtenteMb21(c, scollega) {
 
 function sezioneDati() {
   const c = LS.contatto;
-  disegnaDati(c, null);
+  disegnaDati(c, LS.datiExtra && LS.datiExtra.id === c.id ? LS.datiExtra : null);
   riquadroCoppia(c);
   datiPersonaExtra(c);
 }
 
-// La sezione Dati: prima i dati personali nell'ordine di MB21Lista.DATI_PERSONA (lo stesso del modulo, Ignazio 25/09), poi il resto.
-// Solo i campi pieni. Compleanno, sesso e lavoro non stanno nella vista della Lista: arrivano con `datiPersonaExtra` (seconda passata).
+// ── La sezione Dati (nota Pagine 160, Ignazio 31/10: «nel momento in cui la scheda è creata, la modifica va fatta direttamente nella sezione Dati,
+// in cui ci sono tutte le voci… la voce "Modifica" sopra non serve»; «sembra ok» sulla foto docs/prototipi/dati2_160.png) ──
+// Tutte le voci del vecchio «Modifica», nello stesso ordine e con gli stessi gruppi: Chi è · Per l'attività · (Coppia) · Dati personali · Elimina.
+// Le scelte a un tocco, il resto si scrive sul posto; ogni campo si salva da solo quando lo lasci (salvaContatto, lo stesso salvataggio di prima) con
+// «Salvato · Annulla». Nome e telefono: i doppioni come prima («Salvo lo stesso?»); la categoria chiede conferma con una frase semplice.
+// Con «Tutti» nel Partner Select (soloGuardo) si legge soltanto. Compleanno, sesso e lavoro non stanno nella vista della Lista: arrivano con
+// `datiPersonaExtra` (seconda passata); finché non ci sono, i loro campi dicono «Carico…» e non si toccano (meglio non poterli cambiare che cancellarli).
 function disegnaDati(c, extra) {
   const box = document.getElementById('sezione');
   if (!box) return;
-  const L = MB21Lista, valore = k => (extra && k in extra ? extra[k] : c[k]);
-  const persona = L.DATI_PERSONA.map(([k, etichetta]) => {
-    const v = valore(k);
-    if (!v) return null;
-    if (k === 'compleanno') return [etichetta, ic('compleanno') + ' ' + esc(MB21Rubrica.compleannoScritto(v))];
-    return [etichetta, esc(k === 'sesso' ? L.nomeScelta(L.SESSI, v) : k === 'lavoro' ? L.nomeScelta(L.LAVORI, v) : v)];
-  }).filter(Boolean);
-  // «Contatti fatti» (nota 091 b): arriva con la seconda passata, contato solo per questa persona; finché non c'è la riga non si vede (niente «0» di passaggio)
-  const fatti = valore('contatti_fatti');
-  const resto = [['Area di interesse', MB21Lista.testoInteresse(c.area)],   // nota Pagine 130 (Ignazio 28/10): «Interesse» → «Area di interesse», anche nel modulo
-    ['Contatto e/o Incaricato di', c.referral_di], ['Note', c.note], ['Contatti fatti', fatti == null ? '' : String(fatti)]]
-    .filter(([, v]) => v).map(([k, v]) => [k, esc(v)]);
-  // nota Pagine 031 (Ignazio 06/10): il codice Amway, si copia con un tocco; arriva con `datiPersonaExtra` (la stessa lettura di compleanno e lavoro)
-  const codice = valore('codice_amway');
-  if (codice) resto.unshift(['Codice Amway', `<button type="button" class="codice-copia" data-copia-codice="${esc(codice)}" aria-label="Copia il codice Amway ${esc(codice)}">${esc(codice)}${ic('copia')}</button>`]);
-  const riquadro = `<div class="riquadro dati" id="dati-riquadro">${[...persona, ...resto].map(([k, v]) => `<div><small>${k}</small>${v}</div>`).join('')}</div>`;
-  const vecchio = document.getElementById('dati-riquadro');
-  if (vecchio) vecchio.outerHTML = riquadro; else box.innerHTML = `<div id="coppia"></div>${riquadro}`;
-  const copia = document.querySelector('[data-copia-codice]');
-  if (copia) copia.onclick = () => copiaCodice(copia.dataset.copiaCodice);
+  const L = MB21Lista, guardo = soloGuardo(), spento = guardo ? ' disabled' : '';
+  const conStorico = (lista, v) => (v && !lista.includes(v) ? [...lista, v] : lista);   // valori storici fuori elenco (es. «36-45») restano
+  const testo = (k, etichetta, v, { max, pieno, lista } = {}) => `<div class="${pieno ? 'dt-pieno' : ''}"><small>${etichetta}</small><input class="dt-in" data-dt="${k}" value="${esc(v || '')}" placeholder="${guardo ? '—' : 'Tocca per scrivere'}"${max ? ` maxlength="${Math.max(max, (v || '').length)}"` : ''}${lista ? ` list="${lista}"` : ''}${spento}></div>`;
+  const pastiglie = (k, etichetta, voci, v, attesa) => `<div class="dt-pieno" id="dt-${k}"><small>${etichetta}</small>${attesa ? '<span class="dt-carico">Carico…</span>'
+    : `<div class="dt-pil">${voci.map(([val, t]) => `<button type="button" data-dt-pil="${k}" data-v="${esc(val)}" data-scelto="${val === v ? 1 : 0}" class="${val === v ? 'si' : ''}"${spento}>${esc(t)}</button>`).join('')}</div>`}</div>`;
+  const tel = L.separaTelefono(c.telefono);
+  const prefissi = conStorico(L.PREFISSI.map(p => p[0]), tel.prefisso);
+  const categorie = conStorico(L.CATEGORIE, c.categoria);
+  const x = L.interesseDa(c.area);
+  const miei = LS.righe.filter(r => r.user_id === c.user_id && r.id !== c.id);
+  const fatti = extra && extra.contatti_fatti != null ? String(extra.contatti_fatti) : '';
+  const codice = extra && extra.codice_amway;
+  const k = extra ? MB21Rubrica.compleannoDaData(extra.compleanno) : null;
+  const compleanno = !extra ? '<span class="dt-carico">Carico…</span>' : `<div class="f-comp">
+      <select data-dt-comp="g"${spento}><option value="">Giorno</option>${Array.from({ length: 31 }, (_, i) => `<option${k && k.giorno === i + 1 ? ' selected' : ''}>${i + 1}</option>`).join('')}</select>
+      <select data-dt-comp="m"${spento}><option value="">Mese</option>${MB21Rubrica.MESI.map((m, i) => `<option value="${i + 1}"${k && k.mese === i + 1 ? ' selected' : ''}>${m}</option>`).join('')}</select>
+      <input data-dt-comp="a" inputmode="numeric" maxlength="4" placeholder="Anno" value="${k && k.anno ? k.anno : ''}"${spento}></div>`;
+  const account = c.categoria === 'Cliente' ? `<div class="dt-pieno" id="dt-account"><small>Cliente con account</small><span class="dt-carico">Carico…</span></div>` : '';
+  const html = `<div id="dati-riquadro">
+    <h4 class="mc-t">Chi è</h4><div class="riquadro dt">
+      ${testo('nome', 'Nominativo', c.nome, { pieno: true })}
+      <div class="dt-pieno"><small>Telefono</small><div class="telefono-campo"><select data-dt-pref${spento}>${prefissi.map(p => { const n = L.PREFISSI.find(y => y[0] === p); return `<option value="${p}"${p === (tel.prefisso || '+39') ? ' selected' : ''}>${p}${n ? ' ' + n[1] : ''}</option>`; }).join('')}</select>
+        <input class="dt-in" data-dt="telefono" type="tel" inputmode="tel" value="${esc(tel.numero)}" placeholder="${guardo ? '—' : 'Tocca per scrivere'}"${spento}></div></div></div>
+    <h4 class="mc-t">Per l'attività</h4><div class="riquadro dt">
+      <div class="dt-pieno"><small>Categoria</small>${LS.dopoCategoria ? '<div class="avviso" style="margin:4px 0 8px">Per segnare un\'azione serve la categoria: sceglila qui.</div>' : ''}
+        <div id="dt-cat"${guardo ? ' class="dt-spento"' : ''}>${tendinaCategoriaHtml(categorie, c.categoria)}</div></div>
+      ${account}
+      ${testo('referral_di', 'Contatto e/o Incaricato di', c.referral_di, { lista: 'dt-ref-nomi' })}<datalist id="dt-ref-nomi">${miei.map(r => `<option value="${esc(r.nome)}">`).join('')}</datalist>
+      ${testo('note', 'Note', c.note, { max: 50 })}
+      ${pastiglie('interesse', 'Area di interesse', [['Attività', 'Attività'], ['Prodotti', 'Prodotti']], x.interesse)}
+      ${x.interesse === 'Prodotti' ? `<div class="dt-pieno"><small>Quali prodotti?</small><select data-dt-quali${spento}><option value="">—</option>${L.QUALI_PRODOTTI.map(([v, t]) => `<option value="${esc(v)}"${x.quali === v ? ' selected' : ''}>${esc(t)}</option>`).join('')}</select></div>` : ''}
+      ${codice ? `<div><small>Codice Amway</small><button type="button" class="codice-copia" data-copia-codice="${esc(codice)}" aria-label="Copia il codice Amway ${esc(codice)}">${esc(codice)}${ic('copia')}</button></div>` : ''}
+      ${fatti ? `<div><small>Contatti fatti</small><span class="dt-fisso">${fatti}</span></div>` : ''}</div>
+    <div id="coppia"></div>
+    <h4 class="mc-t">Dati personali</h4><div class="riquadro dt">
+      ${pastiglie('fascia_eta', 'Età', conStorico(L.FASCE_ETA, c.fascia_eta).map(v => [v, v]), c.fascia_eta)}
+      <div class="dt-pieno"><small>Compleanno <span class="sotto" style="margin:0">(l'anno se lo sai)</span></small>${compleanno}</div>
+      ${pastiglie('sesso', 'Sesso', L.SESSI, extra && extra.sesso, !extra)}
+      ${testo('professione', 'Professione', c.professione, { max: 40 })}
+      ${pastiglie('lavoro', 'Tipo di lavoro', L.LAVORI, extra && extra.lavoro, !extra)}
+      ${testo('citta', 'Località', c.citta, { max: 40 })}</div>
+    ${guardo ? '' : `<button type="button" class="link elimina-qui" id="dt-elimina">${ic('elimina')} Elimina dalla lista</button>`}</div>`;
+  // la coppia (riquadroCoppia) ha il suo posto e si disegna da sé: ridisegnando i Dati resta com'era; e il campo in cui si sta scrivendo resta
+  // com'è (con quello che c'è scritto e il cursore), anche quando i dati personali arrivano mentre si scrive
+  const coppia = document.getElementById('coppia'), vecchio = document.getElementById('dati-riquadro');
+  const attivo = vecchio && vecchio.contains && document.activeElement && vecchio.contains(document.activeElement) && document.activeElement.dataset ? document.activeElement : null;
+  const chiave = attivo && (attivo.dataset.dt ? `[data-dt="${attivo.dataset.dt}"]` : attivo.dataset.dtComp ? `[data-dt-comp="${attivo.dataset.dtComp}"]` : null);
+  box.innerHTML = html;   // la sezione è solo questo riquadro
+  const posto = document.getElementById('coppia');
+  if (coppia && posto && coppia !== posto && posto.replaceWith) posto.replaceWith(coppia);
+  collegaDati(c, extra);
+  const di = chiave && document.querySelector('#dati-riquadro ' + chiave);
+  if (di && !di.disabled) { di.value = attivo.value; di.focus(); if (attivo.selectionStart != null && di.setSelectionRange) try { di.setSelectionRange(attivo.selectionStart, attivo.selectionEnd); } catch (e) { /* select */ } }
 }
+
+// I tocchi della sezione Dati: ogni campo salva solo sé stesso (salvaDato)
+function collegaDati(c, extra) {
+  const radice = document.getElementById('dati-riquadro');
+  if (!radice) return;
+  const copia = radice.querySelector('[data-copia-codice]');
+  if (copia) copia.onclick = () => copiaCodice(copia.dataset.copiaCodice);
+  if (soloGuardo()) return;
+  const q = s => radice.querySelector(s);
+  radice.querySelectorAll('input.dt-in').forEach(el => {
+    el.onkeydown = e => { if (e.key === 'Enter') el.blur(); };
+    el.onchange = () => {
+      const k = el.dataset.dt, v = el.value.trim();
+      if (k === 'nome') { if (!v) { el.value = c.nome; return mostraToast('Il nome non può restare vuoto'); } return salvaDato(c, { nome: v }); }
+      if (k === 'telefono') return salvaDato(c, { telefono: MB21Lista.componiTelefono(q('[data-dt-pref]').value, el.value) });
+      return salvaDato(c, { [k]: v || null });
+    };
+  });
+  const pref = q('[data-dt-pref]');
+  if (pref) pref.onchange = () => { if (q('[data-dt="telefono"]').value.trim()) salvaDato(c, { telefono: MB21Lista.componiTelefono(pref.value, q('[data-dt="telefono"]').value) }); };
+  // le pastiglie: un tocco sceglie, un tocco su quella già scelta la toglie
+  radice.querySelectorAll('[data-dt-pil]').forEach(b => { b.onclick = () => {
+    const k = b.dataset.dtPil, v = b.dataset.scelto === '1' ? null : b.dataset.v;
+    if (k === 'interesse') return salvaDato(c, { area: v ? MB21Lista.areaDa(v, '') || null : null });
+    return salvaDato(c, { [k]: v });
+  }; });
+  const quali = q('[data-dt-quali]');
+  if (quali) quali.onchange = () => salvaDato(c, { area: MB21Lista.areaDa('Prodotti', quali.value) || null });
+  // il compleanno: si salva quando giorno e mese ci sono (o sono tolti tutti e due); una data che non esiste si dice
+  radice.querySelectorAll('[data-dt-comp]').forEach(el => { el.onchange = () => {
+    const [g, m, a] = ['g', 'm', 'a'].map(x => q(`[data-dt-comp="${x}"]`).value);
+    if (!!g !== !!m) return;
+    const comp = MB21Rubrica.compleannoDalModulo(g, m, a);
+    if (comp === 'errore') return mostraToast('Compleanno: scegli giorno e mese di una data che esiste (l\'anno di 4 cifre, se lo sai)');
+    return salvaDato(c, { compleanno: MB21Rubrica.dataCompleanno(comp) });
+  }; });
+  // la categoria: la tendina della nota 127; scelta un'altra, una domanda con la frase semplice di cosa succede
+  const cat = q('#dt-cat');
+  if (cat) {
+    collegaTendine5(cat);
+    cat.querySelectorAll('[data-cat]').forEach(b => { b.onclick = async () => {
+      const nuova = b.dataset.cat;
+      cat.querySelector('.tnd5').classList.remove('aperta');
+      if (nuova === c.categoria) return;
+      if (!await chiediConferma(`Categoria: ${MB21Lista.nomeCategoria(nuova)}?`, fraseCategoria(c, nuova), 'Cambia')) return;
+      return salvaDato(c, { categoria: nuova });
+    }; });
+  }
+  // «Cliente con account» (V4, nota 080): Sì/No e «Dal» (mai nel futuro), letto una volta (accountDi, lo stesso della testata)
+  if (q('#dt-account')) accountDi(c).then(dal => {
+    const posto = document.getElementById('dt-account');
+    if (dal === undefined || !posto || LS.contatto !== c) return;
+    posto.innerHTML = `<small>Cliente con account</small><div class="dt-pil"><button type="button" data-acc="si" class="${dal ? 'si' : ''}">Sì</button><button type="button" data-acc="no" class="${dal ? '' : 'si'}">No</button></div>
+      ${dal ? `<div style="margin-top:8px"><small>Dal</small><input type="date" data-acc-dal value="${esc(dal)}" max="${MB21Coda.oggiRoma()}"></div>` : ''}
+      <div class="vn-aiuto">Ordina dal suo account quando vuole: nessuna telefonata di riordino.</div>`;
+    posto.querySelectorAll('[data-acc]').forEach(x => { x.onclick = () => {
+      const si = x.dataset.acc === 'si';
+      if (si === !!dal) return;
+      return salvaDato(c, { account_cliente_dal: si ? MB21Coda.oggiRoma() : null });
+    }; });
+    const d = posto.querySelector('[data-acc-dal]');
+    if (d) d.onchange = () => {
+      if (!d.value || d.value === dal) return;
+      if (d.value > MB21Coda.oggiRoma()) { d.value = dal; return mostraToast('Cliente con account: la data «dal» non può essere nel futuro'); }
+      return salvaDato(c, { account_cliente_dal: d.value });
+    };
+  });
+  const el = q('#dt-elimina');
+  if (el) el.onclick = () => elimina(c);   // «Elimina» (prima in fondo a Modifica): stessa funzione dei tre puntini
+}
+
+// La frase della domanda quando cambia la categoria: cosa succede, a parole (le stesse cose di prima, nota 094 M1)
+function fraseCategoria(c, nuova) {
+  const nome = MB21Lista.nomeCategoria;
+  if (nuova === 'Archiviato') return `${c.nome} va negli Archiviati: le azioni da fare escono dall'Agenda. Si ripristina quando vuoi.`;
+  if (c.categoria === 'Archiviato') return `${c.nome} torna nella Lista: tornano le azioni da fare e il giorno in cui risentirlo.`;
+  if (!c.categoria) return `${c.nome} entra nella Lista come ${nome(nuova)}: lo risenti da domani.`;
+  return `${c.nome} passa da ${nome(c.categoria)} a ${nome(nuova)}.`;
+}
+
+// Un campo della sezione Dati salvato (salvaContatto) con «Salvato · Annulla»; Annulla rimette com'era. Nome, telefono e categoria cambiano anche la
+// testata: si ridisegna la scheda; gli altri campi restano come sono scritti (niente letture in più).
+async function salvaDato(c, cambi) {
+  if (soloGuardo()) return;
+  c = LS.righe.find(x => x.id === c.id) || c;   // la riga com'è adesso (dopo un salvataggio la copia del tocco è vecchia)
+  const ex = LS.datiExtra && LS.datiExtra.id === c.id ? LS.datiExtra : {};
+  const vecchio = k => (k === 'account_cliente_dal' ? (LS.account && LS.account.id === c.id ? LS.account.dal : null) : ['compleanno', 'sesso', 'lavoro'].includes(k) ? ex[k] || null : c[k] ?? null);
+  const prima = Object.fromEntries(Object.keys(cambi).map(k => [k, vecchio(k)]));
+  if (Object.keys(cambi).every(k => (cambi[k] ?? null) === prima[k])) return;
+  const r = await salvaContatto(c, cambi);
+  if (r.annullato || r.errore) {   // «Salvo lo stesso?» → no, o niente rete: la scheda torna com'è salvata
+    if (r.errore) mostraToast(r.errore === 'categoria' ? 'Dati salvati, la categoria no: riprova.' : 'Non salvato: controlla la connessione e riprova.');
+    return dopoDato(c, cambi, true);
+  }
+  const ora = LS.righe.find(x => x.id === c.id) || c;
+  if (r.archiviare) mostraToast(`${ora.nome} spostato in Archiviati · le azioni da fare escono dall'Agenda`, () => ripristina({ id: c.id, nome: ora.nome }));
+  else if (r.ripristinare) mostraToast(`${ora.nome} ripristinato`);
+  else mostraToast('Salvato', r.catalogo ? undefined : async () => {
+    const s = await salvaContatto(LS.righe.find(x => x.id === c.id) || c, prima, { senzaDoppioni: true });
+    if (s.errore) mostraToast('Non annullato: riprova.');
+    dopoDato(c, prima, true);
+  });
+  await dopoDato(c, cambi);
+  if (r.invito) domandaInvito({ ...ora });
+  if ('categoria' in cambi && LS.dopoCategoria === 'azione' && MB21Agenda.tipiPer(ora.categoria).length && LS.contatto && LS.contatto.id === c.id) { LS.dopoCategoria = null; azionePiu(); }
+}
+// dopo un salvataggio (o un «Annulla»): la copia in memoria e la sezione com'è adesso
+async function dopoDato(c, cambi, rileggi = false) {
+  if (rileggi) await aggiornaRiga(c.id);
+  if (LS.datiExtra && LS.datiExtra.id === c.id) for (const k of ['compleanno', 'sesso', 'lavoro']) if (k in cambi) LS.datiExtra[k] = cambi[k];
+  if ('account_cliente_dal' in cambi) LS.account = { id: c.id, dal: cambi.account_cliente_dal ?? null };
+  if (!LS.contatto || LS.contatto.id !== c.id) return;
+  LS.contatto = LS.righe.find(x => x.id === c.id) || LS.contatto;
+  const chiavi = Object.keys(cambi);
+  if (rileggi || chiavi.some(k => ['nome', 'telefono', 'categoria'].includes(k))) return disegnaScheda();
+  if (chiavi.every(k => ['referral_di', 'note', 'professione', 'citta', 'compleanno'].includes(k))) {   // scritti sul posto: restano come sono (la località con la provincia)
+    for (const k of chiavi) { const el = document.querySelector(`#dati-riquadro [data-dt="${k}"]`); if (el && el !== document.activeElement) el.value = LS.contatto[k] || ''; }
+    return;
+  }
+  disegnaDati(LS.contatto, LS.datiExtra && LS.datiExtra.id === c.id ? LS.datiExtra : null);
+  if ('account_cliente_dal' in cambi) mostraAccountCliente(LS.contatto);
+}
+
 // Copia il codice negli appunti; se il telefono non lo lascia fare, il codice resta scritto nel messaggio (si legge e si scrive a mano)
 async function copiaCodice(codice) {
   try { await navigator.clipboard.writeText(codice); mostraToast(`Codice ${codice} copiato`); }
@@ -980,7 +1138,8 @@ async function datiPersonaExtra(c) {
     contaContattiFatti(c.id),
   ]);
   if (error || !data || LS.contatto !== c || LS.sezione !== 'dati') return;
-  disegnaDati(c, { ...data, ...(fatti.error || fatti.count == null ? {} : { contatti_fatti: fatti.count }) });
+  LS.datiExtra = { id: c.id, ...data, ...(fatti.error || fatti.count == null ? {} : { contatti_fatti: fatti.count }) };
+  disegnaDati(c, LS.datiExtra);
 }
 
 // Coppia (cantiere 18, Ignazio 16/09): marito, moglie o compagno/a per qualsiasi contatto.
@@ -1145,7 +1304,7 @@ async function azionePiu() {
   if (soloGuardo()) return;
   const c = LS.contatto;
   // S5c (nota Pagine 072, Ignazio 22/10: «se non hai dati, bisogna partire dai dati e dalla categoria; eventualmente poi azioni»): senza categoria
-  // si apre «Modifica» con la categoria da scegliere; salvata con una categoria, prosegue da sola con «Nuova azione». Chiuso senza salvare: niente.
+  // si apre la sezione Dati con la categoria da scegliere (nota 160; prima «Modifica»); scelta una categoria, prosegue da sola con «Nuova azione». Senza: niente.
   if (!MB21Agenda.tipiPer(c.categoria).length) return apriModulo(c, { poiAzione: true });
   // S6 (Ignazio 22/10: la nota del coach di solito viene prima dell'azione): la prima scelta è «Nota del coach», poi i tipi di sempre
   if (COACH_YES) {
@@ -1259,7 +1418,7 @@ function sezioneOnboarding() {
         : `<div class="riquadro"><button class="primario" id="avvio-concludi">${ic('fatto')} Avvio concluso</button>
             <div class="sotto" style="margin:8px 0 12px">Quando il partner cammina da solo: la riga in alto diventa «${ic('fatto')} Avvio concluso». Si può sempre riaprire.</div>
             <button class="link" id="avvio-pausa" style="padding:0">${ic('pausa')} Metti in pausa</button>
-            <div class="sotto" style="margin:4px 0 0">Se per ora è fermo: esce dai partner da avviare finché non lo riprendi. Chi si è ritirato davvero cambia categoria con «Modifica».</div></div>`}`;
+            <div class="sotto" style="margin:4px 0 0">Se per ora è fermo: esce dai partner da avviare finché non lo riprendi. Chi si è ritirato davvero cambia categoria nei «Dati».</div></div>`}`;
     // campo: 'concluso' (avvio_concluso_il) o 'pausa' (avvio_in_pausa_dal); giorno vuoto = riaperto / ripreso
     const segna = async (campo, giorno) => {
       if (soloGuardo()) return;
@@ -1806,6 +1965,7 @@ function collegaInteresse(radice) {
 // poi.poiAzione (S5c): salvato con una categoria, si apre «Nuova azione»; poi.nome (L1): il nome già scritto, da Cerca; poi.categoria: quella già scelta;
 // poi.salvato(riga) / poi.chiuso(): per chi apre il modulo da fuori la Lista (nota 094 M7, l'appuntamento dell'Agenda) e ci torna
 function apriModulo(c, poi = {}) {
+  if (c) return apriDatiDi(c, poi);   // nota 160: una scheda che c'è già si cambia nella sezione Dati; il modulo resta per il nome nuovo
   if (soloGuardo()) { if (poi.chiuso) poi.chiuso(); return; }
   const nuovo = !c;
   const tel = MB21Lista.separaTelefono(c && c.telefono);
@@ -1840,18 +2000,14 @@ function apriModulo(c, poi = {}) {
   // Nota Pagine 127 (Ignazio 28/10/2026: «nella scheda Contatto… mi escono ancora tutte le categorie da cliccare. Non la leggo a tendina»): la Categoria
   // del modulo Nuovo / Modifica contatto è la tendina del Nuovo appuntamento e di «Modifiche» (sel5 + tendina5): chiusa dice la scelta col suo pallino,
   // aperta l'elenco con ✓ e, sotto «Non collegato», cosa vuol dire. I tre tasselli di «Da catalogare» in Oggi restano (scelta «A»).
-  const tendinaCategoria = (categorie, scelta) => {
-    const pallino = k => `<i class="mc-pallino ${classeCat(k)}"></i>`, nome = k => esc(MB21Lista.nomeCategoria(k));
-    const voci = categorie.map(k => `<button type="button" class="${k === scelta ? 'scelto' : ''}" data-cat="${esc(k)}"><span>${pallino(k)}${nome(k)}${MB21Lista.SPIEGA_CATEGORIA[k] ? `<small>${esc(MB21Lista.SPIEGA_CATEGORIA[k])}</small>` : ''}</span>${k === scelta ? '<b>✓</b>' : ''}</button>`).join('');
-    return tendina5Html(categorie.includes(scelta) ? `<b>${pallino(scelta)}${nome(scelta)}</b>` : '<small>Scegli la categoria</small>', voci);
-  };
+  const tendinaCategoria = tendinaCategoriaHtml;   // la stessa della sezione Dati (nota 160)
   // Lista Nomi L4 (Ignazio 23/10): nel nuovo contatto niente «Archiviato» (resta in Modifica)
   const categorie = conStorico(MB21Lista.CATEGORIE, c && c.categoria).filter(k => !nuovo || k !== 'Archiviato');
   const campoNome = `<div class="campo"><label>Nominativo <small>Obbligatorio</small></label><input id="f-nome" placeholder="Nome Cognome" value="${esc(c ? c.nome : poi.nome || '')}"><div id="f-arch" class="f-arch" hidden></div></div>`;
   const campoTel = `<div class="campo"><label>Telefono</label><div class="telefono-campo">
       <select id="f-prefisso">${prefissi.map(p => { const n = MB21Lista.PREFISSI.find(x => x[0] === p); return `<option value="${p}" ${p === (tel.prefisso || '+39') ? 'selected' : ''}>${p}${n ? ' ' + n[1] : ''}</option>`; }).join('')}</select>
       <input id="f-tel" type="tel" inputmode="tel" placeholder="(es.) 33x xxxxxxx" value="${esc(tel.numero)}"></div></div>`;
-  const campoCat = `<div class="campo"><label>Categoria <small>Obbligatorio</small></label>${poi.poiAzione ? '<div class="avviso" id="f-cat-prima" style="margin:4px 0 8px">Per segnare un\'azione serve la categoria: sceglila qui sotto e tocca «Salva», poi si apre «Nuova azione».</div>' : ''}<select id="f-cat" hidden>${opz(categorie, c ? c.categoria : poi.categoria, 'Scegli qualcosa')}</select>
+  const campoCat = `<div class="campo"><label>Categoria <small>Obbligatorio</small></label><select id="f-cat" hidden>${opz(categorie, c ? c.categoria : poi.categoria, 'Scegli qualcosa')}</select>
       <div id="f-cat-tnd">${tendinaCategoria(categorie, c ? c.categoria : poi.categoria)}</div></div>`;
   // Nota Pagine 080 (Ignazio 24/10: «non è un cliente da oggi, è un cliente da anni»): con «Sì» la data «dal» si vede e si cambia (mai nel futuro)
   const campoAccount = `<div class="campo" id="f-account-campo"><label>Cliente con account</label>
@@ -1859,7 +2015,6 @@ function apriModulo(c, poi = {}) {
       <div id="f-account-dal-posto" style="margin-top:8px"><label>Dal</label><input id="f-account-dal" type="date" max="${MB21Coda.oggiRoma()}"></div>
       <div class="vn-aiuto">Ordina dal suo account quando vuole: nessuna telefonata di riordino.</div></div>`;
   const datiPersona = `<h4 class="mc-t">Dati personali</h4><div class="riquadro mc-g">
-    ${nuovo ? '' : '<small class="sotto" id="f-letti" style="margin:0">Carico compleanno, sesso e lavoro…</small>'}
     ${MB21Lista.DATI_PERSONA.map(([k]) => campiPersona[k]).join('\n')}
     </div>`;
   const altriAttivita = `<div class="campo"><label>Contatto e/o Incaricato di</label><input id="f-ref" list="f-ref-nomi" placeholder="—" value="${esc(c ? c.referral_di || '' : '')}">
@@ -1867,18 +2022,14 @@ function apriModulo(c, poi = {}) {
     ${campoInteresse(c && c.area, opz, conStorico)}
     <div class="campo"><label>Note</label><input id="f-note" maxlength="${max(50, c && c.note)}" value="${esc(c ? c.note || '' : '')}"><div class="conta" data-conta="f-note"></div></div>`;
   // Lista Nomi L4 (Ignazio 23/10): un contatto NUOVO mostra subito nome, telefono e categoria (con «Ha un account cliente», che si vede solo per un Cliente);
-  // il resto sta nella riga chiusa «Altri dati (facoltativi)». In Modifica i tre gruppi restano com'erano. Campi e id sono gli stessi: il salvataggio non cambia.
-  const corpo = nuovo
-    ? `<div class="riquadro mc-g" style="margin-top:14px">${campoNome}${campoTel}${campoCat}${campoAccount}</div>
-    <details class="mc-altri"><summary>Altre informazioni</summary>${datiPersona}<h4 class="mc-t">Per l'attività</h4><div class="riquadro mc-g">${altriAttivita}</div></details>`
-    : `<h4 class="mc-t">Chi è</h4><div class="riquadro mc-g">${campoNome}${campoTel}</div>${datiPersona}
-    <h4 class="mc-t">Per l'attività</h4><div class="riquadro mc-g">${campoCat}${campoAccount}${altriAttivita}</div>`;
+  // il resto sta nella riga chiusa «Altre informazioni». Dalla nota 160 il modulo è solo per il nome nuovo: una scheda che c'è già si cambia nei Dati.
+  const corpo = `<div class="riquadro mc-g" style="margin-top:14px">${campoNome}${campoTel}${campoCat}${campoAccount}</div>
+    <details class="mc-altri"><summary>Altre informazioni</summary>${datiPersona}<h4 class="mc-t">Per l'attività</h4><div class="riquadro mc-g">${altriAttivita}</div></details>`;
   velo.innerHTML = `<div class="foglio alto mc">
     <div class="mc-testa ${classeCat(c ? c.categoria : poi.categoria)}" id="mc-testa"><span class="ts-pastiglia">${c ? esc(iniziali(c.nome)) : ic('persona')}</span>
-      <div><small>${nuovo ? 'Aggiungi un nuovo contatto' + esc(aNome()) : 'Modifica contatto'}</small><b>${c ? esc(c.nome) : 'Nuovo nome'}</b></div><button id="chiudi" aria-label="Chiudi">${ic('chiudi')}</button></div>
+      <div><small>Aggiungi un nuovo contatto${esc(aNome())}</small><b>Nuovo nome</b></div><button id="chiudi" aria-label="Chiudi">${ic('chiudi')}</button></div>
     ${nuovo ? '<p class="sotto mc-basta">bastano nome, telefono e categoria: il resto quando vuoi</p>' : ''}
     ${corpo}
-    ${c ? `<button class="link elimina-qui" id="elimina-qui">${ic('elimina')} Elimina dalla lista</button>` : ''}
     <div class="mc-fondo"><button class="link" id="annulla">Annulla</button><button class="primario" id="invia" disabled>Salva</button></div>
   </div>`;
   document.body.appendChild(velo);
@@ -1888,7 +2039,6 @@ function apriModulo(c, poi = {}) {
   $('chiudi').onclick = lascia;
   $('annulla').onclick = lascia;
   collegaInteresse(velo);   // nota 098: Interesse in due scelte
-  if (poi.poiAzione && $('f-cat-prima') && $('f-cat-prima').scrollIntoView) $('f-cat-prima').scrollIntoView({ block: 'center' });   // S5c: la categoria in evidenza
   // la tendina della categoria (nota Pagine 127) scrive nel menu nascosto e avvisa il modulo, come se si fosse scelto dal menu; scelta una, si richiude
   const collegaCategoria = () => {
     collegaTendine5($('f-cat-tnd'));
@@ -1901,8 +2051,6 @@ function apriModulo(c, poi = {}) {
     });
   };
   collegaCategoria();
-  // «Elimina» dentro la scheda sta qui, in fondo a Modifica (Ignazio 19/09: in «Dati» non è il posto giusto); stessa funzione dei tre puntini
-  if ($('elimina-qui')) $('elimina-qui').onclick = () => { chiudi(); elimina(c); };
   const controlla = () => {
     // Lista Nomi L4 (Ignazio 23/10): finché manca qualcosa, il bottone spento dice cosa (come «Scegli almeno un nome» in Scarica nomi e numeri)
     const manca = !$('f-nome').value.trim() ? 'Scrivi il nome' : !$('f-cat').value ? 'Scegli la categoria' : '';
@@ -1930,19 +2078,6 @@ function apriModulo(c, poi = {}) {
   // se non arriva restano spenti con «Non caricati: riapri per cambiarli».
   let compleannoLetto = nuovo;
   const DA_LEGGERE = ['f-cg', 'f-cm', 'f-ca', 'f-sesso', 'f-lavoro'];
-  if (!nuovo) {
-    DA_LEGGERE.forEach(id => { $(id).disabled = true; });
-    dbq('compleanno', supa.from('contatti').select('compleanno, sesso, lavoro').eq('id', c.id).maybeSingle()).then(({ data, error }) => {
-      if (!velo.isConnected) return;
-      if (error || !data) { $('f-letti').textContent = 'Compleanno, sesso e lavoro non caricati: riapri per cambiarli.'; return; }
-      const k = MB21Rubrica.compleannoDaData(data.compleanno);
-      if (k) { $('f-cg').value = k.giorno; $('f-cm').value = k.mese; $('f-ca').value = k.anno || ''; }
-      $('f-sesso').value = data.sesso || ''; $('f-lavoro').value = data.lavoro || '';
-      DA_LEGGERE.forEach(id => { $(id).disabled = false; });
-      $('f-letti').hidden = true;
-      compleannoLetto = true;
-    });
-  }
   // V4 Vendite (Ignazio 22/10): «Ha un account cliente: ordina da solo», solo per i Clienti (contatti.account_cliente_dal). Come il compleanno:
   // si legge a parte (o dalla scheda aperta) e il salvataggio lo tocca solo se è stato letto e se è cambiato; «Sì» tiene la data di prima o mette oggi.
   const account = { letto: nuovo, prima: null, si: false };
@@ -1952,11 +2087,8 @@ function apriModulo(c, poi = {}) {
     $('f-account-dal-posto').style.display = account.si ? '' : 'none';   // 080: la data solo con «Sì»
     if (account.si && !$('f-account-dal').value) $('f-account-dal').value = account.prima || MB21Coda.oggiRoma();   // la data salvata, o oggi se è nuovo
   };
-  const accountLetto = dal => { if (dal === undefined || !velo.isConnected) return; Object.assign(account, { letto: true, prima: dal, si: !!dal }); $('f-account-dal').value = dal || ''; segnaAccount(); };
   velo.querySelectorAll('[data-account]').forEach(b => b.onclick = () => { account.si = b.dataset.account === 'si'; segnaAccount(); });
   $('f-cat').addEventListener('change', segnaAccount);
-  if (!nuovo && LS.account && LS.account.id === c.id) accountLetto(LS.account.dal);
-  else if (!nuovo) leggiAccountCliente(c.id).then(accountLetto);
   segnaAccount();
   // Un numero incollato con il prefisso («+39 338 1234567», «0039…») non resta «+39» accanto a «+39…»: il prefisso va nella casella del prefisso,
   // nel campo resta il numero (nota 080). Il salvataggio comunque lo componeva giusto; era solo la vista che sembrava doppia.
@@ -1989,59 +2121,74 @@ function apriModulo(c, poi = {}) {
       if (dal !== account.prima) riga.account_cliente_dal = dal;
     }
     if (compleannoLetto) { riga.compleanno = MB21Rubrica.dataCompleanno(compleanno); riga.sesso = $('f-sesso').value || null; riga.lavoro = $('f-lavoro').value || null; }
-    if (nuovo) riga.user_id = proprietario;
-    else {   // in Modifica i doppioni si guardano qui (gli altri nomi); un nome nuovo li guarda salvaNomeNuovo (L9), con lo stesso avviso
-      const doppi = MB21Lista.trovaDoppioni(LS.righe, { nome: riga.nome, telefono: riga.telefono, utenteId: proprietario, escludiId: c.id });
-      if (doppi.length && !await chiediConferma('Salvo lo stesso?', testoDoppioni(doppi, proprietario), 'Salva lo stesso')) return;
-    }
+    riga.user_id = proprietario;
     $('invia').disabled = true;
-    // Nota 094 M1: la categoria cambiata da qui fa le stesse cose del menu «…». Archiviato scelto = la funzione di «Archivia» (`archivia_contatto`:
-    // tiene la categoria di prima per il Ripristina, le azioni da fare escono), anche per un contatto senza categoria. Da Archiviato a un'altra =
-    // la funzione di «Ripristina» (`ripristina_contatto`: tornano le azioni e il giorno di rientro), poi la categoria scelta se è un'altra.
-    // Da senza categoria a una categoria: `cataloga_contatto`, come in «Da catalogare» (conta nei Fatti, rientro domani).
-    const archiviare = !nuovo && riga.categoria === 'Archiviato' && c.categoria !== 'Archiviato';
-    const ripristinare = !nuovo && c.categoria === 'Archiviato' && riga.categoria !== 'Archiviato';
-    const catalogo = !nuovo && !archiviare && !ripristinare && !c.categoria && riga.categoria;
-    let error = null, esito = null;
-    if (nuovo) {
-      esito = await salvaNomeNuovo(riga);   // L9: doppioni, salvataggio, riga nuova nella Lista
-      if (esito.annullato) { $('invia').disabled = false; return; }
-      error = esito.errore || null;
-    } else {
-      // i dati prima, con la categoria di adesso: la cambia dopo la funzione giusta
-      ({ error } = await dbq('modifica contatto', supa.from('contatti')
-        .update({ ...riga, categoria: catalogo ? null : archiviare || ripristinare ? c.categoria : riga.categoria, aggiornato_il: new Date().toISOString() }).eq('id', c.id)));
-    }
-    if (error) { $('invia').disabled = false; return mostraToast('Non salvato: controlla la connessione e riprova.'); }
-    let errCat = null;
-    if (catalogo) ({ error: errCat } = await dbq('cataloga', supa.rpc('cataloga_contatto', { p_contatto: c.id, p_categoria: riga.categoria })));
-    else if (archiviare) ({ error: errCat } = await dbq('archivia', supa.rpc('archivia_contatto', { p_contatto: c.id })));
-    else if (ripristinare) {
-      ({ error: errCat } = await dbq('ripristina', supa.rpc('ripristina_contatto', { p_contatto: c.id })));
-      // tornato com'era: se si è scelta un'altra categoria, si cambia (senza categoria di prima: `cataloga_contatto`, rientro domani)
-      if (!errCat && riga.categoria !== c.categoria_prec) ({ error: errCat } = await dbq('categoria dopo il ripristino', c.categoria_prec
-        ? supa.from('contatti').update({ categoria: riga.categoria, aggiornato_il: new Date().toISOString() }).eq('id', c.id)
-        : supa.rpc('cataloga_contatto', { p_contatto: c.id, p_categoria: riga.categoria })));
-    }
-    // M4: i dati sono salvati, la categoria no: si dice, il modulo resta aperto e «Salva» riprova
-    if (errCat) { $('invia').disabled = false; await aggiornaRiga(c.id); return mostraToast('Dati salvati, la categoria no: riprova.'); }
-    if ('account_cliente_dal' in riga) LS.account = null;   // V4: la riga in testata si rilegge
+    const esito = await salvaNomeNuovo(riga);   // L9: doppioni, salvataggio, riga nuova nella Lista
+    if (esito.annullato) { $('invia').disabled = false; return; }
+    if (esito.errore) { $('invia').disabled = false; return mostraToast('Non salvato: controlla la connessione e riprova.'); }
     chiudi();
-    mostraToast(nuovo ? `${riga.nome} aggiunto` : archiviare ? `${riga.nome} spostato in Archiviati · le azioni da fare escono dall'Agenda`
-      : ripristinare ? `${riga.nome} ripristinato` : 'Modifiche salvate',
-      archiviare ? () => ripristina({ id: c.id, nome: riga.nome }) : undefined);   // nota 046: Annulla rimette com'era (categoria, rientro, azioni)
-    if (nuovo && poi.salvato) return poi.salvato(esito.riga);   // M7: si torna a chi ha aperto il modulo (l'appuntamento)
-    // L7 (Ignazio 23/10): la riga della persona si rilegge sempre, anche dalla Lista (tre puntini · Modifica); un nome nuovo l'ha già messa salvaNomeNuovo
-    // (prima si vedeva solo dopo 10 minuti o con «Aggiorna i nomi»); con la scheda aperta la rilegge già ricaricaERidisegna
-    if (!nuovo && (!LS.contatto || LS.contatto.id !== c.id)) await aggiornaRiga(c.id);
+    mostraToast(`${riga.nome} aggiunto`);
+    if (poi.salvato) return poi.salvato(esito.riga);   // M7: si torna a chi ha aperto il modulo (l'appuntamento)
     // M5: salvato un nome nuovo, si apre subito la sua scheda (se la riga non c'è, la Lista si rilegge come prima)
-    if (nuovo && LS.righe.some(x => x.id === esito.riga.id)) { LS.ritorno = null; apriScheda(esito.riga.id); }
-    else {
-      const ridisegnato = ricaricaERidisegna();
-      if (poi.poiAzione && riga.categoria) return ridisegnato.then(() => azionePiu());   // S5c: dalla categoria all'azione, senza altri tocchi
-    }
-    if (riga.categoria === 'Partner' && (nuovo || c.categoria !== 'Partner')) domandaInvito({ ...riga, user_id: nuovo ? proprietario : c.user_id });
+    if (LS.righe.some(x => x.id === esito.riga.id)) { LS.ritorno = null; apriScheda(esito.riga.id); }
+    else ricaricaERidisegna();
+    if (riga.categoria === 'Partner') domandaInvito({ ...riga, user_id: proprietario });
   };
+}
+
+// La tendina della Categoria (nota Pagine 127): chiusa dice la scelta col suo pallino, aperta l'elenco con ✓ e, sotto «Non collegato», cosa vuol dire.
+// La stessa nel modulo del nome nuovo e nella sezione Dati (nota 160).
+function tendinaCategoriaHtml(categorie, scelta) {
+  const pallino = k => `<i class="mc-pallino ${classeCat(k)}"></i>`, nome = k => esc(MB21Lista.nomeCategoria(k));
+  const voci = categorie.map(k => `<button type="button" class="${k === scelta ? 'scelto' : ''}" data-cat="${esc(k)}"><span>${pallino(k)}${nome(k)}${MB21Lista.SPIEGA_CATEGORIA[k] ? `<small>${esc(MB21Lista.SPIEGA_CATEGORIA[k])}</small>` : ''}</span>${k === scelta ? '<b>✓</b>' : ''}</button>`).join('');
+  return tendina5Html(categorie.includes(scelta) ? `<b>${pallino(scelta)}${nome(scelta)}</b>` : '<small>Scegli la categoria</small>', voci);
+}
+
+// Nota 160: le porte di «Modifica» (i tre puntini della Lista, «Nuova azione» senza categoria) aprono la sezione Dati della scheda.
+// `poi.poiAzione` (S5c): sopra la categoria «Per segnare un'azione serve la categoria»; scelta, si apre «Nuova azione».
+function apriDatiDi(c, poi = {}) {
+  if (!LS.contatto || LS.contatto.id !== c.id) { LS.apriSezione = 'dati'; apriScheda(c.id, { daLista: ST.tab === 'lista' && !LS.ritorno }); }
+  if (!LS.contatto || LS.contatto.id !== c.id) return;
+  LS.dopoCategoria = poi.poiAzione ? 'azione' : null;
+  LS.sezione = 'dati';
+  disegnaScheda();
+}
+
+// Il salvataggio di una scheda che c'è già (nota 160: prima stava dentro «Modifica»; ora lo usa la sezione Dati, un campo alla volta).
+// `cambi` = i campi cambiati. Come prima: la località con la provincia (nota Fondamenta 016); i doppioni se cambiano nome o telefono
+// («Salvo lo stesso?»); la categoria con la funzione giusta (nota 094 M1: Archiviato = `archivia_contatto`, da Archiviato = `ripristina_contatto`
+// e poi la categoria scelta, da senza categoria = `cataloga_contatto`); la riga della Lista riletta.
+// → { ok, archiviare, ripristinare, catalogo, invito } · { annullato } · { errore: true | 'categoria' }
+async function salvaContatto(c, cambi, { senzaDoppioni = false } = {}) {
+  const riga = { ...cambi };
+  if (riga.citta && !/[()]/.test(riga.citta)) riga.citta = MB21Lista.cittaConProvincia(riga.citta, await leggiComuni());
+  if (!senzaDoppioni && (riga.nome || riga.telefono)) {
+    const doppi = MB21Lista.trovaDoppioni(LS.righe, { nome: riga.nome || '', telefono: riga.telefono || '', utenteId: c.user_id, escludiId: c.id });
+    if (doppi.length && !await chiediConferma('Salvo lo stesso?', testoDoppioni(doppi, c.user_id), 'Salva lo stesso')) return { annullato: true };
+  }
+  const cat = 'categoria' in riga ? riga.categoria : c.categoria;
+  const archiviare = 'categoria' in riga && cat === 'Archiviato' && c.categoria !== 'Archiviato';
+  const ripristinare = 'categoria' in riga && c.categoria === 'Archiviato' && cat !== 'Archiviato';
+  const catalogo = 'categoria' in riga && !archiviare && !ripristinare && !c.categoria && !!cat;
+  const dati = { ...riga };
+  if (archiviare || ripristinare || catalogo) delete dati.categoria;   // la categoria la cambia dopo la funzione giusta
+  if (Object.keys(dati).length) {
+    const { error } = await dbq('modifica contatto', supa.from('contatti').update({ ...dati, aggiornato_il: new Date().toISOString() }).eq('id', c.id));
+    if (error) return { errore: true };
+  }
+  let errCat = null;
+  if (catalogo) ({ error: errCat } = await dbq('cataloga', supa.rpc('cataloga_contatto', { p_contatto: c.id, p_categoria: cat })));
+  else if (archiviare) ({ error: errCat } = await dbq('archivia', supa.rpc('archivia_contatto', { p_contatto: c.id })));
+  else if (ripristinare) {
+    ({ error: errCat } = await dbq('ripristina', supa.rpc('ripristina_contatto', { p_contatto: c.id })));
+    // tornato com'era: se si è scelta un'altra categoria, si cambia (senza categoria di prima: `cataloga_contatto`, rientro domani)
+    if (!errCat && cat !== c.categoria_prec) ({ error: errCat } = await dbq('categoria dopo il ripristino', c.categoria_prec
+      ? supa.from('contatti').update({ categoria: cat, aggiornato_il: new Date().toISOString() }).eq('id', c.id)
+      : supa.rpc('cataloga_contatto', { p_contatto: c.id, p_categoria: cat })));
+  }
+  await aggiornaRiga(c.id);   // la riga della Lista com'è adesso (L7)
+  if (errCat) return { errore: 'categoria' };
+  return { ok: true, archiviare, ripristinare, catalogo, invito: 'categoria' in riga && cat === 'Partner' && c.categoria !== 'Partner' };
 }
 
 // «Portato da» uguale dappertutto (decisione di Ignazio 15/09): Agenda, Report, Griglia PM, scheda contatto.

@@ -50,71 +50,51 @@ function modulo({ esiti = {}, lettura = new Promise(() => {}), righe = [], tab =
     contaLettere() {}, ripristina() {}, elimina() {},
     document: { createElement: () => { const n = new Nodo(); n.isConnected = true; n.remove = () => { n.rimosso = true; n.isConnected = false; }; fogli.push(n); return n; }, body: { appendChild() {} } } };
   vm.createContext(ctx);
-  vm.runInContext([PL.match(/^const testoDoppioni = .*$/m)[0], pezzo(PL, 'async function doppioniDi'), pezzo(PL, 'async function salvaNomeNuovo'), pezzo(PL, 'function campoInteresse'), pezzo(PL, 'function collegaInteresse'), pezzo(PL, 'function apriModulo'),
+  vm.runInContext([PL.match(/^const testoDoppioni = .*$/m)[0], pezzo(PL, 'async function doppioniDi'), pezzo(PL, 'async function salvaNomeNuovo'), pezzo(PL, 'function campoInteresse'), pezzo(PL, 'function collegaInteresse'), pezzo(PL, 'function apriModulo') + '\n' + pezzo(PL, 'function tendinaCategoriaHtml'),
     pezzo(IDX, 'function tendina5Html'), pezzo(IDX, 'function collegaTendine5'),   // nota 127: la Categoria a tendina
     'this.apri = apriModulo;'].join('\n'), ctx);
   const apri = (c, poi) => { ctx.apri(c, poi); const f = fogli[fogli.length - 1]; return { f, $: id => f.querySelector('#' + id) }; };
   return { ctx, F, toast, aperte, apri, fogli };
 }
 const ARCHIVIATO = { id: 'z', user_id: 'io', nome: 'Persona Z', categoria: 'Archiviato', categoria_prec: 'Prospect' };
+// Dalla nota Pagine 160 una scheda che c'è già si cambia nella sezione Dati: il salvataggio di prima (M1-M4) è `salvaContatto`, lo stesso per ogni campo
+function salva({ esiti = {} } = {}) {
+  const F = finto(esiti), ctx = { MB21Lista: L, LS: { righe: [] }, supa: F.supa, dbq: F.dbq, aggiornaRiga: async () => {}, leggiComuni: async () => [], chiediConferma: async () => true, testoDoppioni: () => '' };
+  vm.createContext(ctx); vm.runInContext(pezzo(PL, 'async function salvaContatto') + ';this.salva = salvaContatto;', ctx);
+  return { F, salva: (c, cambi) => ctx.salva(c, cambi) };
+}
 
-prova('M1: da Archiviato a un\'altra categoria = la funzione di «Ripristina» (tornano azioni e rientro), poi la categoria scelta se è un\'altra', async () => {
-  const A = modulo(), { $ } = A.apri(ARCHIVIATO);
-  $('f-cat').value = 'Prospect';
-  await $('invia').onclick();
-  uguale(A.F.scritte.map(q => q.rpc || [q.op, q.valori.categoria]), [['update', 'Archiviato'], 'ripristina_contatto']);   // la categoria di prima: niente altro
-  assert.deepEqual(A.toast, ['Persona Z ripristinato']);
-  const B = modulo(), b = B.apri(ARCHIVIATO);
-  b.$('f-cat').value = 'Partner';
-  await b.$('invia').onclick();
-  uguale(B.F.scritte.map(q => q.rpc || [q.op, q.valori.categoria]), [['update', 'Archiviato'], 'ripristina_contatto', ['update', 'Partner']]);
+prova('M1 (dalla nota 160 nei Dati): da Archiviato a un\'altra categoria = la funzione di «Ripristina» (tornano azioni e rientro), poi la categoria scelta se è un\'altra', async () => {
+  const A = salva();
+  uguale(await A.salva(ARCHIVIATO, { categoria: 'Prospect' }), { ok: true, archiviare: false, ripristinare: true, catalogo: false, invito: false });
+  uguale(A.F.scritte.map(q => q.rpc || [q.op, q.valori.categoria]), ['ripristina_contatto']);   // la categoria di prima: niente altro
+  const B = salva();
+  uguale((await B.salva(ARCHIVIATO, { categoria: 'Partner' })).invito, true);   // diventato Partner: la domanda d'invito
+  uguale(B.F.scritte.map(q => q.rpc || [q.op, q.valori.categoria]), ['ripristina_contatto', ['update', 'Partner']]);
   // archiviato senza categoria di prima: dopo il ripristino si cataloga (rientro domani)
-  const C = modulo(), c = C.apri({ ...ARCHIVIATO, categoria_prec: null });
-  c.$('f-cat').value = 'Cliente';
-  await c.$('invia').onclick();
-  uguale(C.F.scritte.map(q => (q.rpc ? [q.rpc, q.arg.p_categoria] : q.op)), ['update', ['ripristina_contatto', undefined], ['cataloga_contatto', 'Cliente']]);
+  const C = salva();
+  await C.salva({ ...ARCHIVIATO, categoria_prec: null }, { categoria: 'Cliente' });
+  uguale(C.F.scritte.map(q => (q.rpc ? [q.rpc, q.arg.p_categoria] : q.op)), [['ripristina_contatto', undefined], ['cataloga_contatto', 'Cliente']]);
 });
 
-prova('M1: Archiviato scelto = sempre la funzione di «Archivia», anche per un contatto senza categoria (prima: cataloga_contatto)', async () => {
-  const A = modulo(), { $ } = A.apri({ id: 'y', user_id: 'io', nome: 'Persona Y', categoria: null });
-  $('f-cat').value = 'Archiviato';
-  await $('invia').onclick();
-  uguale(A.F.scritte.map(q => q.rpc || [q.op, q.valori.categoria]), [['update', null], 'archivia_contatto']);
-  assert.match(A.toast[0], /^Persona Y spostato in Archiviati/);
-  const B = modulo(), b = B.apri({ id: 'x', user_id: 'io', nome: 'Persona X', categoria: null });
-  b.$('f-cat').value = 'Prospect';
-  await b.$('invia').onclick();
-  uguale(B.F.scritte.map(q => q.rpc || [q.op, q.valori.categoria]), [['update', null], 'cataloga_contatto']);   // senza categoria → una categoria: come prima
+prova('M1 (nei Dati): Archiviato scelto = sempre la funzione di «Archivia», anche per un contatto senza categoria; da senza categoria a una = «cataloga»', async () => {
+  const A = salva();
+  uguale((await A.salva({ id: 'y', user_id: 'io', nome: 'Persona Y', categoria: null }, { categoria: 'Archiviato' })).archiviare, true);
+  uguale(A.F.scritte.map(q => q.rpc || [q.op, q.valori.categoria]), ['archivia_contatto']);
+  const B = salva();
+  uguale((await B.salva({ id: 'x', user_id: 'io', nome: 'Persona X', categoria: null }, { categoria: 'Prospect' })).catalogo, true);
+  uguale(B.F.scritte.map(q => q.rpc || [q.op, q.valori.categoria]), ['cataloga_contatto']);
+  const C = salva();   // da una categoria a un'altra: solo il campo
+  await C.salva({ id: 'v', user_id: 'io', nome: 'Persona V', categoria: 'Prospect' }, { categoria: 'Cliente' });
+  uguale(C.F.scritte.map(q => [q.op, q.valori.categoria, q.filtri]), [['update', 'Cliente', [['eq', 'id', 'v']]]]);
 });
 
-prova('M4: dati salvati e categoria no → «Dati salvati, la categoria no: riprova», il modulo resta aperto e «Salva» riprova', async () => {
-  const A = modulo({ esiti: { ripristina: { message: 'giù' } } }), { f, $ } = A.apri(ARCHIVIATO);
-  $('f-cat').value = 'Prospect';
-  await $('invia').onclick();
-  assert.deepEqual(A.toast, ['Dati salvati, la categoria no: riprova.']);
-  assert.ok(!f.rimosso); assert.equal($('invia').disabled, false);
-  const B = modulo({ esiti: { 'modifica contatto': { message: 'giù' } } }), b = B.apri(ARCHIVIATO);
-  b.$('f-cat').value = 'Prospect';
-  await b.$('invia').onclick();
-  assert.deepEqual(B.toast, ['Non salvato: controlla la connessione e riprova.']);   // niente salvato: come prima
-});
-
-prova('M2: compleanno, sesso e lavoro spenti con «Carico…» finché la lettura non arriva; se non arriva «Non caricati: riapri per cambiarli» e il salvataggio non li tocca', async () => {
-  let arriva;
-  const A = modulo({ lettura: new Promise(r => { arriva = r; }) }), { f, $ } = A.apri({ id: 'w', user_id: 'io', nome: 'Persona W', categoria: 'Prospect' });
-  assert.match(f.innerHTML, /<small class="sotto" id="f-letti" style="margin:0">Carico compleanno, sesso e lavoro…<\/small>/);
-  for (const id of ['f-cg', 'f-cm', 'f-ca', 'f-sesso', 'f-lavoro']) assert.equal($(id).disabled, true, id);
-  arriva({ data: { compleanno: '1990-03-07', sesso: 'F', lavoro: 'autonomo' }, error: null }); await aspetta();
-  for (const id of ['f-cg', 'f-cm', 'f-ca', 'f-sesso', 'f-lavoro']) assert.equal($(id).disabled, false, id);
-  assert.equal($('f-sesso').value, 'F'); assert.equal($('f-lavoro').value, 'autonomo'); assert.equal($('f-letti').hidden, true);
-  let non;
-  const B = modulo({ lettura: new Promise(r => { non = r; }) }), b = B.apri({ id: 'w', user_id: 'io', nome: 'Persona W', categoria: 'Prospect' });
-  non({ data: null, error: { message: 'giù' } }); await aspetta();
-  assert.equal(b.$('f-letti').textContent, 'Compleanno, sesso e lavoro non caricati: riapri per cambiarli.');
-  assert.equal(b.$('f-sesso').disabled, true);
-  b.$('f-cat').value = 'Prospect';
-  await b.$('invia').onclick();
-  assert.ok(!('sesso' in B.F.scritte[0].valori) && !('compleanno' in B.F.scritte[0].valori));
+prova('M4 (nei Dati): dati salvati e categoria no → { errore: \'categoria\' } («Dati salvati, la categoria no: riprova»); niente rete → { errore: true }', async () => {
+  const A = salva({ esiti: { ripristina: { message: 'giù' } } });
+  uguale(await A.salva(ARCHIVIATO, { categoria: 'Prospect' }), { errore: 'categoria' });
+  const B = salva({ esiti: { 'modifica contatto': { message: 'giù' } } });
+  uguale(await B.salva(ARCHIVIATO, { note: 'Nota finta' }), { errore: true });
+  assert.match(PL, /if \(r\.errore\) mostraToast\(r\.errore === 'categoria' \? 'Dati salvati, la categoria no: riprova\.' : 'Non salvato: controlla la connessione e riprova\.'\);/);
 });
 
 prova('M5: salvato un nome nuovo si apre subito la sua scheda; M7: dall\'Agenda lo stesso modulo con il nome e Prospect già scelti, salvato si torna all\'appuntamento', async () => {
@@ -140,15 +120,15 @@ prova('M5: salvato un nome nuovo si apre subito la sua scheda; M7: dall\'Agenda 
 });
 
 prova('M8: Età, «Tipo di lavoro» (nota 098, prima «Dipendente o autonomo?») con la riga sulla traccia, Interesse; l\'avviso della categoria più chiaro; «Contatto e/o Incaricato di» resta', () => {
-  const A = modulo(), { f } = A.apri({ id: 'w', user_id: 'io', nome: 'Persona W', categoria: 'Prospect' });
+  const A = modulo(), { f } = A.apri(null, {});
   assert.match(f.innerHTML, /<label>Età<\/label><select id="f-eta">/);
   assert.match(f.innerHTML, /<label>Tipo di lavoro <small class="sotto" style="margin:0">\(serve per la traccia dopo il Piano Marketing\)<\/small><\/label>/);
   assert.match(f.innerHTML, /<label>Area di interesse<\/label><select id="f-area" hidden>[\s\S]*?<\/select>\s*<select id="f-int">/);   // nota 098: due scelte, il menu di prima nascosto
   assert.match(f.innerHTML, /<label>Contatto e\/o Incaricato di<\/label>/);
   assert.doesNotMatch(f.innerHTML, /Fascia Età|per la prima traccia dopo il PM|<label>Area<\/label>/);
-  const B = modulo(), b = B.apri({ id: 'w', user_id: 'io', nome: 'Persona W', categoria: null }, { poiAzione: true });
-  assert.match(b.f.innerHTML, /Per segnare un'azione serve la categoria: sceglila qui sotto e tocca «Salva», poi si apre «Nuova azione»\./);
-  assert.match(PL, /const resto = \[\['Area di interesse', MB21Lista\.testoInteresse\(c\.area\)\],/);   // anche nella sezione Dati, a parole («Prodotti · eSpring»)
+  // nota 160: «Nuova azione» senza categoria porta alla sezione Dati, con l'avviso sopra la categoria; l'Area di interesse anche lì, a due scelte
+  assert.match(PL, /\$\{LS\.dopoCategoria \? '<div class="avviso" style="margin:4px 0 8px">Per segnare un\\'azione serve la categoria: sceglila qui\.<\/div>' : ''\}/);
+  assert.match(PL, /pastiglie\('interesse', 'Area di interesse', \[\['Attività', 'Attività'\], \['Prodotti', 'Prodotti'\]\], x\.interesse\)/);
 });
 
 prova('M3 e M4: moduloSemplice mostra la persona solo se chi lo apre la passa; «Salva» spento dice cosa manca (anche la voce «Scegli …» di un menu)', () => {
@@ -271,11 +251,10 @@ prova('S3: dalla Mappa lettura fresca al tocco; dopo, i conti si rifanno con que
   assert.equal(L.areaDa('Prodotti', 'Nutrilite'), 'Nutrilite'); assert.equal(L.areaDa('Prodotti', ''), 'Prodotti'); assert.equal(L.areaDa('Attività', 'eSpring'), 'Attività'); assert.equal(L.areaDa('', ''), '');
   assert.equal(L.corrisponde({ nome: 'Persona Z', citta: 'Roma (RM)' }, 'roma'), true);   // la ricerca trova anche la località
   assert.equal(L.testoInteresse('Mix Prodotti'), 'Prodotti · più di uno'); assert.equal(L.testoInteresse('eSpring'), 'Prodotti · eSpring'); assert.equal(L.testoInteresse('Attività'), 'Attività');
-  // nel modulo: un contatto con «eSpring» si apre su Prodotti · eSpring; scegliendo Attività il menu nascosto (quello che si salva) dice «Attività» e «Quali prodotti?» sparisce
-  const A = modulo(), { f } = A.apri({ id: 'w', user_id: 'io', nome: 'Persona W', categoria: 'Prospect', area: 'eSpring' });
-  assert.match(f.innerHTML, /<option selected>Prodotti<\/option>/);
-  assert.match(f.innerHTML, /<div class="campo" id="f-quali-campo"><label>Quali prodotti\?<\/label><select id="f-quali">[\s\S]*<option value="eSpring" selected>eSpring<\/option>[\s\S]*<option value="Mix Prodotti">Più di uno<\/option>/);
+  // nel modulo del nome nuovo: scegliendo Prodotti compare «Quali prodotti?» e il menu nascosto (quello che si salva) dice il prodotto; con Attività sparisce
+  const A = modulo(), { f } = A.apri(null, {});
   const int = f.querySelector('#f-int'), area = f.querySelector('#f-area'), campo = f.querySelector('#f-quali-campo');
+  assert.equal(campo.hidden, true);
   int.value = 'Attività'; int.onchange();
   assert.equal(area.value, 'Attività'); assert.equal(campo.hidden, true);
   int.value = 'Prodotti'; f.querySelector('#f-quali').value = 'Mix Prodotti'; f.querySelector('#f-quali').onchange();

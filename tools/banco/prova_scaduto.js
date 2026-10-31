@@ -17,7 +17,9 @@ prova('Pagine 071: nei file dell\'app nessun blocco dell\'abbonamento (limitato,
 });
 
 prova('soloGuardo resta: chi guarda un altro partner (o «Tutti») continua a guardare soltanto', () => {
-  assert.match(leggi('pagina-lista.js'), /function apriModulo\(c, poi = \{\}\) \{[^\n]*\n  if \(soloGuardo\(\)\) \{ if \(poi\.chiuso\) poi\.chiuso\(\); return; \}/);
+  assert.match(leggi('pagina-lista.js'), /function apriModulo\(c, poi = \{\}\) \{\n  if \(c\) return apriDatiDi\(c, poi\);[^\n]*\n  if \(soloGuardo\(\)\) \{ if \(poi\.chiuso\) poi\.chiuso\(\); return; \}/);
+  // nota 160: nella sezione Dati si guarda soltanto (campi spenti, niente salvataggi)
+  assert.match(leggi('pagina-lista.js'), /async function salvaDato\(c, cambi\) \{\n  if \(soloGuardo\(\)\) return;/);
   assert.match(leggi('pagina-vendite.js'), /function moduloVendita\(v, proposta\) \{\n  if \(soloGuardo\(\)\) return;/);
 });
 

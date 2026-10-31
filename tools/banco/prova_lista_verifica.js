@@ -196,7 +196,7 @@ prova('L3: la domanda «… è diventato Partner: vuoi invitarlo nell\'app MB21?
   uguale(domande, ['Persona A è diventato Partner']);
   assert.match(PL, /\nconst INVITO_APP = false;\n/);
   // i tre punti chiamano tutti questa funzione
-  assert.equal((PL + leggi('pagina-dashboard.js') + IDX).match(/domandaInvito\(/g).length, 4);   // 3 chiamate + la funzione
+  assert.equal((PL + leggi('pagina-dashboard.js') + IDX).match(/domandaInvito\(/g).length, 5);   // 4 chiamate + la funzione (nota 160: anche la categoria cambiata nei Dati)
 });
 
 prova('L3: la targhetta dell\'app (📱 «3 gg») e la sua lettura spente con lo stesso interruttore; «app» in Cerca torna una parola come le altre', async () => {
@@ -228,7 +228,7 @@ prova('L3: con «Tutti» nel menu della card una riga fissa al posto dell\'avvis
   assert.equal(sopra, '<div class="contatta"></div><p class="scelta-nota">Con «Tutti» si guarda soltanto: per modificare si sceglie un partner nel Partner Select.</p>');
   uguale(voci, []);
   ctx.guardo = false; await ctx.menu('a');
-  assert.equal(sopra, '<div class="contatta"></div>'); uguale(voci, ['Modifica', 'Archivia']);
+  assert.equal(sopra, '<div class="contatta"></div>'); uguale(voci, ['Modifica i dati', 'Archivia']);   // nota 160: porta alla sezione Dati
 });
 
 prova('L3: la cornetta prende il numero con la regola dei 4 tasti; spenta, un tocco dice «Manca un numero che inizia con «+».»', () => {
@@ -253,7 +253,7 @@ function apriModuloVero(c, poi) {
     dbq: () => new Promise(() => {}), supa: { from: () => ({ select: () => ({ eq: () => ({ maybeSingle: () => null }) }) }) }, leggiAccountCliente: () => new Promise(() => {}),
     document: { createElement: () => { const n = new Nodo(); fogli.push(n); return n; }, body: { appendChild() {} } } };
   vm.createContext(ctx);
-  vm.runInContext(CONTA[0] + pezzo(PL, 'function campoInteresse') + '\n' + pezzo(PL, 'function collegaInteresse') + '\n' + pezzo(PL, 'function apriModulo') + '\n' + pezzo(IDX, 'function tendina5Html') + '\n' + pezzo(IDX, 'function collegaTendine5') + ';this.apri = apriModulo;', ctx);
+  vm.runInContext(CONTA[0] + pezzo(PL, 'function campoInteresse') + '\n' + pezzo(PL, 'function collegaInteresse') + '\n' + pezzo(PL, 'function apriModulo') + '\n' + pezzo(PL, 'function tendinaCategoriaHtml') + '\n' + pezzo(IDX, 'function tendina5Html') + '\n' + pezzo(IDX, 'function collegaTendine5') + ';this.apri = apriModulo;', ctx);
   ctx.apri(c, poi || {});
   return fogli[0];
 }
@@ -283,7 +283,7 @@ prova('L4: finché manca qualcosa, sul bottone c\'è scritto cosa: «Scrivi il n
 });
 
 prova('Nota 127: la Categoria è una tendina (sel5 + tendina5) — chiusa dice la scelta col pallino, «Non collegato» con la sua spiegazione; un tocco su una voce la sceglie, scrive in #f-cat e la tendina si richiude', () => {
-  const f = apriModuloVero({ id: 'c1', user_id: 'io', nome: 'Persona A', categoria: 'Prospect', telefono: '+393330000001' }), $ = id => f.querySelector('#' + id);
+  const f = apriModuloVero(null, { nome: 'Persona A', categoria: 'Prospect' }), $ = id => f.querySelector('#' + id);   // nota 160: il modulo è per il nome nuovo
   let h = f.innerHTML;
   assert.doesNotMatch(h, /mc-cats|class="mc-cat /);   // niente più pastiglie
   assert.match(h, /<div id="f-cat-tnd"><div class="tnd5"><button type="button" class="sel5" data-tnd5><b><i class="mc-pallino cat-Prospect"><\/i>Prospect<\/b><em>▾<\/em><\/button><div class="ag-scelte tendina5" >/);
@@ -309,12 +309,17 @@ prova('Nota 127: la Categoria è una tendina (sel5 + tendina5) — chiusa dice l
   assert.match(IDX, /\.mc-pallino \{ display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var\(--cat\);/);
 });
 
-prova('L4: in Modifica i tre gruppi di sempre, con «Archiviato» tra le categorie', () => {
-  const h = apriModuloVero({ id: 'c1', user_id: 'io', nome: 'Persona A', categoria: 'Prospect', telefono: '+393330000001' }).innerHTML;
-  assert.doesNotMatch(h, /mc-altri/);
-  assert.deepEqual([...h.matchAll(/<h4 class="mc-t">([^<]+)<\/h4>/g)].map(m => m[1]), ['Chi è', 'Dati personali', 'Per l\'attività']);
-  assert.match(h, /data-cat="Archiviato"/);
-  assert.ok(h.indexOf('id="f-cat"') > h.indexOf('Per l\'attività'));
+prova('160: una scheda che c\'è già non apre più il modulo ma la sezione Dati, con i gruppi di sempre (Chi è · Per l\'attività · Dati personali) e «Archiviato» tra le categorie', () => {
+  const aperte = [];
+  const ctx = { soloGuardo: () => false, apriDatiDi: (c, poi) => aperte.push([c.id, !!(poi && poi.poiAzione)]) };
+  vm.createContext(ctx); vm.runInContext(pezzo(PL, 'function apriModulo') + ';this.apri = apriModulo;', ctx);
+  ctx.apri({ id: 'c1' }); ctx.apri({ id: 'c2' }, { poiAzione: true });
+  uguale(aperte, [['c1', false], ['c2', true]]);
+  const dati = pezzo(PL, 'function disegnaDati');
+  assert.deepEqual([...dati.matchAll(/<h4 class="mc-t">([^<]+)<\/h4>/g)].map(m => m[1]), ['Chi è', 'Per l\'attività', 'Dati personali']);
+  assert.match(dati, /const categorie = conStorico\(L\.CATEGORIE, c\.categoria\);/);   // con «Archiviato» (il nome nuovo no)
+  assert.ok(L.CATEGORIE.includes('Archiviato'));
+  assert.doesNotMatch(PL, /id="modifica">Modifica<\/button>/);   // via il tasto «Modifica» in testa
 });
 
 prova('L4: la domanda di conferma (chiediConferma, una per tutta l\'app) sta al centro, come le scelte', async () => {
@@ -477,7 +482,7 @@ prova('L7: «Aggiorna i nomi» sta in alto, accanto al conto (anche con l\'elenc
   assert.match(IDX, /\.ls-ordina \{[^}]*flex-wrap: wrap;/);
 });
 
-prova('L7: nome nuovo dal «+» e «Modifica» dai tre puntini: si rilegge solo la riga di quella persona (il nome nuovo compare subito)', async () => {
+prova('L7: nome nuovo dal «+»: si rilegge solo la riga di quella persona (il nome nuovo compare subito)', async () => {
   const letture = [];
   const fogli = [];
   const q = { insert: () => q, update: () => q, eq: () => q, select: () => q, maybeSingle: () => q, single: () => Promise.resolve({ data: { id: 'nuovo1' }, error: null }),
@@ -488,22 +493,13 @@ prova('L7: nome nuovo dal «+» e «Modifica» dai tre puntini: si rilegge solo 
     aggiornaRiga: async id => { letture.push(id); }, ricaricaERidisegna: () => Promise.resolve(), mostraToast() {}, chiediConferma: async () => true, domandaInvito() {}, azionePiu() {},
     document: { createElement: () => { const n = new Nodo(); fogli.push(n); return n; }, body: { appendChild() {} } } };
   vm.createContext(ctx);
-  vm.runInContext([CONTA[0], PL.match(/^const testoDoppioni = .*$/m)[0], pezzo(PL, 'async function doppioniDi'), pezzo(PL, 'async function salvaNomeNuovo'), pezzo(PL, 'function campoInteresse') + '\n' + pezzo(PL, 'function collegaInteresse') + '\n' + pezzo(PL, 'function apriModulo'), pezzo(IDX, 'function tendina5Html'), pezzo(IDX, 'function collegaTendine5'), 'this.apri = apriModulo;'].join('\n'), ctx);   // L9: il nome nuovo passa da salvaNomeNuovo
+  vm.runInContext([CONTA[0], PL.match(/^const testoDoppioni = .*$/m)[0], pezzo(PL, 'async function doppioniDi'), pezzo(PL, 'async function salvaNomeNuovo'), pezzo(PL, 'function campoInteresse') + '\n' + pezzo(PL, 'function collegaInteresse') + '\n' + pezzo(PL, 'function apriModulo') + '\n' + pezzo(PL, 'function tendinaCategoriaHtml'), pezzo(IDX, 'function tendina5Html'), pezzo(IDX, 'function collegaTendine5'), 'this.apri = apriModulo;'].join('\n'), ctx);   // L9: il nome nuovo passa da salvaNomeNuovo
   // nuovo
   ctx.apri(null, {}); let f = fogli.pop(), $ = id => f.querySelector('#' + id);
   $('f-nome').value = 'Persona Nuova'; $('f-cat').value = 'Prospect'; $('f-cat').onchange();
   await $('invia').onclick();
   uguale(letture, ['nuovo1']);
-  // modifica dai tre puntini (scheda chiusa)
-  ctx.apri({ id: 'z', user_id: 'io', nome: 'Persona Z', categoria: 'Prospect' }); f = fogli.pop(); $ = id => f.querySelector('#' + id);
-  $('f-cat').value = 'Prospect'; $('f-cat').onchange();
-  await $('invia').onclick();
-  uguale(letture, ['nuovo1', 'z']);
-  // con la scheda aperta la rilegge già ricaricaERidisegna: non due volte
-  ctx.LS.contatto = { id: 'z' }; ctx.apri({ id: 'z', user_id: 'io', nome: 'Persona Z', categoria: 'Prospect' }); f = fogli.pop(); $ = id => f.querySelector('#' + id);
-  $('f-cat').value = 'Prospect'; $('f-cat').onchange();
-  await $('invia').onclick();
-  uguale(letture, ['nuovo1', 'z']);
+  // una scheda che c'è già si cambia nella sezione Dati (nota 160): ogni salvataggio rilegge solo quella riga (prova «160: nome»)
 });
 
 prova('L7: le altre pagine non buttano via tutta la Lista: rileggono solo la persona toccata (tranne l\'importazione dell\'Admin e «Aggiorna i nomi»)', () => {
@@ -754,40 +750,135 @@ prova('L8b: la scheda di un altro partner, aperta da Agenda, Report o Mappa, si 
   assert.equal(interi, 1);   // Lista mai letta: prima la lettura intera (la sua), poi la riga se serve
 });
 
-prova('Nota 080 (Ignazio 24/10): «Cliente con account» — con «Sì» la data «dal» si vede e si cambia (la salvata, o oggi se è nuovo); si salva solo se cambia, mai nel futuro', async () => {
-  const fogli = [], salvate = [], avvisi = [];
-  const q = { update: r => { salvate.push(r); return q; }, insert: () => q, eq: () => q, select: () => q, maybeSingle: () => q, single: () => q, then: ok => Promise.resolve(ok({ data: null, error: null })) };
-  const c = { id: 'c1', user_id: 'io', nome: 'Cliente A', categoria: 'Cliente', telefono: '+393330000001' };
-  const ctx = { esc, ic: n => `[${n}]`, MB21Lista: L, MB21Rubrica: require('../../rubrica.js'), MB21Coda: { oggiRoma: () => '2026-10-24' }, ST: { utente: { id: 'io' } },
-    LS: { righe: [c], account: { id: 'c1', dal: '2024-03-01' }, contatto: c }, soloGuardo: () => false, visto: () => ({ id: 'io' }), aNome: () => '', classeCat: () => 'cat', iniziali: () => 'CA', Event: class {},
-    dbq: (n, p) => (n === 'compleanno' ? new Promise(() => {}) : Promise.resolve(p)), supa: { from: () => q, rpc: () => Promise.resolve({ error: null }) }, leggiAccountCliente: () => new Promise(() => {}),
-    aggiornaRiga: async () => {}, ricaricaERidisegna: () => Promise.resolve(), mostraToast: t => avvisi.push(t), chiediConferma: async () => true, domandaInvito() {}, azionePiu() {},
-    document: { createElement: () => { const n = new Nodo(); n.isConnected = true; fogli.push(n); return n; }, body: { appendChild() {} } } };
+// La sezione Dati vera (nota 160) in un finto mondo: disegnaDati, collegaDati, salvaDato, dopoDato, salvaContatto, con un database che registra
+function datiVeri(c, { extra = { compleanno: null, sesso: null, lavoro: null, codice_amway: null }, account = null, righe = [], conferma = true, guardo = false } = {}) {
+  const app = new Nodo(), scritte = [], avvisi = [], domande = [], fatti = [];
+  app.innerHTML = '<div id="sezione"></div>';
+  const from = t => { const x = { t, op: null, v: null, f: [] }; const q = new Proxy({}, { get: (_, p) => (p === 'then' ? (ok => Promise.resolve(ok({ data: null, error: null })))
+    : (...a) => { if (['update', 'insert', 'delete'].includes(p)) { x.op = p; x.v = a[0]; scritte.push(x); } if (p === 'eq') x.f.push(a); return q; }) }); return q; };
+  const LSf = { righe: [{ ...c }, ...righe], datiExtra: extra ? { id: c.id, ...extra } : null, account: { id: c.id, dal: account }, sezione: 'dati', dopoCategoria: null };
+  LSf.contatto = LSf.righe[0];
+  const ctx = { esc, ic: n => `[${n}]`, MB21Lista: L, MB21Rubrica: require('../../rubrica.js'), MB21Coda: { oggiRoma: () => '2026-10-31' }, MB21Agenda: require('../../agenda.js'), LS: LSf,
+    soloGuardo: () => guardo, classeCat: k => 'cat-' + k, dbq: (n, p) => Promise.resolve(p), leggiComuni: async () => [], testoDoppioni: () => 'C\'è già un nome uguale',
+    supa: { from, rpc: (n, a) => { scritte.push({ rpc: n, a }); return Promise.resolve({ error: null }); } },
+    aggiornaRiga: async id => { fatti.push('rileggi'); const i = LSf.righe.findIndex(x => x.id === id); const u = Object.assign({}, ...scritte.map(x => (x.rpc === 'cataloga_contatto' ? { categoria: x.a.p_categoria } : x.rpc === 'archivia_contatto' ? { categoria: 'Archiviato' } : x.op === 'update' ? x.v : {}))); delete u.aggiornato_il; if (i >= 0) LSf.righe[i] = { ...LSf.righe[i], ...u }; },
+    chiediConferma: async (t, testo) => { domande.push([t, testo]); return conferma; }, mostraToast: (t, annulla) => avvisi.push({ t, annulla }),
+    disegnaScheda: () => fatti.push('scheda'), mostraAccountCliente: () => fatti.push('account'), accountDi: async () => account, elimina: x => fatti.push('elimina ' + x.id),
+    ripristina: x => fatti.push('ripristina ' + x.id), domandaInvito: x => fatti.push('invito ' + x.nome), azionePiu: () => fatti.push('azione'), copiaCodice() {},
+    document: { getElementById: id => app.getElementById(id), querySelector: x => app.querySelector(x), activeElement: null } };
   vm.createContext(ctx);
-  vm.runInContext([CONTA[0], PL.match(/^const testoDoppioni = .*$/m)[0], pezzo(PL, 'async function doppioniDi'), pezzo(PL, 'async function salvaNomeNuovo'), pezzo(PL, 'function campoInteresse') + '\n' + pezzo(PL, 'function collegaInteresse') + '\n' + pezzo(PL, 'function apriModulo'), pezzo(IDX, 'function tendina5Html'), pezzo(IDX, 'function collegaTendine5'), 'this.apri = apriModulo;'].join('\n'), ctx);
-  // (nel finto DOM il menu della categoria non prende l'opzione «selected»: si mette a mano, come la vede il telefono)
-  const apri = () => { ctx.apri(c); const f = fogli.pop(); f.querySelector('#f-cat').value = 'Cliente'; return { f, $: id => f.querySelector('#' + id) }; };
-  // cliente da anni: la data salvata, che si cambia
-  let m = apri();
-  assert.equal(m.$('f-account-dal').value, '2024-03-01'); assert.equal(m.$('f-account-dal-posto').style.display, ''); assert.equal(m.$('f-account-dal').attr.max, '2026-10-24');
-  await m.$('invia').onclick(); assert.equal(salvate.at(-1).account_cliente_dal, undefined);   // non cambiata: non si scrive
-  m = apri(); m.$('f-account-dal').value = '2021-05-10'; await m.$('invia').onclick();
-  assert.equal(salvate.at(-1).account_cliente_dal, '2021-05-10');
-  // nel futuro: no (dopo il salvataggio la scheda rilegge il dato: qui lo si rimette a mano)
-  ctx.LS.account = { id: 'c1', dal: '2021-05-10' };
-  const prima = salvate.length;
-  m = apri(); m.$('f-account-dal').value = '2026-11-01'; await m.$('invia').onclick();
-  assert.equal(salvate.length, prima); assert.match(avvisi.at(-1), /non può essere nel futuro/);
-  // «No»: la data sparisce e si toglie l'account; «Sì» su un cliente senza account: oggi, già scritto
-  ctx.LS.account = { id: 'c1', dal: '2021-05-10' };
-  m = apri(); m.f.querySelectorAll('[data-account]').find(b => b.dataset.account === 'no').onclick();
-  assert.equal(m.$('f-account-dal-posto').style.display, 'none');
-  await m.$('invia').onclick(); assert.equal(salvate.at(-1).account_cliente_dal, null);
-  ctx.LS.account = { id: 'c1', dal: null };
-  m = apri(); assert.equal(m.$('f-account-dal-posto').style.display, 'none');
-  m.f.querySelectorAll('[data-account]').find(b => b.dataset.account === 'si').onclick();
-  assert.equal(m.$('f-account-dal').value, '2026-10-24');
-  await m.$('invia').onclick(); assert.equal(salvate.at(-1).account_cliente_dal, '2026-10-24');
+  vm.runInContext(['function disegnaDati', 'function collegaDati', 'function fraseCategoria', 'async function salvaDato', 'async function dopoDato', 'async function salvaContatto', 'function tendinaCategoriaHtml']
+    .map(x => pezzo(PL, x)).join('\n') + pezzo(IDX, 'function tendina5Html') + pezzo(IDX, 'function collegaTendine5') + ';this.d = disegnaDati;', ctx);
+  ctx.d(LSf.contatto, LSf.datiExtra);
+  const scritto = () => scritte.map(x => (x.rpc ? x.rpc : Object.fromEntries(Object.entries(x.v).filter(([k]) => k !== 'aggiornato_il'))));
+  return { app, ctx, scritte, scritto, avvisi, domande, fatti, $: x => app.querySelector(x) };
+}
+const aspetta = () => new Promise(r => setImmediate(r));
+const P1 = { id: 'c1', user_id: 'io', nome: 'Persona Uno', categoria: 'Prospect', telefono: '+393330000001', citta: null };
+
+prova('160: tutte le voci nei Dati, nei gruppi del modulo (Chi è · Per l\'attività · coppia · Dati personali) e in fondo «Elimina dalla lista»; via «Modifica» in testa', () => {
+  const D = datiVeri(P1), h = D.app.innerHTML;
+  const ordine = ['data-dt="nome"', 'data-dt="telefono"', 'id="dt-cat"', 'data-dt="referral_di"', 'data-dt="note"', 'data-dt-pil="interesse"', 'id="coppia"',
+    'data-dt-pil="fascia_eta"', 'data-dt-comp="g"', 'data-dt-pil="sesso"', 'data-dt="professione"', 'data-dt-pil="lavoro"', 'data-dt="citta"', 'id="dt-elimina"'];
+  const pos = ordine.map(x => h.indexOf(x));
+  assert.ok(pos.every((p, i) => p > 0 && (!i || p > pos[i - 1])), JSON.stringify(pos));
+  assert.deepEqual([...h.matchAll(/<h4 class="mc-t">([^<]+)<\/h4>/g)].map(m => m[1]), ['Chi è', 'Per l\'attività', 'Dati personali']);
+  assert.match(h, /data-dt="citta" value="" placeholder="Tocca per scrivere" maxlength="40"/);   // i campi vuoti ci sono, e si toccano
+  assert.match(h, /data-dt-pil="sesso" data-v="F" data-scelto="0" class="">Donna<\/button>/);
+  assert.match(h, /data-cat="Archiviato"/);   // anche «Archiviato» tra le categorie
+  D.app.clic('#dt-elimina'); uguale(D.fatti, ['elimina c1']);   // la stessa funzione dei tre puntini
+  assert.doesNotMatch(PL, /id="modifica">Modifica<\/button>/);
+  // finché compleanno, sesso e lavoro non arrivano: «Carico…», e non si toccano
+  const E = datiVeri(P1, { extra: null });
+  assert.match(E.app.innerHTML, /<div class="dt-pieno" id="dt-sesso"><small>Sesso<\/small><span class="dt-carico">Carico…<\/span><\/div>/);
+  assert.doesNotMatch(E.app.innerHTML, /data-dt-comp=/);
+});
+
+prova('160: il nome — prima/dopo: si salva da solo lasciando il campo, «Salvato · Annulla» lo rimette; vuoto no; un doppione chiede «Salvo lo stesso?»', async () => {
+  const D = datiVeri(P1, { righe: [{ id: 'c9', user_id: 'io', nome: 'Persona Nove' }] }), nome = D.$('[data-dt="nome"]');
+  nome.value = 'Persona Uno Bis'; await nome.onchange();
+  uguale(D.scritto(), [{ nome: 'Persona Uno Bis' }]); uguale(D.scritte[0].f, [['id', 'c1']]);
+  assert.equal(D.avvisi.at(-1).t, 'Salvato'); assert.ok(D.avvisi.at(-1).annulla);
+  uguale(D.fatti, ['rileggi', 'scheda']);   // una lettura sola, poi la testata col nome nuovo
+  assert.equal(D.ctx.LS.contatto.nome, 'Persona Uno Bis');
+  await D.avvisi.at(-1).annulla();
+  uguale(D.scritto(), [{ nome: 'Persona Uno Bis' }, { nome: 'Persona Uno' }]);   // Annulla: com'era
+  nome.value = '  '; await nome.onchange();
+  assert.equal(D.avvisi.at(-1).t, 'Il nome non può restare vuoto'); assert.equal(D.scritte.length, 2);
+  // un nome uguale a un altro: la domanda di prima; «no» → niente salvato, la scheda torna com'è
+  const X = datiVeri(P1, { righe: [{ id: 'c9', user_id: 'io', nome: 'Persona Nove' }], conferma: false }), n2 = X.$('[data-dt="nome"]');
+  n2.value = 'Persona Nove'; await n2.onchange();
+  uguale(X.domande.map(d => d[0]), ['Salvo lo stesso?']); uguale(X.scritte, []);
+  // stesso valore: niente
+  const Y = datiVeri(P1), n3 = Y.$('[data-dt="nome"]'); n3.value = 'Persona Uno'; await n3.onchange(); uguale(Y.scritte, []);
+});
+
+prova('160: il telefono — prima/dopo: prefisso e numero insieme («+39…»), lo stesso controllo dei doppioni sul numero', async () => {
+  const D = datiVeri(P1), tel = D.$('[data-dt="telefono"]');
+  assert.equal(tel.value, '3330000001'); assert.equal(D.$('[data-dt-pref]').innerHTML.includes('<option value="+39" selected>'), true);   // il numero senza il prefisso, il prefisso a parte
+  tel.value = '338 1234567'; await tel.onchange();
+  uguale(D.scritto(), [{ telefono: '+393381234567' }]);
+  const X = datiVeri(P1, { righe: [{ id: 'c8', user_id: 'io', nome: 'Persona Otto', telefono: '+393381234567' }], conferma: false }), t2 = X.$('[data-dt="telefono"]');
+  t2.value = '338 1234567'; await t2.onchange();
+  uguale(X.domande.map(d => d[0]), ['Salvo lo stesso?']); uguale(X.scritte, []);
+});
+
+prova('160: la categoria — prima/dopo: una domanda con la frase semplice; «Cambia» salva con la funzione giusta; Partner → la domanda d\'invito; «no» → niente', async () => {
+  const D = datiVeri(P1);
+  await D.app.clic('[data-cat="Partner"]');
+  uguale(D.domande, [['Categoria: Partner?', 'Persona Uno passa da Prospect a Partner.']]);
+  uguale(D.scritto(), [{ categoria: 'Partner' }]); assert.ok(D.fatti.includes('invito Persona Uno'));
+  const A = datiVeri(P1);
+  await A.app.clic('[data-cat="Archiviato"]');
+  assert.match(A.domande[0][1], /^Persona Uno va negli Archiviati: le azioni da fare escono dall'Agenda\. Si ripristina quando vuoi\.$/);
+  uguale(A.scritto(), ['archivia_contatto']);
+  assert.match(A.avvisi.at(-1).t, /^Persona Uno spostato in Archiviati/); A.avvisi.at(-1).annulla(); assert.ok(A.fatti.includes('ripristina c1'));
+  const N = datiVeri(P1, { conferma: false }); await N.app.clic('[data-cat="Cliente"]'); uguale(N.scritte, []);
+  const S = datiVeri(P1); await S.app.clic('[data-cat="Prospect"]'); uguale(S.domande, []);   // la stessa: niente
+  assert.match(PL, /entra nella Lista come \$\{nome\(nuova\)\}: lo risenti da domani\./);   // da senza categoria
+  // «Nuova azione» senza categoria (S5c): scelta la categoria, si apre «Nuova azione»
+  const Z = datiVeri({ ...P1, categoria: null }); Z.ctx.LS.dopoCategoria = 'azione'; Z.ctx.d(Z.ctx.LS.contatto, Z.ctx.LS.datiExtra);
+  assert.match(Z.app.innerHTML, /Per segnare un'azione serve la categoria: sceglila qui\./);
+  await Z.app.clic('[data-cat="Prospect"]');
+  uguale(Z.scritto(), ['cataloga_contatto']); assert.equal(Z.fatti.at(-1), 'azione');
+});
+
+prova('160: le scelte a un tocco (età, sesso, lavoro, interesse) e i campi scritti (località, note…): un campo alla volta; un tocco sulla scelta già fatta la toglie', async () => {
+  const D = datiVeri(P1);
+  await D.app.clic('[data-dt-pil="fascia_eta"][data-v="31-40"]');
+  await D.app.clic('[data-dt-pil="sesso"][data-v="F"]');
+  await D.app.clic('[data-dt-pil="interesse"][data-v="Prodotti"]');
+  uguale(D.scritto(), [{ fascia_eta: '31-40' }, { sesso: 'F' }, { area: 'Prodotti' }]);
+  assert.match(D.app.innerHTML, /data-dt-pil="fascia_eta" data-v="31-40" data-scelto="1" class="si"/);
+  assert.match(D.app.innerHTML, /<small>Quali prodotti\?<\/small><select data-dt-quali>/);   // con Prodotti, quali
+  await D.app.clic('[data-dt-pil="sesso"][data-v="F"]');   // di nuovo: tolta
+  uguale(D.scritto().at(-1), { sesso: null });
+  const c = D.$('[data-dt="citta"]'); c.value = 'Roma'; await c.onchange();
+  uguale(D.scritto().at(-1), { citta: 'Roma' });
+  assert.ok(!D.fatti.slice(-2).includes('scheda'));   // la località non ridisegna la scheda
+  // guardando soltanto («Tutti»): campi spenti, niente «Elimina», niente salvataggi
+  const G = datiVeri(P1, { guardo: true });
+  assert.match(G.app.innerHTML, /data-dt="nome" value="Persona Uno" placeholder="—" disabled>/);
+  assert.doesNotMatch(G.app.innerHTML, /dt-elimina/);
+});
+
+prova('Nota 080 nei Dati (nota 160): «Cliente con account» — Sì/No e «Dal» (la salvata, o oggi se è nuovo); si salva solo se cambia, mai nel futuro', async () => {
+  const C = { id: 'c2', user_id: 'io', nome: 'Cliente A', categoria: 'Cliente', telefono: '+393330000002' };
+  const D = datiVeri(C, { account: '2024-03-01' }); await aspetta();
+  const dal = D.$('[data-acc-dal]');
+  assert.equal(dal.value, '2024-03-01'); assert.equal(dal.attr.max, '2026-10-31');
+  dal.value = '2024-03-01'; dal.onchange(); uguale(D.scritte, []);   // non cambiata: non si scrive
+  dal.value = '2021-05-10'; await dal.onchange(); await aspetta();
+  uguale(D.scritto(), [{ account_cliente_dal: '2021-05-10' }]); assert.ok(D.fatti.includes('account'));   // la riga in testata si aggiorna
+  const F = datiVeri(C, { account: '2024-03-01' }); await aspetta();
+  const d2 = F.$('[data-acc-dal]'); d2.value = '2026-11-05'; d2.onchange();
+  uguale(F.scritte, []); assert.match(F.avvisi.at(-1).t, /non può essere nel futuro/);
+  const N = datiVeri(C, { account: '2024-03-01' }); await aspetta();
+  await N.app.clic('[data-acc="no"]'); uguale(N.scritto(), [{ account_cliente_dal: null }]);
+  const S = datiVeri(C, { account: null }); await aspetta();
+  assert.equal(S.$('[data-acc-dal]'), null);   // senza account niente data
+  await S.app.clic('[data-acc="si"]'); uguale(S.scritto(), [{ account_cliente_dal: '2026-10-31' }]);
+  assert.doesNotMatch(datiVeri({ ...C, categoria: 'Prospect' }).app.innerHTML, /dt-account/);   // solo per i Clienti
 });
 
 prova('Nota 080, punto 2 (Ignazio 24/10, «C»): la targhetta «Account» uguale sulla card della Lista e nella testata della scheda; solo per i Clienti con la data', () => {

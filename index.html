@@ -434,6 +434,26 @@
   .sezioni button.scelto { background: var(--accento); color: var(--accento-su); }
   .riquadro { background: var(--superficie); border-radius: var(--raggio-card); padding: 16px; margin-bottom: 12px; box-shadow: var(--ombra-card); }
   .dati { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; }
+  /* nota Pagine 160 (Ignazio 31/10, foto dati2_160.png): la sezione Dati si cambia sul posto. I campi sembrano testo finché non si toccano;
+     le scelte sono pastiglie a un tocco; con «Tutti» nel Partner Select tutto spento */
+  .riquadro.dt { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; }
+  .dt > div { min-width: 0; } .dt .dt-pieno { grid-column: 1 / -1; }
+  .dt small { display: block; font-size: 12px; color: var(--grigio); margin-bottom: 3px; }
+  .dt .dt-in { width: 100%; font: inherit; font-size: 15px; color: var(--testo); background: transparent; border: 1px dashed transparent; border-radius: 10px; padding: 6px 8px; margin: 0 -8px; min-height: 0; }
+  .dt [data-dt="nome"] { font-size: 17px; font-weight: 700; }
+  .dt .dt-in::placeholder { color: #A0A7B4; }
+  @media (hover: hover) { .dt .dt-in:not(:disabled):hover { border-color: var(--linea); background: var(--superficie-2); } }
+  .dt .dt-in:focus { outline: none; border: 2px solid var(--cat-partner); background: var(--superficie); padding: 5px 7px; }
+  .dt .dt-in:disabled { color: var(--testo); -webkit-text-fill-color: var(--testo); opacity: 1; }
+  .dt-pil { display: flex; flex-wrap: wrap; gap: 6px; }
+  .dt-pil button { border: 0; font-size: 13.5px; font-weight: 600; padding: 6px 11px; border-radius: 999px; background: #F2F4F7; color: #3A4150; min-height: 34px; }
+  .dt-pil button.si { background: var(--cat-partner); color: #fff; }
+  .dt-pil button:disabled { opacity: .75; }
+  .dt-carico { font-size: 13px; color: var(--testo-tenue); }
+  .dt-fisso { font-size: 15px; }
+  .dt-spento { pointer-events: none; opacity: .8; }
+  #dati-riquadro .mc-t:first-child { margin-top: 6px; }
+  #dati-riquadro #coppia .riquadro { margin-top: 10px; }
   .dati small { display: block; font-size: 12px; color: var(--grigio); }
   .dati div { font-size: 15px; overflow-wrap: anywhere; }
   .piccolo { border: 0; border-radius: var(--raggio-pill); min-height: 36px; background: var(--superficie); box-shadow: var(--ombra-card); font-size: 14px; font-weight: 600; padding: 9px 14px; color: var(--testo); margin-bottom: 12px; }

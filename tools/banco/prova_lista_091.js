@@ -9,7 +9,7 @@ const L = require('../../lista.js'), R = require('../../rubrica.js'), E = requir
 const { Nodo } = require('../design/mini_dom.js');
 const BASE = path.join(__dirname, '..', '..');
 const leggi = f => fs.readFileSync(path.join(BASE, f), 'utf8');
-const PL = leggi('pagina-lista.js');
+const PL = leggi('pagina-lista.js'), IDX = leggi('index.html');
 const MIG = ['20261025063000_apri_oggi_senza_categoria_via.sql', '20261025063100_contatti_lista_senza_contatti_fatti.sql', '20261025063200_contatti_da_rubrica.sql', '20261025063300_lista_nomi_meno_colonne.sql'];
 const sql = f => leggi('supabase/migrations/' + f);
 const codice = t => t.split('\n').filter(r => !r.startsWith('--')).join('\n');   // senza i commenti, che raccontano il prima
@@ -40,29 +40,29 @@ prova('091 (b): «Contatti fatti» si conta aprendo «Dati» della scheda (stess
   const risposte = { contatti: { data: { compleanno: null, sesso: null, lavoro: null, codice_amway: null }, error: null }, azioni: { count: 4, error: null, data: null } };
   const supa = { from: t => { const q = { t, passi: [] }; const c = new Proxy({}, { get: (_, p) => (p === 'then' ? (si => { letture.push(q); return Promise.resolve(risposte[t]).then(si); })
     : (...a) => { q.passi.push([p, ...a]); return c; }) }); return c; } };
-  const ctx = { esc, ic: n => `[${n}]`, MB21Lista: L, MB21Rubrica: R, supa, dbq: (_, p) => Promise.resolve(p), LS: { sezione: 'dati' }, copiaCodice() {},
+  const ctx = { esc, ic: n => `[${n}]`, MB21Lista: L, MB21Rubrica: R, supa, dbq: (_, p) => Promise.resolve(p), LS: { sezione: 'dati', righe: [] }, copiaCodice() {}, soloGuardo: () => false, classeCat: k => 'cat-' + k,
     // il finto DOM non sostituisce un pezzo con outerHTML: il riquadro si riscrive intero (come alla prima apertura)
     document: { getElementById: id => (id === 'dati-riquadro' ? null : app.getElementById(id)), querySelector: s => app.querySelector(s) } };
   vm.createContext(ctx);
-  vm.runInContext([pezzo(PL, 'function disegnaDati'), riga(PL, 'const contaContattiFatti = '), PL.split('\n')[PL.split('\n').findIndex(r => r.startsWith('const contaContattiFatti = ')) + 1],
+  vm.runInContext([pezzo(PL, 'function disegnaDati'), pezzo(PL, 'function collegaDati'), pezzo(PL, 'function tendinaCategoriaHtml'), pezzo(IDX, 'function tendina5Html'), riga(PL, 'const contaContattiFatti = '), PL.split('\n')[PL.split('\n').findIndex(r => r.startsWith('const contaContattiFatti = ')) + 1],
     pezzo(PL, 'async function datiPersonaExtra'), 'this.d = disegnaDati; this.extra = datiPersonaExtra;'].join('\n'), ctx);
   const c = { id: 'c1', nome: 'Persona A', categoria: 'Prospect', note: 'Nota finta' };
   ctx.LS.contatto = c;
   ctx.d(c);   // prima passata: dalla Lista (senza il conto)
   assert.doesNotMatch(app.innerHTML, /Contatti fatti/);
   await ctx.extra(c);
-  assert.match(app.innerHTML, /<div><small>Contatti fatti<\/small>4<\/div>/);
+  assert.match(app.innerHTML, /<div><small>Contatti fatti<\/small><span class="dt-fisso">4<\/span><\/div>/);
   const q = letture.find(x => x.t === 'azioni');
   assert.equal(JSON.stringify(q.passi), JSON.stringify([['select', 'id', { count: 'exact', head: true }], ['eq', 'contatto_id', 'c1'], ['eq', 'tipo_azione', 'Contatto'], ['not', 'esito', 'is', null],
     ['not', 'esito', 'in', '("No Risposta","Telefono spento")'], ['or', 'esito.neq.Riordino,completata.is.true']]));   // valori nati dentro vm: si confrontano scritti
   risposte.azioni = { count: 0, error: null };
   await ctx.extra(c);
-  assert.match(app.innerHTML, /<div><small>Contatti fatti<\/small>0<\/div>/);
+  assert.match(app.innerHTML, /<div><small>Contatti fatti<\/small><span class="dt-fisso">0<\/span><\/div>/);
   risposte.azioni = { count: null, error: { message: 'giù' } };   // il conto non arriva: la riga non c'è, il resto sì
   app.innerHTML = '<div id="sezione"></div>';
   await ctx.extra(c);
   assert.doesNotMatch(app.innerHTML, /Contatti fatti/);
-  assert.match(app.innerHTML, /<small>Note<\/small>Nota finta/);
+  assert.match(app.innerHTML, /<small>Note<\/small><input class="dt-in" data-dt="note" value="Nota finta"/);   // nota 160: si scrive sul posto
 });
 
 prova('091: l\'Admin legge con COLONNE_LISTA senza contatti_fatti e con da_rubrica in fondo; lista_nomi dà ai partner le STESSE colonne', () => {
