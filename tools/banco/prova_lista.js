@@ -498,7 +498,7 @@ prova('Nota 031: nei Dati la riga «Codice Amway» (se c\'è), che si copia con 
   vm.createContext(ctx);
   vm.runInContext([pz(src, 'function disegnaDati'), pz(src, 'function collegaDati'), pz(src, 'async function copiaCodice'), pz(src, 'function tendinaCategoriaHtml'), pz(idx, 'function tendina5Html'), 'this.disegnaDati = disegnaDati;'].join('\n'), ctx);
   ctx.disegnaDati({ nome: 'Persona Uno', categoria: 'Partner' }, { codice_amway: '7001234', contatti_fatti: 3 });
-  assert.match(app.innerHTML, /<div><small>Codice Amway<\/small><button type="button" class="codice-copia" data-copia-codice="7001234"[^>]*>7001234<i data-ic="copia"><\/i><\/button><\/div>/);
+  assert.match(app.innerHTML, /<div class="dt-campo"><small>Codice Amway<\/small><button type="button" class="codice-copia" data-copia-codice="7001234"[^>]*>7001234<i data-ic="copia"><\/i><\/button><\/div>/);
   await app.querySelector('[data-copia-codice]').onclick();   // si copia anche guardando soltanto
   assert.deepEqual(copiati, ['7001234']); assert.equal(avvisi.at(-1), 'Codice 7001234 copiato');
   app.innerHTML = '<div id="sezione"></div>';   // il finto DOM non sostituisce con outerHTML: si riparte dalla sezione vuota

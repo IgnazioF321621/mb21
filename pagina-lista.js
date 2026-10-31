@@ -934,56 +934,61 @@ function sezioneDati() {
 }
 
 // ── La sezione Dati (nota Pagine 160, Ignazio 31/10: «nel momento in cui la scheda è creata, la modifica va fatta direttamente nella sezione Dati,
-// in cui ci sono tutte le voci… la voce "Modifica" sopra non serve»; «sembra ok» sulla foto docs/prototipi/dati2_160.png) ──
-// Tutte le voci del vecchio «Modifica», nello stesso ordine e con gli stessi gruppi: Chi è · Per l'attività · (Coppia) · Dati personali · Elimina.
-// Le scelte a un tocco, il resto si scrive sul posto; ogni campo si salva da solo quando lo lasci (salvaContatto, lo stesso salvataggio di prima) con
-// «Salvato · Annulla». Nome e telefono: i doppioni come prima («Salvo lo stesso?»); la categoria chiede conferma con una frase semplice.
-// Con «Tutti» nel Partner Select (soloGuardo) si legge soltanto. Compleanno, sesso e lavoro non stanno nella vista della Lista: arrivano con
-// `datiPersonaExtra` (seconda passata); finché non ci sono, i loro campi dicono «Carico…» e non si toccano (meglio non poterli cambiare che cancellarli).
+// in cui ci sono tutte le voci… la voce "Modifica" sopra non serve») ──
+// Seguito (Ignazio 31/10, vista online: «troppo dispersiva… un misto tra quello che c'era prima e questo»; «così va decisamente meglio» sulla foto
+// docs/prototipi/misto_160.png): UN riquadro come prima, etichetta piccola e valore su due colonne, tutte le voci del vecchio «Modifica» (anche le
+// vuote, «aggiungi»), niente titoli di gruppo: una riga sottile tra i dati dell'attività, quelli personali e la coppia; in fondo «Elimina dalla lista».
+// I campi scritti sembrano testo e si scrivono sul posto; le scelte (categoria, area, età, sesso, lavoro, compleanno) si leggono come testo con ▾ e al
+// tocco aprono lì sotto le pastiglie; «i tasti toccati prendono il colore della categoria e, se non è catalogato, è un grigio» (il riquadro ha la
+// classe della categoria: --cat). Ogni campo si salva da solo quando lo lasci (salvaDato → salvaContatto, il salvataggio di prima) con
+// «Salvato · Annulla». Nome e telefono: i doppioni come prima; la categoria chiede conferma con una frase semplice. Con «Tutti» nel Partner Select
+// (soloGuardo) si legge soltanto. Compleanno, sesso e lavoro arrivano con `datiPersonaExtra` (seconda passata): finché non ci sono dicono «Carico…».
 function disegnaDati(c, extra) {
   const box = document.getElementById('sezione');
   if (!box) return;
-  const L = MB21Lista, guardo = soloGuardo(), spento = guardo ? ' disabled' : '';
+  const L = MB21Lista, guardo = soloGuardo(), spento = guardo ? ' disabled' : '', vuoto = guardo ? '—' : 'aggiungi', freccia = guardo ? '' : ' <em>▾</em>';
   const conStorico = (lista, v) => (v && !lista.includes(v) ? [...lista, v] : lista);   // valori storici fuori elenco (es. «36-45») restano
-  const testo = (k, etichetta, v, { max, pieno, lista } = {}) => `<div class="${pieno ? 'dt-pieno' : ''}"><small>${etichetta}</small><input class="dt-in" data-dt="${k}" value="${esc(v || '')}" placeholder="${guardo ? '—' : 'Tocca per scrivere'}"${max ? ` maxlength="${Math.max(max, (v || '').length)}"` : ''}${lista ? ` list="${lista}"` : ''}${spento}></div>`;
-  const pastiglie = (k, etichetta, voci, v, attesa) => `<div class="dt-pieno" id="dt-${k}"><small>${etichetta}</small>${attesa ? '<span class="dt-carico">Carico…</span>'
-    : `<div class="dt-pil">${voci.map(([val, t]) => `<button type="button" data-dt-pil="${k}" data-v="${esc(val)}" data-scelto="${val === v ? 1 : 0}" class="${val === v ? 'si' : ''}"${spento}>${esc(t)}</button>`).join('')}</div>`}</div>`;
+  const testo = (k, etichetta, v, { max, pieno, lista, tipo } = {}) => `<div class="dt-campo${pieno ? ' dt-pieno' : ''}"><small>${etichetta}</small><input class="dt-in" data-dt="${k}"${tipo ? ` type="${tipo}"` : ''} value="${esc(v || '')}" placeholder="${vuoto}"${max ? ` maxlength="${Math.max(max, (v || '').length)}"` : ''}${lista ? ` list="${lista}"` : ''}${spento}></div>`;
+  // una scelta: il valore scritto con ▾; al tocco (collegaDati) si apre sotto la fila di pastiglie
+  const valore = (k, t, prima = '') => `<button type="button" class="dt-val${t ? '' : ' dt-vuota'}" data-dt-apri="${k}"${spento}>${prima}${esc(t || vuoto)}${freccia}</button>`;
+  const pastiglie = (k, etichetta, voci, v, attesa) => `<div class="dt-campo" id="dt-${k}"><small>${etichetta}</small>${attesa ? '<span class="dt-carico">Carico…</span>'
+    : `${valore(k, (voci.find(x => x[0] === v) || [])[1])}<div class="dt-pil" data-dt-fila="${k}" hidden>${voci.map(([val, t]) => `<button type="button" data-dt-pil="${k}" data-v="${esc(val)}" data-scelto="${val === v ? 1 : 0}" class="${val === v ? 'si' : ''}">${esc(t)}</button>`).join('')}</div>`}</div>`;
   const tel = L.separaTelefono(c.telefono);
-  const prefissi = conStorico(L.PREFISSI.map(p => p[0]), tel.prefisso);
   const categorie = conStorico(L.CATEGORIE, c.categoria);
   const x = L.interesseDa(c.area);
   const miei = LS.righe.filter(r => r.user_id === c.user_id && r.id !== c.id);
   const fatti = extra && extra.contatti_fatti != null ? String(extra.contatti_fatti) : '';
   const codice = extra && extra.codice_amway;
   const k = extra ? MB21Rubrica.compleannoDaData(extra.compleanno) : null;
-  const compleanno = !extra ? '<span class="dt-carico">Carico…</span>' : `<div class="f-comp">
-      <select data-dt-comp="g"${spento}><option value="">Giorno</option>${Array.from({ length: 31 }, (_, i) => `<option${k && k.giorno === i + 1 ? ' selected' : ''}>${i + 1}</option>`).join('')}</select>
-      <select data-dt-comp="m"${spento}><option value="">Mese</option>${MB21Rubrica.MESI.map((m, i) => `<option value="${i + 1}"${k && k.mese === i + 1 ? ' selected' : ''}>${m}</option>`).join('')}</select>
-      <input data-dt-comp="a" inputmode="numeric" maxlength="4" placeholder="Anno" value="${k && k.anno ? k.anno : ''}"${spento}></div>`;
-  const account = c.categoria === 'Cliente' ? `<div class="dt-pieno" id="dt-account"><small>Cliente con account</small><span class="dt-carico">Carico…</span></div>` : '';
-  const html = `<div id="dati-riquadro">
-    <h4 class="mc-t">Chi è</h4><div class="riquadro dt">
+  // la categoria: le pastiglie col colore di ognuna; «Nuova azione» senza categoria (S5c) la apre già, con l'avviso
+  const categoria = `<div class="dt-campo${LS.dopoCategoria ? ' dt-pieno' : ''}" id="dt-cat"><small>Categoria</small>${LS.dopoCategoria ? '<div class="avviso" style="margin:4px 0 8px">Per segnare un\'azione serve la categoria: sceglila qui.</div>' : ''}
+    ${valore('cat', c.categoria ? L.nomeCategoria(c.categoria) : '', c.categoria ? `<i class="mc-pallino ${classeCat(c.categoria)}"></i>` : '')}
+    <div class="dt-pil" data-dt-fila="cat"${LS.dopoCategoria ? '' : ' hidden'}>${categorie.map(kc => `<button type="button" data-cat="${esc(kc)}" class="${classeCat(kc)}${kc === c.categoria ? ' si' : ''}">${esc(L.nomeCategoria(kc))}</button>`).join('')}</div></div>`;
+  const compleanno = `<div class="dt-campo" id="dt-comp"><small>Compleanno</small>${!extra ? '<span class="dt-carico">Carico…</span>' : `${valore('comp', MB21Rubrica.compleannoScritto(extra.compleanno))}
+    <div class="dt-comp" data-dt-fila="comp" hidden><select data-dt-comp="g"><option value="">Giorno</option>${Array.from({ length: 31 }, (_, i) => `<option${k && k.giorno === i + 1 ? ' selected' : ''}>${i + 1}</option>`).join('')}</select>
+      <select data-dt-comp="m"><option value="">Mese</option>${MB21Rubrica.MESI.map((m, i) => `<option value="${i + 1}"${k && k.mese === i + 1 ? ' selected' : ''}>${m}</option>`).join('')}</select>
+      <input data-dt-comp="a" inputmode="numeric" maxlength="4" placeholder="Anno" value="${k && k.anno ? k.anno : ''}"></div>`}</div>`;
+  const account = c.categoria === 'Cliente' ? `<div class="dt-campo dt-pieno" id="dt-account"><small>Cliente con account</small><span class="dt-carico">Carico…</span></div>` : '';
+  const html = `<div id="dati-riquadro"><div class="riquadro dt ${classeCat(c.categoria)}">
       ${testo('nome', 'Nominativo', c.nome, { pieno: true })}
-      <div class="dt-pieno"><small>Telefono</small><div class="telefono-campo"><select data-dt-pref${spento}>${prefissi.map(p => { const n = L.PREFISSI.find(y => y[0] === p); return `<option value="${p}"${p === (tel.prefisso || '+39') ? ' selected' : ''}>${p}${n ? ' ' + n[1] : ''}</option>`; }).join('')}</select>
-        <input class="dt-in" data-dt="telefono" type="tel" inputmode="tel" value="${esc(tel.numero)}" placeholder="${guardo ? '—' : 'Tocca per scrivere'}"${spento}></div></div></div>
-    <h4 class="mc-t">Per l'attività</h4><div class="riquadro dt">
-      <div class="dt-pieno"><small>Categoria</small>${LS.dopoCategoria ? '<div class="avviso" style="margin:4px 0 8px">Per segnare un\'azione serve la categoria: sceglila qui.</div>' : ''}
-        <div id="dt-cat"${guardo ? ' class="dt-spento"' : ''}>${tendinaCategoriaHtml(categorie, c.categoria)}</div></div>
+      ${testo('telefono', 'Telefono', c.telefono ? `${tel.prefisso} ${tel.numero}` : '', { tipo: 'tel' })}
+      ${categoria}
       ${account}
       ${testo('referral_di', 'Contatto e/o Incaricato di', c.referral_di, { lista: 'dt-ref-nomi' })}<datalist id="dt-ref-nomi">${miei.map(r => `<option value="${esc(r.nome)}">`).join('')}</datalist>
-      ${testo('note', 'Note', c.note, { max: 50 })}
       ${pastiglie('interesse', 'Area di interesse', [['Attività', 'Attività'], ['Prodotti', 'Prodotti']], x.interesse)}
-      ${x.interesse === 'Prodotti' ? `<div class="dt-pieno"><small>Quali prodotti?</small><select data-dt-quali${spento}><option value="">—</option>${L.QUALI_PRODOTTI.map(([v, t]) => `<option value="${esc(v)}"${x.quali === v ? ' selected' : ''}>${esc(t)}</option>`).join('')}</select></div>` : ''}
-      ${codice ? `<div><small>Codice Amway</small><button type="button" class="codice-copia" data-copia-codice="${esc(codice)}" aria-label="Copia il codice Amway ${esc(codice)}">${esc(codice)}${ic('copia')}</button></div>` : ''}
-      ${fatti ? `<div><small>Contatti fatti</small><span class="dt-fisso">${fatti}</span></div>` : ''}</div>
-    <div id="coppia"></div>
-    <h4 class="mc-t">Dati personali</h4><div class="riquadro dt">
+      ${x.interesse === 'Prodotti' ? `<div class="dt-campo"><small>Quali prodotti?</small><select class="dt-sel" data-dt-quali${spento}><option value="">—</option>${L.QUALI_PRODOTTI.map(([v, t]) => `<option value="${esc(v)}"${x.quali === v ? ' selected' : ''}>${esc(t)}</option>`).join('')}</select></div>` : ''}
+      ${testo('note', 'Note', c.note, { max: 50 })}
+      ${codice ? `<div class="dt-campo"><small>Codice Amway</small><button type="button" class="codice-copia" data-copia-codice="${esc(codice)}" aria-label="Copia il codice Amway ${esc(codice)}">${esc(codice)}${ic('copia')}</button></div>` : ''}
+      <div class="dt-sep"></div>
       ${pastiglie('fascia_eta', 'Età', conStorico(L.FASCE_ETA, c.fascia_eta).map(v => [v, v]), c.fascia_eta)}
-      <div class="dt-pieno"><small>Compleanno <span class="sotto" style="margin:0">(l'anno se lo sai)</span></small>${compleanno}</div>
+      ${compleanno}
       ${pastiglie('sesso', 'Sesso', L.SESSI, extra && extra.sesso, !extra)}
       ${testo('professione', 'Professione', c.professione, { max: 40 })}
       ${pastiglie('lavoro', 'Tipo di lavoro', L.LAVORI, extra && extra.lavoro, !extra)}
-      ${testo('citta', 'Località', c.citta, { max: 40 })}</div>
+      ${testo('citta', 'Località', c.citta, { max: 40 })}
+      ${fatti ? `<div class="dt-campo"><small>Contatti fatti</small><span class="dt-fisso">${fatti}</span></div>` : ''}
+      <div class="dt-sep"></div>
+      <div id="coppia" class="dt-pieno"></div></div>
     ${guardo ? '' : `<button type="button" class="link elimina-qui" id="dt-elimina">${ic('elimina')} Elimina dalla lista</button>`}</div>`;
   // la coppia (riquadroCoppia) ha il suo posto e si disegna da sé: ridisegnando i Dati resta com'era; e il campo in cui si sta scrivendo resta
   // com'è (con quello che c'è scritto e il cursore), anche quando i dati personali arrivano mentre si scrive
@@ -1011,12 +1016,19 @@ function collegaDati(c, extra) {
     el.onchange = () => {
       const k = el.dataset.dt, v = el.value.trim();
       if (k === 'nome') { if (!v) { el.value = c.nome; return mostraToast('Il nome non può restare vuoto'); } return salvaDato(c, { nome: v }); }
-      if (k === 'telefono') return salvaDato(c, { telefono: MB21Lista.componiTelefono(q('[data-dt-pref]').value, el.value) });
+      if (k === 'telefono') return salvaDato(c, { telefono: MB21Lista.componiTelefono('+39', el.value) });   // «+41…» o «0041…» scritti: quel prefisso
       return salvaDato(c, { [k]: v || null });
     };
   });
-  const pref = q('[data-dt-pref]');
-  if (pref) pref.onchange = () => { if (q('[data-dt="telefono"]').value.trim()) salvaDato(c, { telefono: MB21Lista.componiTelefono(pref.value, q('[data-dt="telefono"]').value) }); };
+  // una scelta si apre al tocco (le pastiglie sotto, su tutta la riga) e si richiude; se ne apre una alla volta
+  radice.querySelectorAll('[data-dt-apri]').forEach(b => { b.onclick = () => {
+    const fila = q(`[data-dt-fila="${b.dataset.dtApri}"]`);
+    if (!fila) return;
+    const apri = fila.hidden;
+    radice.querySelectorAll('[data-dt-fila]').forEach(f => { f.hidden = true; if (f.parentElement) f.parentElement.style.gridColumn = ''; });
+    fila.hidden = !apri;
+    if (apri && fila.parentElement) fila.parentElement.style.gridColumn = '1 / -1';
+  }; });
   // le pastiglie: un tocco sceglie, un tocco su quella già scelta la toglie
   radice.querySelectorAll('[data-dt-pil]').forEach(b => { b.onclick = () => {
     const k = b.dataset.dtPil, v = b.dataset.scelto === '1' ? null : b.dataset.v;
@@ -1033,13 +1045,11 @@ function collegaDati(c, extra) {
     if (comp === 'errore') return mostraToast('Compleanno: scegli giorno e mese di una data che esiste (l\'anno di 4 cifre, se lo sai)');
     return salvaDato(c, { compleanno: MB21Rubrica.dataCompleanno(comp) });
   }; });
-  // la categoria: la tendina della nota 127; scelta un'altra, una domanda con la frase semplice di cosa succede
+  // la categoria: le pastiglie col colore di ognuna; scelta un'altra, una domanda con la frase semplice di cosa succede
   const cat = q('#dt-cat');
   if (cat) {
-    collegaTendine5(cat);
     cat.querySelectorAll('[data-cat]').forEach(b => { b.onclick = async () => {
       const nuova = b.dataset.cat;
-      cat.querySelector('.tnd5').classList.remove('aperta');
       if (nuova === c.categoria) return;
       if (!await chiediConferma(`Categoria: ${MB21Lista.nomeCategoria(nuova)}?`, fraseCategoria(c, nuova), 'Cambia')) return;
       return salvaDato(c, { categoria: nuova });
@@ -2000,7 +2010,7 @@ function apriModulo(c, poi = {}) {
   // Nota Pagine 127 (Ignazio 28/10/2026: «nella scheda Contatto… mi escono ancora tutte le categorie da cliccare. Non la leggo a tendina»): la Categoria
   // del modulo Nuovo / Modifica contatto è la tendina del Nuovo appuntamento e di «Modifiche» (sel5 + tendina5): chiusa dice la scelta col suo pallino,
   // aperta l'elenco con ✓ e, sotto «Non collegato», cosa vuol dire. I tre tasselli di «Da catalogare» in Oggi restano (scelta «A»).
-  const tendinaCategoria = tendinaCategoriaHtml;   // la stessa della sezione Dati (nota 160)
+  const tendinaCategoria = tendinaCategoriaHtml;
   // Lista Nomi L4 (Ignazio 23/10): nel nuovo contatto niente «Archiviato» (resta in Modifica)
   const categorie = conStorico(MB21Lista.CATEGORIE, c && c.categoria).filter(k => !nuovo || k !== 'Archiviato');
   const campoNome = `<div class="campo"><label>Nominativo <small>Obbligatorio</small></label><input id="f-nome" placeholder="Nome Cognome" value="${esc(c ? c.nome : poi.nome || '')}"><div id="f-arch" class="f-arch" hidden></div></div>`;
@@ -2137,7 +2147,7 @@ function apriModulo(c, poi = {}) {
 }
 
 // La tendina della Categoria (nota Pagine 127): chiusa dice la scelta col suo pallino, aperta l'elenco con ✓ e, sotto «Non collegato», cosa vuol dire.
-// La stessa nel modulo del nome nuovo e nella sezione Dati (nota 160).
+// Nel modulo del nome nuovo (la sezione Dati, dal seguito della nota 160, ha le pastiglie col colore della categoria).
 function tendinaCategoriaHtml(categorie, scelta) {
   const pallino = k => `<i class="mc-pallino ${classeCat(k)}"></i>`, nome = k => esc(MB21Lista.nomeCategoria(k));
   const voci = categorie.map(k => `<button type="button" class="${k === scelta ? 'scelto' : ''}" data-cat="${esc(k)}"><span>${pallino(k)}${nome(k)}${MB21Lista.SPIEGA_CATEGORIA[k] ? `<small>${esc(MB21Lista.SPIEGA_CATEGORIA[k])}</small>` : ''}</span>${k === scelta ? '<b>✓</b>' : ''}</button>`).join('');

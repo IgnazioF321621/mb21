@@ -434,26 +434,32 @@
   .sezioni button.scelto { background: var(--accento); color: var(--accento-su); }
   .riquadro { background: var(--superficie); border-radius: var(--raggio-card); padding: 16px; margin-bottom: 12px; box-shadow: var(--ombra-card); }
   .dati { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; }
-  /* nota Pagine 160 (Ignazio 31/10, foto dati2_160.png): la sezione Dati si cambia sul posto. I campi sembrano testo finché non si toccano;
-     le scelte sono pastiglie a un tocco; con «Tutti» nel Partner Select tutto spento */
-  .riquadro.dt { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; }
-  .dt > div { min-width: 0; } .dt .dt-pieno { grid-column: 1 / -1; }
-  .dt small { display: block; font-size: 12px; color: var(--grigio); margin-bottom: 3px; }
-  .dt .dt-in { width: 100%; font: inherit; font-size: 15px; color: var(--testo); background: transparent; border: 1px dashed transparent; border-radius: 10px; padding: 6px 8px; margin: 0 -8px; min-height: 0; }
-  .dt [data-dt="nome"] { font-size: 17px; font-weight: 700; }
-  .dt .dt-in::placeholder { color: #A0A7B4; }
-  @media (hover: hover) { .dt .dt-in:not(:disabled):hover { border-color: var(--linea); background: var(--superficie-2); } }
-  .dt .dt-in:focus { outline: none; border: 2px solid var(--cat-partner); background: var(--superficie); padding: 5px 7px; }
-  .dt .dt-in:disabled { color: var(--testo); -webkit-text-fill-color: var(--testo); opacity: 1; }
-  .dt-pil { display: flex; flex-wrap: wrap; gap: 6px; }
+  /* nota Pagine 160, seguito (Ignazio 31/10, «così va decisamente meglio» sulla foto misto_160.png): la sezione Dati in UN riquadro come prima, etichetta
+     piccola e valore su due colonne; i campi sembrano testo finché non si toccano; le scelte aprono le pastiglie sotto; «i tasti toccati prendono il colore
+     della categoria» (--cat del riquadro; senza categoria il grigio di .cat-nessuna); con «Tutti» nel Partner Select tutto spento */
+  .riquadro.dt { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; padding: 14px 16px; }
+  .dt > * { min-width: 0; } .dt .dt-pieno { grid-column: 1 / -1; }
+  .dt small { display: block; font-size: 12px; color: var(--grigio); margin-bottom: 1px; }
+  .dt .dt-in, .dt .dt-val { display: block; width: calc(100% + 12px); font: inherit; font-size: 16px; color: var(--testo); background: transparent; border: 1px solid transparent; border-radius: 8px;
+    padding: 2px 6px; margin: 0 -6px; min-height: 0; text-align: left; overflow-wrap: anywhere; }
+  .dt .dt-val em { font-style: normal; font-size: 11px; color: var(--testo-tenue); }
+  .dt .dt-val .mc-pallino { margin-right: 6px; }
+  .dt [data-dt="nome"] { font-weight: 700; }
+  .dt .dt-in::placeholder, .dt .dt-val.dt-vuota { color: #A0A7B4; font-size: 14px; }
+  @media (hover: hover) { .dt .dt-in:not(:disabled):hover, .dt .dt-val:not(:disabled):hover { background: var(--superficie-2); } }
+  .dt .dt-in:focus { outline: none; border: 2px solid var(--cat); background: var(--superficie); padding: 1px 5px; }
+  .dt .dt-in:disabled, .dt .dt-val:disabled { color: var(--testo); -webkit-text-fill-color: var(--testo); opacity: 1; }
+  .dt-pil { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; } .dt-pil[hidden], .dt-comp[hidden] { display: none; }
   .dt-pil button { border: 0; font-size: 13.5px; font-weight: 600; padding: 6px 11px; border-radius: 999px; background: #F2F4F7; color: #3A4150; min-height: 34px; }
-  .dt-pil button.si { background: var(--cat-partner); color: #fff; }
-  .dt-pil button:disabled { opacity: .75; }
+  .dt-pil button.si { background: var(--cat); color: #fff; }
+  .dt-comp { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+  .dt-comp select, .dt-comp input, .dt .dt-sel { width: auto; margin: 0; border: 0; border-radius: 999px; background: #F2F4F7; padding: 6px 12px; font-size: 16px; min-height: 34px; }   /* 16 px: l'iPhone non ingrandisce al tocco */
+  .dt-comp input { width: 84px; }
+  .dt-sep { grid-column: 1 / -1; height: 1px; background: var(--linea); margin: 2px 0; }
   .dt-carico { font-size: 13px; color: var(--testo-tenue); }
-  .dt-fisso { font-size: 15px; }
-  .dt-spento { pointer-events: none; opacity: .8; }
-  #dati-riquadro .mc-t:first-child { margin-top: 6px; }
-  #dati-riquadro #coppia .riquadro { margin-top: 10px; }
+  .dt-fisso { display: block; font-size: 16px; padding: 2px 0; }
+  .dt #coppia .riquadro { margin: 0; padding: 0; box-shadow: none; background: none; border: 0; }
+  #dati-riquadro .elimina-qui { margin-top: 12px; }
   .dati small { display: block; font-size: 12px; color: var(--grigio); }
   .dati div { font-size: 15px; overflow-wrap: anywhere; }
   .piccolo { border: 0; border-radius: var(--raggio-pill); min-height: 36px; background: var(--superficie); box-shadow: var(--ombra-card); font-size: 14px; font-weight: 600; padding: 9px 14px; color: var(--testo); margin-bottom: 12px; }

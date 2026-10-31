@@ -51,13 +51,13 @@ prova('091 (b): «Contatti fatti» si conta aprendo «Dati» della scheda (stess
   ctx.d(c);   // prima passata: dalla Lista (senza il conto)
   assert.doesNotMatch(app.innerHTML, /Contatti fatti/);
   await ctx.extra(c);
-  assert.match(app.innerHTML, /<div><small>Contatti fatti<\/small><span class="dt-fisso">4<\/span><\/div>/);
+  assert.match(app.innerHTML, /<div class="dt-campo"><small>Contatti fatti<\/small><span class="dt-fisso">4<\/span><\/div>/);
   const q = letture.find(x => x.t === 'azioni');
   assert.equal(JSON.stringify(q.passi), JSON.stringify([['select', 'id', { count: 'exact', head: true }], ['eq', 'contatto_id', 'c1'], ['eq', 'tipo_azione', 'Contatto'], ['not', 'esito', 'is', null],
     ['not', 'esito', 'in', '("No Risposta","Telefono spento")'], ['or', 'esito.neq.Riordino,completata.is.true']]));   // valori nati dentro vm: si confrontano scritti
   risposte.azioni = { count: 0, error: null };
   await ctx.extra(c);
-  assert.match(app.innerHTML, /<div><small>Contatti fatti<\/small><span class="dt-fisso">0<\/span><\/div>/);
+  assert.match(app.innerHTML, /<div class="dt-campo"><small>Contatti fatti<\/small><span class="dt-fisso">0<\/span><\/div>/);
   risposte.azioni = { count: null, error: { message: 'giù' } };   // il conto non arriva: la riga non c'è, il resto sì
   app.innerHTML = '<div id="sezione"></div>';
   await ctx.extra(c);
