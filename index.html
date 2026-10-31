@@ -399,6 +399,16 @@
   .altri-voci button[class*="tono-"] svg.ic { width: 22px; height: 22px; }
   .altri-voci .tono-blu { color: var(--blu); } .altri-voci .tono-ambra { color: var(--proposta); } .altri-voci .tono-verde { color: var(--ok); } .altri-voci .tono-rosso { color: var(--pericolo); }
 
+  /* nota Pagine 158 (Ignazio 31/10, foto scorri4_158.png): la pastiglia «‹ Precedente · 12 di 340 · Successivo ›» della scheda aperta dalla Lista, piccola,
+     centrata sopra la barra in basso, uguale su ogni schermo; le frecce sui tasti solo dove c'è un mouse (tastiera) */
+  .ls-giro { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom) + 92px); z-index: 6; display: flex; align-items: center; gap: 4px;
+    background: var(--superficie); border-radius: 999px; padding: 5px; box-shadow: 0 4px 16px rgba(16,21,31,.13); white-space: nowrap; }
+  .ls-giro button { border: 0; background: #F2F4F7; border-radius: 999px; padding: 8px 14px; font-size: 14px; font-weight: 600; color: var(--cat-partner); min-height: 40px; }
+  .ls-giro button:disabled { color: var(--spento); }
+  .ls-giro span { font-size: 12px; font-weight: 700; color: var(--testo-tenue); padding: 0 8px; }
+  .ls-giro kbd { border: 1px solid #CBD2DC; border-bottom-width: 2px; border-radius: 4px; padding: 0 4px; font: 700 10px system-ui, sans-serif; background: var(--superficie); color: var(--testo-soft); margin-left: 5px; }
+  @media (hover: none) { .ls-giro kbd { display: none; } }
+  .ls-giro-spazio { height: 64px; }   /* la fine della scheda non resta sotto la pastiglia */
   .indietro { border: 0; background: none; color: var(--testo-soft); font-size: 16px; font-weight: 600; padding: 6px 0; margin-top: 4px; min-height: var(--tocco); }
   /* Testata della scheda: qui la persona è una sola, quindi prende la tinta della sua categoria (docs/MB21_Design.md) */
   .testata { background: var(--cat-tinta, var(--superficie)); border-radius: var(--raggio-card); overflow: hidden; margin: 8px 0 12px; }

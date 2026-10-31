@@ -123,6 +123,13 @@
     return (righe || []).filter(r => r.user_id === utenteId && corrisponde(r, testo))
       .sort((a, b) => ((eArchiviato(a) ? 1 : 0) - (eArchiviato(b) ? 1 : 0)) || ordinaPerNome(a, b)).slice(0, max);
   }
+  // Nota Pagine 158 (Ignazio 31/10, «perfetto» sulla foto scorri4_158.png): dalla scheda aperta dalla Lista, il nome prima e dopo nello stesso elenco
+  // (filtro, ricerca e ordine di filtraContatti). `ids` = gli id dell'elenco, in ordine → { prima, dopo, n, di } (prima/dopo null ai bordi); null se `id` non c'è.
+  function viciniInLista(ids, id) {
+    const i = (ids || []).indexOf(id);
+    if (i < 0) return null;
+    return { prima: i > 0 ? ids[i - 1] : null, dopo: i < ids.length - 1 ? ids[i + 1] : null, n: i + 1, di: ids.length };
+  }
   // Nota Pagine 156 (Ignazio 30/10: «mi esce due volte»): due schede con lo stesso nome tra i risultati di cercaNomi; accanto a ognuna cosa la distingue,
   // per scegliere quella giusta: il telefono (o «senza telefono») e «nessuna azione» se non ne ha. Per i nomi unici: ''.
   function segnoOmonimi(r, trovati) {
@@ -702,7 +709,7 @@
   const nomeCategoria = c => NOMI_CATEGORIA[c] || c;
 
   const api = { cepPerCodice, importo, rigaPrezzo, QUOTA_PROVVIGIONE, IVA, contiVendita, contiStimati, scontoCalcolato, scontoAMano, NOMI_CATEGORIA, SPIEGA_CATEGORIA, nomeCategoria, CATEGORIE, FASCE_ETA, AREE, QUALI_PRODOTTI, interesseDa, areaDa, testoInteresse, PREFISSI, PASSI_ONBOARDING, AVVIO_DA_INCONTRO, passoAvvioDa, situazioneAvvio, FILTRI, GIORNI_NEW, eNuovo, piega, corrisponde, filtraContatti,
-    contaFiltri, cercaNomi, segnoOmonimi, compieOggi, azioniENote, MESI_RIORDINO, riordinoFra, mesiFra, modoRiordino, propostaRiordino, sezioneIniziale, giorniFermo, SENZA_PARLARE, fraseCard, ORDINI, componiTelefono, separaTelefono, trovaDoppioni, archiviatiUguali, contatoreOnboarding, prossimoPasso, entratoDa, partnerDaAvviare, partnerInPausa, proposteAvvio, pausaLunga, PASSI_SPENTI, postiBiglietto, postoSuo, momento, meseEvento, etichettaEvento, eventoAttivo, eventoDaMostrare, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, cepDaTogliere, cepDaAccendere, descrizioneCep, data, DATI_PERSONA, SESSI, LAVORI, nomeScelta, daCompletare, cittaFrequenti, cittaConProvincia, BRAND, coloreBrand, brandComprati, haVendite, daConsegnare, daConfermare, GIORNI_CONSEGNA_LONTANA, consegnaLontana, totaliVendite, momentoNelMese, momentiVendita, pagataSulSito, provvigioniMese, scontiMese, MESI_ANNO, provvigioniAnno, prossimoRiordino, rigaVendita, rigaFattore, numeroFattore, numero };
+    contaFiltri, cercaNomi, segnoOmonimi, viciniInLista, compieOggi, azioniENote, MESI_RIORDINO, riordinoFra, mesiFra, modoRiordino, propostaRiordino, sezioneIniziale, giorniFermo, SENZA_PARLARE, fraseCard, ORDINI, componiTelefono, separaTelefono, trovaDoppioni, archiviatiUguali, contatoreOnboarding, prossimoPasso, entratoDa, partnerDaAvviare, partnerInPausa, proposteAvvio, pausaLunga, PASSI_SPENTI, postiBiglietto, postoSuo, momento, meseEvento, etichettaEvento, eventoAttivo, eventoDaMostrare, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, cepDaTogliere, cepDaAccendere, descrizioneCep, data, DATI_PERSONA, SESSI, LAVORI, nomeScelta, daCompletare, cittaFrequenti, cittaConProvincia, BRAND, coloreBrand, brandComprati, haVendite, daConsegnare, daConfermare, GIORNI_CONSEGNA_LONTANA, consegnaLontana, totaliVendite, momentoNelMese, momentiVendita, pagataSulSito, provvigioniMese, scontiMese, MESI_ANNO, provvigioniAnno, prossimoRiordino, rigaVendita, rigaFattore, numeroFattore, numero };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Lista = api;
 })(this);

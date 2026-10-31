@@ -102,7 +102,7 @@ prova('L1: Cerca senza risultati → «+ Aggiungi «testo» alla Lista» apre il
     LS: { righe: [{ id: 'a', user_id: 'io', nome: 'Persona A', categoria: 'Prospect' }], filtro: 'lista', ordine: 'az', lettera: null, esporta: null, testo: 'Mario Bianchi ', mostrate: 40 },
     utentiLista: () => 'io', eAdmin: () => false, soloGuardo: () => ctx.guardo, barraEsporta() {}, apriModulo: (c, poi) => moduli.push([c, poi]),
     document: { getElementById: id => pagina.querySelector('#' + id) } };
-  vm.createContext(ctx); vm.runInContext(pezzo(PL, 'function disegnaElenco') + ';this.disegna = disegnaElenco;', ctx);
+  vm.createContext(ctx); vm.runInContext(pezzo(PL, 'const nomiDellElenco') + ';this.disegna = disegnaElenco;', ctx);
   ctx.disegna();
   const h = pagina.querySelector('#elenco').innerHTML;
   assert.match(h, /Nessun nome trovato\.<button class="link ls-aggiungi-cercato" id="aggiungi-cercato">\[piu\] Aggiungi «Mario Bianchi» alla Lista<\/button>/);
@@ -128,7 +128,7 @@ prova('L2: via le lettere A-Z — «Ordina» ha solo gli ordini, niente pastigli
     utentiLista: () => 'io', eAdmin: () => ctx.admin, soloGuardo: () => false, barraEsporta() {}, cardNome: r => `<div class="cn" data-id="${r.id}"></div>`,
     sceltaDa: async (t, v) => { voci = v; return v.find(x => x.k === 'mai') || null; }, IntersectionObserver: class { observe() {} disconnect() {} },
     document: { getElementById: id => pagina.querySelector('#' + id) } };
-  vm.createContext(ctx); vm.runInContext(pezzo(PL, 'function disegnaElenco') + ';this.disegna = disegnaElenco;', ctx);
+  vm.createContext(ctx); vm.runInContext(pezzo(PL, 'const nomiDellElenco') + ';this.disegna = disegnaElenco;', ctx);
   ctx.disegna();
   let h = pagina.querySelector('#elenco').innerHTML;
   assert.match(h, /<span>1 nome · <button class="link ls-aggiorna" id="ls-aggiorna">Aggiorna i nomi<\/button><\/span>\s*<span><button id="ordina">Ordina: A-Z ▾<\/button><\/span>/);   // un partner: niente «Scarica nomi e numeri» (L7: «Aggiorna i nomi» accanto al conto)
@@ -240,7 +240,7 @@ prova('L3: la cornetta prende il numero con la regola dei 4 tasti; spenta, un to
   assert.match(ctx.card({ id: 'b', nome: 'Persona B', telefono: '333 0000001' }), /<button class="chiama spento" aria-label="Chiama: perché è spenta">\[contatto\]<\/button>/);
   assert.match(PL, /function contattaHtml\(telefono, soloScrivere\) \{\n  const tel = numeroDaChiamare\(telefono\);/);
   assert.match(PL, /elenco\.querySelectorAll\('\.cn button\.chiama'\)\.forEach\(b => b\.onclick = \(\) => diPerche\('telefono'\)\);/);
-  assert.match(PL, /if \(!e\.target\.closest\('a, \.menu, \.chiama'\)\) apriScheda\(c\.dataset\.id\);/);   // il tocco sulla cornetta non apre la scheda
+  assert.match(PL, /if \(!e\.target\.closest\('a, \.menu, \.chiama'\)\) apriScheda\(c\.dataset\.id, \{ daLista: true \}\);/);   // il tocco sulla cornetta non apre la scheda
   assert.equal(require('../../perche.js').perche('telefono'), 'Manca un numero che inizia con «+».');
   assert.match(IDX, /\.cn button\.chiama\.spento \{ pointer-events: auto; \}/);
 });
@@ -563,6 +563,32 @@ prova('L9: una ricerca sola (cercaNomi) per i fogli di scelta, con la regola di 
   assert.equal(ids(L.cercaNomi(righe, { testo: '333 0000002', utenteId: 'io' })), '2');   // anche il numero
   assert.equal(ids(L.cercaNomi(righe, { testo: 'bar', utenteId: 'io', max: 1 })), '3');
   assert.equal(L.cercaNomi(righe, { testo: '  ', utenteId: 'io' }).length, 0);
+});
+
+prova('158: dalla scheda aperta dalla Lista, la pastiglia «‹ Precedente · N di M · Successivo ›» segue lo stesso elenco; spenta ai bordi; niente da altrove', () => {
+  assert.deepEqual(L.viciniInLista(['a', 'b', 'c'], 'b'), { prima: 'a', dopo: 'c', n: 2, di: 3 });
+  assert.deepEqual(L.viciniInLista(['a', 'b', 'c'], 'a'), { prima: null, dopo: 'b', n: 1, di: 3 });
+  assert.deepEqual(L.viciniInLista(['a', 'b', 'c'], 'c'), { prima: 'b', dopo: null, n: 3, di: 3 });
+  assert.equal(L.viciniInLista(['a', 'b'], 'z'), null);
+  const passi = [], LSf = { giro: null, ritorno: null, righe: [{ id: 'a' }, { id: 'b' }, { id: 'c' }], contatto: { id: 'b' } };
+  const ctx = { esc, MB21Lista: L, LS: LSf, apriScheda: (id, o) => passi.push([id, o]), eseguiDopoScheda: id => passi.push(['dopo', id]) };
+  vm.createContext(ctx); vm.runInContext(pezzo(PL, 'function giroHtml') + pezzo(PL, 'function vaiNelGiro') + ';this.giro = giroHtml; this.vai = vaiNelGiro;', ctx);
+  assert.equal(ctx.giro({ id: 'b' }), '');   // aperta da altrove: niente
+  LSf.giro = ['a', 'b', 'c'];
+  const h = ctx.giro({ id: 'b' });
+  assert.match(h, /<button type="button" data-giro="a">‹ Precedente<kbd>←<\/kbd><\/button><span>2 di 3<\/span><button type="button" data-giro="c">Successivo ›<kbd>→<\/kbd><\/button>/);
+  assert.match(ctx.giro({ id: 'a' }), /data-giro="" disabled>‹ Precedente/);
+  assert.match(ctx.giro({ id: 'c' }), /data-giro="" disabled>Successivo ›/);
+  LSf.ritorno = 'agenda'; assert.equal(ctx.giro({ id: 'b' }), ''); LSf.ritorno = null;
+  LSf.giro = ['b']; assert.equal(ctx.giro({ id: 'b' }), '');   // un nome solo: niente
+  ctx.vai('c'); ctx.vai(''); ctx.vai('z');
+  assert.deepEqual(JSON.parse(JSON.stringify(passi)), [['dopo', 'b'], ['c', { giro: true }]]);
+  // nel codice: l'elenco è quello della Lista (una funzione sola), il passo non cambia il punto di ritorno, le frecce non scattano nei campi né coi fogli
+  assert.match(PL, /const nomiDellElenco = \(\) => MB21Lista\.filtraContatti\(LS\.righe, \{ filtro: LS\.filtro, testo: LS\.testo,/);
+  assert.match(PL, /function disegnaElenco\(\) \{\n  const trovati = nomiDellElenco\(\);/);
+  assert.match(PL, /if \(!giro\) \{\n    LS\.scrollLista = [^\n]+\n    LS\.giro = daLista \? nomiDellElenco\(\)\.map\(r => r\.id\) : null;/);
+  assert.match(PL, /apriScheda\(c\.dataset\.id, \{ daLista: true \}\)/);
+  assert.match(PL, /closest\('input, textarea, select, \[contenteditable\]'\)\) return;\n  if \(document\.querySelector\('\.velo'\)\) return;/);
 });
 
 prova('156: due schede con lo stesso nome nella ricerca → accanto il telefono (o «senza telefono») e «nessuna azione»; i nomi unici niente', () => {

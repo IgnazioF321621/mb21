@@ -343,8 +343,10 @@ async function salvaCompleta(r, campo, valore) {
   });
 }
 
+// I nomi che la Lista mostra adesso (filtro, ricerca, ordine): l'elenco e, dalla nota 158, la barretta «‹ Precedente · Successivo ›» della scheda
+const nomiDellElenco = () => MB21Lista.filtraContatti(LS.righe, { filtro: LS.filtro, testo: LS.testo, utenteId: utentiLista(), admin: eAdmin(), oggi: MB21Coda.oggiRoma(), ordine: LS.ordine });
 function disegnaElenco() {
-  const trovati = MB21Lista.filtraContatti(LS.righe, { filtro: LS.filtro, testo: LS.testo, utenteId: utentiLista(), admin: eAdmin(), oggi: MB21Coda.oggiRoma(), ordine: LS.ordine });
+  const trovati = nomiDellElenco();
   const elenco = document.getElementById('elenco');
   if (!elenco) return;
   // Lista Nomi L2 (Ignazio 23/10): niente più lettere A-Z (per un nome c'è Cerca); il file per l'altro programma, «Scarica nomi e numeri», solo per l'Admin
@@ -363,7 +365,7 @@ function disegnaElenco() {
   elenco.querySelectorAll('.cn').forEach(c => {
     c.onclick = e => {
       if (LS.esporta) { if (!e.target.closest('.menu')) { spuntaEsporta(c.dataset.id); c.classList.toggle('spuntata', sceltoEsporta(c.dataset.id)); barraEsporta(trovati); } return; }
-      if (!e.target.closest('a, .menu, .chiama')) apriScheda(c.dataset.id);
+      if (!e.target.closest('a, .menu, .chiama')) apriScheda(c.dataset.id, { daLista: true });
     };
   });
   const esportaB = document.getElementById('esporta');
@@ -519,7 +521,7 @@ async function menuCard(id) {
   const r = LS.righe.find(x => x.id === id);
   if (!r) return;
   // in Esporta il tocco sulla card spunta e non apre: la scheda si apre da qui (Ignazio 27/09), e al ritorno si ritrova tutto com'era
-  const apri = LS.esporta ? [{ etichetta: 'Apri la scheda', icona: 'persona', tono: 'blu', fai: () => apriScheda(r.id) }] : [];
+  const apri = LS.esporta ? [{ etichetta: 'Apri la scheda', icona: 'persona', tono: 'blu', fai: () => apriScheda(r.id, { daLista: true }) }] : [];
   // Lista Nomi L3 (Ignazio 23/10): con «Tutti» una riga fissa nel foglio al posto dell'avviso a ogni apertura (va via con il Partner Select)
   const guardo = soloLettura();
   const voci = [...apri, ...(guardo ? [] : [{ etichetta: 'Modifica', icona: 'modifica', tono: 'blu', fai: () => apriModulo(r) }, ...comandiContatto(r)])];
@@ -598,13 +600,18 @@ async function elimina(r, dopo) {   // `dopo` ridisegna chi l'ha chiamata (dalla
 }
 
 // ── Scheda contatto ──
-function apriScheda(id) {
+// `daLista`: aperta toccando un nome della Lista → la barretta per il nome prima e dopo (nota 158); `giro`: un passo della barretta (l'elenco e il punto
+// della Lista da cui si è partiti restano quelli)
+function apriScheda(id, { daLista = false, giro = false } = {}) {
   LS.contatto = LS.righe.find(x => x.id === id);
   if (!LS.contatto) return;
   LS.sezione = MB21Lista.sezioneIniziale(LS.contatto);
   if (LS.apriSezione) { if (sezioniPer(LS.contatto).some(([k]) => k === LS.apriSezione)) LS.sezione = LS.apriSezione; LS.apriSezione = null; }   // chiesta da un avviso o dalla Dashboard
   LS.azioni = null; LS.azAperta = null; LS.note = null; LS.sv = null; LS.vendite = null; LS.avvio = null; LS.account = null; LS.accountLettura = null; LS.stessoOrdine = null;
-  LS.scrollLista = ST.tab === 'lista' && !LS.ritorno ? window.scrollY : 0;   // per tornare al punto della Lista da cui si è aperta
+  if (!giro) {
+    LS.scrollLista = ST.tab === 'lista' && !LS.ritorno ? window.scrollY : 0;   // per tornare al punto della Lista da cui si è aperta
+    LS.giro = daLista ? nomiDellElenco().map(r => r.id) : null;   // nota 158: l'elenco di quel momento, nello stesso ordine
+  }
   window.scrollTo(0, 0);
   disegnaScheda();
 }
@@ -736,7 +743,8 @@ function disegnaScheda() {
     <div id="scheda-cose"></div>
     <div class="sezioni">${sezioniPer(c).map(([k, t]) => `<button data-s="${k}" class="${LS.sezione === k ? 'scelto' : ''}">${t}</button>`).join('')}</div>
     <div id="sezione"></div>
-    ${versione()}`;
+    ${versione()}${giroHtml(c)}`;
+  app.querySelectorAll('[data-giro]').forEach(b => { b.onclick = () => vaiNelGiro(b.dataset.giro); });
   document.getElementById('indietro').onclick = () => {
     const daId = LS.contatto && LS.contatto.id;
     eseguiDopoScheda(daId);   // il processo lasciato a metà (dopo lo Sharing del Piano Marketing) riprende
@@ -782,6 +790,31 @@ function disegnaScheda() {
   coseDellaScheda(c);
   ({ dati: sezioneDati, azioni: sezioneAzioni, coach: sezioneAzioni, onboarding: sezioneOnboarding, segni: sezioneSegni, vendite: sezioneVendite, sharing: sezioneSharing }[LS.sezione] || sezioneDati)();
 }
+
+// Nota Pagine 158 (Ignazio 31/10, «perfetto» sulla foto scorri4_158.png): aperta la scheda dalla Lista, in fondo una pastiglia piccola
+// «‹ Precedente · 12 di 340 · Successivo ›», senza nomi, uguale su iPhone, iPad e Mac; i tasti si spengono al primo e all'ultimo nome.
+// Segue i nomi che la Lista mostrava (LS.giro); «‹ Lista» torna alla Lista com'era (filtro, ricerca, punto). Da Agenda, Oggi, Mappa… non c'è.
+function giroHtml(c) {
+  const v = LS.giro && !LS.ritorno ? MB21Lista.viciniInLista(LS.giro, c.id) : null;
+  if (!v || v.di < 2) return '';
+  const tasto = (id, testo, freccia) => `<button type="button" data-giro="${esc(id || '')}"${id ? '' : ' disabled'}>${testo}<kbd>${freccia}</kbd></button>`;
+  return `<div class="ls-giro-spazio"></div><div class="ls-giro" aria-label="Il nome prima e dopo nella Lista">${tasto(v.prima, '‹ Precedente', '←')}<span>${v.n.toLocaleString('it-IT')} di ${v.di.toLocaleString('it-IT')}</span>${tasto(v.dopo, 'Successivo ›', '→')}</div>`;
+}
+function vaiNelGiro(id) {
+  if (!id || !LS.righe.some(x => x.id === id)) return;
+  eseguiDopoScheda(LS.contatto && LS.contatto.id);   // come «‹ Lista»: il processo lasciato a metà su questa scheda riprende
+  apriScheda(id, { giro: true });
+}
+// Le frecce ← → della tastiera (Mac, iPad con tastiera): come i tasti della pastiglia; mai mentre si scrive in un campo o con un foglio aperto
+document.addEventListener('keydown', e => {
+  if ((e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') || e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return;
+  if (e.target && e.target.closest && e.target.closest('input, textarea, select, [contenteditable]')) return;
+  if (document.querySelector('.velo')) return;
+  const tasti = document.querySelectorAll('.ls-giro [data-giro]'), b = tasti[e.key === 'ArrowLeft' ? 0 : 1];
+  if (!b || b.disabled) return;
+  e.preventDefault();
+  b.click();
+});
 
 // Le cose da fare collegate a questa persona (cantiere 41, Ignazio 23/09: quello che fai in MB Plan si ritrova nella scheda).
 // Sotto la testata, prima delle linguette, per ogni categoria (S5, nota 072: anche archiviati e senza categoria): le aperte (e le fatte oggi, grigie), la spunta, il tocco apre il foglio della cosa
