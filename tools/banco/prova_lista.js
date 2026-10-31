@@ -82,12 +82,9 @@ prova('numeri nelle pillole: come i filtri; «Lista» senza gli archiviati, che 
   assert.equal(c.lista, L.filtraContatti(righe, { filtro: 'lista', utenteId: IO }).length);   // stessa fonte dell'elenco
 });
 
-prova('la scheda si apre su Azioni con telefono e categoria, altrimenti su Dati (anche un archiviato: dal 05/10 si lavora come gli altri)', () => {
+prova('159: la scheda si apre sempre sui Dati (prima Azioni con telefono e categoria), anche con Precedente/Successivo', () => {
   const s = id => L.sezioneIniziale(righe.find(r => r.id === id));
-  assert.equal(s('1'), 'azioni');   // telefono e categoria
-  assert.equal(s('3'), 'dati');     // manca il telefono
-  assert.equal(s('4'), 'dati');     // manca la categoria
-  assert.equal(s('5'), 'azioni');   // archiviata, con telefono e categoria: come gli altri
+  for (const id of ['1', '3', '4', '5']) assert.equal(s(id), 'dati');
   assert.equal(L.sezioneIniziale(null), 'dati');
 });
 

@@ -195,8 +195,11 @@
     return voci.sort((x, y) => (!x.quando - !y.quando) || (x.quando < y.quando ? 1 : x.quando > y.quando ? -1 : x.i - y.i));
   }
 
-  function sezioneIniziale(c) {
-    return c && c.telefono && c.categoria ? 'azioni' : 'dati';   // anche un archiviato (05/10): si lavora come gli altri
+  // Nota Pagine 159 (Ignazio 31/10, seguito della 158: «quando faccio Successivo mi va in Azioni, invece mi deve andare in Dati»): la scheda parte
+  // sempre dai Dati (prima Azioni per chi aveva telefono e categoria). Chi apre la scheda apposta su una sezione (Vendite, Sharing, i 14 passi,
+  // Segni Vitali, l'avviso con «sezione») lo fa con LS.apriSezione o LS.sezione, e resta com'è.
+  function sezioneIniziale() {
+    return 'dati';
   }
 
   // Telefono dal modulo: prefisso scelto + numero scritto → «+39…» senza spazi. Numero vuoto → null.
