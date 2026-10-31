@@ -383,7 +383,7 @@ function esploraVai(k) {
 // (elencoDiOggi: prima ciò che è aperto da chiudere, poi chi contattare, con «Non ora»); la scheda è la stessa (disegnaPersonaLV): per una telefonata della
 // coda o un Dare Seguito l'esito si sceglie nel modulo al centro e poi parte toccaBottone, con i suoi fogli di adesso (data, appuntamento, rientro…);
 // conferme, riordini e telefonate scelte tengono la loro card di adesso, dentro la veste nuova.
-const COLORE_CAT_V5 = c => (c === 'Partner' ? 'var(--cat-partner)' : c === 'Cliente' ? 'var(--cat-cliente)' : c === 'Prospect' || !c || c === 'Referral' ? 'var(--cat-prospect)' : 'var(--cat-ex)');
+const COLORE_CAT_V5 = c => (c === 'Partner' ? 'var(--cat-partner)' : c === 'Cliente' ? 'var(--cat-cliente)' : c === 'Prospect' || !c || c === 'Referral' ? 'var(--cat-prospect)' : c === 'Unlinked' ? 'var(--cat-unlinked)' : c === 'Archiviato' ? 'var(--cat-archiviato)' : 'var(--cat-ex)');   // nota 157
 const catDi = x => (x && (x.categoria || (x.contatti && x.contatti.categoria))) || '';
 function collegaTestaV5() {
   const fb = document.getElementById('o5-feedback');   // il feedback sta nella testata; il tondo si nasconde da solo (nota 102, index.html)

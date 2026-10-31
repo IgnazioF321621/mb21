@@ -20,8 +20,8 @@
     --testo: #10151F; --testo-soft: #5A6475; --testo-tenue: #7B8496; --accento: #10151F; --accento-su: #FFFFFF;
     /* categorie dei contatti: colore pieno e tinta */
     --cat-prospect: #DD5F0D; --cat-prospect-tinta: #FDEEE2; --cat-cliente: #D99A00; --cat-cliente-tinta: #FFF3D1;   /* nota 095 (Ignazio 25/10, «diamo continuità all'immagine»): Cliente oro, come Clienti e Vendite; era #0E7490 */
-    --cat-partner: #1D4ED8; --cat-partner-tinta: #E7EFFE; --cat-ex: #5A6475; --cat-ex-tinta: #EAECF1;
-    --cat-unlinked: #7B8496; --cat-unlinked-tinta: #F2F4F7; --cat-archiviato: #374151; --cat-archiviato-tinta: #E4E7EC;
+    --cat-partner: #1D4ED8; --cat-partner-tinta: #E7EFFE; --cat-ex: #9A5B45; --cat-ex-tinta: #F6ECE8;
+    --cat-unlinked: #8B7FB0; --cat-unlinked-tinta: #F1EEF8; --cat-archiviato: #374151; --cat-archiviato-tinta: #E4E7EC;   /* nota Pagine 157 (Ignazio 31/10, «A»): Ex ruggine, Non collegato lilla, Archiviati ardesia; erano tre grigi (#5A6475, #7B8496) */
     /* Segni Vitali e stati */
     --bbs: #1D4ED8; --bbs-tinta: #E7EFFE; --wes: #C02626; --cep: #15803D; --spento: #C3C8D1;
     --ok: #15803D; --ok-tinta: #E4F3E8; --pericolo: #C02626; --pericolo-tinta: #FCEAEA; --proposta: #B45309; --proposta-tinta: #FEF3C8;
@@ -141,8 +141,8 @@
      iniziali (la riga tutta tinta, sul fondo perla, dava fastidio); la tinta --cat-tinta si usa dove c'è una persona sola: la testata della scheda. */
   /* --cat-scuro: la stessa tinta scritta scura, per il testo dentro i blocchi tinti dell'Agenda a orario (cantiere 37) */
   .cat-prospect { --cat: var(--cat-prospect); --cat-tinta: var(--cat-prospect-tinta); --cat-scuro: #8E3B06; } .cat-cliente { --cat: var(--cat-cliente); --cat-tinta: var(--cat-cliente-tinta); --cat-scuro: #8A6200; }
-  .cat-partner { --cat: var(--cat-partner); --cat-tinta: var(--cat-partner-tinta); --cat-scuro: #16379B; } .cat-ex { --cat: var(--cat-ex); --cat-tinta: var(--cat-ex-tinta); --cat-scuro: #3A4150; }
-  .cat-unlinked { --cat: var(--cat-unlinked); --cat-tinta: var(--cat-unlinked-tinta); --cat-scuro: #434C5C; } .cat-archiviato { --cat: var(--cat-archiviato); --cat-tinta: var(--cat-archiviato-tinta); --cat-scuro: #26303F; }
+  .cat-partner { --cat: var(--cat-partner); --cat-tinta: var(--cat-partner-tinta); --cat-scuro: #16379B; } .cat-ex { --cat: var(--cat-ex); --cat-tinta: var(--cat-ex-tinta); --cat-scuro: #6B3A2B; }
+  .cat-unlinked { --cat: var(--cat-unlinked); --cat-tinta: var(--cat-unlinked-tinta); --cat-scuro: #4E4373; } .cat-archiviato { --cat: var(--cat-archiviato); --cat-tinta: var(--cat-archiviato-tinta); --cat-scuro: #26303F; }
   .cat-nessuna { --cat: var(--testo-tenue); --cat-tinta: var(--superficie); --cat-scuro: #363E4C; }
   .card[class*="cat-"].aperta .corpo { border-top: 1px solid var(--bordo); }
   .rc-pastiglia { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 42px; height: 42px; border-radius: 50%; background: var(--cat, var(--testo-tenue)); color: #fff;
@@ -3001,7 +3001,7 @@ const SUPABASE_URL = 'https://exwgjlhbhlgebkgxtanq.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_i9kxRdnrgk2fvk71P3VV9g_GJA1-r26';
 
 const COLORI = { 'Prospect': 'var(--prospect)', 'Cliente': 'var(--cliente)', 'Partner': 'var(--partner)',
-  'Ex Partner/Cliente': 'var(--ex)', 'Archiviato': 'var(--ex)', 'Referral': 'var(--ex)', 'Unlinked': 'var(--unlinked)' };
+  'Ex Partner/Cliente': 'var(--ex)', 'Archiviato': 'var(--cat-archiviato)', 'Referral': 'var(--ex)', 'Unlinked': 'var(--cat-unlinked)' };   // nota 157: ognuna il suo colore, come CLASSI_CAT
 // Stile (cantiere 34, docs/MB21_Design.md): scorciatoie usate da tutte le pagine
 function ic(nome, px) { return MB21Icone.icona(nome, px); }                       // un'icona a tratto (icone.js)
 // Testi che arrivano già pronti dalle funzioni pure (agenda.js: «⏳ Da completare», «✅ Completato», «👍 confermato»): le funzioni e le loro

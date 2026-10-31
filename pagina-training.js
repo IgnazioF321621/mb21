@@ -20,7 +20,7 @@ const TRN = {
 const TRN_PRIME = 6;   // in un elenco lungo del catalogo si vedono le prime 6, poi «Mostra tutte»
 const TRN_ICONA = { manuale: 'file', traccia: 'audio', libro: 'libro', sito: 'collega' };
 const TRN_ORDINE = ['manuale', 'traccia', 'libro'];   // in «Per approfondire»: prima il manuale, poi le tracce, poi i libri
-const TRN_LIBRI = 'var(--cat-ex)';   // il colore di «Libri»
+const TRN_LIBRI = 'var(--testo-soft)';   // il colore di «Libri» (il grigio di sempre: --cat-ex dalla nota Pagine 157 è ruggine)
 const trnOggi = () => MB21Coda.oggiRoma();
 // Nota Pagine 085 (Ignazio 24/10: «tutto quello che io vedo, fallo vedere anche [alla partner che resta], e vale per tutto il training»): conversazioni,
 // Allenamento a coppia, Allenati a voce, Test d'ingresso, percorsi in prova, «Le prove del role play» (ognuno le sue, l'Admin tutte) e «Correggi questa
