@@ -912,6 +912,7 @@ Le 4 righe Partner/Cliente · Contatto · Richiamare/Appuntamento sono state agg
       - Salva e mette la riga nella Lista (`aggiornaRiga`). Dà `{ riga }`, `{ annullato }` o `{ errore }`.
       - La rubrica salva a blocchi con il suo controllo sui numeri (`preparaImport`), sulla stessa Lista.
     - `MB21Lista.cercaNomi(righe, { testo, utenteId, max })` è la ricerca sola dei fogli di scelta, con la regola di Cerca: nome, professione, numero; archiviati in fondo; gli eliminati non ci sono.
+    - **Nota Pagine 156 (Ignazio 30/10/2026, «mi esce due volte»):** `MB21Lista.segnoOmonimi(r, trovati)` — se tra i risultati due schede hanno lo stesso nome (piegato), accanto alla categoria cosa le distingue: «tel …» o «senza telefono», e «nessuna azione» se non ne ha (`ultima_il` vuoto); per i nomi unici niente. La usano «Con chi?» (`sceltaContatto`, index.html) e «Cerca nella lista» (`scegliScheda`, pagina-lista.js). Causa del caso vero: una seconda scheda creata il 28/10 col codice dell'app di una partner, mentre la sua scheda di sempre ha il codice della coppia; l'unione dei dati aspetta l'ok di Ignazio. Prove `prova_lista_verifica.js` (156).
       - `scegliScheda` («Cerca nella lista»: coppia, Mappa) la usa sulla copia della Lista (`nomiDellaLista`), invece di un `ilike` sul nome a ogni tasto.
       - `sceltaContatto` la usa sui nomi di `leggiContattiMiei`, che ora vengono dalla copia della Lista (prima una lettura a parte, eliminati compresi). Tolta la copia `contattiMiei`.
     - `chiediConferma` sta sopra ogni foglio (`z-index` 30).

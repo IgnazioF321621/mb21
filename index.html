@@ -5062,7 +5062,7 @@ async function sceltaContatto(titolo, testo = '', escludi = [], motivo = 'è gi�
       const uguale = trovati.some(c => MB21Lista.piega(c.nome) === MB21Lista.piega(t));
       velo.querySelector('#sc-elenco').innerHTML = trovati.map(c => escludi.includes(c.id)
           ? `<button disabled>${esc(c.nome)} <small style="color:var(--grigio)">· ${esc(motivo)}</small></button>`
-          : `<button data-id="${esc(c.id)}">${esc(c.nome)} <small style="color:var(--grigio)">· ${esc(c.categoria ? MB21Lista.nomeCategoria(c.categoria) : 'Senza categoria')}</small></button>`).join('')
+          : `<button data-id="${esc(c.id)}">${esc(c.nome)} <small style="color:var(--grigio)">· ${esc([c.categoria ? MB21Lista.nomeCategoria(c.categoria) : 'Senza categoria', MB21Lista.segnoOmonimi(c, trovati)].filter(Boolean).join(' · '))}</small></button>`).join('')   // nota 156: stesso nome → cosa le distingue
         + (t && !uguale ? `<button data-nuovo="1">${ic('piu')} Non c'è: aggiungi «${esc(t)}» come Prospect</button>` : '');
       velo.querySelectorAll('[data-id]').forEach(b => b.onclick = () => chiudi(elenco.find(c => c.id === b.dataset.id)));
       const n = velo.querySelector('[data-nuovo]');

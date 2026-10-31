@@ -1476,7 +1476,7 @@ function scegliScheda(opz) {
       if (!righe) { elenco.innerHTML = '<div class="sotto">Carico i nomi…</div>'; await pronti; if (input.value.trim() !== testo) return; }
       const data = MB21Lista.cercaNomi(righe, { testo, utenteId: opz.userId, max: 15 }).filter(r => r.id !== opz.escludi);
       elenco.innerHTML = data.length
-        ? data.map(r => `<button data-id="${esc(r.id)}"><b>${esc(r.nome)}</b> <small>${esc(r.categoria ? MB21Lista.nomeCategoria(r.categoria) : 'Senza categoria')}</small></button>`).join('')
+        ? data.map(r => `<button data-id="${esc(r.id)}"><b>${esc(r.nome)}</b> <small>${esc([r.categoria ? MB21Lista.nomeCategoria(r.categoria) : 'Senza categoria', MB21Lista.segnoOmonimi(r, data)].filter(Boolean).join(' · '))}</small></button>`).join('')   // nota 156
         : '<div class="sotto">Nessun nome trovato</div>';
       elenco.querySelectorAll('[data-id]').forEach(b => b.onclick = () => chiudi(data.find(r => r.id === b.dataset.id)));
     };

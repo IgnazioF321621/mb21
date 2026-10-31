@@ -63,8 +63,8 @@ prova('L1: sulla card solo la professione (l\'area resta nella scheda)', () => {
 });
 
 prova('L1: «Non collegato» al posto di «Unlinked» nei tre elenchi (Scegli dalla tua lista, Cerca nella lista, In coda dell\'Agenda)', () => {
-  assert.match(IDX, /<small style="color:var\(--grigio\)">· \$\{esc\(c\.categoria \? MB21Lista\.nomeCategoria\(c\.categoria\) : 'Senza categoria'\)\}<\/small>/);
-  assert.match(PL, /<b>\$\{esc\(r\.nome\)\}<\/b> <small>\$\{esc\(r\.categoria \? MB21Lista\.nomeCategoria\(r\.categoria\) : 'Senza categoria'\)\}<\/small>/);
+  assert.match(IDX, /<small style="color:var\(--grigio\)">· \$\{esc\(\[c\.categoria \? MB21Lista\.nomeCategoria\(c\.categoria\) : 'Senza categoria', /);   // nota 156: poi segnoOmonimi
+  assert.match(PL, /<b>\$\{esc\(r\.nome\)\}<\/b> <small>\$\{esc\(\[r\.categoria \? MB21Lista\.nomeCategoria\(r\.categoria\) : 'Senza categoria', /);
   assert.match(leggi('pagina-agenda.js'), /<span>\$\{esc\(c\.nome\)\}<small>\$\{esc\(c\.categoria \? MB21Lista\.nomeCategoria\(c\.categoria\) : ''\)\}<\/small><\/span>/);
   assert.doesNotMatch(IDX + PL, /esc\([rc]\.categoria \|\| 'Senza categoria'\)/);
 });
@@ -563,6 +563,17 @@ prova('L9: una ricerca sola (cercaNomi) per i fogli di scelta, con la regola di 
   assert.equal(ids(L.cercaNomi(righe, { testo: '333 0000002', utenteId: 'io' })), '2');   // anche il numero
   assert.equal(ids(L.cercaNomi(righe, { testo: 'bar', utenteId: 'io', max: 1 })), '3');
   assert.equal(L.cercaNomi(righe, { testo: '  ', utenteId: 'io' }).length, 0);
+});
+
+prova('156: due schede con lo stesso nome nella ricerca → accanto il telefono (o «senza telefono») e «nessuna azione»; i nomi unici niente', () => {
+  const righe = [{ id: 'v', user_id: 'io', nome: 'Persona Gamma', telefono: '333 0000009', ultima_il: '2026-10-20T09:00:00Z', categoria: 'Partner' },
+    { id: 'n', user_id: 'io', nome: 'persona gàmma', categoria: 'Partner' }, { id: 'u', user_id: 'io', nome: 'Persona Gammina', categoria: 'Partner' }];
+  const trovati = L.cercaNomi(righe, { testo: 'gamm', utenteId: 'io' });
+  assert.deepEqual(trovati.map(r => [r.id, L.segnoOmonimi(r, trovati)]), [['v', 'tel 333 0000009'], ['n', 'senza telefono · nessuna azione'], ['u', '']]);
+  assert.equal(L.segnoOmonimi(righe[0], [righe[0]]), '');
+  // i due fogli di ricerca la usano
+  assert.match(IDX, /MB21Lista\.segnoOmonimi\(c, trovati\)/);
+  assert.match(PL, /MB21Lista\.segnoOmonimi\(r, data\)/);
 });
 
 prova('L9: «Cerca nella lista» (coppia, Mappa) cerca nella copia della Lista con la stessa regola: niente lettura a ogni tasto, gli eliminati non ci sono', async () => {
