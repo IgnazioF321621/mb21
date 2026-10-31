@@ -2135,7 +2135,7 @@ function foglioIncontro(inc) {
       ${fase && senza.length > 1 ? `<button type="button" class="primario fi-tutti" data-fi-tutti>Fatto per tutti</button>` : ''}</div>
     ${persone.map(p => `<div data-condividi="${esc(p.id)}"></div>`).join('')}
     ${comandiTendina([['fi-cmd', 'modifica', 'modifica', 'Modifica'], ['fi-cmd', 'sposta', 'orario', 'Sposta'], ['fi-cmd', 'elimina', 'elimina', 'Elimina']])}
-    <p class="na5-aiuto">Modifica, Sposta ed Elimina valgono per tutto l'incontro. Per aprire una persona, tocca il suo nome.</p></div>`;
+    <p class="na5-aiuto">Modifica ed Elimina valgono per tutto l'incontro; Sposta, per chi non ha ancora l'esito. Per aprire una persona, tocca il suo nome.</p></div>`;
   velo.querySelector('#fi-x').onclick = chiudi;
   collegaTendine5(velo);   // nota 116: Modifica · Sposta · Elimina a tendina
   velo.querySelectorAll('[data-fi-persona]').forEach(b => { b.onclick = () => { const p = persone.find(x => x.id === b.dataset.fiPersona); chiudi(); foglioEvento({ ...p, quando: p.quando || p.inizio }, true); }; });

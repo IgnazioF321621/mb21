@@ -4030,10 +4030,15 @@ function spostaAppuntamento(e, dopo) {
   const { giorno, ora } = A.partiRoma(quando);
   const durata0 = !dallaCoda && e.fine && Date.parse(e.fine) > Date.parse(e.inizio) ? Math.round((Date.parse(e.fine) - Date.parse(e.inizio)) / 60000) : 0;
   dopo = dopo || (async g => { AG.aperta = e.id; await apriAgenda(g); });
+  // nota 109: un incontro con più persone si sposta tutto insieme (le righe di ognuno); nota Pagine 155 (Ignazio 30/10): chi ha già l'esito resta
+  // al suo giorno (per lui l'incontro c'è stato), si spostano solo le persone ancora senza esito; se l'hanno tutte, si sposta tutto come prima
+  const gruppo = e._persone && e._persone.length > 1 ? e._persone : [e], aperte = gruppo.filter(x => !x.esito);
+  const tutte = aperte.length && aperte.length < gruppo.length ? aperte : gruppo, ids = tutte.map(x => x.id);
+  const chi = tutte.length < gruppo.length ? `<p>Si ${tutte.length === 1 ? 'sposta' : 'spostano'}: ${esc(tutte.map(x => (x.contatti && x.contatti.nome) || '—').join(', '))}</p>` : '';
   const velo = document.createElement('div');
   velo.className = 'velo';
   // cantiere 37: si sposta l'inizio E si cambia quanto dura («Finisce alle»), e si vede subito se l'ora è già occupata
-  velo.innerHTML = `<div class="foglio"><h3>${ic('orario')} Sposta</h3><p>${esc(A.riga(e, { mioId: ST.utente.id, admin: false }).titolo)}</p>
+  velo.innerHTML = `<div class="foglio"><h3>${ic('orario')} Sposta</h3><p>${esc(A.riga(e, { mioId: ST.utente.id, admin: false }).titolo)}</p>${chi}
     <div class="ag-due-campi"><input id="sp-giorno" type="date" value="${giorno}"><input id="sp-ora" type="time" value="${ora}"></div>
     ${durata0 ? `<div class="campo" style="margin-top:10px"><label>Finisce alle</label><input id="sp-fine" type="time" value="${A.daMinuti(Math.min(1440, A.inMinuti(ora) + durata0))}"></div>` : ''}
     <div id="sp-avviso" style="margin-top:10px"></div>
@@ -4085,10 +4090,8 @@ function spostaAppuntamento(e, dopo) {
     const prima = { inizio: e.inizio, fine: e.fine, confermato_il: e.confermato_il || null };
     // nota 061: spostato un appuntamento condiviso si segna quando (spostato_il); dalla nota 077 (25/10) conta per «Non può» (va ridata), «Partecipa» resta (rispostaValida)
     if (e.condiviso_con) { nuovo.spostato_il = new Date().toISOString(); prima.spostato_il = e.spostato_il || null; }
-    // nota 109: un incontro con più persone si sposta tutto insieme (le righe di ognuno)
-    const tutte = e._persone && e._persone.length > 1 ? e._persone : [e], ids = tutte.map(x => x.id);
     if (tutte.some(x => x.condiviso_con)) nuovo.spostato_il = nuovo.spostato_il || new Date().toISOString();
-    const { error } = await dbq('sposta appuntamento', ids.length === 1 ? supa.from('azioni').update(nuovo).eq('id', e.id) : supa.from('azioni').update(nuovo).in('id', ids));
+    const { error } = await dbq('sposta appuntamento', ids.length === 1 ? supa.from('azioni').update(nuovo).eq('id', ids[0]) : supa.from('azioni').update(nuovo).in('id', ids));
     if (error) return mostraToast('Non spostato: controlla la connessione e riprova.');
     for (const x of tutte) await allineaRigaCoda(x, x.inizio, nuovaData);   // la riga «PM Fissato» dalla coda segue l'appuntamento (nota 035)
     await dopo(g);
@@ -4099,7 +4102,7 @@ function spostaAppuntamento(e, dopo) {
     if (tutte.some(x => x.condiviso_con)) setTimeout(() => { if (!annullato) avvisaTutti(); }, DURATA_ANNULLA + 500);
     mostraToast(`Spostato a ${g.split('-').reverse().join('/')} ${o}`, async () => {
       annullato = true;
-      const { error: eAnnulla } = await dbqAvvisa('annulla sposta', ids.length === 1 ? supa.from('azioni').update(prima).eq('id', e.id) : supa.from('azioni').update(prima).in('id', ids), 'Annullamento non riuscito: controlla la connessione e riprova.');
+      const { error: eAnnulla } = await dbqAvvisa('annulla sposta', ids.length === 1 ? supa.from('azioni').update(prima).eq('id', ids[0]) : supa.from('azioni').update(prima).in('id', ids), 'Annullamento non riuscito: controlla la connessione e riprova.');
       if (!eAnnulla) for (const x of tutte) await allineaRigaCoda(x, nuovaData, x.inizio);
       else avvisaTutti();   // l'annullamento non è riuscito: lo spostamento resta, e chi lo riceve lo sa
       await dopo(giorno);
