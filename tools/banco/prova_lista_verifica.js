@@ -660,7 +660,7 @@ prova('L10: nell\'Agenda di oggi chi compie gli anni, con i bottoni per scrivere
   ctx.AG.giorno = '2026-10-24'; assert.equal(ctx.html('2026-10-23'), '');   // un altro giorno: niente
   ctx.AG.giorno = '2026-10-23'; ctx.tutti = true; assert.equal(ctx.html('2026-10-23'), '');
   // i bottoni per scrivere: la stessa funzione dei 4 tasti, senza la cornetta
-  const c = { esc, ic: n => `[${n}]`, MB21Lista: L, telegramSulWeb: () => false };   // nota 166: sul telefono t.me
+  const c = { esc, ic: n => `[${n}]`, MB21Lista: L, sulComputer: () => false, schedaFuori: () => 'target="_blank" rel="noopener"' };   // nota 166: sul telefono come prima
   vm.createContext(c); vm.runInContext(PL.slice(PL.indexOf('const ICONE_CONTATTA = {'), PL.indexOf('\nfunction disegnaLista')) + ';this.c = contattaHtml;', c);
   const tre = c.c('+393330000001', true);
   assert.match(tre, /^<div class="contatta tre">/); assert.doesNotMatch(tre, /Chiama/); assert.match(tre, /SMS[\s\S]*WhatsApp[\s\S]*Telegram/);

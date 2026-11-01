@@ -3641,8 +3641,18 @@ function mostraToast(testo, suAnnulla, rifai) {
 // senza attese prima: su iPhone, dopo un'attesa, il permesso di copiare si perde. Se il telefono non lascia copiare: con `campo`
 // (il riquadro di testo del foglio) lo seleziona e dice `aiuto`; senza, apre un foglio con il testo già selezionato (in sola
 // lettura: si tiene premuto e si sceglie «Copia»), con in più la `nota` se c'è (il Calendario: «Non darlo a nessuno…»).
-// Nota Pagine 166: un Mac senza touch screen (l'iPad si presenta come un Mac, ma ha il touch: la stessa regola di avvisi.js) → Telegram Web nel browser
-const telegramSulWeb = () => /Macintosh/.test(navigator.userAgent) && !(navigator.maxTouchPoints > 1);
+// Nota Pagine 166: sul computer (niente iPhone, iPad, Android, niente touch screen; l'iPad si presenta come un Mac, ma ha il touch: la regola di avvisi.js)
+// WhatsApp e Telegram si aprono nel browser (WhatsApp Web, Telegram Web). Seguito (Ignazio 01/11: «aprendo nuove pagine web, quelle precedenti si
+// chiudono»): ogni tocco riusa la stessa scheda, una per WhatsApp e una per Telegram (un nome fisso: «mb21-whatsapp», «mb21-telegram»), perché le due
+// web app lavorano in una scheda sola alla volta. Il nome regge solo senza «noopener»: si toglie dopo il legame con MB21 (opener = null). Si riusa
+// solo la scheda aperta da MB21, non una aperta a mano. Sul telefono tutto come prima: una scheda nuova, che apre l'app.
+const sulComputer = () => !/iPhone|iPad|iPod|Android/.test(navigator.userAgent) && !(navigator.maxTouchPoints > 1);
+const schedaFuori = chi => (sulComputer() ? `target="mb21-${chi}"` : 'target="_blank" rel="noopener"');   // per i link <a>
+function apriFuori(url, chi) {   // per i tocchi che aprono da codice
+  if (!sulComputer()) return window.open(url, '_blank', 'noopener');
+  const w = window.open(url, 'mb21-' + chi);
+  try { if (w) w.opener = null; } catch (e) { /* niente */ }
+}
 async function copiaTesto(testo, detto, campo, aiuto, nota) {
   try {
     if (!navigator.clipboard) throw new Error('appunti non disponibili');
@@ -6295,10 +6305,11 @@ function foglioLinkInvito(opz = {}) {
   // Il link del bottone si prepara al tocco, con il testo del riquadro
   velo.querySelectorAll('[data-canale]').forEach(a => a.onclick = () => {
     const t = encodeURIComponent(attuale());
-    a.target = a.dataset.canale === 'sms' ? '' : '_blank';
-    a.rel = 'noopener';
-    a.href = a.dataset.canale === 'wa' ? `https://wa.me/${tel.replace(/[^0-9]/g, '')}?text=${t}`
-      : a.dataset.canale === 'tg' ? MB21Lista.linkTelegramCondividi(link, attuale().replace(link, '').trim(), telegramSulWeb())   // nota 166: sul Mac Telegram Web
+    const chi = { wa: 'whatsapp', tg: 'telegram' }[a.dataset.canale];   // nota 166: sul computer la stessa scheda di WhatsApp Web e di Telegram Web
+    a.target = !chi ? '' : sulComputer() ? 'mb21-' + chi : '_blank';
+    a.rel = chi && sulComputer() ? '' : 'noopener';
+    a.href = a.dataset.canale === 'wa' ? MB21Lista.linkWhatsApp(tel, attuale(), sulComputer())
+      : a.dataset.canale === 'tg' ? MB21Lista.linkTelegramCondividi(link, attuale().replace(link, '').trim(), sulComputer())
       : `sms:${tel}?&body=${t}`;
   });
   velo.querySelector('#li-copia').onclick = () => copiaTesto(attuale(), 'Messaggio copiato: incollalo dove vuoi', testo, 'Tieni premuto sul messaggio e scegli Copia');

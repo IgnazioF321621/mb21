@@ -17,7 +17,7 @@ function prova(nome, fn) { fn(); ok++; console.log('✓', nome); }
 function mondo({ guardo = false } = {}) {
   const app = new Nodo(), tocchi = [];
   const ctx = { esc: s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;'), ic: n => `[${n}]`, MB21Lista: L, MB21Agenda: A,
-    telegramSulWeb: () => false, ST: { aperta: 'c1', catalogo: { righe: [] }, vistaCatalogo: true }, LV: { vista: 'home' }, app,
+    sulComputer: () => false, schedaFuori: () => 'target="_blank" rel="noopener"', ST: { aperta: 'c1', catalogo: { righe: [] }, vistaCatalogo: true }, LV: { vista: 'home' }, app,
     guardoAltri: () => guardo, nuovoBadge: () => '', iniziali: n => n.slice(0, 2).toUpperCase(),
     toccaCategoria: (id, i) => tocchi.push(['categoria', id, i]), toccaBottone: (id, i) => tocchi.push(['esito', id, i]),
     apriContattoDa() {}, elimina() {}, disegnaOggi() {}, document: { getElementById: () => null } };

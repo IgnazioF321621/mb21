@@ -125,7 +125,7 @@ const senzaAvvisi = () => AD.utenti.filter(u => u.accesso_attivo && !(AD.disposi
 async function apriTelegramCon(tel, testo) {
   let copiato = false;
   try { await navigator.clipboard.writeText(testo); copiato = true; } catch (e) { /* si scrive a mano */ }
-  window.open(MB21Lista.linkTelegram(tel, telegramSulWeb()), '_blank', 'noopener');   // nota 166: sul Mac Telegram Web
+  apriFuori(MB21Lista.linkTelegram(tel, sulComputer()), 'telegram');   // nota 166: sul computer Telegram Web, sempre nella stessa scheda
   const avviso = copiato ? 'Messaggio copiato: nella chat di Telegram tieni premuto e scegli «Incolla»' : 'Telegram aperto: scrivi tu il messaggio';
   mostraToast(avviso);
   return avviso;
@@ -152,7 +152,7 @@ function senzaAvvisiHtml() {
     const tel = telefonoInvito(u), android = (AD.telefonoDi || {})[u.id] === 'android';
     return `<div class="ad-richiesta"><b>${esc(nomeDi(u))}</b><small>${esc(usoBreve(u))}</small>
       <div class="pf-scelte"><button class="${android ? '' : 'scelto'}" data-invito-tel="${esc(u.id)}:iphone">iPhone</button><button class="${android ? 'scelto' : ''}" data-invito-tel="${esc(u.id)}:android">Android</button></div>
-      <div class="ad-invita">${tel ? `<a class="ct-whatsapp" href="${esc('https://wa.me/' + tel.slice(1) + '?text=' + encodeURIComponent(invitoAvvisi(u)))}" target="_blank" rel="noopener">${ic('whatsapp')} WhatsApp</a>
+      <div class="ad-invita">${tel ? `<a class="ct-whatsapp" href="${esc(MB21Lista.linkWhatsApp(tel, invitoAvvisi(u), sulComputer()))}" ${schedaFuori('whatsapp')}>${ic('whatsapp')} WhatsApp</a>
         <button class="ct-telegram" data-invito-tg="${esc(u.id)}">${ic('telegram')} Telegram</button>` : ''}
         <button data-invito-copia="${esc(u.id)}">${ic('copia')} Copia</button></div>
       ${tel ? '' : '<small>Manca il telefono: copia il messaggio e mandalo come vuoi</small>'}</div>`;

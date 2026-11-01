@@ -1907,7 +1907,7 @@ function collegaCondividi(el, e, preset) {
     const via = posto.querySelector('[data-condividi-via]');
     if (via) via.onclick = () => {
       const testo = testoAppuntamento(e, st.cosa);
-      if (st.come === 'whatsapp') window.open('https://wa.me/' + tel.slice(1) + '?text=' + encodeURIComponent(testo), '_blank', 'noopener');
+      if (st.come === 'whatsapp') apriFuori(MB21Lista.linkWhatsApp(tel, testo, sulComputer()), 'whatsapp');   // nota 166: sul computer sempre la stessa scheda
       else apriTelegramCon(tel, testo);
     };
     if (partner) legaCondivisioneAzione(posto, e, disegna, st);   // condiviso o tolto: si ridisegna il riquadro (la lista dell'Agenda la aggiorna «localmente»)
