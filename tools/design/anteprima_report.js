@@ -80,7 +80,7 @@ function avvia(opz = {}) {
     app, document: { getElementById: id => app.getElementById(id), querySelectorAll: s => app.querySelectorAll(s) }, window: { scrollTo() {} },
     MB21Report: R, MB21Lista: L, MB21Agenda: A, MB21Icone: Icone, MB21Coda: { oggiRoma: () => OGGI },
     supa: db, dbq: async (cosa, p) => p, SCRITTURE: { ultima: 0 }, aggiungiPortatoDa: async x => x, rigaPortato: () => '', foglioAzione() {},
-    partnerSelect: () => '', collegaPartnerSelect() {}, versione: () => '', eAdmin: () => false, vediTutti: () => false, idVisti: () => ['io'], visto: () => ({ id: 'io' }),
+    partnerSelect: () => '', collegaPartnerSelect() {}, versione: () => '', rigaSuHtml: x => x, eAdmin: () => false, vediTutti: () => false, idVisti: () => ['io'], visto: () => ({ id: 'io' }),
     ST: { tab: 'report', utente: { id: 'io' } }, LS: {}, mostraTab: () => ritorni.push('mostraTab'), apriContattoDa: (id, rit) => aperti.push([id, rit]),
     impostaGriglia() {}, soloGuardo: () => false, Date, JSON, Math, console, Promise, Map, Set,
   };

@@ -290,12 +290,12 @@ function disegnaMappa() {
 async function apriCompleta(id) {
   MP.completa = id;
   if (!MP.storico[id]) {
-    app.innerHTML = `<button class="indietro" id="mp-indietro">‹ Mappa</button><h1>Mappa</h1><div class="vuoto">Carico i mesi…</div>`;
+    app.innerHTML = `${rigaSuHtml(`<button class="indietro" id="mp-indietro">‹ Mappa</button>`)}<h1>Mappa</h1><div class="vuoto">Carico i mesi…</div>`;
     document.getElementById('mp-indietro').onclick = () => { MP.completa = null; disegnaMappa(); };
     const { data, error } = await dbq('storico del partner',
       supa.from('volumi_mese').select('mese, vpp, vpg, bonus, al_livello_successivo, dimensioni_gruppo').eq('partner_id', id).order('mese'));
     if (error) {
-      app.innerHTML = `<button class="indietro" id="mp-indietro">‹ Mappa</button><h1>Mappa</h1>
+      app.innerHTML = `${rigaSuHtml(`<button class="indietro" id="mp-indietro">‹ Mappa</button>`)}<h1>Mappa</h1>
         <div class="avviso">Non riesco a caricare i mesi di questo partner. Riprova.</div>${versione()}`;
       document.getElementById('mp-indietro').onclick = () => { MP.completa = null; disegnaMappa(); };
       return;
@@ -333,7 +333,7 @@ const statisticheHtml = () => (haStatistiche()
 const tornaStat = () => (ST.tornaA === 'report' ? 'Report' : 'Mappa');
 // Nota 098 (Ignazio 27/10): con la veste v5 dal Report è la linguetta «Efficacia»: in cima la testata del Report con le linguette, al posto del «‹ Report» e del titolo
 const inLinguetta = () => ST.tornaA === 'report' && ST.tab === 'report' && typeof veste5Report === 'function' && veste5Report();
-const testaStatHtml = () => (inLinguetta() ? testaReport() + linguetteReport() : `<button class="indietro" id="indietro">‹ ${tornaStat()}</button>
+const testaStatHtml = () => (inLinguetta() ? testaReport() + linguetteReport() : `${rigaSuHtml(`<button class="indietro" id="indietro">‹ ${tornaStat()}</button>`)}
     <h1>${ic('crescita')} ${TITOLO_STAT}</h1>`);
 function collegaTestaStat(indietro) {
   if (inLinguetta()) { collegaTornaInDashboard(); collegaLinguetteReport(); collegaPartnerSelect(); return; }
@@ -416,7 +416,7 @@ function disegnaSchedaStat(pid) {
   canvas.style.cssText = 'width:100%;height:auto;border-radius:16px;display:block';
   const sola = soloLei();
   // nella linguetta «Efficacia» (v5): la scheda di una persona torna all'elenco con «‹ Efficacia»; la propria (sola) sta sotto la testata del Report
-  app.innerHTML = `${inLinguetta() && sola ? testaStatHtml() : `<button class="indietro" id="indietro">‹ ${sola ? tornaStat() : inLinguetta() ? 'Efficacia' : TITOLO_STAT}</button>`}
+  app.innerHTML = `${inLinguetta() && sola ? testaStatHtml() : `${rigaSuHtml(`<button class="indietro" id="indietro">‹ ${sola ? tornaStat() : inLinguetta() ? 'Efficacia' : TITOLO_STAT}</button>`)}`}
     <div id="stat-img"></div>
     <button class="primario" id="stat-invia" style="margin-top:12px">${ic('condividi')} Invia l'immagine</button>
     <div class="sotto">${sola ? 'Questa è la tua scheda: puoi tenerla o mandarla a chi vuoi.' : `L'immagine è pulita, pronta da mandare a ${esc(r.nome)}.`} Se il telefono non apre il menu per inviarla, si scarica.</div>${versione()}`;
@@ -472,7 +472,7 @@ function disegnaCompleta() {
   const bonus = Number(ultimo.bonus) || 0;
   const fatta = manca ? Math.max(0, Math.min(100, 100 * (Number(ultimo.vpg) || 0) / ((Number(ultimo.vpg) || 0) + manca))) : 100;
 
-  let html = `<button class="indietro" id="mp-indietro">‹ Mappa</button>
+  let html = `${rigaSuHtml(`<button class="indietro" id="mp-indietro">‹ Mappa</button>`)}
     <div class="mp-scheda-testa"><h1>${escIcone(s.pallino)}${esc(nome)}</h1><span style="color:var(--grigio-chiaro);font-size:12px">#${esc(id)}</span></div>
     <div class="mp-testa"><span>${chi.livello ? 'Livello ' + livelloVisto(chi.livello, radiceVista(MB21Mappa.albero(MP.squadra || [], MP.volumi || []))) : ''}${chi.data_ingresso ? ' · dal ' + esc(chi.data_ingresso.split('-').reverse().join('/')) : ''}</span>
       <span>mese ${esc(mesePulito(ultimo.mese))}</span></div>

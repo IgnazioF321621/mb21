@@ -35,7 +35,7 @@ const ctx = {
   localStorage: memoria, app,
   esc: t => String(t == null ? '' : t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])),
   ic: nome => `<svg class="ic ${nome}"></svg>`,
-  partnerSelect: () => '', versione: () => '', collegaCheck: () => {},
+  partnerSelect: () => '', versione: () => '', rigaSuHtml: x => x, collegaCheck: () => {},
   console,
 };
 vm.createContext(ctx);

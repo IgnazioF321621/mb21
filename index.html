@@ -678,6 +678,10 @@
   .o5-righe .v5-su .freccia5 { background: var(--superficie); color: var(--testo); border: 1px solid var(--linea); }   /* Oggi ha la testata chiara */
   .riga-su { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
   .riga-su .frecce { margin-right: 42px; }   /* a destra resta il posto del tondo del feedback (.segnala-bottone) */
+  /* nota Pagine 164 (Ignazio 01/11, «Perfetto, così» su linea2_164.png): sotto la riga in alto delle pagine bianche la linea come nelle testate colorate,
+     larga quanto il contenuto, grigia che si veda, 12 px prima del resto; la riga sale di 7 px così «‹ …», frecce e tondo del feedback stanno allineati */
+  .riga-su { margin: -7px 0 12px; padding-bottom: 10px; border-bottom: 1px solid var(--spento); }
+  .riga-su .indietro { margin-top: 0; }
   .cat-comandi { display: flex; align-items: center; gap: 14px; }
   .cat-comandi button.link { margin-top: 12px; }
   .cat-comandi button.link.elimina-qui { display: inline; width: auto; margin-left: auto; }   /* all'estremo destro: lontano da «Apri contatto» (Ignazio 24/09) */
@@ -2502,8 +2506,8 @@
   /* una schermata sola: i riquadri si distribuiscono fino alla barra (altezza visibile del telefono, 100dvh); sotto restano la versione e «Da seguire» */
   .o5 { display: flex; flex-direction: column; min-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 170px); }
   .o5-testa { display: flex; justify-content: space-between; align-items: flex-start; margin: 2px 0 10px; }   /* nota 111: «Tu ▾» e il profilo all'altezza della data */
-  .o5-righe { display: flex; flex-direction: column; gap: 10px; margin: 6px 0 10px; }   /* nota 112: le due righe della testata bianca (Oggi, Esplora) */
-  .o5-righe .v5-su { border-bottom-color: var(--linea); }
+  .o5-righe { display: flex; flex-direction: column; gap: 12px; margin: 6px 0 10px; }   /* nota 164: 12 px sotto la linea, come le testate colorate */   /* nota 112: le due righe della testata bianca (Oggi, Esplora) */
+  .o5-righe .v5-su { margin: 0; padding: 0 0 10px; border-bottom-color: var(--spento); }   /* nota 164: nelle testate bianche (Oggi, Esplora) la linea come nelle pagine bianche: larga quanto il contenuto, grigia che si veda */
   .o5-righe .v5-titolo h1 { color: var(--testo); font-size: 34px; line-height: 1.1; }
   .o5-testa h1 { margin: 2px 0 0; font-size: 34px; font-weight: 800; line-height: 1.1; }
   .o5-data { font-size: 13px; font-weight: 700; color: var(--z-contatti); letter-spacing: .03em; }
@@ -5383,7 +5387,7 @@ async function caricaDatiCheck() {
 // Nota Pagine 081, punto 2 (Ignazio 24/10): la freccia in alto del Check riporta da dove si arriva. `CK.da` = { etichetta, tab } lo mette chi apre
 // il Check con `apriCheckDa` (la card di un'area della Dashboard: «‹ Volume» torna lì); senza, «‹ Dashboard». Dalla scheda o dal Modulo Core si torna
 // al Check e la freccia resta quella di prima.
-const indietroCheck = () => `<button class="indietro" id="ck-indietro">‹ ${esc((CK.da && CK.da.etichetta) || 'Oggi')}</button>`;
+const indietroCheck = () => rigaSuHtml(`<button class="indietro" id="ck-indietro">‹ ${esc((CK.da && CK.da.etichetta) || 'Oggi')}</button>`);
 function tornaDalCheck() { const da = CK.da; CK.da = null; ST.tab = (da && da.tab) || 'oggi'; mostraTab(); window.scrollTo(0, 0); }
 function apriCheckDa(etichetta, tab) { CK.da = { etichetta, tab }; ST.tab = 'check'; mostraTab(); window.scrollTo(0, 0); }
 
@@ -5690,7 +5694,7 @@ async function leggiAzioniMie() {
 // Dal 28/09 il Report non è più nella barra in basso (si apre dalla Dashboard, zona «Approfondisci»):
 // come il Check, ha in cima il ritorno alla Dashboard. Nota 074: aperto dalla scheda › Vendite («Le tue provvigioni, mese per mese ›», `RP.da`)
 // la freccia ha il nome della persona e torna alla sua scheda, sulla linguetta Vendite.
-function tornaInDashboard() { return `<button class="indietro" id="rp-indietro">‹ ${esc(RP.da ? RP.da.nome : 'Oggi')}</button>`; }
+function tornaInDashboard() { return rigaSuHtml(`<button class="indietro" id="rp-indietro">‹ ${esc(RP.da ? RP.da.nome : 'Oggi')}</button>`); }
 // v5 (nota 095, Regia 26/10): la testata grigio scuro del Report, con lo stesso ritorno (#rp-indietro: dalla scheda il suo nome, se no «‹ Esplora»), il chip e il feedback
 const testaReport = () => (typeof veste5 === 'function' && veste5()
   ? testaZonaV5({ colore: 'var(--z-report)', torna: RP.da ? RP.da.nome : 'Esplora', tornaId: 'rp-indietro', titolo: 'Report' })
@@ -6320,7 +6324,7 @@ function disegnaGriglia() {
     if (!daDashboard) return disegnaReport();
     RP.grigliaDa = null; ST.tab = 'oggi'; mostraTab(); window.scrollTo(0, 0);
   };
-  let html = `<button class="indietro" id="gp-indietro">‹ ${daDashboard ? 'Oggi' : 'Report'}</button><h1>Griglia PM</h1>`;
+  let html = `${rigaSuHtml(`<button class="indietro" id="gp-indietro">‹ ${daDashboard ? 'Oggi' : 'Report'}</button>`)}<h1>Griglia PM</h1>`;
   if (!imp) {
     // nota 081, punto 11: una domanda, non un ordine
     html += `<div class="riquadro"><p style="margin:0 0 12px"><b>Quanti Piani Marketing vuoi fare, e in quanto tempo?</b></p>

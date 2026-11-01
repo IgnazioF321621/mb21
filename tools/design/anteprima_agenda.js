@@ -129,7 +129,7 @@ const stub = {
   ST: { utente: { id: 'io', partner_id: 'IO1' }, tab: 'agenda' }, RIO: { righe: [{}] }, CONF: { righe: [{}, {}] }, FATTO_APERTO: new Set(),
   MB21Coda: { ...require(path.join(BASE, 'coda.js')), oggiRoma: () => OGGI, adesso: () => A.isoDaRoma(OGGI, '12:00') },   // il motore vero (contoGiorno), con l'oggi fermo e «adesso» a mezzogiorno
   vediTutti: () => modo.tutti, visto: () => ({ id: 'io' }), eAdmin: () => modo.admin, soloGuardo: () => false,
-  partnerSelect: () => '', collegaPartnerSelect: () => {}, versione: () => '',
+  partnerSelect: () => '', collegaPartnerSelect: () => {}, versione: () => '', rigaSuHtml: x => x,
   contattaHtml: () => '<div class="contatta"><a href="#">Chiama</a><a href="#">Messaggio</a><a href="#">WhatsApp</a><a href="#">Telegram</a></div>',
   rigaPortato: n => 'portato da ' + n,
   ricordoHtml: () => '', preparaChiamataHtml: () => '', preparaPresentazioneHtml: () => '',   // il coach non c'entra qui (il foglio dell'impegno, per i punti da trattare)

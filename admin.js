@@ -240,7 +240,7 @@ function rigaUtenteAdmin(u) {
 // Sottopagine (richiesta di Ignazio 16/09: sul telefono una pagina sola diventa caotica):
 // AD.sezione null = menu · 'utenti' · 'wes' · 'bbs'. «Carica file Amway» apre subito la scelta del file.
 function disegnaAdmin() {
-  const indietro = `<button class="indietro" id="ad-indietro">‹ Admin</button>`;
+  const indietro = rigaSuHtml(`<button class="indietro" id="ad-indietro">‹ Admin</button>`);
   let html;
   if (AD.sezione === 'utenti' && !UTENTI_ADMIN) AD.sezione = null;   // 087: spenta, si torna al menu
   if (AD.sezione === 'utenti') {

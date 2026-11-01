@@ -16,7 +16,7 @@ function mondo(extra = {}) {
   const letture = [], archivi = [];
   const app = { innerHTML: '' };
   const ctx = { console, Date, Intl, Set, Map, Promise, JSON, Math, app,
-    esc: s => String(s ?? ''), escIcone: s => s, ic: n => `[${n}]`, dentroCerchio: () => 'AB', nomeDi: u => u.nome_cognome, dataOra: x => x, versione: () => '',
+    esc: s => String(s ?? ''), escIcone: s => s, ic: n => `[${n}]`, dentroCerchio: () => 'AB', nomeDi: u => u.nome_cognome, dataOra: x => x, versione: () => '', rigaSuHtml: x => x,
     ST: { utente: { id: 'admin' } }, MB21Coda: { oggiRoma: () => '2026-10-24' }, MB21Lista: L, MB21Training: T, MB21Dashboard: { haObiettivi: () => false },
     AVVISI_TEAM: { messaggi: false }, INVITO_APP: false,
     TRN: { mazzi: null }, trnArchivio: async () => { archivi.push(1); return { mazzi: [{ percorso: { id: T.LIVELLI[0].percorsi[0].id, titolo: 'Percorso finto' }, carte: [{ id: 'c1' }] }] }; },

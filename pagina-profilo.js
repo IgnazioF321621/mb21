@@ -29,7 +29,7 @@ function cerchiettoProfilo() {
 // BBS · WES · CEP. Password, calendario, avvisi e il resto restano del proprio Profilo: sono personali e non si cambiano per un altro.
 async function apriProfiloDiAltro(p) {
   const nome = nomeDi(p);
-  const testa = `<button class="indietro" id="pf-indietro">‹ Oggi</button>`;
+  const testa = rigaSuHtml(`<button class="indietro" id="pf-indietro">‹ Oggi</button>`);
   app.innerHTML = `${testa}<h1>Profilo di ${esc(nome)}</h1>${partnerSelect()}<div class="vuoto">Carico…</div>`;
   const torna = () => { document.getElementById('pf-indietro').onclick = () => { ST.tab = 'oggi'; mostraTab(); }; collegaPartnerSelect(); };
   torna();
@@ -88,7 +88,7 @@ function restoProfiloDiAltro(d, m, trn, disp) {
 async function apriProfilo() {
   if (guardoAltri() && !vediTutti()) return apriProfiloDiAltro(visto());
   const u = ST.utente;
-  app.innerHTML = `<button class="indietro" id="pf-indietro">‹ Oggi</button><h1>Profilo</h1><div class="vuoto">Carico…</div>`;
+  app.innerHTML = `${rigaSuHtml(`<button class="indietro" id="pf-indietro">‹ Oggi</button>`)}<h1>Profilo</h1><div class="vuoto">Carico…</div>`;
   document.getElementById('pf-indietro').onclick = () => { ST.tab = 'oggi'; mostraTab(); };
   // Dati freschi (telefono e contatti al giorno possono essere cambiati da un altro dispositivo) e stato degli avvisi
   const [dati, stato, percorso] = await Promise.all([
@@ -199,7 +199,7 @@ function disegnaProfilo() {
     <div class="zona-oggi">Impostazioni</div><div class="p6-gruppo">${impostazioni}</div>
     <div class="p6-gruppo"><button class="p6-esci" id="pf-esci">Esci da MB21</button></div></div>
     ${versione()}`
-    : `<button class="indietro" id="pf-indietro">‹ Oggi</button>
+    : `${rigaSuHtml(`<button class="indietro" id="pf-indietro">‹ Oggi</button>`)}
     <div class="testa-pagina"><h1>Profilo</h1>${foto}</div>
     <div class="sotto">Il tuo quadro personale</div>
     <div class="zona-oggi">La mia crescita</div>

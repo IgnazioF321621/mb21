@@ -278,7 +278,7 @@ function vaiLV(vista, extra) {
   window.scrollTo(0, 0);
   disegnaOggi();
 }
-const indietroLV = () => `<button class="indietro" id="lv-indietro">‹ ${esc(nomeLV(PADRE_LV[LV.vista] || 'home'))}</button>`;
+const indietroLV = () => rigaSuHtml(`<button class="indietro" id="lv-indietro">‹ ${esc(nomeLV(PADRE_LV[LV.vista] || 'home'))}</button>`);
 // v5 (nota 095, Regia 25/10 sera): il Mese, l'area, il traguardo e il gradino con la testata del Check (testaCheckV5, pagina-oggi.js); senza la veste nuova come prima.
 // `sotto` è testo già pronto (escape qui); `colore` = il colore del titolo di prima (l'area), che nella testata non serve
 const testaLV = (titolo, sotto = '', colore = '') => (typeof OGGI_V5 !== 'undefined' && OGGI_V5 && typeof testaCheckV5 === 'function'
@@ -1467,7 +1467,7 @@ function disegnaConfronto() {
   const riga = r => `<div class="dm-riga"><span class="n">${esc(r.etichetta)}</span><span class="g"><b class="lv-${r.livello}">${esc(r.parola)}</b></span>
     <small>${centesimi(f(r.fatto))} su ${esc(f(r.obiettivo))}</small><small class="r">${r.perc}%</small>
     <div class="dm-barra"><div style="width:${Math.min(100, r.perc)}%;background:${r.raggiunto ? 'var(--ok)' : 'var(--accento)'}"></div></div></div>`;
-  app.innerHTML = `<button class="indietro" id="indietro">‹ Come sto andando questo mese?</button>
+  app.innerHTML = `${rigaSuHtml(`<button class="indietro" id="indietro">‹ Come sto andando questo mese?</button>`)}
     <h1>${ic('obiettivi')} Com'è andato ${esc(nome)}</h1>
     <div class="sotto" style="margin-bottom:8px">Gli obiettivi che ti eri dato e quello che è risultato (Check, file Amway e persone).</div>
     <div class="riquadro mese-card"><div class="mese-t">${c.raggiunti} ${c.raggiunti === 1 ? 'obiettivo raggiunto' : 'obiettivi raggiunti'} su ${c.totali}</div>
@@ -1546,7 +1546,7 @@ function disegnaObiettiviTeam() {
       ${aperto ? `<div class="obt-corpo">${r.prima ? `<div class="obt-gruppo"><h4>${esc(D.nomeMese(r.prima.mese))}</h4><div><span>VPG: obiettivo ${f(r.prima.obiettivo)}</span><b>fatto ${f(Math.round(r.prima.fatto))} · ${Math.round(r.prima.fatto / r.prima.obiettivo * 100)}%</b></div></div>` : ''}${gruppi}${linee}</div>` : ''}
     </div>`;
   };
-  app.innerHTML = `<button class="indietro" id="indietro">‹ ${ST.tornaA === 'mappa' ? 'Mappa' : 'Oggi'}</button>
+  app.innerHTML = `${rigaSuHtml(`<button class="indietro" id="indietro">‹ ${ST.tornaA === 'mappa' ? 'Mappa' : 'Oggi'}</button>`)}
     <h1>${ic('obiettivi')} Obiettivi mensili dei partner</h1>
     <div class="sotto" style="margin-bottom:8px">Gli obiettivi di ${esc(nomeMese)} dei partner ${altro ? `del Team di ${esc(nomeDi(visto()))}` : 'della tua linea'}, per aiutarli a raggiungerli. Tocca un nome per vedere tutto. Qui si legge soltanto: li cambia ogni partner. Sono quelli che hanno già aperto l'app.</div>
     ${OBT.senza.length ? `<div class="obt-senza"><h4>Non ancora scritti · ${OBT.senza.length}</h4>${OBT.senza.map(r => `<div><span><b>${esc(MB21Mappa.nomeLeggibile(r.nome))}</b>${r.sponsor_nome ? ` <span class="avv-sponsor${r.diretto && !altro ? ' tuo' : ''}">[${r.diretto && !altro ? 'Tuo/a' : esc(MB21Mappa.nomeLeggibile(r.sponsor_nome))}]</span>` : ''}</span></div>`).join('')}</div>` : ''}
@@ -1591,7 +1591,7 @@ function disegnaAvvio() {
   };
   // v5 (nota 098): dalla Mappa la testata blu notte con «‹ Mappa»; il resto della pagina come prima
   app.innerHTML = `${typeof testaZonaV5 === 'function' && typeof OGGI_V5 !== 'undefined' && OGGI_V5 ? testaZonaV5({ colore: 'var(--z-mappa)', torna: ST.tornaA === 'mappa' ? 'Mappa' : 'Oggi', tornaId: 'indietro', titolo: 'Partner da avviare', ps: false })
-      : `<button class="indietro" id="indietro">‹ ${ST.tornaA === 'mappa' ? 'Mappa' : 'Oggi'}</button>
+      : `${rigaSuHtml(`<button class="indietro" id="indietro">‹ ${ST.tornaA === 'mappa' ? 'Mappa' : 'Oggi'}</button>`)}
     <h1>${ic('avvio')} Partner da avviare</h1>`}
     <div class="sotto" style="margin-bottom:8px">I partner ${altro ? `del Team di ${esc(nomeDi(visto()))}` : 'del tuo Team'} con l'avvio aperto, dal più recente. Tocca un nome per vedere i suoi passi.</div>
     <button class="ag-blocco avv-come" id="avv-come"><span>${ic('info')} Come funziona</span><span>${AVV.comeAperto ? '⌄' : '›'}</span></button>

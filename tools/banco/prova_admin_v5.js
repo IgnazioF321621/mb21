@@ -14,7 +14,7 @@ function prova(nome, fn) { prove.push([nome, fn]); }
 function menu(v5) {
   const app = { innerHTML: '' };
   const ctx = { console, Date, Intl, Set, Map, Promise, JSON, Math, app, esc: s => String(s ?? ''), escIcone: s => s, ic: n => `[${n}]`, dentroCerchio: () => 'PA',
-    nomeDi: u => u.nome_cognome, versione: () => '', ST: { utente: { id: 'admin' } }, MB21Coda: { oggiRoma: () => '2026-10-27' }, MB21Lista: L, MB21Training: T,
+    nomeDi: u => u.nome_cognome, versione: () => '', rigaSuHtml: x => x, ST: { utente: { id: 'admin' } }, MB21Coda: { oggiRoma: () => '2026-10-27' }, MB21Lista: L, MB21Training: T,
     AVVISI_TEAM: { messaggi: false }, INVITO_APP: false, veste5: () => v5, chipPartnerSelect: () => '', supa: {}, dbq: async () => ({}), window: {}, document: { getElementById: () => null } };
   vm.createContext(ctx);
   const i = PO.indexOf('function testaZonaV5');

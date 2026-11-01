@@ -46,7 +46,7 @@ function mondo({ cache = true, archivio, admin = false, sostituisci = [] } = {})
   let adesso = Date.parse(OGGI + 'T12:00:00Z');
   const stub = {
     app, document: { getElementById: id => app.getElementById(id), body: { appendChild() {} }, createElement: () => new Nodo(), querySelector: () => null },
-    window: { scrollTo() {} }, location: { hostname: 'mb21.example' }, localStorage: { getItem: () => '1', setItem() {} }, esc, ic: n => `[${n}]`, versione: () => '',
+    window: { scrollTo() {} }, location: { hostname: 'mb21.example' }, localStorage: { getItem: () => '1', setItem() {} }, esc, ic: n => `[${n}]`, versione: () => '', rigaSuHtml: x => x,
     MB21Training: T, MB21Coda: { oggiRoma: () => OGGI }, MB21Lista: L, ST: { utente: { id: 'io', nome_cognome: 'Persona A' } }, eAdmin: () => admin,
     supa: { from: da }, dbq: (_, p) => p, primoNome: s => String(s || '').split(' ')[0], mostraToast() {}, caches, Response: RispostaFinta,
     Date: { now: () => adesso, parse: Date.parse },

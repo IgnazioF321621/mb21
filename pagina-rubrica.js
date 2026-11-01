@@ -32,7 +32,7 @@ function apriImportaRubrica() {
   RB.esito = null; RB.proprietario = visto().id;
   window.scrollTo(0, 0);
   app.innerHTML = `
-    <button class="indietro" id="rb-indietro">‹ Lista Nomi</button>
+    ${rigaSuHtml(`<button class="indietro" id="rb-indietro">‹ Lista Nomi</button>`)}
     <h1>Importa dalla rubrica</h1>
     <div class="sotto">Porta in MB21 i nomi che hai nel telefono${esc(aNome())}. Chi è già nella Lista viene saltato.</div>
     <div class="sotto">Sono dati di altre persone: li vedi tu (e l'Admin, per aiutarti), non chi ti segue. Conviene importare chi conosci. <button class="link" id="rb-privacy" style="display:inline;padding:0;font-size:inherit">Privacy</button></div>
@@ -98,7 +98,7 @@ function disegnaRiepilogoRubrica() {
       <small>${esc([s.telefono, ...s.motivi.map(m => RB_MOTIVI[m])].filter(Boolean).join(' · '))}</small></div>`;
   const blocco = (titolo, gruppo) => (e[gruppo].length ? `<h2>${titolo} · ${n(e[gruppo].length)}</h2><div class="riquadro rb-elenco">${e[gruppo].map((s, i) => riga(s, gruppo, i)).join('')}</div>` : '');
   app.innerHTML = `
-    <button class="indietro" id="rb-indietro">‹ Scegli un altro file</button>
+    ${rigaSuHtml(`<button class="indietro" id="rb-indietro">‹ Scegli un altro file</button>`)}
     <h1>${n(e.letti)} contatti letti</h1>
     <div class="riquadro rb-conti">
       <div><b>${n(e.presenti.length)}</b> già nella Lista · saltati${compleanni.length ? ` <small style="display:block;margin:2px 0 0">a ${n(compleanni.length)} aggiungo il compleanno della rubrica, solo dove manca</small>` : ''}</div>

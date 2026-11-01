@@ -27,7 +27,7 @@ function profilo(v5, aperte = []) {
     percheRigheHtml: p => p.map(x => `<span>${x}</span>`), mioPassiHtml: () => '', nomeDi: u => u.nome_cognome, dentroCerchio: () => 'PA',
     mieiSegniHtml: () => '<div class="pf-box pf-voce" id="finto-segni">I miei Segni Vitali</div>',
     mioTrainingHtml: () => '<div class="pf-box pf-voce" id="finto-training">Il mio Training</div>',
-    calendarioHtml: () => '<div class="pf-box pf-voce" id="finto-calendario">MB21 nel tuo calendario</div>', versione: () => '<div id="finta-versione"></div>',
+    calendarioHtml: () => '<div class="pf-box pf-voce" id="finto-calendario">MB21 nel tuo calendario</div>', versione: () => '<div id="finta-versione"></div>', rigaSuHtml: x => x,
     toccoScaricaLista() {}, collegaMieiSegni() {}, collegaMioAvvio() {}, collegaAvvisi() {}, collegaCalendario() {}, mostraTab: () => tocchi.push(['tab']), foglioFoto() {}, salvaTelefono() {},
     foglioSegnala() {}, scegliNumero() {}, apriLibri() {}, apriBenvenuto() {}, foglioPassword: (...a) => tocchi.push(['password', ...a]), foglioPrivacy() {},
     supa: { auth: { signOut: () => tocchi.push(['esci']) } }, TRN: {},

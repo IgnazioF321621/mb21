@@ -347,7 +347,7 @@ function righeTracceHtml() {
 async function apriPaginaTracce() {
   // nota 098 (Ignazio 26/10): «Da seguire» sta in fondo al Giorno dell'Agenda: si torna lì
   const da = TRC.daAgenda ? 'Agenda' : 'Oggi';
-  app.innerHTML = `<button class="indietro" id="tr-indietro">‹ ${da}</button><h1>${ic('audio')} Tracce condivise</h1><div class="sotto">Le condivisioni degli ultimi 7 giorni${guardoAltri() ? ' di ' + esc(nomeDi(visto())) : ''}. Tocca un nome per aprire lo Sharing.</div>${righeTracceHtml()}${versione()}`;
+  app.innerHTML = `${rigaSuHtml(`<button class="indietro" id="tr-indietro">‹ ${da}</button>`)}<h1>${ic('audio')} Tracce condivise</h1><div class="sotto">Le condivisioni degli ultimi 7 giorni${guardoAltri() ? ' di ' + esc(nomeDi(visto())) : ''}. Tocca un nome per aprire lo Sharing.</div>${righeTracceHtml()}${versione()}`;
   window.scrollTo(0, 0);
   document.getElementById('tr-indietro').onclick = () => (TRC.daAgenda ? apriAgenda() : caricaOggi());
   collegaTracce(async () => { await caricaTracceDaControllare(ST.oggi); apriPaginaTracce(); });

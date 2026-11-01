@@ -14,7 +14,7 @@ const tornaDaiLibri = () => { if (LB.ritorno === 'oggi' || LB.ritorno === 'check
 async function apriLibri(ritorno) {
   if (ritorno) LB.ritorno = ritorno;
   const indietro = indietroLibri(), torna = tornaDaiLibri;
-  app.innerHTML = `<button class="indietro" id="lb-indietro">${indietro}</button><h1>${ic('libro')} I miei libri</h1><div class="vuoto">Carico…</div>`;
+  app.innerHTML = `${rigaSuHtml(`<button class="indietro" id="lb-indietro">${indietro}</button>`)}<h1>${ic('libro')} I miei libri</h1><div class="vuoto">Carico…</div>`;
   document.getElementById('lb-indietro').onclick = torna;
   const [check, libri, gia, personali] = await Promise.all([
     dbq('check con libro', supa.from('check_giorno').select('data, libro, pagine, note_libro').eq('user_id', visto().id).order('data')),
@@ -22,7 +22,7 @@ async function apriLibri(ritorno) {
     dbq('libri già letti', supa.from('libri_letti').select('id, titolo, quando').eq('user_id', visto().id)),
     dbq('libri personali', supa.from('libri_personali').select('titolo, autore').eq('user_id', visto().id)),
   ]);
-  if (check.error || libri.error) { app.innerHTML = `<button class="indietro" id="lb-indietro">${indietro}</button><h1>${ic('libro')} I miei libri</h1><div class="avviso">Non riesco a caricare i libri: riprova.</div>${versione()}`; document.getElementById('lb-indietro').onclick = torna; return; }
+  if (check.error || libri.error) { app.innerHTML = `${rigaSuHtml(`<button class="indietro" id="lb-indietro">${indietro}</button>`)}<h1>${ic('libro')} I miei libri</h1><div class="avviso">Non riesco a caricare i libri: riprova.</div>${versione()}`; document.getElementById('lb-indietro').onclick = torna; return; }
   // i libri personali («Altro libro…») entrano nell'elenco come libri fuori percorso, così hanno autore nel diario
   const tuttiLibri = [...(libri.data || []), ...(personali.data || []).map(x => ({ tipo: 'libro', titolo: x.titolo, autore: x.autore, ordine_libro: null, solo_n21: false, personale: true }))];
   LB.dati = { check: check.data || [], tuttiLibri, giaLetti: gia.data || [] };
@@ -63,7 +63,7 @@ function disegnaLibri(inCima) {
       ${aperto ? `<div class="lb-note">${b.note.length ? b.note.map(x => `<div class="lb-nota"><b>${esc(x.testo)}</b><small>${esc(data(x.data))}${x.pagine ? ` · ${x.pagine} pagine` : ''}</small></div>`).join('') : '<div class="sotto" style="margin:8px 0">Nessuna nota scritta per questo libro.</div>'}</div>` : ''}`;
   }).join('')}</div>` : '<div class="vuoto">Nessun libro nel diario finora.</div>'}${mio ? `<button class="sh-mano" id="lb-gia-altro">${ic('piu')} Un libro già letto</button>` : ''}`;
 
-  app.innerHTML = `<button class="indietro" id="lb-indietro">${indietro}</button><h1>${ic('libro')} ${guardoAltri() ? 'I libri di ' + esc(MB21Sharing.nomeCorto(nomeDi(visto()))) : 'I miei libri'}</h1>
+  app.innerHTML = `${rigaSuHtml(`<button class="indietro" id="lb-indietro">${indietro}</button>`)}<h1>${ic('libro')} ${guardoAltri() ? 'I libri di ' + esc(MB21Sharing.nomeCorto(nomeDi(visto()))) : 'I miei libri'}</h1>
     <div class="sotto">Da «Il mio giorno»${chi}: il libro, le pagine, le note.</div>${inCorso}${percorso}${diario}${versione()}`;
   if (inCima) window.scrollTo(0, 0);
   document.getElementById('lb-indietro').onclick = torna;

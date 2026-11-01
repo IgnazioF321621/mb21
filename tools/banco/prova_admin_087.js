@@ -13,7 +13,7 @@ function prova(nome, fn) { prove.push([nome, fn]); }
 function mondo(acceso) {
   const app = { innerHTML: '' };
   const ctx = { console, Date, Intl, Set, Map, Promise, JSON, Math, app, esc: s => String(s ?? ''), escIcone: s => s, ic: n => `[${n}]`, dentroCerchio: () => 'PA', nomeDi: u => u.nome_cognome, dataOra: x => x,
-    versione: () => '', ST: { utente: { id: 'admin' } }, MB21Coda: { oggiRoma: () => '2026-10-25' }, MB21Lista: L, AVVISI_TEAM: { messaggi: false }, INVITO_APP: false, window: {}, document: {} };
+    versione: () => '', rigaSuHtml: x => x, ST: { utente: { id: 'admin' } }, MB21Coda: { oggiRoma: () => '2026-10-25' }, MB21Lista: L, AVVISI_TEAM: { messaggi: false }, INVITO_APP: false, window: {}, document: {} };
   vm.createContext(ctx);
   vm.runInContext((acceso ? ADMIN.replace('const UTENTI_ADMIN = false;', 'const UTENTI_ADMIN = true;') : ADMIN) + '\nthis.__A = { AD, disegnaAdmin }; collegaAdmin = () => {};', ctx);
   Object.assign(ctx.__A.AD, { utenti: [{ id: 'u1', nome_cognome: 'Persona A', email: 'a@esempio.it', partner_id: '123', accesso_attivo: true, ultimo_uso: '2026-10-23T10:00:00Z', auth_id: 'x', nel_partner_select: true }], richieste: [], doppioni: [], wes: [], bbs: [], fc: [], segnAperte: 0, sezione: null,
