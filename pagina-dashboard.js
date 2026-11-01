@@ -815,11 +815,12 @@ function disegnaCatalogo() {
   const corpo = cat.righe.length ? cat.righe.map(cardCatalogo).join('')
     : `<div class="vuoto">${cat.totale ? `Per oggi ${altro ? 'ha' : 'hai'} finito: ${fatti} ${fatti === 1 ? 'catalogato' : 'catalogati'}. ${ic('complimenti')}` : 'Tutti catalogati. ' + ic('complimenti')}</div>`
       + (cat.totale && !altro ? `<button class="primario" id="altri-catalogo">Altri ${MB21Coda.QUOTA_CATALOGO}</button>` : '');
-  app.innerHTML = `<button class="indietro" id="indietro">‹ Lista Nomi</button><h1>Da catalogare</h1>
+  app.innerHTML = `<button class="indietro" id="indietro">‹ Lista Nomi</button><div class="titolo-frecce"><h1>Da catalogare</h1>${altro ? '' : frecceHtml('catalogo')}</div>
     <div class="sotto" style="margin-bottom:8px">${sotto}</div>
     ${altro ? `<div class="sotto">${ic('visione')} Solo da guardare, per ora.</div>` : ''}${corpo}${versione()}`;
-  document.getElementById('indietro').onclick = () => { ST.vistaCatalogo = false; window.scrollTo(0, 0); disegnaLista(); };
+  document.getElementById('indietro').onclick = () => { scordaFrecce(); ST.vistaCatalogo = false; window.scrollTo(0, 0); disegnaLista(); };
   collegaCarteCoda();
+  aggiornaFrecce();
 }
 // ── «Da catalogare» dalla copia in memoria (Lista Nomi L5): niente riletture per «Altri 5», Elimina e il ritorno dalla scheda ──
 // un nome esce dai 5 di oggi (catalogato non da chiamare, eliminato)
@@ -916,23 +917,29 @@ async function toccaCategoria(id, indice) {
     ST.stato.catalogati_oggi = (ST.stato.catalogati_oggi || 0) + 1;
     ST.aperta = daChiamare ? id : null;
     disegnaOggi();
-    mostraToast(`${contatto.nome} · ${scelta.etichetta}`, () => annullaCatalogo(contatto, prima, daChiamare, indice));
+    segnaAzione(`${contatto.nome} · ${scelta.etichetta}`, () => annullaCatalogo(contatto, prima, daChiamare, indice, scelta.categoria), () => toccaCategoria(id, indice));   // nota 162
     if (scelta.categoria === 'Partner' && !eraPartner) domandaInvito(contatto);
   };
   if (daChiamare) return dopo();
   card.classList.add('via');
   setTimeout(dopo, 250);
 }
-async function annullaCatalogo(contatto, prima, daChiamare, indice) {
+// `messa` (nota 162, la freccia «indietro» si tocca anche dopo un po'): prima si rilegge la categoria; se nel frattempo è cambiata non si rimette quella vecchia
+async function annullaCatalogo(contatto, prima, daChiamare, indice, messa) {
+  if (messa) {
+    const ora = await dbq('categoria adesso', supa.from('contatti').select('categoria').eq('id', contatto.id).maybeSingle());
+    if (ora.error) { mostraToast('Annullamento non riuscito: riprova.'); return false; }
+    if (!ora.data || ora.data.categoria !== messa) { mostraToast('Non si può annullare: nel frattempo la categoria è cambiata.'); return false; }
+  }
   const { error } = await dbq('annulla catalogo', supa.rpc('annulla_catalogo',
     { p_contatto: contatto.id, p_rientro: prima.rientro_prec, p_in_coda: prima.in_coda_prec }));
-  if (error) return mostraToast('Annullamento non riuscito: riprova.');
+  if (error) { mostraToast('Annullamento non riuscito: riprova.'); return false; }
   contatto.categoria = null;
   aggiornaRiga(contatto.id);   // L5: anche la Lista torna com'era
   rimettiInCatalogo(contatto);   // il nome in ordine alfabetico (se era uscito) e il conto
   ST.stato.catalogati_oggi--;
   disegnaOggi();
-  mostraToast('Annullato');
+  if (!frecceQui()) mostraToast('Annullato');   // con le frecce (nota 162) lo dice la freccia «avanti» accesa
 }
 
 // 'catalogo' = i catalogati in «Da catalogare» che si chiamano subito (cantiere 16, lavoro 3)
@@ -986,7 +993,7 @@ async function toccaBottone(id, indice) {
     salvaCache();
     if (restaV5) LV.restaSu = { ...pos.contatto, esito: bottone.etichetta };   // disegnaPersonaV5 tiene aperta la sua scheda
     disegnaOggi();
-    mostraToast(`${pos.contatto.nome} · ${appuntamento ? 'appuntamento fissato' : bottone.etichetta}${rientro ? ' · risentirlo il ' + dataBreve(rientro) : ''}`, () => annulla(pos, esito));
+    segnaAzione(`${pos.contatto.nome} · ${appuntamento ? 'appuntamento fissato' : bottone.etichetta}${rientro ? ' · risentirlo il ' + dataBreve(rientro) : ''}`, () => annulla(pos, esito), () => toccaBottone(id, indice));   // nota 162
     // per ultimo il momento di riflessione (cantiere 42), sulla telefonata appena registrata; con «Ordine» alla chiusura del modulo Vendita
     // (la categoria serve al coach: la chat delle telefonate è per chi non è Partner né Cliente)
     const riflessione = () => chiediRiflessione({ id: esito.azione_id, contatto_id: id, user_id: pos.contatto.user_id, incontro: appuntamento || undefined, tipo_azione: 'Contatto', modalita: 'Telefonata',
@@ -1028,12 +1035,12 @@ async function annullaEsito(esito) {
 
 async function annulla(pos, esito) {
   const { error } = await annullaEsito(esito);
-  if (error) return mostraToast(/altri|altre azioni/i.test(error.message || '') ? 'Non si può annullare: dopo questo esito ce ne sono altri.' : 'Annullamento non riuscito: riprova.');
+  if (error) { mostraToast(/altri|altre azioni/i.test(error.message || '') ? 'Non si può annullare: dopo questo esito ce ne sono altri.' : 'Annullamento non riuscito: riprova.'); return false; }
   listaDi(pos.lista).splice(pos.i, 0, pos.contatto);
   if (pos.lista === 'coda') ST.stato.fatti_oggi--;
   salvaCache();
   disegnaOggi();
-  mostraToast('Annullato');
+  if (!frecceQui()) mostraToast('Annullato');   // nota 162
 }
 
 function salvaCache() {

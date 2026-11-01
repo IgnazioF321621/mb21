@@ -125,6 +125,9 @@
     'segnala': '<path d="M12 8.6a4.4 4.4 0 0 1 4.4 4.4v2.6a4.4 4.4 0 0 1-8.8 0V13A4.4 4.4 0 0 1 12 8.6z"/><path d="M12 8.6v11.4M9.3 8.8a2.7 2.7 0 0 1 5.4 0"/><path d="m8.8 6.4 1.2 1.6M15.2 6.4 14 8M4.6 11.2l3.1.9M19.4 11.2l-3.1.9M4.6 17.6l3.1-1.3M19.4 17.6l-3.1-1.3M7.6 13.6l-3 .3M16.4 13.6l3 .3"/>',
     // Aggiunte a mano (nota Pagine 038, Ignazio 07/10, schizzo docs/prototipi/schizzo_icone_038.png): icone diverse dal Training e dal lampo
     'traguardo': '<path d="M3 20.5 9.6 9.8l3.6 5.4 2.2-3.1 5.6 8.4z"/><path d="M9.6 9.8V3.4l4.4 1.8-4.4 1.8"/>',   // la vetta con la bandierina: «Qual è il mio prossimo traguardo?»
+    // nota Pagine 162 (Ignazio 01/11, «ok» sulla foto frecce_162.png): le due frecce «indietro / avanti», come nell'editor di Evernote
+    'indietro': '<path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>',
+    'avanti': '<path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/>',
     'diario': '<rect x="4.5" y="3.5" width="11.5" height="17" rx="2"/><path d="M8 8h4.5M8 11.5h4.5"/><path d="m14 18.6 5.8-5.8 1.6 1.6-5.8 5.8H14z"/>',   // il quaderno con la matita: «Com'è andata oggi?»
   };
   const ha = nome => Object.prototype.hasOwnProperty.call(DISEGNI, nome);

@@ -591,12 +591,13 @@ async function elimina(r, dopo) {   // `dopo` ridisegna chi l'ha chiamata (dalla
   // a video finché la Lista non si rileggeva, e un secondo «Elimina» sullo stesso nome diceva «Non eliminato: riprova»
   await aggiornaRiga(r.id);
   await (dopo || ricaricaERidisegna)(true);   // `dopo(true)`: eliminato (L5: «Da catalogare» lo toglie dalla sua copia)
-  mostraToast(`${r.nome} eliminato`, async () => {
+  // nota Pagine 162: in «Da catalogare» è la freccia «indietro» (e «avanti» lo rielimina, con la sua conferma)
+  segnaAzione(`${r.nome} eliminato`, async () => {
     const { error } = await dbq('annulla elimina', supa.rpc('annulla_elimina_contatto', { p_contatto: r.id }));
-    if (error) return mostraToast('Non annullato: riprova.');
+    if (error) { mostraToast('Non annullato: riprova.'); return false; }
     await aggiornaRiga(r.id);   // e con «Annulla» torna subito
     (dopo || ricaricaERidisegna)(false);   // `dopo(false)`: di nuovo in lista
-  });
+  }, () => elimina(r, dopo));
 }
 
 // ── Scheda contatto ──

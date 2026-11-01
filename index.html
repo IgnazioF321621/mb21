@@ -667,6 +667,13 @@
   .card .cc-tasti .contatta { margin-top: 0; }
   .card .cc-tasti .contatta a { background: var(--superficie); }
   .card .cc-tasti.cat-nessuna { background: #EEF0F3; }
+  /* nota Pagine 162: le frecce «indietro / avanti» accanto al titolo, tonde, 44 px; spente grigie */
+  .titolo-frecce { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .titolo-frecce h1 { margin: 0; }
+  .frecce { display: flex; gap: 6px; flex: none; }
+  .freccia5 { width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--bordo); background: var(--superficie); color: var(--testo); padding: 0; display: grid; place-items: center; }
+  .freccia5 svg.ic { width: 22px; height: 22px; stroke-width: 2.2; }
+  .freccia5:disabled { color: #C3C9D2; background: transparent; }
   .cat-comandi { display: flex; align-items: center; gap: 14px; }
   .cat-comandi button.link { margin-top: 12px; }
   .cat-comandi button.link.elimina-qui { display: inline; width: auto; margin-left: auto; }   /* all'estremo destro: lontano da «Apri contatto» (Ignazio 24/09) */
@@ -3524,6 +3531,7 @@ function mostraTab() {
   if (sg) { sg.hidden = false; sg.onclick = foglioSegnala; seguiFogli(); }
   if (ST.tab === 'admin' && !eAdmin()) ST.tab = 'oggi';
   if (ST.tab === 'training' && !TRAINING_VISIBILE) ST.tab = 'oggi';
+  scordaFrecce();   // nota 162: cambiando pagina le frecce ripartono da zero
   ST.vistaCatalogo = false; ST.tornaA = null;   // lasciata la pagina «Da catalogare» o i «Team» della Mappa si riparte dalla pagina scelta
   if (ST.tab !== 'oggi') ST.riquadroObMostrato = false;   // lasciata la Dashboard, al ritorno il riquadro degli obiettivi può riaprirsi (pagina-dashboard.js)
   accendiTab();
@@ -3544,6 +3552,50 @@ function mostraTab() {
   if (ST.tab === 'profilo') return apriProfilo();   // cantiere 25: dal cerchietto in Dashboard
   if (ST.tab === 'training') return apriTraining();   // cantiere 42: pagina-training.js
   if (ST.tab === 'esplora') return apriEsplora();   // v5: pagina-oggi.js
+}
+
+// ── Le frecce «indietro / avanti» (nota Pagine 162, Ignazio 01/11, «ok» sulla foto docs/prototipi/frecce_162.png, «senza spiegazione») ──
+// Al posto del messaggio nero con «Annulla» (4 secondi, copriva i tasti: «il tempo del pensiero è molto più veloce»): due frecce fisse accanto al titolo
+// delle pagine in cui si inseriscono dati, come nell'editor di Evernote. Solo l'ultima azione: «indietro» la annulla (la stessa funzione di «Annulla»),
+// «avanti» la rifà (la stessa funzione del tocco: i fogli della data o dell'appuntamento si riaprono). Spente quando non c'è niente da fare.
+// Valgono finché si resta sulla pagina (cambiando pagina si riparte da zero). Il controllo «nel frattempo è cambiato?» lo fa chi annulla
+// (annulla_esito nel database per gli esiti, la categoria riletta per «Da catalogare»): se non si può, lo dice e la freccia resta.
+// Una pagina le ha se ha `frecceHtml(pagina)` nel titolo; dove non ci sono `segnaAzione` mostra il messaggio con «Annulla» di prima.
+const FRECCE = { pagina: null, indietro: null, avanti: null, occupato: false };
+const frecceQui = () => !!document.getElementById('frecce');
+function frecceHtml(pagina) {
+  if (FRECCE.pagina !== pagina) Object.assign(FRECCE, { pagina, indietro: null, avanti: null });
+  return `<span class="frecce" id="frecce"><button type="button" class="freccia5" id="fr-indietro" aria-label="Indietro: annulla l'ultima azione" disabled>${ic('indietro')}</button><button type="button" class="freccia5" id="fr-avanti" aria-label="Avanti: rifà l'azione annullata" disabled>${ic('avanti')}</button></span>`;
+}
+function scordaFrecce() { Object.assign(FRECCE, { pagina: null, indietro: null, avanti: null }); }
+function aggiornaFrecce() {
+  const i = document.getElementById('fr-indietro'), a = document.getElementById('fr-avanti');
+  if (!i || !a) return;
+  i.disabled = !FRECCE.indietro || FRECCE.occupato;
+  a.disabled = !FRECCE.avanti || FRECCE.occupato;
+  i.onclick = async () => {
+    const u = FRECCE.indietro;
+    if (!u || FRECCE.occupato) return;
+    FRECCE.occupato = true; aggiornaFrecce();
+    let ok = false;
+    try { ok = (await u.annulla()) !== false; } finally { FRECCE.occupato = false; }
+    if (ok) { FRECCE.indietro = null; FRECCE.avanti = u; }
+    aggiornaFrecce();
+  };
+  a.onclick = async () => {   // rifatta l'azione, `segnaAzione` la rimette in «indietro»; se il foglio si chiude senza scegliere, «avanti» resta
+    const u = FRECCE.avanti;
+    if (!u || FRECCE.occupato) return;
+    await u.rifai();
+    aggiornaFrecce();
+  };
+}
+// Un'azione appena fatta: con le frecce nella pagina diventa «indietro» (niente messaggio); senza, il messaggio con «Annulla» di prima.
+// `annulla()` restituisce false se non è riuscito (e lo dice lei); `rifai()` rifà lo stesso tocco.
+function segnaAzione(testo, annulla, rifai) {
+  if (!frecceQui()) return mostraToast(testo, annulla);
+  document.querySelectorAll('.toast').forEach(t => t.remove());
+  Object.assign(FRECCE, { indietro: { annulla, rifai }, avanti: null });
+  aggiornaFrecce();
 }
 
 // ── OGGI / DASHBOARD ── la pagina è in pagina-dashboard.js; qui resta l'avviso in basso usato da tutte le pagine

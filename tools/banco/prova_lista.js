@@ -987,7 +987,7 @@ prova('Nota 068 (feedback 20/10, «non mi fa eliminare i doppioni»): il nome el
     },
     chiediConferma: async () => ({}), eAdmin: () => false, segnaApp() {}, leggiLista: async () => { throw new Error('non deve rileggere tutto'); },
     disegnaLista: () => { disegnata = ctx.LS.righe.map(x => x.id).join(); }, disegnaScheda() {},
-    mostraToast: (t, f) => { if (f) annulla = f; },
+    mostraToast: (t, f) => { if (f) annulla = f; }, segnaAzione: (t, f) => { annulla = f; },   // nota 162: senza frecce nella pagina è il messaggio di prima
   };
   vm.createContext(ctx);
   vm.runInContext("const COLONNE_LISTA = '*';" + pezzo('async function aggiornaRiga') + pezzo('async function ricaricaERidisegna') + pezzo('async function elimina(r, dopo)') + ';this.elimina = elimina;', ctx);   // L8: le colonne scritte una per una
