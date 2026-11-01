@@ -249,6 +249,20 @@ prova('Nota 171: in «Programmare la settimana», scelto un incontro LdS e tocca
   } finally { P.modo.admin = false; }
 });
 
+prova('Nota 173: negli incontri di gruppo (Team, LdS, SdS/OPEN, sessione di telefonate) niente «Condividi con», anche per l\'Admin; nell\'app l\'interruttore è spento', async () => {
+  const attendi = () => new Promise(r => setTimeout(r, 0));
+  assert.match(require('node:fs').readFileSync(require('node:path').join(__dirname, '../../index.html'), 'utf8'), /\nconst CONDIVIDI_SPAZI = false;\n/);
+  const spazio = (id, tipo) => ({ id, user_id: 'io', tipo, inizio: iso(P.OGGI, '21:00'), durata: 90, condiviso_con: tipo === 'SdS/OPEN' ? 'linea' : null, linea_codice: tipo === 'SdS/OPEN' ? 'FR1' : null });
+  P.AG.spazi = ['Team', 'LOS', 'SdS/OPEN', 'Telefonate'].map((t, i) => spazio('g' + i, t));
+  P.modo.admin = true; P.impostaCondividiSpazi(false);
+  try {
+    for (const s of P.AG.spazi) {
+      pulisci(); P.foglioSpazio(s.id); for (let i = 0; i < 3; i++) await attendi();
+      assert.doesNotMatch(P.fogli[0].innerHTML, /data-cd=|Condividi con/, s.tipo);
+    }
+  } finally { P.modo.admin = false; P.impostaCondividiSpazi(true); }
+});
+
 (async () => {
   for (const [nome, fn] of coda) { await fn(); ok++; console.log('OK  ' + nome); }
   console.log(`\n${ok} prove superate`);

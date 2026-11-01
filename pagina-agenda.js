@@ -1994,7 +1994,7 @@ function legaCondivisioneAzione(el, e, ridisegna, st) {
 // la serata di gruppo (solo l'Admin): con chi, la Linea (uno dei suoi frontali, da `squadra`), i punti sì/no, le risposte con i nomi
 function condivisioneSpazioHtml(s) {
   const A = MB21Agenda;
-  if (!A.puoCondividereSpazio(s, eAdmin())) return '';
+  if (!CONDIVIDI_SPAZI || !A.puoCondividereSpazio(s, eAdmin())) return '';   // nota 173: negli incontri di gruppo niente «Condividi con»
   const con = s.condiviso_con || '';
   if (!CONDIVISIONE_LINEE) {
     // P5b (Ignazio 23/10): «Nessuno» e una pastiglia per ognuna delle persone del gruppo che usano l'app; le serate già mandate si leggono con le
@@ -2522,7 +2522,7 @@ function foglioSpazio(id) {
     <div class="vn-aiuto">${sds ? 'Serata di sponsorizzazione / OPEN: dice che questa settimana l\'OPEN c\'è. La tua presenza la segni in «Il mio giorno».'
       : persona ? 'Uno spazio tenuto libero per questo appuntamento. Quando fissi con qualcuno, metti qui il suo nome: diventa l\'appuntamento, collegato alla sua scheda.'
       : dopo ? 'Un tempo tenuto per le tue telefonate. Se lavori con qualcuno, aggiungilo: diventa un appuntamento «Lista/Contatti» con le persone, ognuna col suo esito.'
-      : `${esc(S.TIPI[s.tipo].sotto)}${S.puoAvereNome(s.tipo) ? '. Puoi dargli il nome della serata (o la tipologia, la linea, la squadra)' : ': un incontro senza nome'}. Se dura di più, lo allunghi con «Cambia giorno e ora» o nella Timeline.`}</div>
+      : `${esc(S.TIPI[s.tipo].sotto)}${S.puoAvereNome(s.tipo) ? '. Puoi scegliere che incontro è' : ': un incontro senza nome'}. Se dura di più, lo allunghi con «Cambia giorno e ora» o nella Timeline.`}</div>
     ${puntiHtml(s, 'spazi')}
     ${condivisioneSpazioHtml(s)}
     <div class="sp-comandi">${persona ? `<button class="primario" id="sp-nome">${ic('piu')} Metti un nome</button>` : ''}${dopo ? `<button class="primario" id="sp-persone">${ic('piu')} Aggiungi persone</button>` : ''}

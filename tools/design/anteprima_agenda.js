@@ -33,12 +33,12 @@ const codice = [
   funzione('bottoniEsiti'), funzione('tendina5Html'), funzione('collegaTendine5'), funzione('elencoEsitoHtml'), funzione('bloccoEsiti'), funzione('statoAzione'), funzione('avvisoSovrapposti'), riga('function iniziali('),
   fra('const CY = {', '\nfunction doveSono').replace('const COACH_YES = false;', 'let COACH_YES = false;'),   // nota 001: il segnale Coach Yes, vero; nota 093: spento, le prove lo riaccendono (impostaCoachYes)
   // P5b: l'interruttore, qui cambiabile dalle prove (impostaLinee)
-  'let CONDIVISIONE_LINEE = false; let PUNTI_CONDIVISI = false; let SERATA_DA_MANDARE = false;',   // nota 106: «Serata da mandare» spenta (impostaSerata)
+  'let CONDIVISIONE_LINEE = false; let PUNTI_CONDIVISI = false; let SERATA_DA_MANDARE = false; let CONDIVIDI_SPAZI = true;',   // nota 173: nell'app spento; nel banco acceso per le prove di prima (impostaCondividiSpazi)   // nota 106: «Serata da mandare» spenta (impostaSerata)
     // note 103 e 104: i punti non si condividono (impostaPunti per provarli accesi)
   funzione('puoSerataTeam'), funzione('nuovoAppuntamento'), funzione('sceltaLinea'), funzione('leggiCodiciSchede'), funzione('creaSchedeNuove'),   // nota 108: la linea dalla Mappa; nota 141: le schede col codice
   funzione('parteLineaHtml'), riga('const parteDopoTocco'),   // nota 005: una persona dentro la Linea   // il modulo «+» vero (dal 05/10, nota 027: «Condividi con», la serata Team/Linea)
   fra("// ── Come si guarda l'Agenda (cantiere 37)", '// Prima si cerca la persona'),
-  'return { impostaLinee: v => { CONDIVISIONE_LINEE = v; }, impostaPunti: v => { PUNTI_CONDIVISI = v; }, impostaSerata: v => { SERATA_DA_MANDARE = v; }, impostaCoachYes: v => { COACH_YES = v; }, CY, foglioCoachYes, caricaCoachYes, foglioAggiungi, disegnaAgenda, avvisoSovrapposti, grigliaGiorno, grigliaSettimana, menuAgendaHtml, foglioSpazio, preparaSettimana, rigaSpazioHtml, programmaSettimanaHtml, foglioCosa, collegaCose, spuntaCosa, foglioEvento, foglioRicevuto, controllaImpegniNuovi, nuovoAppuntamento, foglioCercaAgenda: typeof foglioCercaAgenda === \'function\' ? foglioCercaAgenda : null, apriCampoCosa: typeof apriCampoCosa === \'function\' ? apriCampoCosa : null };',
+  'return { impostaCondividiSpazi: v => { CONDIVIDI_SPAZI = v; }, impostaLinee: v => { CONDIVISIONE_LINEE = v; }, impostaPunti: v => { PUNTI_CONDIVISI = v; }, impostaSerata: v => { SERATA_DA_MANDARE = v; }, impostaCoachYes: v => { COACH_YES = v; }, CY, foglioCoachYes, caricaCoachYes, foglioAggiungi, disegnaAgenda, avvisoSovrapposti, grigliaGiorno, grigliaSettimana, menuAgendaHtml, foglioSpazio, preparaSettimana, rigaSpazioHtml, programmaSettimanaHtml, foglioCosa, collegaCose, spuntaCosa, foglioEvento, foglioRicevuto, controllaImpegniNuovi, nuovoAppuntamento, foglioCercaAgenda: typeof foglioCercaAgenda === \'function\' ? foglioCercaAgenda : null, apriCampoCosa: typeof apriCampoCosa === \'function\' ? apriCampoCosa : null };',
 ].join('\n');
 
 // ── una giornata finta, con due appuntamenti alla stessa ora ──
@@ -165,7 +165,7 @@ if (globalThis.AGENDA_V5) {
     n => MB21Icone.icona(n), x => String(x).replace(/&/g, '&amp;').replace(/</g, '&lt;'), AG, A, stub.chipPartnerSelect, { getElementById: () => null });   // nota 111: il feedback condiviso
 }
 const nomi = Object.keys(stub);
-const { foglioCercaAgenda, apriCampoCosa, impostaLinee, impostaPunti, impostaSerata, impostaCoachYes, CY, foglioCoachYes, caricaCoachYes, foglioAggiungi, disegnaAgenda, avvisoSovrapposti, grigliaGiorno, grigliaSettimana, menuAgendaHtml, foglioSpazio, preparaSettimana, rigaSpazioHtml, programmaSettimanaHtml, foglioCosa, collegaCose, spuntaCosa, foglioEvento, foglioRicevuto, controllaImpegniNuovi, nuovoAppuntamento } = new Function(...nomi, codice)(...nomi.map(n => stub[n]));
+const { foglioCercaAgenda, apriCampoCosa, impostaCondividiSpazi, impostaLinee, impostaPunti, impostaSerata, impostaCoachYes, CY, foglioCoachYes, caricaCoachYes, foglioAggiungi, disegnaAgenda, avvisoSovrapposti, grigliaGiorno, grigliaSettimana, menuAgendaHtml, foglioSpazio, preparaSettimana, rigaSpazioHtml, programmaSettimanaHtml, foglioCosa, collegaCose, spuntaCosa, foglioEvento, foglioRicevuto, controllaImpegniNuovi, nuovoAppuntamento } = new Function(...nomi, codice)(...nomi.map(n => stub[n]));
 
 // `orario` = la griglia del giorno da sola (nell'app sta nel cassetto «Timeline»); `giorno` (o `elenco`) = la pagina
 // formato NotePlan (cantiere 41: impegni, foglio, Core); `settimana` = le sette colonne
@@ -178,7 +178,7 @@ function vista(v, aperta) {
   if (v === 'settimana') return app.innerHTML + grigliaSettimana({ mioId: modo.tutti ? null : 'io', admin: modo.admin });
   return app.innerHTML;
 }
-module.exports = { foglioCercaAgenda, apriCampoCosa, stub, impostaLinee, impostaPunti, impostaSerata, impostaCoachYes, CY, foglioCoachYes, caricaCoachYes, foglioAggiungi, foglioCosa, collegaCose, spuntaCosa, scelta, app, A, AG, modo, vista, menuAgendaHtml, disegnaAgenda, avvisoSovrapposti, az, OGGI, foglioSpazio, foglioEvento, foglioRicevuto, controllaImpegniNuovi, nuovoAppuntamento, finto, preparaSettimana, rigaSpazioHtml, programmaSettimanaHtml, fogli, scritture, avvisi };
+module.exports = { foglioCercaAgenda, apriCampoCosa, stub, impostaCondividiSpazi, impostaLinee, impostaPunti, impostaSerata, impostaCoachYes, CY, foglioCoachYes, caricaCoachYes, foglioAggiungi, foglioCosa, collegaCose, spuntaCosa, scelta, app, A, AG, modo, vista, menuAgendaHtml, disegnaAgenda, avvisoSovrapposti, az, OGGI, foglioSpazio, foglioEvento, foglioRicevuto, controllaImpegniNuovi, nuovoAppuntamento, finto, preparaSettimana, rigaSpazioHtml, programmaSettimanaHtml, fogli, scritture, avvisi };
 if (require.main !== module) return;
 
 // con un argomento si guarda una vista sola, grande: node tools/design/anteprima_agenda.js giorno /tmp/x.html

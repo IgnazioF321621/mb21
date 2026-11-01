@@ -4314,6 +4314,10 @@ const PUNTI_CONDIVISI = false;
 // Nota Pagine 106 (Ignazio 27/10: «la riceve solo una persona, non serve»): con false dal «+» dell'Agenda sparisce «Serata da mandare» (solo l'Admin, con le
 // Linee spente); il codice e le serate già mandate restano. Con true torna.
 const SERATA_DA_MANDARE = false;
+// Nota Pagine 173 (Ignazio 01/11: «mi spunta sempre la voce "Condividi"… possiamo togliere completamente questa cosa in tutti i lavori, a meno che non sia
+// un appuntamento personale»): con false il foglio degli incontri di gruppo (Team, LdS, SdS/OPEN, sessione di telefonate) non ha più «Condividi con».
+// Gli appuntamenti con una persona lo tengono. Le condivisioni già salvate restano come sono (la partner le ritrova tra i ricevuti). Con true torna.
+const CONDIVIDI_SPAZI = false;
 function puoSerataTeam() { return typeof eAdmin === 'function' && eAdmin() && (CONDIVISIONE_LINEE || (typeof personeAppDelGruppo === 'function' && personeAppDelGruppo().length > 0)); }
 // Foglio «Nuovo appuntamento» (lavoro 4). Restituisce l'id creato o null.
 // opz: { giorno, ora, contatto:{id,nome,categoria}, categoria, tipo, modalita, area, titolo, sottotitolo, salta, resta, userId, durata, spazio }
