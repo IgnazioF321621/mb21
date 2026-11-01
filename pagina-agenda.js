@@ -2317,9 +2317,9 @@ function collegaAgenda(eventi) {
 const vediSpazi = () => typeof MB21Spazi !== 'undefined' && !vediTutti();
 const spaziDelGiorno = g => (vediSpazi() ? MB21Spazi.delGiorno(AG.spazi, g) : []);
 // Piani e Consulenze col colore del loro tipo; gli incontri di gruppo (SdS/OPEN, Team, LdS) col colore degli Appuntamenti
-const coloreSpazio = tipo => (MB21Spazi.daRiempire(tipo) ? MB21Agenda.COLORI[tipo] : 'var(--az-appuntamento)');
+const coloreSpazio = tipo => (MB21Spazi.daRiempire(tipo) ? MB21Agenda.COLORI[tipo] : tipo === 'Telefonate' ? 'var(--az-contatto)' : 'var(--az-appuntamento)');   // nota 168: le telefonate col colore dei contatti
 // col nome della serata (Team e LdS, nota 022) sotto resta il tipo; senza nome come sempre
-const sottoSpazio = s => (MB21Spazi.daRiempire(s.tipo) ? 'da riempire · tocca per mettere un nome' : MB21Spazi.titolo(s) !== MB21Spazi.nome(s.tipo) ? `${MB21Spazi.nome(s.tipo)} · ${MB21Spazi.TIPI[s.tipo].sotto}` : MB21Spazi.TIPI[s.tipo].sotto);
+const sottoSpazio = s => (MB21Spazi.daRiempire(s.tipo) ? 'da riempire · tocca per mettere un nome' : MB21Spazi.PERSONE_DOPO[s.tipo] ? 'tocca per aggiungere persone' : MB21Spazi.titolo(s) !== MB21Spazi.nome(s.tipo) ? `${MB21Spazi.nome(s.tipo)} · ${MB21Spazi.TIPI[s.tipo].sotto}` : MB21Spazi.TIPI[s.tipo].sotto);
 const giornoBreve = g => `${MB21Agenda.GIORNI_SETTIMANA[MB21Agenda.giornoSettimana(g) - 1]} ${Number(g.slice(8))}`;
 // la riga nella card degli impegni e nell'elenco della settimana
 function rigaSpazioHtml(s) {
@@ -2487,7 +2487,7 @@ async function preparaSettimana() {
 function foglioSpazio(id) {
   const S = MB21Spazi, A = MB21Agenda, s = (AG.spazi || []).find(x => x.id === id);
   if (!s) return;
-  const o = S.orario(s), sds = s.tipo === 'SdS/OPEN', persona = S.daRiempire(s.tipo);
+  const o = S.orario(s), sds = s.tipo === 'SdS/OPEN', persona = S.daRiempire(s.tipo), dopo = S.PERSONE_DOPO[s.tipo];   // nota 168: la sessione di telefonate
   const velo = document.createElement('div');
   velo.className = 'velo';
   velo.innerHTML = `<div class="foglio sp-foglio" style="--tinta:${coloreSpazio(s.tipo)}">
@@ -2495,13 +2495,14 @@ function foglioSpazio(id) {
     <p>${esc(dataLunga(o.giorno))} · ${o.ora}–${o.fine}</p>
     <div class="vn-aiuto">${sds ? 'Serata di sponsorizzazione / OPEN: dice che questa settimana l\'OPEN c\'è. La tua presenza la segni in «Il mio giorno».'
       : persona ? 'Uno spazio tenuto libero per questo appuntamento. Quando fissi con qualcuno, metti qui il suo nome: diventa l\'appuntamento, collegato alla sua scheda.'
+      : dopo ? 'Un tempo tenuto per le tue telefonate. Se lavori con qualcuno, aggiungilo: diventa un appuntamento «Lista/Contatti» con le persone, ognuna col suo esito.'
       : `${esc(S.TIPI[s.tipo].sotto)}${S.puoAvereNome(s.tipo) ? '. Puoi dargli il nome della serata (o la tipologia, la linea, la squadra)' : ': un incontro senza nome'}. Se dura di più, lo allunghi con «Cambia giorno e ora» o nella Timeline.`}</div>
     ${puntiHtml(s, 'spazi')}
     ${condivisioneSpazioHtml(s)}
-    <div class="sp-comandi">${persona ? `<button class="primario" id="sp-nome">${ic('piu')} Metti un nome</button>` : ''}
+    <div class="sp-comandi">${persona ? `<button class="primario" id="sp-nome">${ic('piu')} Metti un nome</button>` : ''}${dopo ? `<button class="primario" id="sp-persone">${ic('piu')} Aggiungi persone</button>` : ''}
       ${S.puoAvereNome(s.tipo) ? `<button class="primario" id="sp-serata">${ic(S.pulisciNome(s.nome) ? 'modifica' : 'piu')} ${S.pulisciNome(s.nome) ? 'Cambia il nome' : 'Metti il nome della serata'}</button>` : ''}
       <button id="sp-cambia">${ic('orario')} Cambia giorno e ora</button>
-      <button class="link" id="sp-togli">${sds ? 'Questa settimana non c\'è' : persona ? 'Togli lo spazio' : 'Togli l\'incontro'}</button></div>
+      <button class="link" id="sp-togli">${sds ? 'Questa settimana non c\'è' : persona ? 'Togli lo spazio' : dopo ? 'Togli la sessione' : 'Togli l\'incontro'}</button></div>
     <div id="sp-campi" hidden><div class="campo"><label>Giorno e ora</label><div class="ag-due-campi"><input id="sp-giorno" type="date" value="${o.giorno}"><input id="sp-ora" type="time" value="${o.ora}"></div></div>
       <div class="campo"><label>Durata</label>${pilloleDurata('sp-durata', o.durata, o.ora)}</div>
       <div class="mc-fondo"><button class="link" id="sp-annulla">Annulla</button><button class="primario" id="sp-salva">Salva</button></div></div></div>`;
@@ -2513,6 +2514,10 @@ function foglioSpazio(id) {
   collegaCondivisioneSpazio(velo, s, () => { chiudi(); foglioSpazio(id); });   // con chi la condivido (nota 027, solo l'Admin)
   const nome = velo.querySelector('#sp-nome');
   if (nome) nome.onclick = () => { chiudi(); nuovoAppuntamento({ giorno: o.giorno, ora: o.ora, tipo: s.tipo, durata: o.durata, spazio: s, titolo: S.nome(s.tipo), sottotitolo: `${dataLunga(o.giorno)} alle ${o.ora}: scrivi il nome di chi viene.` }); };
+  // nota 168: «Aggiungi persone» apre il modulo dell'appuntamento già compilato (stesso giorno, ora e durata, «Appuntamento · Lista/Contatti»); salvato,
+  // lo spazio si toglie (nuovoAppuntamento con `spazio`, come «Metti un nome»); le altre persone con «Aggiungi un'altra persona»
+  const persone = velo.querySelector('#sp-persone');
+  if (persone) persone.onclick = () => { chiudi(); nuovoAppuntamento({ giorno: o.giorno, ora: o.ora, tipo: dopo.tipo, modalita: dopo.modalita, durata: o.durata, spazio: s, titolo: S.nome(s.tipo), sottotitolo: `${dataLunga(o.giorno)} alle ${o.ora}: con chi la fai?` }); };
   const serata = velo.querySelector('#sp-serata');
   if (serata) serata.onclick = () => { chiudi(); foglioNomeSerata(s); };
   let durata = o.durata;

@@ -75,7 +75,7 @@ prova('Il programma della settimana: fissati e da riempire per tipo, poi la SdS/
 });
 
 prova('Team e LdS (27/09): incontri di gruppo, senza nome, nel selettore dopo Piani e Consulenze', () => {
-  assert.deepEqual(S.DA_PREPARARE, ['Piano Marketing', 'Consulenza PRD', 'Team', 'LOS']);
+  assert.deepEqual(S.DA_PREPARARE, ['Piano Marketing', 'Consulenza PRD', 'Team', 'LOS', 'Telefonate']);   // nota 168: in fondo la sessione di telefonate
   assert.equal(S.daRiempire('Piano Marketing'), true);
   assert.equal(S.daRiempire('Team'), false);
   assert.equal(S.daRiempire('SdS/OPEN'), false);

@@ -16,10 +16,14 @@
     'Team': { nome: 'Incontro di Team', plurale: 'Incontri di Team', uno: 'l\'incontro di Team', tanti: 'incontri di Team', piccolo: 'incontro di Team', sotto: 'Incontro di gruppo' },
     'LOS': { nome: 'Incontro LdS', plurale: 'Incontri LdS', uno: 'l\'incontro LdS', tanti: 'incontri LdS', piccolo: 'incontro LdS', sotto: 'Linea di sponsorizzazione' },
     'SdS/OPEN': { nome: 'SdS/OPEN', plurale: 'SdS/OPEN', sotto: 'Serata di sponsorizzazione / OPEN' },
+    // Nota Pagine 168 (Ignazio 01/11, «si va bene»): un tempo per le proprie telefonate, da soli; aggiunte le persone (chi lavora con lui) diventa un
+    // appuntamento «Appuntamento · Lista/Contatti» (PERSONE_DOPO) e lo spazio si toglie, come «Metti un nome» dei Piani Marketing
+    'Telefonate': { nome: 'Sessione di telefonate', plurale: 'Sessioni di telefonate', f: true, uno: 'la sessione di telefonate', tanti: 'sessioni di telefonate', piccolo: 'sessione di telefonate', sotto: 'Le tue telefonate' },
   };
   const CON_PERSONA = ['Piano Marketing', 'Consulenza PRD'];   // spazi da riempire con un nome
   const DI_GRUPPO = ['Team', 'LOS'];
-  const DA_PREPARARE = [...CON_PERSONA, ...DI_GRUPPO];         // le scelte del selettore «Aggiungi», in quest'ordine
+  const PERSONE_DOPO = { 'Telefonate': { tipo: 'Appuntamento', modalita: 'Lista/Contatti' } };   // nota 168: le persone si aggiungono dopo, e diventa questo
+  const DA_PREPARARE = [...CON_PERSONA, ...DI_GRUPPO, 'Telefonate'];   // le scelte del selettore «Aggiungi», in quest'ordine
   const daRiempire = tipo => CON_PERSONA.includes(tipo);
   const NOME_MAX = 60;
   // Il nome della serata (nota 022, Ignazio 04/10): un campo libero e facoltativo per Team e LdS (nome della serata, tipologia, linea, squadra); la SdS/OPEN è sempre la stessa
@@ -120,7 +124,7 @@
       if (!fissati && !vuoti) continue;
       righe.push({ tipo: t, testo: `${TIPI[t].plurale}: ${[fissati ? `${fissati} da fare` : '', vuoti ? `${vuoti} da riempire` : ''].filter(Boolean).join(' · ')}` });
     }
-    for (const t of [...DI_GRUPPO, 'SdS/OPEN']) {
+    for (const t of [...DI_GRUPPO, 'Telefonate', 'SdS/OPEN']) {
       const questi = suoi.filter(s => s.tipo === t);
       if (questi.length) righe.push({ tipo: t, testo: `${questi.length === 1 ? TIPI[t].nome : TIPI[t].plurale}: ${questi.map(s => quando(s) + (puoAvereNome(t) && pulisciNome(s.nome) ? ` (${pulisciNome(s.nome)})` : '')).join(' · ')}` });
     }
@@ -130,9 +134,12 @@
   // Quello che c'è già in un giorno, per «Programmare la settimana» (Agenda P6, 23/10): gli spazi («Piano Marketing · da riempire», «Serata Rubino»),
   // i Piani Marketing e le Consulenze già fissati con una persona («Piano Marketing · fissato») e le serate ricevute (eventi di A.ricevutiComeEventi,
   // «SdS/OPEN · da …»). Con le stesse parole della card e della vista Settimana; in ordine d'ora. Si legge e basta: niente tasti.
+  // Nota Pagine 168 (Ignazio 01/11: il PM di mercoledì «compare due volte»): un incontro con più persone è UNA riga, con la regola dell'Agenda
+  // (MB21Agenda.incontri, nota 109); prima si scriveva una riga per persona.
   function giaNelGiorno(giorno, spazi, azioni, ricevuti) {
     const righe = delGiorno(spazi, giorno).map(s => ({ ora: oraDi(s.inizio), testo: titolo(s) + (daRiempire(s.tipo) ? ' · da riempire' : '') }));
-    for (const a of azioni || []) if (CON_PERSONA.includes(a.tipo_azione) && a.inizio && giornoDi(a.inizio) === giorno) righe.push({ ora: oraDi(a.inizio), testo: `${nome(a.tipo_azione)} · fissato` });
+    const fissati = (azioni || []).filter(a => CON_PERSONA.includes(a.tipo_azione) && a.inizio && giornoDi(a.inizio) === giorno);
+    for (const a of A.incontri(fissati)) righe.push({ ora: oraDi(a.inizio), testo: `${nome(a.tipo_azione)} · fissato` });
     for (const e of ricevuti || []) if (e._ricevuto && giornoDi(e.inizio) === giorno) righe.push({ ora: oraDi(e.inizio), testo: A.titoloRicevuto(e._ricevuto) });
     return righe.sort((x, y) => x.ora.localeCompare(y.ora));
   }
@@ -144,7 +151,7 @@
     return parti.length > 1 ? parti.slice(0, -1).join(', ') + ' e ' + parti[parti.length - 1] : (parti[0] || '');
   }
 
-  const api = { TIPI, CON_PERSONA, DI_GRUPPO, DA_PREPARARE, daRiempire, NOME_MAX, puoAvereNome, pulisciNome, titolo, DURATA, SDS, DALLE, ALLE, nome, occupati, oreLibere, delGiorno, orario, righeNuove, sdsDaMettere, programma, riassunto, giaNelGiorno };
+  const api = { TIPI, CON_PERSONA, DI_GRUPPO, PERSONE_DOPO, DA_PREPARARE, daRiempire, NOME_MAX, puoAvereNome, pulisciNome, titolo, DURATA, SDS, DALLE, ALLE, nome, occupati, oreLibere, delGiorno, orario, righeNuove, sdsDaMettere, programma, riassunto, giaNelGiorno };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Spazi = api;
 })(this);

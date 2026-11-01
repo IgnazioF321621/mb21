@@ -4374,7 +4374,8 @@ async function nuovoAppuntamento(opz = {}) {
   };
   const inCoda = () => puoInCoda() && st.senzaOra;
   // il tipo chiesto (lo spazio da riempire: «Piano Marketing») torna appena si sceglie una persona che lo può avere
-  const tipoVoluto = st.tipo;
+  // nota 168: con il tipo anche il sottotipo chiesto (la sessione di telefonate: «Appuntamento · Lista/Contatti»)
+  const tipoVoluto = st.tipo, modalitaVoluta = st.modalita;
   const tipoPer = categoria => (A.tipiPer(categoria).includes(tipoVoluto) ? tipoVoluto : null);
   if (st.tipo && !A.tipiPer(st.categoria).includes(st.tipo)) { st.tipo = null; st.modalita = null; }
   const eventiGiorno = A.eventiDelGiorno(AG.azioni, opz.giorno || MB21Coda.oggiRoma());
@@ -4674,7 +4675,7 @@ async function nuovoAppuntamento(opz = {}) {
       if (altro) altro.onclick = () => { leggiCampi(); st.altroAperto = !st.altroAperto; disegna(); };
       const prendi = async trovato => {
         st.contatto = trovato || null; st.categoria = trovato ? trovato.categoria : null;
-        if (!A.tipiPer(st.categoria).includes(st.tipo)) { st.tipo = tipoPer(st.categoria); st.modalita = null; }
+        if (!A.tipiPer(st.categoria).includes(st.tipo)) { st.tipo = tipoPer(st.categoria); st.modalita = st.tipo === tipoVoluto ? modalitaVoluta : null; }
         leggiCampi(); tipoAncoraBuono(); disegna();
         if (trovato) { const altri = await conLoStessoCodice(trovato); if (altri.length && st.contatto === trovato) { accoda(altri); tipoAncoraBuono(); disegna(); } }   // nota 141
       };
