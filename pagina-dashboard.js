@@ -425,6 +425,10 @@ async function nonOra(id) {
   ST.risultato.coda.splice(posto, 1);
   disegnaOggi();
   mostraToast(`${x.nome} · non ora, ${MB21Coda.testoRinvio(giorno, ST.oggi)}`, async () => {
+    // nota 162: con la freccia si può annullare anche dopo un po': solo se il giorno è ancora quello messo qui
+    const { data: ora, error: e1 } = await dbq('non ora adesso', supa.from('contatti').select('rientro_il').eq('id', id).maybeSingle());
+    if (e1) return mostraToast('Annullamento non riuscito: riprova.');
+    if (!ora || ora.rientro_il !== giorno) return mostraToast('Non si può annullare: nel frattempo è cambiato.');
     const { error: e2 } = await dbq('annulla non ora', supa.from('contatti').update({ rientro_il: prima, aggiornato_il: new Date().toISOString() }).eq('id', id));
     if (e2) return mostraToast('Annullamento non riuscito: riprova.');
     ST.risultato.coda.splice(Math.min(posto, ST.risultato.coda.length), 0, x);
@@ -816,7 +820,7 @@ function disegnaCatalogo() {
   const corpo = cat.righe.length ? cat.righe.map(cardCatalogo).join('')
     : `<div class="vuoto">${cat.totale ? `Per oggi ${altro ? 'ha' : 'hai'} finito: ${fatti} ${fatti === 1 ? 'catalogato' : 'catalogati'}. ${ic('complimenti')}` : 'Tutti catalogati. ' + ic('complimenti')}</div>`
       + (cat.totale && !altro ? `<button class="primario" id="altri-catalogo">Altri ${MB21Coda.QUOTA_CATALOGO}</button>` : '');
-  app.innerHTML = `<button class="indietro" id="indietro">‹ Lista Nomi</button><div class="titolo-frecce"><h1>Da catalogare</h1>${altro ? '' : frecceHtml('catalogo')}</div>
+  app.innerHTML = `${rigaSuHtml('<button class="indietro" id="indietro">‹ Lista Nomi</button>')}<h1>Da catalogare</h1>
     <div class="sotto" style="margin-bottom:8px">${sotto}</div>
     ${altro ? `<div class="sotto">${ic('visione')} Solo da guardare, per ora.</div>` : ''}${corpo}${versione()}${aperta ? giroHtml(aperta, cat.righe.map(r => r.id)) : ''}`;
   document.getElementById('indietro').onclick = () => { scordaFrecce(); ST.vistaCatalogo = false; window.scrollTo(0, 0); disegnaLista(); };
@@ -828,7 +832,6 @@ function disegnaCatalogo() {
     if (card) card.scrollIntoView({ block: 'start' });
   }; });
   collegaCarteCoda();
-  aggiornaFrecce();
 }
 // ── «Da catalogare» dalla copia in memoria (Lista Nomi L5): niente riletture per «Altri 5», Elimina e il ritorno dalla scheda ──
 // un nome esce dai 5 di oggi (catalogato non da chiamare, eliminato)
@@ -1241,24 +1244,28 @@ function collegaConferme() {
       if (b.dataset.conferma === 'nr') { CONF.nonRisponde.add(c.id); return LV.vista === 'persona' ? vaiLV('oggi') : disegnaOggi(); }   // dalla scheda si torna all'elenco
       if (b.dataset.conferma === 'sposta') return spostaAppuntamento(c, async () => { await caricaConferme(); disegnaOggi(); });
       if (b.dataset.conferma === 'annulla') return annullaAppuntamentoDash(c);
-      const { error } = await dbq('conferma', supa.from('azioni').update({ confermato_il: new Date().toISOString() }).eq('id', c.id));
-      if (error) return mostraToast('Non salvato: controlla la connessione e riprova.');
-      CONF.righe = CONF.righe.filter(x => x.id !== c.id);
-      disegnaOggi();
-      mostraToast(`${c.contatti ? c.contatti.nome : ''} · confermato`, async () => {
-        await dbqAvvisa('annulla conferma', supa.from('azioni').update({ confermato_il: null }).eq('id', c.id), 'Annullamento non riuscito: controlla la connessione e riprova.');
-        await caricaConferme();
-        disegnaOggi();
-      });
+      confermaAppuntamento(c);
     };
   });
+}
+async function confermaAppuntamento(c) {
+  const { error } = await dbq('conferma', supa.from('azioni').update({ confermato_il: new Date().toISOString() }).eq('id', c.id));
+  if (error) return mostraToast('Non salvato: controlla la connessione e riprova.');
+  CONF.righe = CONF.righe.filter(x => x.id !== c.id);
+  disegnaOggi();
+  mostraToast(`${c.contatti ? c.contatti.nome : ''} · confermato`, async () => {
+    const { error: e2 } = await dbq('annulla conferma', supa.from('azioni').update({ confermato_il: null }).eq('id', c.id));
+    if (e2) return mostraToast('Annullamento non riuscito: controlla la connessione e riprova.');
+    await caricaConferme();
+    disegnaOggi();
+  }, () => confermaAppuntamento(c));   // nota 162: «avanti» la riconferma
 }
 
 // «Annullato» (Ignazio 04/10): l'appuntamento non si fa più. Sparisce dall'Agenda e dalle conferme; la funzione del database tiene una copia (la stessa di «Elimina»,
 // nota 010) e «Annulla» nell'avviso lo rimette com'era, con il rientro del contatto.
 async function annullaAppuntamentoDash(c) {
   const nome = c.contatti ? c.contatti.nome : '';
-  if (!await chiediConferma('Annullo questo appuntamento?', `${nome ? nome + ': ' : ''}sparisce dall'Agenda e dalle conferme. Se cambi idea, dopo tocchi «Annulla».`, 'Sì, annullo', true)) return;
+  if (!await chiediConferma('Annullo questo appuntamento?', `${nome ? nome + ': ' : ''}sparisce dall'Agenda e dalle conferme. Se cambi idea, tocchi la freccia indietro in alto.`, 'Sì, annullo', true)) return;
   const { error } = await dbq('annulla appuntamento', supa.rpc('elimina_azione', { p_azione: c.id }));
   if (error) return mostraToast('Non annullato: controlla la connessione e riprova.');
   CONF.righe = CONF.righe.filter(x => x.id !== c.id);
@@ -1271,7 +1278,7 @@ async function annullaAppuntamentoDash(c) {
     await caricaConferme();
     disegnaOggi();
     mostraToast('Appuntamento ripristinato');
-  });
+  }, () => annullaAppuntamentoDash(c));
 }
 
 // ── TELEFONATE SCELTE A MANO (Azioni, nota 012; decisioni di Ignazio 04/10/2026) ────

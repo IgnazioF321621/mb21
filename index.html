@@ -668,13 +668,16 @@
   .card .cc-tasti .contatta { margin-top: 0; }
   .card .cc-tasti .contatta a { background: var(--superficie); }
   .card .cc-tasti.cat-nessuna { background: #EEF0F3; }
-  /* nota Pagine 162: le frecce «indietro / avanti» accanto al titolo, tonde, 44 px; spente grigie */
-  .titolo-frecce { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-  .titolo-frecce h1 { margin: 0; }
-  .frecce { display: flex; gap: 6px; flex: none; }
-  .freccia5 { width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--bordo); background: var(--superficie); color: var(--testo); padding: 0; display: grid; place-items: center; }
-  .freccia5 svg.ic { width: 22px; height: 22px; stroke-width: 2.2; }
-  .freccia5:disabled { color: #C3C9D2; background: transparent; }
+  /* nota Pagine 162: le frecce «indietro / avanti» nella riga più in alto a destra, tonde come il tasto del feedback (34 px), accanto a lui; spente si vedono appena */
+  .frecce { display: flex; gap: 8px; flex: none; }
+  .freccia5 { width: 34px; height: 34px; border-radius: 50%; padding: 0; display: grid; place-items: center; border: 1px solid var(--linea); background: var(--superficie); color: var(--testo); }
+  .freccia5 svg.ic { width: 18px; height: 18px; stroke-width: 2.2; }
+  .freccia5:disabled { opacity: .35; }
+  .v5-su .frecce { margin-left: auto; }
+  .v5-su .freccia5 { border: 0; background: rgba(255,255,255,.22); color: #fff; }
+  .o5-righe .v5-su .freccia5 { background: var(--superficie); color: var(--testo); border: 1px solid var(--linea); }   /* Oggi ha la testata chiara */
+  .riga-su { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .riga-su .frecce { margin-right: 42px; }   /* a destra resta il posto del tondo del feedback (.segnala-bottone) */
   .cat-comandi { display: flex; align-items: center; gap: 14px; }
   .cat-comandi button.link { margin-top: 12px; }
   .cat-comandi button.link.elimina-qui { display: inline; width: auto; margin-left: auto; }   /* all'estremo destro: lontano da «Apri contatto» (Ignazio 24/09) */
@@ -3557,39 +3560,49 @@ function mostraTab() {
 
 // ── Le frecce «indietro / avanti» (nota Pagine 162, Ignazio 01/11, «ok» sulla foto docs/prototipi/frecce_162.png, «senza spiegazione») ──
 // Al posto del messaggio nero con «Annulla» (4 secondi, copriva i tasti: «il tempo del pensiero è molto più veloce»): due frecce fisse accanto al titolo
-// delle pagine in cui si inseriscono dati, come nell'editor di Evernote. Solo l'ultima azione: «indietro» la annulla (la stessa funzione di «Annulla»),
+// delle pagine in cui si inseriscono dati, come nell'editor di Evernote. Seguito (Ignazio 01/11, «ok» su frecce_pagine_162.png): un posto solo in tutte
+// le pagine, la riga più in alto a destra accanto al tasto del feedback (nelle testate colorate dentro testataV5; nelle pagine bianche, «Da catalogare»,
+// «Da completare» e la scheda contatto, nella riga di «‹ …» con rigaSuHtml). Solo l'ultima azione: «indietro» la annulla (la stessa funzione di «Annulla»),
 // «avanti» la rifà (la stessa funzione del tocco: i fogli della data o dell'appuntamento si riaprono). Spente quando non c'è niente da fare.
 // Valgono finché si resta sulla pagina (cambiando pagina si riparte da zero). Il controllo «nel frattempo è cambiato?» lo fa chi annulla
 // (annulla_esito nel database per gli esiti, la categoria riletta per «Da catalogare»): se non si può, lo dice e la freccia resta.
-// Una pagina le ha se ha `frecceHtml(pagina)` nel titolo; dove non ci sono `segnaAzione` mostra il messaggio con «Annulla» di prima.
+// Tutti i messaggi con «Annulla» passano di qui (mostraToast con le frecce nella pagina → segnaAzione); `rifai` (il terzo argomento) accende «avanti»:
+// dove manca, dopo «indietro» la freccia «avanti» resta spenta. Con un foglio aperto le frecce non si vedono: lì resta il messaggio di prima.
 const FRECCE = { pagina: null, indietro: null, avanti: null, occupato: false };
-const frecceQui = () => !!document.getElementById('frecce');
-function frecceHtml(pagina) {
+const frecceQui = () => !!document.getElementById('frecce') && !document.querySelector('.velo');
+function frecceHtml(pagina = ST.vistaCatalogo ? 'catalogo' : ST.tab) {
   if (FRECCE.pagina !== pagina) Object.assign(FRECCE, { pagina, indietro: null, avanti: null });
-  return `<span class="frecce" id="frecce"><button type="button" class="freccia5" id="fr-indietro" aria-label="Indietro: annulla l'ultima azione" disabled>${ic('indietro')}</button><button type="button" class="freccia5" id="fr-avanti" aria-label="Avanti: rifà l'azione annullata" disabled>${ic('avanti')}</button></span>`;
+  const spenta = x => (x && !FRECCE.occupato ? '' : ' disabled');
+  return `<span class="frecce" id="frecce"><button type="button" class="freccia5" id="fr-indietro" aria-label="Indietro: annulla l'ultima azione"${spenta(FRECCE.indietro)}>${ic('indietro')}</button><button type="button" class="freccia5" id="fr-avanti" aria-label="Avanti: rifà l'azione annullata"${spenta(FRECCE.avanti)}>${ic('avanti')}</button></span>`;
 }
 function scordaFrecce() { Object.assign(FRECCE, { pagina: null, indietro: null, avanti: null }); }
+// La riga in alto delle pagine bianche: «‹ …» a sinistra, le frecce a destra (accanto al tondo del feedback, che sta in alto a destra da solo)
+const rigaSuHtml = indietro => `<div class="riga-su">${indietro}${frecceHtml()}</div>`;
 function aggiornaFrecce() {
   const i = document.getElementById('fr-indietro'), a = document.getElementById('fr-avanti');
-  if (!i || !a) return;
-  i.disabled = !FRECCE.indietro || FRECCE.occupato;
-  a.disabled = !FRECCE.avanti || FRECCE.occupato;
-  i.onclick = async () => {
-    const u = FRECCE.indietro;
-    if (!u || FRECCE.occupato) return;
-    FRECCE.occupato = true; aggiornaFrecce();
-    let ok = false;
-    try { ok = (await u.annulla()) !== false; } finally { FRECCE.occupato = false; }
-    if (ok) { FRECCE.indietro = null; FRECCE.avanti = u; }
-    aggiornaFrecce();
-  };
-  a.onclick = async () => {   // rifatta l'azione, `segnaAzione` la rimette in «indietro»; se il foglio si chiude senza scegliere, «avanti» resta
-    const u = FRECCE.avanti;
-    if (!u || FRECCE.occupato) return;
-    await u.rifai();
-    aggiornaFrecce();
-  };
+  if (i) i.disabled = !FRECCE.indietro || FRECCE.occupato;
+  if (a) a.disabled = !FRECCE.avanti || FRECCE.occupato;
 }
+async function frecciaIndietro() {
+  const u = FRECCE.indietro;
+  if (!u || FRECCE.occupato) return;
+  FRECCE.occupato = true; aggiornaFrecce();
+  let ok = false;
+  try { ok = (await u.annulla()) !== false; } finally { FRECCE.occupato = false; }
+  if (ok) { FRECCE.indietro = null; FRECCE.avanti = u.rifai ? u : null; }
+  aggiornaFrecce();
+}
+async function frecciaAvanti() {   // rifatta l'azione, `segnaAzione` la rimette in «indietro»; se il foglio si chiude senza scegliere, «avanti» resta
+  const u = FRECCE.avanti;
+  if (!u || FRECCE.occupato) return;
+  await u.rifai();
+  aggiornaFrecce();
+}
+// un ascoltatore solo per tutte le pagine: le frecce si ridisegnano con la pagina e restano collegate
+document.addEventListener('click', e => {
+  const b = e.target && e.target.closest ? e.target.closest('#fr-indietro, #fr-avanti') : null;
+  if (b && !b.disabled) (b.id === 'fr-indietro' ? frecciaIndietro : frecciaAvanti)();
+});
 // Un'azione appena fatta: con le frecce nella pagina diventa «indietro» (niente messaggio); senza, il messaggio con «Annulla» di prima.
 // `annulla()` restituisce false se non è riuscito (e lo dice lei); `rifai()` rifà lo stesso tocco.
 function segnaAzione(testo, annulla, rifai) {
@@ -3602,7 +3615,10 @@ function segnaAzione(testo, annulla, rifai) {
 // ── OGGI / DASHBOARD ── la pagina è in pagina-dashboard.js; qui resta l'avviso in basso usato da tutte le pagine
 let timerToast;
 const DURATA_ANNULLA = 4000;   // quanto resta il messaggio con «Annulla» dopo un esito (nota Azioni 027)
-function mostraToast(testo, suAnnulla) {
+// Restituisce sempre false: un «Annulla» che finisce con `return mostraToast('… riprova')` dice così alla freccia che non è riuscito (nota 162)
+function mostraToast(testo, suAnnulla, rifai) {
+  if (suAnnulla && frecceQui()) { segnaAzione(testo, suAnnulla, rifai); return false; }   // nota 162: le frecce al posto del messaggio
+  if (frecceQui() && /^(Annullato|.*ripristinat[oa])$/.test(testo)) return false;   // l'annullamento lo dice la freccia «avanti» accesa
   document.querySelectorAll('.toast').forEach(t => t.remove());
   clearTimeout(timerToast);
   const t = document.createElement('div');
@@ -3614,6 +3630,7 @@ function mostraToast(testo, suAnnulla) {
   document.body.appendChild(t);
   // con «Annulla» 4 secondi (erano 6: nota Azioni 027), senza 3,5; un messaggio nuovo (un altro esito) toglie subito quello di prima
   timerToast = setTimeout(() => t.remove(), suAnnulla ? DURATA_ANNULLA : 3500);
+  return false;
 }
 
 // Copiare negli appunti, uguale ovunque (Progetti di MB Plan, Invito, Calendario: 24/09). Va chiamata SUBITO nel tocco,
@@ -3834,7 +3851,7 @@ async function cambiaEsito(a, esito, dopo, testo) {
     await accountDaEsito(a.id, esito, a.esito);
     await dopo();
     mostraToast('Annullato');
-  });
+  }, () => cambiaEsito(a, esito, dopo, testo));   // nota 162: «avanti» rifà lo stesso cambio
 }
 
 // «🛒 Vendita! La registri adesso?»: lo stesso passo per l'esito «Vendita» di una consulenza e per «Ordine» di una telefonata al Cliente
@@ -3979,6 +3996,7 @@ async function chiudiAppuntamento(e, esito, opz = {}) {
     mostraToast(parziale ? 'Annullato solo in parte: il passo dopo resta, puoi toglierlo a mano.' : 'Annullato');
   };
   AG.aperta = null;
+  const rifai = () => chiudiAppuntamento(e, esito, opz);   // nota 162: la freccia «avanti» rifà lo stesso esito (i fogli si riaprono)
   // Azione di più di 7 giorni fa (chi importa lo storico): niente coach, traccia di apertura, «Quando risentirlo?», «prossimo appuntamento» (MB21Agenda.nelPassato)
   const storico = MB21Agenda.nelPassato(e.inizio, MB21Coda.oggiRoma());
   const riflessione = () => (storico ? null : chiediRiflessione(e, esito));
@@ -3990,12 +4008,12 @@ async function chiudiAppuntamento(e, esito, opz = {}) {
   const giorniRisentire = MB21Agenda.giorniRisentire(esito);
   if (giorniRisentire && storico) {   // storico: l'esito si salva e basta
     await ridisegna();
-    return mostraToast(`${esito} salvato`, () => annulla(null));
+    return mostraToast(`${esito} salvato`, () => annulla(null), rifai);
   }
   if (giorniRisentire) {   // No Interesse / No BuonFine (un anno) e Relazione (20 giorni, Ignazio 25/09): niente prossimo appuntamento, «Quando risentirlo?»
     const giorno = await chiediRientro(e.contatto_id, e.contatti ? e.contatti.nome : '', esito, giorniRisentire);
     await ridisegna();
-    mostraToast(`${esito}${giorno ? ' · risentirlo il ' + dataBreve(giorno) : ' salvato'}`, () => annulla(null));
+    mostraToast(`${esito}${giorno ? ' · risentirlo il ' + dataBreve(giorno) : ' salvato'}`, () => annulla(null), rifai);
     return riflessione();
   }
   // Una telefonata (cantiere 48, Ignazio 29/09): dopo l'esito si apre lo stesso foglio della coda, non «un'altra telefonata».
@@ -4024,7 +4042,7 @@ async function chiudiAppuntamento(e, esito, opz = {}) {
         if (ec) mostraToast('Appuntamento fissato, ma il nome è ancora in coda: riprova da Modifica.');
       }
       await ridisegna();
-      mostraToast(creato ? `${esito} · appuntamento fissato` : `${esito} salvato`, () => annullaTel(creato));
+      mostraToast(creato ? `${esito} · appuntamento fissato` : `${esito} salvato`, () => annullaTel(creato), rifai);
       pianoFissato = creato;   // se è un Piano Marketing a un candidato, prima della chat del coach «Hai condiviso la traccia di apertura?»
     } else if (dopo.cosa === 'giorno' && !storico) {   // Richiamare: il giorno del richiamo (in coda quel giorno, in MB Plan come dalla coda); storico: niente giorno, niente coda
       const iso = await chiediData({ etichetta: 'Richiamare', data: 'giorno' }, nome);
@@ -4036,10 +4054,10 @@ async function chiudiAppuntamento(e, esito, opz = {}) {
         else if (e4) mostraToast('Giorno salvato, ma il nome non rientra in coda quel giorno: riprova da Modifica.');
       }
       await ridisegna();
-      mostraToast(`Richiamare${iso ? ' · il ' + dataBreve(MB21Coda.oggiRoma(new Date(iso))) : ' salvato'}`, () => annullaTel(null));
+      mostraToast(`Richiamare${iso ? ' · il ' + dataBreve(MB21Coda.oggiRoma(new Date(iso))) : ' salvato'}`, () => annullaTel(null), rifai);
     } else {   // No Risposta, Telefono spento, Ordine…: niente da fissare
       await ridisegna();
-      mostraToast(`${opz.testo || esito} salvato`, () => annulla(null));
+      mostraToast(`${opz.testo || esito} salvato`, () => annulla(null), rifai);
     }
     return storico ? null : tracciaDiApertura(pianoFissato, { id: e.contatto_id, nome }, riflessione);
   }
@@ -4052,7 +4070,7 @@ async function chiudiAppuntamento(e, esito, opz = {}) {
     contatto: { id: e.contatto_id, ...e.contatti }, tipo: e.tipo_azione, modalita: e.modalita, area: e.area, userId: e.user_id,
   });
   await ridisegna();
-  mostraToast(`${creato ? `${esito} · prossimo appuntamento fissato` : `${opz.testo || esito} salvato`}${passiAvvio.length ? ` · segnato in «Il mio avvio»: ${passiAvvio.map(p => p.nome).join(', ')}` : ''}`, () => annulla(creato));
+  mostraToast(`${creato ? `${esito} · prossimo appuntamento fissato` : `${opz.testo || esito} salvato`}${passiAvvio.length ? ` · segnato in «Il mio avvio»: ${passiAvvio.map(p => p.nome).join(', ')}` : ''}`, () => annulla(creato), rifai);
   // Dare Seguito / Ulteriore Follow Up (cantiere 40 lavoro 5): fissato il prossimo appuntamento, «Che traccia mandi a Mario?»
   if (!storico && MB21Sharing.proponeTraccia(e.tipo_azione, esito) && e.contatti && await proponiTracciaDopo({ id: e.contatto_id, nome: e.contatti.nome, categoria: e.contatti.categoria }, { dopoIlPm: true })
       && ST.tab === 'lista' && LS.contatto && LS.contatto.id === e.contatto_id && LS.sezione === 'sharing') sezioneSharing();
@@ -4186,7 +4204,7 @@ function spostaAppuntamento(e, dopo) {
         await dbqAvvisa('annulla sposta', supa.rpc('annulla_modifica_azione', { p_prima: prima }), 'Annullamento non riuscito: controlla la connessione e riprova.');
         await aggiornaRiga(e.contatto_id);
         await dopo(giorno);
-      });
+      }, () => spostaAppuntamento(e, dopo));
     }
     const nuovo = { inizio: nuovaData, fine: durata ? new Date(Date.parse(nuovaData) + durata * 60000).toISOString() : null, confermato_il: null };
     const prima = { inizio: e.inizio, fine: e.fine, confermato_il: e.confermato_il || null };
@@ -4208,7 +4226,8 @@ function spostaAppuntamento(e, dopo) {
       if (!eAnnulla) for (const x of tutte) await allineaRigaCoda(x, nuovaData, x.inizio);
       else avvisaTutti();   // l'annullamento non è riuscito: lo spostamento resta, e chi lo riceve lo sa
       await dopo(giorno);
-    });
+      if (eAnnulla) return false;
+    }, () => spostaAppuntamento(e, dopo));
   };
 }
 
@@ -4230,7 +4249,7 @@ async function eliminaAppuntamento(e, dopo) {
     await aggiornaRiga(e.contatto_id);
     await ridisegna();
     mostraToast('Azione ripristinata');
-  });
+  }, () => eliminaAppuntamento(e, dopo));
 }
 // Nota 109: un incontro con più persone si elimina tutto, con una conferma sola (la stessa funzione elimina_azione per ogni riga; «Annulla» le rimette tutte)
 async function eliminaIncontro(inc, ridisegna) {
@@ -4247,7 +4266,7 @@ async function eliminaIncontro(inc, ridisegna) {
     await Promise.all(tolte.map(p => aggiornaRiga(p.contatto_id)));
     await ridisegna();
     mostraToast('Appuntamento ripristinato');
-  });
+  }, () => eliminaIncontro(inc, ridisegna));
 }
 // (P3 Agenda, 23/10: il foglio «Senza esito» della pastiglia non c'è più: gli appuntamenti senza esito sono in «Da chiudere» del Programma della settimana)
 

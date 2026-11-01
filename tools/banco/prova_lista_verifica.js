@@ -754,8 +754,10 @@ prova('L8b: la scheda di un altro partner, aperta da Agenda, Report o Mappa, si 
 function datiVeri(c, { extra = { compleanno: null, sesso: null, lavoro: null, codice_amway: null }, account = null, righe = [], conferma = true, guardo = false } = {}) {
   const app = new Nodo(), scritte = [], avvisi = [], domande = [], fatti = [];
   app.innerHTML = '<div id="sezione"></div>';
-  const from = t => { const x = { t, op: null, v: null, f: [] }; const q = new Proxy({}, { get: (_, p) => (p === 'then' ? (ok => Promise.resolve(ok({ data: null, error: null })))
-    : (...a) => { if (['update', 'insert', 'delete'].includes(p)) { x.op = p; x.v = a[0]; scritte.push(x); } if (p === 'eq') x.f.push(a); return q; }) }); return q; };
+  // una lettura (select, nota 162: prima di annullare si rilegge il campo) dà la riga com'è dopo le scritture
+  const adesso = () => Object.assign({}, c, ...scritte.filter(x => x.op === 'update').map(x => x.v));
+  const from = t => { const x = { t, op: null, v: null, f: [] }; const q = new Proxy({}, { get: (_, p) => (p === 'then' ? (ok => Promise.resolve(ok({ data: x.op === 'select' ? adesso() : null, error: null })))
+    : (...a) => { if (['update', 'insert', 'delete'].includes(p)) { x.op = p; x.v = a[0]; scritte.push(x); } if (p === 'select' && !x.op) x.op = 'select'; if (p === 'eq') x.f.push(a); return q; }) }); return q; };
   const LSf = { righe: [{ ...c }, ...righe], datiExtra: extra ? { id: c.id, ...extra } : null, account: { id: c.id, dal: account }, sezione: 'dati', dopoCategoria: null };
   LSf.contatto = LSf.righe[0];
   const ctx = { esc, ic: n => `[${n}]`, MB21Lista: L, MB21Rubrica: require('../../rubrica.js'), MB21Coda: { oggiRoma: () => '2026-10-31' }, MB21Agenda: require('../../agenda.js'), LS: LSf,

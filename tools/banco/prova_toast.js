@@ -27,7 +27,7 @@ const document = {
   body: { appendChild: el => corpo.push(el) },
   querySelectorAll: s => (s === '.toast' ? corpo.filter(e => e.className === 'toast') : []),
 };
-const ctx = { document, setTimeout, clearTimeout, esc: x => x };
+const ctx = { document, setTimeout, clearTimeout, esc: x => x, frecceQui: () => false };   // nota 162: qui senza le frecce, il messaggio di prima
 vm.createContext(ctx);
 vm.runInContext(codice + '\nthis.mostraToast = mostraToast; this.DURATA_ANNULLA = DURATA_ANNULLA;', ctx);
 const visibili = () => corpo.filter(e => e.className === 'toast');

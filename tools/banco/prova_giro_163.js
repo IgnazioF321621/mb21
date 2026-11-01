@@ -17,7 +17,7 @@ function mondo(aperta) {
   const righe = ['c1', 'c2', 'c3'].map((id, i) => ({ id, nome: `Persona ${i + 1}` }));
   const ctx = { app, MB21Lista: L, MB21Coda: { QUOTA_CATALOGO: 5 }, esc: s => String(s ?? ''), ic: n => `[${n}]`,
     ST: { aperta, catalogo: { righe, totale: 3 }, stato: { catalogati_oggi: 0 } }, LS: { giro: null, ritorno: null },
-    guardoAltri: () => false, versione: () => '', frecceHtml: () => '', scordaFrecce() {}, aggiornaFrecce() {}, collegaCarteCoda() {},
+    guardoAltri: () => false, versione: () => '', rigaSuHtml: x => x, scordaFrecce() {}, collegaCarteCoda() {},
     catalogoSotto: () => 'Senza categoria: 3', cardCatalogo: r => `<div class="card" id="card-${r.id}">${r.nome}</div>`,
     disegnaLista() {}, disegnaOggi: () => { disegni.push(ctx.ST.aperta); },
     document: { getElementById: id => app.querySelector('#' + id) }, window: { scrollTo() {} } };

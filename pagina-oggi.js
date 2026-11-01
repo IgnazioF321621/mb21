@@ -303,7 +303,7 @@ function feedbackV5(chiaro) {
 // a destra sulla stessa riga i comandi della pagina («Tu ▾», foto, lente, «+») e `destra` (l'anello, le medaglie, la foto del Profilo). `titolo`,
 // `sotto` e `sinistra` arrivano già sicuri (esc). `chiaro`: la testata bianca di Oggi ed Esplora.
 function testataV5({ sinistra = '', titolo = '', sotto = '', comandi = '', destra = '', chi = '', chiaro = false }) {
-  return `<div class="v5-su">${sinistra || '<span></span>'}${feedbackV5(chiaro)}</div>
+  return `<div class="v5-su">${sinistra || '<span></span>'}${typeof frecceHtml === 'function' ? frecceHtml() : ''}${feedbackV5(chiaro)}</div>
     <div class="v5-titolo">${chi || `<div><h1>${titolo}</h1>${sotto ? `<span>${sotto}</span>` : ''}</div>`}${comandi || destra ? `<div class="o5-dx">${comandi}${destra}</div>` : ''}</div>`;
 }
 

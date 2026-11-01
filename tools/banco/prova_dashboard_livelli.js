@@ -342,7 +342,9 @@ prova('Sotto il nome si legge cosa è successo l\'ultima volta e quando (nota 01
 prova('«Non ora» → «Salta»: la persona esce dalla coda di oggi e torna tra GIORNI_SALTA giorni (non domani), non conta come fatta; «Annulla» la rimette', async () => {
   const scritte = [], supaPrima = P.stub.supa, dbqPrima = P.stub.dbq, sceltaPrima = P.stub.sceltaDa;
   let chiesto = null;
-  P.stub.supa = { rpc: () => Promise.resolve({ error: null }), from: tab => ({ update: v => ({ eq: (k, id) => { scritte.push({ tab, v, id }); return Promise.resolve({ error: null }); } }) }) };
+  P.stub.supa = { rpc: () => Promise.resolve({ error: null }), from: tab => ({ update: v => ({ eq: (k, id) => { scritte.push({ tab, v, id }); return Promise.resolve({ error: null }); } }),
+    // nota 162: prima di annullare si rilegge il giorno (è ancora quello messo qui)
+    select: () => ({ eq: () => ({ maybeSingle: () => Promise.resolve({ data: { rientro_il: scritte.at(-1).v.rientro_il }, error: null }) }) }) }) };
   P.stub.dbq = (_, p) => p;
   P.stub.sceltaDa = async (titolo, voci) => { chiesto = { titolo, voci: voci.map(v => v.etichetta) }; return voci[0]; };
   try {

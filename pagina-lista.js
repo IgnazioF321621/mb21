@@ -294,7 +294,7 @@ function completaRigaHtml() {
 function disegnaDaCompletare() {
   const coda = codaCompleta(), d = coda[0];
   const r = d && LS.righe.find(x => x.id === d.id);
-  const indietro = '<button class="indietro" id="indietro">‹ Lista Nomi</button><h1>Da completare</h1>';
+  const indietro = `${rigaSuHtml('<button class="indietro" id="indietro">‹ Lista Nomi</button>')}<h1>Da completare</h1>`;   // nota 162: le frecce in alto
   if (!r) {
     app.innerHTML = `${indietro}<div class="vuoto">Per ora è tutto completo. ${ic('complimenti')}</div>${versione()}`;
     document.getElementById('indietro').onclick = () => { window.scrollTo(0, 0); disegnaLista(); };
@@ -340,7 +340,7 @@ async function salvaCompleta(r, campo, valore) {
     if (campo === 'sesso') ST.completa.senzaSesso.add(r.id); else await aggiornaRiga(r.id);
     disegnaDaCompletare();
     mostraToast('Annullato');
-  });
+  }, () => salvaCompleta(r, campo, valore));
 }
 
 // I nomi che la Lista mostra adesso (filtro, ricerca, ordine): l'elenco e, dalla nota 158, la barretta «‹ Precedente · Successivo ›» della scheda
@@ -553,7 +553,7 @@ async function archivia(r) {
   const { error } = await dbq('archivia', supa.rpc('archivia_contatto', { p_contatto: r.id }));
   if (error) return mostraToast('Non archiviato: riprova.');
   // dal 04/10 (nota 046) «Archivia» toglie dall'Agenda le azioni ancora da fare (con una copia): si dice, e «Annulla» rimette tutto com'era
-  mostraToast(`${r.nome} spostato in Archiviati · le azioni da fare escono dall'Agenda`, () => ripristina(r));
+  mostraToast(`${r.nome} spostato in Archiviati · le azioni da fare escono dall'Agenda`, () => ripristina(r), () => archivia(r));
   if (LS.contatto) LS.contatto = null;
   await aggiornaRiga(r.id);   // nota 068: la riga in memoria prende subito la categoria nuova
   ricaricaERidisegna();
@@ -722,7 +722,7 @@ async function avvioDellaScheda(c) {
 function disegnaScheda() {
   const c = LS.contatto;
   app.innerHTML = `
-    <button class="indietro" id="indietro">‹ ${LS.ritorno === 'oggi' ? 'Oggi' : LS.ritorno === 'mappa' ? 'Mappa' : LS.ritorno === 'catalogo' ? 'Da catalogare' : LS.ritorno === 'check' ? 'Check' : LS.ritorno === 'agenda' ? 'Agenda' : LS.ritorno === 'vendite' ? 'Vendite' : LS.ritorno ? 'Report' : 'Lista Nomi'}</button>
+    ${rigaSuHtml(`<button class="indietro" id="indietro">‹ ${LS.ritorno === 'oggi' ? 'Oggi' : LS.ritorno === 'mappa' ? 'Mappa' : LS.ritorno === 'catalogo' ? 'Da catalogare' : LS.ritorno === 'check' ? 'Check' : LS.ritorno === 'agenda' ? 'Agenda' : LS.ritorno === 'vendite' ? 'Vendite' : LS.ritorno ? 'Report' : 'Lista Nomi'}</button>`)}
     <div class="testata ${classeCat(c.categoria)}">
       <div class="corpo">
         <div class="alto">
@@ -1108,10 +1108,18 @@ async function salvaDato(c, cambi) {
   if (r.archiviare) mostraToast(`${ora.nome} spostato in Archiviati · le azioni da fare escono dall'Agenda`, () => ripristina({ id: c.id, nome: ora.nome }));
   else if (r.ripristinare) mostraToast(`${ora.nome} ripristinato`);
   else mostraToast('Salvato', r.catalogo ? undefined : async () => {
+    // nota 162: con la freccia si può annullare anche dopo un po': solo se i campi della Lista sono ancora quelli salvati qui
+    const chiavi = Object.keys(cambi).filter(k => k in c);
+    if (chiavi.length) {
+      const { data: ora2, error: e1 } = await dbq('dato adesso', supa.from('contatti').select(chiavi.join(', ')).eq('id', c.id).maybeSingle());
+      if (e1) return mostraToast('Non annullato: riprova.');
+      if (!ora2 || chiavi.some(k => (ora2[k] ?? null) !== (cambi[k] ?? null))) return mostraToast('Non si può annullare: nel frattempo è cambiato.');
+    }
     const s = await salvaContatto(LS.righe.find(x => x.id === c.id) || c, prima, { senzaDoppioni: true });
     if (s.errore) mostraToast('Non annullato: riprova.');
-    dopoDato(c, prima, true);
-  });
+    await dopoDato(c, prima, true);
+    if (s.errore) return false;
+  }, () => salvaDato(c, cambi));
   await dopoDato(c, cambi);
   if (r.invito) domandaInvito({ ...ora });
   if ('categoria' in cambi && LS.dopoCategoria === 'azione' && MB21Agenda.tipiPer(ora.categoria).length && LS.contatto && LS.contatto.id === c.id) { LS.dopoCategoria = null; azionePiu(); }
