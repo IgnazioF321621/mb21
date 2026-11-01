@@ -59,10 +59,11 @@ function disegnaBenvenuto() {
   const B = MB21Benvenuto, quale = B.SCHERMATE[BV.i];
   const nome = String((ST.utente && (ST.utente.nome || ST.utente.nome_cognome)) || '').trim().split(/\s+/)[0];
   // In alto: i pallini del percorso e «Lo faccio dopo» (niente è vincolante); in una schermata sola, il ritorno alla Dashboard
+  // Nota Pagine 164 (Ignazio 01/11, «sì»): la stessa riga in alto delle altre pagine (rigaSuHtml: frecce, posto del feedback, linea sotto)
   const testa = BV.solo
-    ? `<div class="bv-testa"><button class="indietro" id="bv-esci">‹ ${BV.ritorno === 'profilo' ? 'Profilo' : 'Oggi'}</button></div>`
-    : `<div class="bv-testa"><span class="bv-pallini">${B.SCHERMATE.map((_, k) => `<i class="${k === BV.i ? 'qui' : k < BV.i ? 'fatto' : ''}"></i>`).join('')}</span>
-        <button class="link" id="bv-esci">Lo faccio dopo</button></div>`;
+    ? rigaSuHtml(`<button class="indietro" id="bv-esci">‹ ${BV.ritorno === 'profilo' ? 'Profilo' : 'Oggi'}</button>`)
+    : rigaSuHtml(`<span class="bv-pallini">${B.SCHERMATE.map((_, k) => `<i class="${k === BV.i ? 'qui' : k < BV.i ? 'fatto' : ''}"></i>`).join('')}</span>
+        <button class="link" id="bv-esci">Lo faccio dopo</button>`);
   const indietro = !BV.solo && BV.i > 0 ? '<button class="link bv-indietro" id="bv-indietro">‹ Indietro</button>' : '';
   const corpo = {
     benvenuto: () => `<div class="bv-grande">${ic('complimenti')}</div>
