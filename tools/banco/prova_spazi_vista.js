@@ -186,6 +186,29 @@ prova('Programma della settimana (nota 004): «Da chiudere» in alto, solo il fu
   } finally { P.AG.azioni = prima; P.AG.spazi = []; P.AG.fattiAperti = false; }
 });
 
+// ── Nota Pagine 169 (Ignazio 01/11: domenica sera vedeva solo oggi; «frecce invece di una spiegazione») ──
+prova('169: ‹ › accanto a «Settimana N» cambiano settimana senza uscire dal foglio; ‹ spenta sulla settimana di oggi; spente con qualcosa di nuovo non creato', async () => {
+  pulisci(); P.AG.spazi = [];
+  const settPrima = P.AG.settimana.slice(), giornoPrima = P.AG.giorno, n = P.A.numeroSettimana(settPrima[0]);
+  try {
+    await P.preparaSettimana();
+    const v = P.fogli.at(-1);
+    assert.match(v.innerHTML, new RegExp(`<b class="sp-sett"><button type="button" class="freccia" id="sp-prima" aria-label="Settimana prima" disabled>‹</button>Settimana ${n}<button type="button" class="freccia" id="sp-dopo" aria-label="Settimana dopo">›</button></b>`));
+    const quanti = P.fogli.length;
+    await v.clic('#sp-dopo'); for (let i = 0; i < 4; i++) await new Promise(r => setTimeout(r, 0));
+    assert.equal(P.fogli.length, quanti + 1);   // il foglio si riapre (nel banco l'Agenda finta resta sulla stessa settimana)
+    assert.match(require('node:fs').readFileSync(require('node:path').join(__dirname, '../../pagina-agenda.js'), 'utf8'),
+      /const lun = A\.spostaGiorno\(settimana\[0\], 7 \* passo\), sett = A\.settimana\(lun\);\n    chiudi\(\);\n    await apriAgenda\(sett\.includes\(oggi\) \? oggi : lun\);/);
+    // una settimana dopo quella di oggi: ‹ accesa
+    P.AG.settimana = P.A.settimana(P.A.spostaGiorno(settPrima[0], 7)); P.AG.giorno = P.AG.settimana[0];
+    await P.preparaSettimana();
+    const w = P.fogli.at(-1);
+    assert.match(w.innerHTML, new RegExp(`id="sp-prima" aria-label="Settimana prima">‹</button>Settimana ${n + 1}<`));
+    w.clic('[data-g]'); w.clic('#sp-aggiungi');
+    assert.match(w.innerHTML, /id="sp-prima" aria-label="Settimana prima" disabled>‹[\s\S]*id="sp-dopo" aria-label="Settimana dopo" disabled>›/);   // prima «Crea»
+  } finally { P.AG.giorno = giornoPrima; P.AG.settimana = settPrima; }
+});
+
 (async () => {
   for (const [nome, fn] of coda) { await fn(); ok++; console.log('OK  ' + nome); }
   console.log(`\n${ok} prove superate`);

@@ -1724,7 +1724,9 @@
   .mm-testa h1 { flex: 1; text-align: center; }
   .mm-testa .mm-titolo { font-size: 22px; font-weight: 800; color: var(--testo); padding: 0; min-height: 0; }
   .ag-titolo .ag-mese.ag-titolo-giorno { font: inherit; color: inherit; padding: 0; min-height: 0; text-align: left; }   /* P4 (23/10): il titolo del Giorno apre la scelta della data e resta grande come un titolo */
-  .mm-testa .freccia { border: 0; background: var(--superficie); box-shadow: var(--ombra-card); border-radius: 50%; width: 36px; height: 36px; font-size: 20px; color: var(--testo); }
+  /* nota Pagine 169: le stesse frecce anche accanto a «Settimana N» in «Programmare la settimana» */
+  .sp-sett { display: flex; align-items: center; gap: 8px; }
+  .mm-testa .freccia, .sp-sett .freccia { border: 0; background: var(--superficie); box-shadow: var(--ombra-card); border-radius: 50%; width: 36px; height: 36px; font-size: 20px; color: var(--testo); }
   .mm-griglia { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; margin: 8px 0 14px; }
   .mm-griglia > b { font-size: 11px; font-weight: 700; color: var(--testo-tenue); text-align: center; text-transform: uppercase; }
   .mm-g { border: 0; background: var(--superficie); border-radius: 10px; min-height: 58px; padding: 5px 4px; font-family: inherit; color: var(--testo); display: flex; flex-direction: column; align-items: center; gap: 3px; overflow: hidden; }
@@ -1842,7 +1844,7 @@
   .mn-griglia .ag-punti { display: flex; gap: 2px; height: 4px; }
   .mn-griglia .ag-punti i { width: 4px; height: 4px; border-radius: 50%; background: var(--cat, var(--spento)); }
   .mn-griglia button.oggi .ag-punti i { filter: brightness(1.75) saturate(.85); }
-  .mm-testa .freccia:disabled { opacity: .35; }
+  .mm-testa .freccia:disabled, .sp-sett .freccia:disabled { opacity: .35; }   /* nota 169: anche in «Programmare la settimana» */
   .ad-wes-giorno { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--testo-soft); margin-top: 6px; }
   .ad-wes-giorno input { font-family: inherit; font-size: 16px; padding: 4px 6px; border: 1px solid var(--bordo); border-radius: 8px; background: var(--superficie-2); color: var(--testo); }
   /* il menu ☰ di lato, come la colonna sinistra di NotePlan */

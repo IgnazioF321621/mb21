@@ -2416,6 +2416,17 @@ async function preparaSettimana() {
     for (const x of [...sds(), ...st.scelti]) if (tocca(S.occupati(g, [], [], [x])[0])) nomi.push(x.tipo === 'SdS/OPEN' ? 'SdS/OPEN' : S.TIPI[x.tipo].nome);
     return nomi;
   }
+  // Nota Pagine 169 (Ignazio 01/11: domenica sera vedeva solo oggi; «frecce invece di una spiegazione»): ‹ › accanto a «Settimana N» cambiano la settimana
+  // senza uscire dal foglio (l'Agenda va su quella settimana, che porta i suoi impegni e spazi, e il foglio si riapre). Le settimane passate no: ‹ si spegne
+  // sulla settimana di oggi. Con qualcosa di nuovo messo e non ancora creato le frecce sono spente (si perderebbe): prima «Crea».
+  const primaSi = settimana[0] > A.settimana(oggi)[0];
+  const frecce = (dove, segno, nome, si) => `<button type="button" class="freccia" id="sp-${dove}" aria-label="${nome}"${si && !st.scelti.length ? '' : ' disabled'}>${segno}</button>`;
+  const vaiSettimana = async passo => {
+    const lun = A.spostaGiorno(settimana[0], 7 * passo), sett = A.settimana(lun);
+    chiudi();
+    await apriAgenda(sett.includes(oggi) ? oggi : lun);   // tornando alla settimana di oggi, sul giorno di oggi
+    preparaSettimana();
+  };
   const pastiglia = (tipo, testo, attr) => `<span class="sp-chip" style="--tinta:${tipo === 'SdS/OPEN' ? 'var(--az-appuntamento)' : coloreSpazio(tipo)}">${esc(testo)}<button type="button" ${attr} aria-label="Togli ${esc(testo)}">${ic('chiudi')}</button></span>`;
   function disegna(errore) {
     const nuovi = [...sds(), ...st.scelti];
@@ -2437,12 +2448,14 @@ async function preparaSettimana() {
       }).join('')}
       <p class="sp-conto${nuovi.length ? ' pieno' : ''}">${nuovi.length ? esc('Nuovi: ' + S.riassunto(nuovi)) : 'Tocca un giorno per mettere il primo'}</p>`;
     velo.innerHTML = `<div class="foglio alto mc sp-foglio">
-      <div class="mc-testa"><span class="ts-pastiglia">${ic('scala-settimana')}</span><div><small>Programmare la settimana</small><b>Settimana ${A.numeroSettimana(settimana[0])}</b></div><button id="sp-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
+      <div class="mc-testa"><span class="ts-pastiglia">${ic('scala-settimana')}</span><div><small>Programmare la settimana</small><b class="sp-sett">${frecce('prima', '‹', 'Settimana prima', primaSi)}Settimana ${A.numeroSettimana(settimana[0])}${frecce('dopo', '›', 'Settimana dopo', true)}</b></div><button id="sp-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
       <div class="riquadro mc-g" style="margin-top:14px">${corpo}</div>
       <div class="errore" id="sp-errore">${errore ? esc(errore) : ''}</div>
       <div class="mc-fondo"><button class="link" id="sp-no">Annulla</button><button class="primario" id="sp-si"${nuovi.length ? '' : ' disabled'}>Crea</button></div></div>`;
     velo.querySelector('#sp-x').onclick = chiudi;
     velo.querySelector('#sp-no').onclick = chiudi;
+    velo.querySelector('#sp-prima').onclick = () => vaiSettimana(-1);   // nota 169
+    velo.querySelector('#sp-dopo').onclick = () => vaiSettimana(1);
     velo.querySelectorAll('[data-tipo-scelto]').forEach(b => { b.onclick = () => { st.tipo = b.dataset.tipoScelto; disegna(); }; });
     velo.querySelectorAll('[data-g]').forEach(b => { b.onclick = () => {
       st.aperto = st.aperto === b.dataset.g ? null : b.dataset.g;
