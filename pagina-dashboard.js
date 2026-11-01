@@ -812,13 +812,21 @@ function disegnaCatalogo() {
   const cat = ST.catalogo, altro = guardoAltri();
   if (!cat || !ST.stato) { ST.vistaCatalogo = false; return disegnaLista(); }
   const fatti = ST.stato.catalogati_oggi || 0, sotto = catalogoSotto(cat);
+  const aperta = cat.righe.find(r => r.id === ST.aperta);   // nota 163: la persona aperta ha sotto «‹ Precedente · N di M · Successivo ›»
   const corpo = cat.righe.length ? cat.righe.map(cardCatalogo).join('')
     : `<div class="vuoto">${cat.totale ? `Per oggi ${altro ? 'ha' : 'hai'} finito: ${fatti} ${fatti === 1 ? 'catalogato' : 'catalogati'}. ${ic('complimenti')}` : 'Tutti catalogati. ' + ic('complimenti')}</div>`
       + (cat.totale && !altro ? `<button class="primario" id="altri-catalogo">Altri ${MB21Coda.QUOTA_CATALOGO}</button>` : '');
   app.innerHTML = `<button class="indietro" id="indietro">‹ Lista Nomi</button><div class="titolo-frecce"><h1>Da catalogare</h1>${altro ? '' : frecceHtml('catalogo')}</div>
     <div class="sotto" style="margin-bottom:8px">${sotto}</div>
-    ${altro ? `<div class="sotto">${ic('visione')} Solo da guardare, per ora.</div>` : ''}${corpo}${versione()}`;
+    ${altro ? `<div class="sotto">${ic('visione')} Solo da guardare, per ora.</div>` : ''}${corpo}${versione()}${aperta ? giroHtml(aperta, cat.righe.map(r => r.id)) : ''}`;
   document.getElementById('indietro').onclick = () => { scordaFrecce(); ST.vistaCatalogo = false; window.scrollTo(0, 0); disegnaLista(); };
+  // nota 163: «Successivo ›» apre la persona dopo al posto di questa (una sola aperta, come col tocco) e la porta in cima
+  app.querySelectorAll('[data-giro]').forEach(b => { b.onclick = () => {
+    if (!b.dataset.giro) return;
+    ST.aperta = b.dataset.giro; disegnaOggi();
+    const card = document.getElementById('card-' + ST.aperta);
+    if (card) card.scrollIntoView({ block: 'start' });
+  }; });
   collegaCarteCoda();
   aggiornaFrecce();
 }

@@ -792,8 +792,10 @@ function disegnaScheda() {
 // Nota Pagine 158 (Ignazio 31/10, «perfetto» sulla foto scorri4_158.png): aperta la scheda dalla Lista, in fondo una pastiglia piccola
 // «‹ Precedente · 12 di 340 · Successivo ›», senza nomi, uguale su iPhone, iPad e Mac; i tasti si spengono al primo e all'ultimo nome.
 // Segue i nomi che la Lista mostrava (LS.giro); «‹ Lista» torna alla Lista com'era (filtro, ricerca, punto). Da Agenda, Oggi, Mappa… non c'è.
-function giroHtml(c) {
-  const v = LS.giro && !LS.ritorno ? MB21Lista.viciniInLista(LS.giro, c.id) : null;
+// Nota Pagine 163 (Ignazio 01/11, «ok» sulla foto giro_163.png): la stessa pastiglia sotto la persona aperta di «Da catalogare»; lì `giro` = i nomi
+// dell'elenco (disegnaCatalogo) e i tasti li collega la pagina. Le frecce ← → della tastiera toccano i tasti, quindi valgono anche lì.
+function giroHtml(c, giro = LS.giro && !LS.ritorno ? LS.giro : null) {
+  const v = giro ? MB21Lista.viciniInLista(giro, c.id) : null;
   if (!v || v.di < 2) return '';
   const tasto = (id, testo, freccia) => `<button type="button" data-giro="${esc(id || '')}"${id ? '' : ' disabled'}>${testo}<kbd>${freccia}</kbd></button>`;
   return `<div class="ls-giro-spazio"></div><div class="ls-giro" aria-label="Il nome prima e dopo nella Lista">${tasto(v.prima, '‹ Precedente', '←')}<span>${v.n.toLocaleString('it-IT')} di ${v.di.toLocaleString('it-IT')}</span>${tasto(v.dopo, 'Successivo ›', '→')}</div>`;
