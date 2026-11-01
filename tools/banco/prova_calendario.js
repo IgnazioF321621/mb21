@@ -79,12 +79,12 @@ const fs = require('node:fs'), path = require('node:path');
     assert.ok(riunito.includes(`SUMMARY:[MB] Incontro LdS · ${lungo}`));
   });
 
-  prova('La funzione online legge gli incontri di gruppo, solo di tre tipi, e non rompe il calendario se la lettura non riesce', () => {
+  prova('La funzione online legge gli incontri di gruppo e la sessione di telefonate (nota 168), e non rompe il calendario se la lettura non riesce', () => {
     const src = fs.readFileSync(path.join(__dirname, '../../supabase/functions/calendario/index.ts'), 'utf8');
     assert.match(src, /from\('spazi'\)\.select\(campi\)\.eq\('user_id', utente\.id\)\.in\('tipo', TIPI_SPAZIO_NEL_CALENDARIO\)\.gte\('inizio', da\)/);
     assert.match(src, /leggiSpazi\('id, tipo, inizio, durata, nome'\)[\s\S]*leggiSpazi\('id, tipo, inizio, durata'\)/);   // prima della migrazione: senza la colonna nome
     assert.match(src, /sp\.error \? \[\]/);   // se proprio non riesce: il calendario esce lo stesso
-    assert.deepEqual(F.TIPI_SPAZIO_NEL_CALENDARIO, ['Team', 'LOS', 'SdS/OPEN']);
+    assert.deepEqual(F.TIPI_SPAZIO_NEL_CALENDARIO, ['Team', 'LOS', 'SdS/OPEN', 'Telefonate']);   // nota 168: anche la sessione di telefonate
   });
 
   prova('Un impegno ricevuto da un altro (nota 027): titolo «… · da Ignazio», UID fisso, link e punti nella descrizione; «Non ci sono» lo segna annullato e libero', () => {
@@ -134,6 +134,16 @@ const fs = require('node:fs'), path = require('node:path');
     assert.equal(F.nomiIncontro(cinque.slice(0, 2)), 'Persona A, Persona B');
     // una persona sola: come prima
     assert.equal(campo(F.evento(cinque[0], ADESSO), 'DESCRIPTION'), 'DESCRIPTION:porta il quaderno');
+  });
+
+  prova('Nota 168: la sessione di telefonate senza persone entra come «[MB] Sessione di telefonate», senza nome; lo stesso elenco dei tipi in calendario_righe', () => {
+    const r = F.eventoSpazio(sp({ tipo: 'Telefonate', nome: 'non si usa', durata: 90 }), ADESSO);
+    assert.equal(campo(r, 'SUMMARY'), 'SUMMARY:[MB] Sessione di telefonate');
+    assert.equal(campo(r, 'DTEND'), 'DTEND;TZID=Europe/Rome:20261007T213000');   // un'ora e mezza
+    assert.ok(F.TIPI_SPAZIO_NEL_CALENDARIO.includes('Telefonate'));
+    const mig = fs.readFileSync(path.join(__dirname, '../../supabase/migrations/20261101211000_calendario_telefonate.sql'), 'utf8');
+    assert.match(mig, /s\.tipo in \('Team', 'LOS', 'SdS\/OPEN', 'Telefonate'\)/);
+    assert.match(mig, /grant execute on function public\.calendario_righe\(text\) to service_role;/);
   });
 
   console.log(`\n${ok} prove superate`);

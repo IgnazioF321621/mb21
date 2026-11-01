@@ -70,12 +70,14 @@ export function evento(a: Azione, adesso: Date, persone: Azione[] = [a]) {
 // database `LOS`) e SdS/OPEN; gli spazi «da riempire» dei Piani e delle Consulenze no: col nome diventano un appuntamento vero e entrano da soli.
 // Titolo «[MB] Incontro LdS · Serata Rubino» (senza il nome della serata, «[MB] Incontro LdS»; nota 167: prima «MB21 · …»); inizio e durata in minuti (di solito 60); niente note;
 // UID fisso `spazio-<id>@mb21`, così uno spostamento aggiorna lo stesso evento nel Calendario.
-export const TIPI_SPAZIO_NEL_CALENDARIO = ['Team', 'LOS', 'SdS/OPEN'];
-const NOME_SPAZIO: Record<string, string> = { 'Team': 'Incontro di Team', 'LOS': 'Incontro LdS', 'SdS/OPEN': 'SdS/OPEN' };
+// Nota Pagine 168 (Ignazio 01/11, «si»): anche la «Sessione di telefonate» (tipo `Telefonate`) finché è senza persone; con le persone è un appuntamento.
+// Lo stesso elenco sta in `calendario_righe` (migrazione 20261101211000): si cambiano insieme.
+export const TIPI_SPAZIO_NEL_CALENDARIO = ['Team', 'LOS', 'SdS/OPEN', 'Telefonate'];
+const NOME_SPAZIO: Record<string, string> = { 'Team': 'Incontro di Team', 'LOS': 'Incontro LdS', 'SdS/OPEN': 'SdS/OPEN', 'Telefonate': 'Sessione di telefonate' };
 export type Spazio = { id: string; tipo: string; inizio: string; durata: number | null; nome?: string | null; luogo?: string | null };
 export function eventoSpazio(s: Spazio, adesso: Date) {
   const nomeTipo = NOME_SPAZIO[s.tipo] || s.tipo;
-  const serata = (s.tipo === 'SdS/OPEN' ? '' : String(s.nome ?? '').replace(/\s+/g, ' ').trim());   // la SdS/OPEN è sempre la stessa: niente nome
+  const serata = (s.tipo === 'SdS/OPEN' || s.tipo === 'Telefonate' ? '' : String(s.nome ?? '').replace(/\s+/g, ' ').trim());   // la SdS/OPEN è sempre la stessa, la sessione non ha nome
   const minuti = s.durata && s.durata > 0 ? s.durata : 60;
   return ['BEGIN:VEVENT', `UID:spazio-${s.id}@mb21`, `DTSTAMP:${compatto(adesso)}`,
     `DTSTART;TZID=Europe/Rome:${aRoma(s.inizio)}`, `DTEND;TZID=Europe/Rome:${aRoma(Date.parse(s.inizio) + minuti * 60000)}`,
