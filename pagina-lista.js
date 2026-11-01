@@ -214,7 +214,7 @@ const numeroDaChiamare = telefono => (telefono && telefono.startsWith('+') ? tel
 function contattaHtml(telefono, soloScrivere) {
   const tel = numeroDaChiamare(telefono);
   const link = (href, icona, testo) => `<a href="${esc(href)}" class="ct-${icona} ${tel ? '' : 'spento'}" ${href.startsWith('http') ? 'target="_blank" rel="noopener"' : ''}>${ICONE_TRATTO[icona] ? ic(ICONE_TRATTO[icona]) : ICONE_CONTATTA[icona]}<span>${testo}</span></a>`;
-  return `<div class="contatta${soloScrivere ? ' tre' : ''}">${soloScrivere ? '' : link('tel:' + (tel || ''), 'call', 'Chiama')}${link('sms:' + (tel || ''), 'sms', 'SMS')}${link('https://wa.me/' + (tel || '').slice(1), 'whatsapp', 'WhatsApp')}${link('https://t.me/' + (tel || ''), 'telegram', 'Telegram')}</div>`;
+  return `<div class="contatta${soloScrivere ? ' tre' : ''}">${soloScrivere ? '' : link('tel:' + (tel || ''), 'call', 'Chiama')}${link('sms:' + (tel || ''), 'sms', 'SMS')}${link('https://wa.me/' + (tel || '').slice(1), 'whatsapp', 'WhatsApp')}${link(MB21Lista.linkTelegram(tel, telegramSulWeb()), 'telegram', 'Telegram')}</div>`;
 }
 
 function disegnaLista() {

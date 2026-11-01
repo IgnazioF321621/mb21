@@ -123,6 +123,19 @@
     return (righe || []).filter(r => r.user_id === utenteId && corrisponde(r, testo))
       .sort((a, b) => ((eArchiviato(a) ? 1 : 0) - (eArchiviato(b) ? 1 : 0)) || ordinaPerNome(a, b)).slice(0, max);
   }
+  // Nota Pagine 166 (Ignazio 01/11: sul Mac non ha il programma Telegram, usa Telegram Web; «si si apre» provando il link): i link di Telegram, una regola
+  // sola. `web` = un Mac senza touch screen: Telegram Web nel browser (web.telegram.org legge i link tg:// dopo «#?tgaddr=»); altrimenti t.me, che su
+  // iPhone e iPad apre l'app. `tel` = il numero col «+». La chat di un numero: tg://resolve?phone=… (il numero senza «+»).
+  const telegramWeb = tg => 'https://web.telegram.org/k/#?tgaddr=' + encodeURIComponent(tg);
+  function linkTelegram(tel, web) {
+    const numero = String(tel || '').replace(/[^0-9]/g, '');
+    return web ? telegramWeb('tg://resolve?phone=' + numero) : 'https://t.me/' + (tel || '');
+  }
+  // Condividere un link con un testo (si sceglie la chat in Telegram): t.me/share, sul Mac lo stesso in Telegram Web (tg://msg_url)
+  function linkTelegramCondividi(url, testo, web) {
+    const q = `url=${encodeURIComponent(url)}&text=${encodeURIComponent(testo)}`;
+    return web ? telegramWeb('tg://msg_url?' + q) : 'https://t.me/share/url?' + q;
+  }
   // Nota Pagine 158 (Ignazio 31/10, «perfetto» sulla foto scorri4_158.png): dalla scheda aperta dalla Lista, il nome prima e dopo nello stesso elenco
   // (filtro, ricerca e ordine di filtraContatti). `ids` = gli id dell'elenco, in ordine → { prima, dopo, n, di } (prima/dopo null ai bordi); null se `id` non c'è.
   function viciniInLista(ids, id) {
@@ -712,7 +725,7 @@
   const nomeCategoria = c => NOMI_CATEGORIA[c] || c;
 
   const api = { cepPerCodice, importo, rigaPrezzo, QUOTA_PROVVIGIONE, IVA, contiVendita, contiStimati, scontoCalcolato, scontoAMano, NOMI_CATEGORIA, SPIEGA_CATEGORIA, nomeCategoria, CATEGORIE, FASCE_ETA, AREE, QUALI_PRODOTTI, interesseDa, areaDa, testoInteresse, PREFISSI, PASSI_ONBOARDING, AVVIO_DA_INCONTRO, passoAvvioDa, situazioneAvvio, FILTRI, GIORNI_NEW, eNuovo, piega, corrisponde, filtraContatti,
-    contaFiltri, cercaNomi, segnoOmonimi, viciniInLista, compieOggi, azioniENote, MESI_RIORDINO, riordinoFra, mesiFra, modoRiordino, propostaRiordino, sezioneIniziale, giorniFermo, SENZA_PARLARE, fraseCard, ORDINI, componiTelefono, separaTelefono, trovaDoppioni, archiviatiUguali, contatoreOnboarding, prossimoPasso, entratoDa, partnerDaAvviare, partnerInPausa, proposteAvvio, pausaLunga, PASSI_SPENTI, postiBiglietto, postoSuo, momento, meseEvento, etichettaEvento, eventoAttivo, eventoDaMostrare, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, cepDaTogliere, cepDaAccendere, descrizioneCep, data, DATI_PERSONA, SESSI, LAVORI, nomeScelta, daCompletare, cittaFrequenti, cittaConProvincia, BRAND, coloreBrand, brandComprati, haVendite, daConsegnare, daConfermare, GIORNI_CONSEGNA_LONTANA, consegnaLontana, totaliVendite, momentoNelMese, momentiVendita, pagataSulSito, provvigioniMese, scontiMese, MESI_ANNO, provvigioniAnno, prossimoRiordino, rigaVendita, rigaFattore, numeroFattore, numero };
+    contaFiltri, cercaNomi, segnoOmonimi, viciniInLista, linkTelegram, linkTelegramCondividi, compieOggi, azioniENote, MESI_RIORDINO, riordinoFra, mesiFra, modoRiordino, propostaRiordino, sezioneIniziale, giorniFermo, SENZA_PARLARE, fraseCard, ORDINI, componiTelefono, separaTelefono, trovaDoppioni, archiviatiUguali, contatoreOnboarding, prossimoPasso, entratoDa, partnerDaAvviare, partnerInPausa, proposteAvvio, pausaLunga, PASSI_SPENTI, postiBiglietto, postoSuo, momento, meseEvento, etichettaEvento, eventoAttivo, eventoDaMostrare, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, cepDaTogliere, cepDaAccendere, descrizioneCep, data, DATI_PERSONA, SESSI, LAVORI, nomeScelta, daCompletare, cittaFrequenti, cittaConProvincia, BRAND, coloreBrand, brandComprati, haVendite, daConsegnare, daConfermare, GIORNI_CONSEGNA_LONTANA, consegnaLontana, totaliVendite, momentoNelMese, momentiVendita, pagataSulSito, provvigioniMese, scontiMese, MESI_ANNO, provvigioniAnno, prossimoRiordino, rigaVendita, rigaFattore, numeroFattore, numero };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Lista = api;
 })(this);

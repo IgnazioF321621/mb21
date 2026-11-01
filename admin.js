@@ -125,7 +125,7 @@ const senzaAvvisi = () => AD.utenti.filter(u => u.accesso_attivo && !(AD.disposi
 async function apriTelegramCon(tel, testo) {
   let copiato = false;
   try { await navigator.clipboard.writeText(testo); copiato = true; } catch (e) { /* si scrive a mano */ }
-  window.open('https://t.me/' + tel, '_blank', 'noopener');
+  window.open(MB21Lista.linkTelegram(tel, telegramSulWeb()), '_blank', 'noopener');   // nota 166: sul Mac Telegram Web
   const avviso = copiato ? 'Messaggio copiato: nella chat di Telegram tieni premuto e scegli «Incolla»' : 'Telegram aperto: scrivi tu il messaggio';
   mostraToast(avviso);
   return avviso;

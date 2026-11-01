@@ -3641,6 +3641,8 @@ function mostraToast(testo, suAnnulla, rifai) {
 // senza attese prima: su iPhone, dopo un'attesa, il permesso di copiare si perde. Se il telefono non lascia copiare: con `campo`
 // (il riquadro di testo del foglio) lo seleziona e dice `aiuto`; senza, apre un foglio con il testo già selezionato (in sola
 // lettura: si tiene premuto e si sceglie «Copia»), con in più la `nota` se c'è (il Calendario: «Non darlo a nessuno…»).
+// Nota Pagine 166: un Mac senza touch screen (l'iPad si presenta come un Mac, ma ha il touch: la stessa regola di avvisi.js) → Telegram Web nel browser
+const telegramSulWeb = () => /Macintosh/.test(navigator.userAgent) && !(navigator.maxTouchPoints > 1);
 async function copiaTesto(testo, detto, campo, aiuto, nota) {
   try {
     if (!navigator.clipboard) throw new Error('appunti non disponibili');
@@ -6296,7 +6298,7 @@ function foglioLinkInvito(opz = {}) {
     a.target = a.dataset.canale === 'sms' ? '' : '_blank';
     a.rel = 'noopener';
     a.href = a.dataset.canale === 'wa' ? `https://wa.me/${tel.replace(/[^0-9]/g, '')}?text=${t}`
-      : a.dataset.canale === 'tg' ? `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(attuale().replace(link, '').trim())}`
+      : a.dataset.canale === 'tg' ? MB21Lista.linkTelegramCondividi(link, attuale().replace(link, '').trim(), telegramSulWeb())   // nota 166: sul Mac Telegram Web
       : `sms:${tel}?&body=${t}`;
   });
   velo.querySelector('#li-copia').onclick = () => copiaTesto(attuale(), 'Messaggio copiato: incollalo dove vuoi', testo, 'Tieni premuto sul messaggio e scegli Copia');
