@@ -95,12 +95,12 @@ prova('P6, P5b e nota 047: l\'Admin trova la SdS/OPEN del lunedì già messa (co
   try {
     await P.preparaSettimana();
     let v = P.fogli[0];
-    assert.match(v.innerHTML, /<span class="sp-chip"[^>]*>SdS\/OPEN 21:30 · la riceve: Persona Prova<button type="button" data-sds-via/);
+    assert.match(v.innerHTML, /<span class="sp-chip"[^>]*>SdS\/OPEN 21:30<button type="button" data-sds-via/);   // nota 172: anche con una persona con l'app, nessun «la riceve»
     assert.match(v.innerHTML, /Nuovi: la SdS\/OPEN/); assert.doesNotMatch(v.innerHTML, /perche/);
     await v.clic('#sp-si');   // solo la SdS: «Crea» mette solo lei
     let righe = P.scritture.find(x => x.tabella === 'spazi' && x.op === 'insert').args[0];
     assert.equal(righe.length, 1); assert.equal(righe[0].tipo, 'SdS/OPEN');
-    assert.equal(righe[0].condiviso_con, 'linea'); assert.equal(righe[0].linea_codice, 'X1');   // P5b: alla persona, mai più a «tutto il Team»
+    assert.equal(righe[0].condiviso_con, undefined); assert.equal(righe[0].linea_codice, undefined);   // nota 172 (Ignazio 01/11): nasce senza condivisione; si condivide a mano dal foglio
     pulisci();
     await P.preparaSettimana();
     v = P.fogli[0];

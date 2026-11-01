@@ -2388,12 +2388,10 @@ async function preparaSettimana() {
   const settimana = AG.settimana.slice(), giorni = settimana.filter(g => g >= oggi);
   if (!giorni.length) return mostraToast('Questa settimana è già passata: vai alla prossima con ›');
   const esistenti = (AG.spazi || []).filter(s => settimana.includes(S.orario(s).giorno));
-  // la SdS/OPEN è una sola, quella del Team (nota 047, Ignazio 11/10): la crea l'Admin per sé, già condivisa; i partner la ricevono
+  // la SdS/OPEN è una sola, quella del Team (nota 047, Ignazio 11/10): la crea l'Admin per sé. Nota Pagine 172 (Ignazio 01/11: «togli SdS con [la partner]
+  // come condivisione»): nasce senza condivisione (prima andava già alla persona del gruppo che usa l'app, P5b); si condivide a mano dal suo foglio.
+  // Le SdS già condivise restano come sono.
   const sdsMia = eAdmin() && visto().id === ST.utente.id;
-  // P5b (23/10): la SdS/OPEN la riceve la persona del gruppo che usa l'app (se è una sola); prima andava a «tutto il Team»
-  if (sdsMia && !CONDIVISIONE_LINEE && AG.ramo === undefined) await caricaRamoApp();
-  const riceve = sdsMia && !CONDIVISIONE_LINEE ? personeAppDelGruppo() : [];
-  const sdsA = riceve.length === 1 ? riceve[0] : null;
   const st = { tipo: S.DA_PREPARARE[0], scelti: [], aperto: null, ora: '', avviso: '', sdsVia: false };
   const lun = settimana[S.SDS.giorno];
   const sds = () => (sdsMia && !st.sdsVia && S.sdsDaMettere(settimana, esistenti, oggi) ? [{ tipo: 'SdS/OPEN', giorno: lun, ora: S.SDS.ora, durata: S.SDS.durata }] : []);
@@ -2441,7 +2439,7 @@ async function preparaSettimana() {
         return `<div class="sp-giorno${st.aperto === g ? ' aperto' : ''}"><button type="button" class="sp-g" data-g="${g}"><b>${esc(giornoBreve(g))}</b>${
           gia.length || miei.length || sdsQui.length ? '' : '<small>tocca per aggiungere</small>'}</button>
           ${gia.map(x => `<span class="sp-gia">${esc(x.ora)} ${esc(x.testo)}</span>`).join('')}
-          ${sdsQui.map(x => pastiglia('SdS/OPEN', `SdS/OPEN ${x.ora}${CONDIVISIONE_LINEE ? ' · per tutto il Team' : sdsA ? ` · la riceve: ${sdsA.nome}` : ''}`, 'data-sds-via')).join('')}
+          ${sdsQui.map(x => pastiglia('SdS/OPEN', `SdS/OPEN ${x.ora}`, 'data-sds-via')).join('')}
           ${miei.map(x => pastiglia(x.tipo, `${S.TIPI[x.tipo].nome} ${x.ora}`, `data-togli="${x.i}"`)).join('')}</div>
           ${st.aperto === g ? `<div class="sp-ora-riga"><input type="time" id="sp-ora-nuova" aria-label="Ora" value="${esc(st.ora)}"><button type="button" class="primario" id="sp-aggiungi">Aggiungi</button></div>
           ${st.avviso ? `<div class="ag-scontro">${ic('attenzione')} ${esc(st.avviso)}</div>` : ''}` : ''}`;
@@ -2477,7 +2475,7 @@ async function preparaSettimana() {
     velo.querySelectorAll('[data-togli]').forEach(b => { b.onclick = () => { st.scelti.splice(Number(b.dataset.togli), 1); disegna(); }; });
     velo.querySelectorAll('[data-sds-via]').forEach(b => { b.onclick = () => { st.sdsVia = true; disegna(); }; });
     velo.querySelector('#sp-si').onclick = async () => {
-      const righe = S.righeNuove(visto().id, settimana, st.scelti, esistenti, oggi, { sds: sdsMia && !st.sdsVia, ...(CONDIVISIONE_LINEE ? { team: true } : sdsA ? { a: sdsA.partner_id } : {}) });
+      const righe = S.righeNuove(visto().id, settimana, st.scelti, esistenti, oggi, { sds: sdsMia && !st.sdsVia });   // nota 172: la SdS/OPEN senza condivisione
       if (!righe.length) return disegna('Tocca un giorno per mettere il primo.');
       const btn = velo.querySelector('#sp-si');
       btn.disabled = true; btn.textContent = 'Salvo…';

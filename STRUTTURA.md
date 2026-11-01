@@ -1304,7 +1304,7 @@ Le 4 righe Partner/Cliente · Contatto · Richiamare/Appuntamento sono state agg
   - **Dove si sceglie:**
     - in «Cosa vuoi aggiungere?» la terza voce è «Serata da mandare · La riceve: [nome]», e la vede solo chi ha almeno una persona (`puoSerataTeam`);
     - nel modulo della serata e nel foglio della serata (`condivisioneSpazioHtml`) «Condividi con» è «Nessuno» più una pastiglia per persona; con una sola, è già scelta;
-    - in «Programmare la settimana» la SdS/OPEN del lunedì dice «· la riceve: [nome]».
+    - ~~in «Programmare la settimana» la SdS/OPEN del lunedì dice «· la riceve: [nome]»~~: dalla nota Pagine 172 (Ignazio 01/11/2026, «togli SdS con [la partner] come condivisione») la SdS/OPEN nasce senza condivisione; si condivide a mano dal suo foglio. Le SdS già condivise restano.
   - **Il tranello:** nel modulo di un appuntamento con una persona «Condividi con» è solo «Nessuno · [la persona]», quindi il nome non sparisce più.
   - **Database:** nessuna modifica. A una persona si manda con `condiviso_con 'linea'` e `linea_codice` = il suo codice. Lo riceverebbe anche chi un domani usasse l'app sotto di lei, e Ignazio lo sa. `'team'` non si usa più per i nuovi invii; le serate già mandate si leggono con le parole nuove («la riceve: …»).
   - **Interruttore** `CONDIVISIONE_LINEE = false` in `index.html`: spegne «Tutto il Team / Una Linea», «Quale Linea?», «Solo una parte?», «Senza l'app» e la lettura dei frontali (`caricaFrontali`). Il codice resta.
