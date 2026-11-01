@@ -776,6 +776,9 @@
     'Piano Marketing': ['PM', 'PM'], 'Follow Up': ['Follow Up', 'Follow Up'], 'Appuntamento': ['Appuntamento', 'Appuntamenti'],
     'Consulenza PRD': ['Consulenza', 'Consulenze'], 'Contatto': ['Contatto', 'Contatti'],
   };
+  // Nota Pagine 170 (Ignazio 01/11: nella Timeline della settimana «mettere le cose come vanno», come nel calendario): il tipo in breve, con le parole
+  // del conto («PM», «Consulenza», «Appuntamento», «Follow Up»); per gli altri il tipo com'è
+  const tipoCorto = t => (NOMI_CONTO[t] || [t || 'Contatto'])[0];
   function contaPerTipo(azioni, giorni) {
     const dentro = new Set(giorni || []);
     const conto = {};
@@ -983,7 +986,7 @@
     partiRoma, isoDaRoma, spostaGiorno, settimana, titoloMese, eventiDelGiorno, riga, orario,
     oraProposta, passatiSenzaEsito, validaAppuntamento, tipoDaCoda, senzaDoppioniCoda, ORE_CONFERMA, confermeDaFare, testoConferma, rispostaValida, confermeConRisposte, quandoBreve, risposteNuove, riordiniDaSentire, INIZIO_RIORDINI_GLIDE, ESITO_ATTESA_ORDINE,
     ORA_DA, ORA_A, PASSO_MIN, MINIMO_VISTA, DURATA_CONTATTO, DURATA_NORMALE, durataPredefinita, avvisoFissato, inMinuti, daMinuti, alQuarto,
-    fascia, disposizioneGiorno, estremiGriglia, oreUtili, puntiGiorni, contaPerTipo, ORDINE_TIPI, sovrapposti, stessoIncontro, incontri, fasceLibere, oreProposte,
+    fascia, disposizioneGiorno, estremiGriglia, oreUtili, puntiGiorni, contaPerTipo, tipoCorto, ORDINE_TIPI, sovrapposti, stessoIncontro, incontri, fasceLibere, oreProposte,
     AVVENUTO, RISULTATI, daChiudere, passiEsito, passiIncontro, vociIncontro, esitoDaVoci, ESITO_ALTRO, NON_AVVENUTI_INCONTRO, passiFatti, esitoDaiPassi, senzaApp, ramoDellaLinea, parteDi, schedeDelCodice, stessoCodiceDi, frontaleDi, personeConApp, domandaEsito, dopoTelefonata, fattoDi, esitoDaDare, ESITI_CHIUSURA, GIORNI_CHIUSURA, GIORNI_RELAZIONE, GIORNI_NO_RISPOSTA, GIORNI_TELEFONO_SPENTO, GIORNI_STORICO, nelPassato, chiudeRelazione, giorniRisentire, proponeVendita, ICONE_TIPO, controllaGiorno,
     coseDelGiorno, LEGAMI, legameDi, campiLegame, coseDelMese, coseDellaScala, senzaPeriodo, numeroSettimana, meseAccanto, mesiTra, giorniTra, testoCosa, testoTroppoLungo, MAX_COSA, MAX_VOCE, daMBPlan, MAX_PUNTO, MAX_PUNTI, MAX_LINK, puntiDi, aggiungiPunto, puntiDaRighe, spuntaPunto, togliPunto, contoPunti, linkChiamata, legamePunti, conPunti, MAX_LUOGO, doveDa, testoDove, linkMappa,
     RISPOSTE, nomeRisposta, nomeRispostaDiLui, CONDIVISIONI_SPAZIO, SDS_DEL_TEAM, FRASE_OSPITI, conOspiti, eConsegna, aggiungiOspite, ospitiPerChiOrganizza, chiaveRicevuto, ricevutiDelGiorno, ricevutiComeEventi, titoloRicevuto, eRichiamo, azioniAgenda, passatoSenzaEsito, programmaDelGiorno, ricevutiNuovi, contoRisposte, nomiPerRisposta, puoCondividereAzione, puoCondividereSpazio, RIPETIZIONI, ripetizioniPer, prossimaRipetizione, SCALE, inizioScala, GIORNI_SETTIMANA, giornoSettimana };

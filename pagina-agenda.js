@@ -1517,6 +1517,9 @@ function grigliaGiorno(eventi, opz) {
   return h;
 }
 
+// Il testo di un blocco della settimana (nota 170): il tipo in grassetto e sotto chi (o il nome della serata); basso: su una riga sola; bassissimo: niente
+const testoSev = (tipo, chi, alto) => (alto < 14 ? '' : alto < 26 ? `<span><b>${esc(tipo)}</b>${chi ? ' ' + esc(chi) : ''}</span>`
+  : `<span><b>${esc(tipo)}</b></span>${chi ? `<span>${esc(chi)}</span>` : ''}`);
 // ── La settimana intera: sette colonne, il colpo d'occhio su dove sei pieno e dove sei libero ──
 function grigliaSettimana(opz) {
   const A = MB21Agenda, oggi = MB21Coda.oggiRoma();
@@ -1546,8 +1549,11 @@ function grigliaSettimana(opz) {
       chi.push(b);
       gruppi.set(b.gruppo, chi);
     }
+    // Nota Pagine 170 (Ignazio 01/11: gli spazi erano vuoti e i PM dicevano solo il nome; «nel calendario Apple sono tutte perfette»): ogni blocco dice cos'è,
+    // in breve per la colonna stretta: il tipo in grassetto («PM», «LdS», «SdS/OPEN») e sotto i nomi (solo il primo nome di ognuno) o il nome della serata
+    // («da riempire» per gli spazi dei PM); con un blocco basso, tutto su una riga. `testoSev` è la regola sola per appuntamenti e spazi.
     for (const b of spaziSett[i]) h += `<button class="ag-sev ag-spazio" data-vai="${g}" style="--tinta:${coloreSpazio(b.x.tipo)};top:${y(b.cima)}px;height:${Math.max(11, y(b.cima + b.alta) - y(b.cima) - 2)}px;left:calc(${sinG}% + 1px);width:calc(${larga}% - 2px)"
-      aria-label="${MB21Spazi.orario(b.x).ora} ${esc(MB21Spazi.titolo(b.x))}${MB21Spazi.daRiempire(b.x.tipo) ? ' da riempire' : ''}"></button>`;
+      aria-label="${MB21Spazi.orario(b.x).ora} ${esc(MB21Spazi.titolo(b.x))}${MB21Spazi.daRiempire(b.x.tipo) ? ' da riempire' : ''}">${testoSev(MB21Spazi.TIPI[b.x.tipo].corto, MB21Spazi.daRiempire(b.x.tipo) ? 'da riempire' : MB21Spazi.pulisciNome(b.x.nome) || '', y(b.cima + b.alta) - y(b.cima) - 2)}</button>`;
     for (const chi of gruppi.values()) {
       const cima = Math.min(...chi.map(b => b.cima)), giu = Math.max(...chi.map(b => b.cima + b.alta));
       const alto = Math.max(11, y(giu) - y(cima) - 2);
@@ -1563,7 +1569,7 @@ function grigliaSettimana(opz) {
       const nome = (e.contatti && e.contatti.nome) || '—';
       h += `<button class="ag-sev ${classeCat(cat)}${e.completata ? ' fatta' : ''}" data-evento="${esc(e.id)}" data-giorno="${g}"
         style="top:${y(b.cima)}px;height:${alto}px;left:calc(${sinG}% + 1px);width:calc(${larga}% - 2px)"
-        aria-label="${esc(A.orario(e))} ${esc(nome)}"><span class="bar"></span>${alto >= 18 ? `<span>${esc(nome.split(' ')[0])}</span>` : ''}</button>`;
+        aria-label="${esc(A.orario(e))} ${esc(A.riga(e, { mioId: null, admin: false }).titolo)}"><span class="bar"></span>${testoSev(A.tipoCorto(e.tipo_azione), (e._persone || [e]).map(p => ((p.contatti && p.contatti.nome) || '—').split(' ')[0]).join(', '), alto)}</button>`;
     }
   });
   if (AG.settimana.includes(oggi)) {
@@ -1574,8 +1580,13 @@ function grigliaSettimana(opz) {
   if (!quanti) h += `<div class="ag-sett-vuoto">Settimana libera. Tocca un giorno per fissare qualcosa.</div>`;
   else {
     // il riassunto della settimana: che lavoro c'è, non solo quando (qui il colore è quello del TIPO di lavoro)
-    const conto = A.contaPerTipo(AG.azioni, AG.settimana);
-    h += `<div class="ag-conto">${conto.map(c => `<span style="--tinta:${c.colore}"><i></i>${c.quanti} ${esc(c.nome)}</span>`).join('')}</div>`;
+    // nota 170: con gli incontri e gli spazi della settimana («1 SdS/OPEN · 2 Incontri LdS»), dopo gli appuntamenti; gli incontri con più persone una volta
+    const conto = A.contaPerTipo(A.incontri(AG.azioni), AG.settimana);
+    const perTipo = {};
+    for (const x of spaziSett.flat()) perTipo[x.x.tipo] = (perTipo[x.x.tipo] || 0) + 1;
+    const spaziConto = Object.entries(perTipo).map(([t, n]) => ({ quanti: n, colore: coloreSpazio(t),
+      nome: MB21Spazi.daRiempire(t) ? `${MB21Spazi.TIPI[t].corto} da riempire` : n === 1 ? MB21Spazi.TIPI[t].nome : MB21Spazi.TIPI[t].plurale }));   // «1 PM da riempire», accanto a «5 PM»
+    h += `<div class="ag-conto">${[...conto, ...spaziConto].map(c => `<span style="--tinta:${c.colore}"><i></i>${c.quanti} ${esc(c.nome)}</span>`).join('')}</div>`;
   }
   return h;
 }

@@ -11,14 +11,14 @@
   // Team e LdS (linea di sponsorizzazione; nel database il tipo resta «LOS», cambia solo il nome che si legge: Ignazio 03/10): incontri di gruppo, senza persona e senza giorno fisso (Ignazio 27/09); il nome della serata, facoltativo, nella colonna `nome` (puoAvereNome).
   // uno / tanti / piccolo: le parole dentro le frasi («In che giorno fai l'incontro di Team?», «1 incontro di Team»); f = femminile
   const TIPI = {
-    'Piano Marketing': { nome: 'Piano Marketing', plurale: 'Piani Marketing', persona: true, uno: 'il Piano Marketing', tanti: 'Piani Marketing', piccolo: 'Piano Marketing' },
-    'Consulenza PRD': { nome: 'Consulenza prodotti', plurale: 'Consulenze prodotti', persona: true, f: true, uno: 'la Consulenza prodotti', tanti: 'Consulenze prodotti', piccolo: 'Consulenza prodotti' },
-    'Team': { nome: 'Incontro di Team', plurale: 'Incontri di Team', uno: 'l\'incontro di Team', tanti: 'incontri di Team', piccolo: 'incontro di Team', sotto: 'Incontro di gruppo' },
-    'LOS': { nome: 'Incontro LdS', plurale: 'Incontri LdS', uno: 'l\'incontro LdS', tanti: 'incontri LdS', piccolo: 'incontro LdS', sotto: 'Linea di sponsorizzazione' },
-    'SdS/OPEN': { nome: 'SdS/OPEN', plurale: 'SdS/OPEN', sotto: 'Serata di sponsorizzazione / OPEN' },
+    'Piano Marketing': { nome: 'Piano Marketing', corto: 'PM', plurale: 'Piani Marketing', persona: true, uno: 'il Piano Marketing', tanti: 'Piani Marketing', piccolo: 'Piano Marketing' },
+    'Consulenza PRD': { nome: 'Consulenza prodotti', corto: 'Consulenza', plurale: 'Consulenze prodotti', persona: true, f: true, uno: 'la Consulenza prodotti', tanti: 'Consulenze prodotti', piccolo: 'Consulenza prodotti' },
+    'Team': { nome: 'Incontro di Team', corto: 'Team', plurale: 'Incontri di Team', uno: 'l\'incontro di Team', tanti: 'incontri di Team', piccolo: 'incontro di Team', sotto: 'Incontro di gruppo' },
+    'LOS': { nome: 'Incontro LdS', corto: 'LdS', plurale: 'Incontri LdS', uno: 'l\'incontro LdS', tanti: 'incontri LdS', piccolo: 'incontro LdS', sotto: 'Linea di sponsorizzazione' },
+    'SdS/OPEN': { nome: 'SdS/OPEN', corto: 'SdS/OPEN', plurale: 'SdS/OPEN', sotto: 'Serata di sponsorizzazione / OPEN' },
     // Nota Pagine 168 (Ignazio 01/11, «si va bene»): un tempo per le proprie telefonate, da soli; aggiunte le persone (chi lavora con lui) diventa un
     // appuntamento «Appuntamento · Lista/Contatti» (PERSONE_DOPO) e lo spazio si toglie, come «Metti un nome» dei Piani Marketing
-    'Telefonate': { nome: 'Sessione di telefonate', plurale: 'Sessioni di telefonate', f: true, uno: 'la sessione di telefonate', tanti: 'sessioni di telefonate', piccolo: 'sessione di telefonate', sotto: 'Le tue telefonate' },
+    'Telefonate': { nome: 'Sessione di telefonate', corto: 'Telefonate', plurale: 'Sessioni di telefonate', f: true, uno: 'la sessione di telefonate', tanti: 'sessioni di telefonate', piccolo: 'sessione di telefonate', sotto: 'Le tue telefonate' },
   };
   const CON_PERSONA = ['Piano Marketing', 'Consulenza PRD'];   // spazi da riempire con un nome
   const DI_GRUPPO = ['Team', 'LOS'];
