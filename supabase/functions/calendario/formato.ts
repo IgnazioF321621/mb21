@@ -60,7 +60,7 @@ export function evento(a: Azione, adesso: Date, persone: Azione[] = [a]) {
   const uid = persone.map(p => p.id).reduce((x, y) => (y < x ? y : x));
   return ['BEGIN:VEVENT', `UID:azione-${uid}@mb21`, `DTSTAMP:${compatto(adesso)}`,
     `DTSTART;TZID=Europe/Rome:${aRoma(inizio)}`, `DTEND;TZID=Europe/Rome:${aRoma(fine)}`,
-    `SUMMARY:${testoIcs(`MB21 · ${cosa} · ${nome}`)}`,
+    `SUMMARY:${testoIcs(`[MB] ${nome} · ${cosa}`)}`,   // nota Pagine 167 (Ignazio 01/11): «[MB] Nome/i · Tipo» (prima «MB21 · Tipo · Nome»)
     ...rigaLuogo(a.luogo),
     ...(dettagli ? [`DESCRIPTION:${testoIcs(dettagli)}`] : []),
     'END:VEVENT'];
@@ -68,7 +68,7 @@ export function evento(a: Azione, adesso: Date, persone: Azione[] = [a]) {
 
 // Gli incontri di gruppo (nota 024, Ignazio 04/10/2026): non sono azioni ma righe di `spazi` (tabella scritta da «Prepara la settimana»). Entrano solo Team, LdS (nel
 // database `LOS`) e SdS/OPEN; gli spazi «da riempire» dei Piani e delle Consulenze no: col nome diventano un appuntamento vero e entrano da soli.
-// Titolo «MB21 · Incontro LdS · Serata Rubino» (senza il nome della serata, «MB21 · Incontro LdS»); inizio e durata in minuti (di solito 60); niente note;
+// Titolo «[MB] Incontro LdS · Serata Rubino» (senza il nome della serata, «[MB] Incontro LdS»; nota 167: prima «MB21 · …»); inizio e durata in minuti (di solito 60); niente note;
 // UID fisso `spazio-<id>@mb21`, così uno spostamento aggiorna lo stesso evento nel Calendario.
 export const TIPI_SPAZIO_NEL_CALENDARIO = ['Team', 'LOS', 'SdS/OPEN'];
 const NOME_SPAZIO: Record<string, string> = { 'Team': 'Incontro di Team', 'LOS': 'Incontro LdS', 'SdS/OPEN': 'SdS/OPEN' };
@@ -79,14 +79,14 @@ export function eventoSpazio(s: Spazio, adesso: Date) {
   const minuti = s.durata && s.durata > 0 ? s.durata : 60;
   return ['BEGIN:VEVENT', `UID:spazio-${s.id}@mb21`, `DTSTAMP:${compatto(adesso)}`,
     `DTSTART;TZID=Europe/Rome:${aRoma(s.inizio)}`, `DTEND;TZID=Europe/Rome:${aRoma(Date.parse(s.inizio) + minuti * 60000)}`,
-    `SUMMARY:${testoIcs(['MB21', nomeTipo, serata].filter(Boolean).join(' · '))}`,
+    `SUMMARY:${testoIcs('[MB] ' + [nomeTipo, serata].filter(Boolean).join(' · '))}`,
     ...rigaLuogo(s.luogo),
     'END:VEVENT'];
 }
 
 // Gli impegni ricevuti da altri (nota Pagine 027, Ignazio 05/10/2026): un appuntamento condiviso dalla persona con cui è fissato, o una serata di Team/Linea
 // condivisa da Ignazio. Righe della funzione `impegni_ricevuti_di`. Niente avvisi push: l'avviso lo dà il calendario personale, quindi entrano qui.
-// Titolo «MB21 · PM 1a1 · da Ignazio»; nella descrizione il link della chiamata e, se condivisi, i punti da trattare; UID fisso `ricevuto-<origine>-<id>@mb21`.
+// Titolo «[MB] PM 1a1 · da Ignazio» (nota 167: prima «MB21 · …»); nella descrizione il link della chiamata e, se condivisi, i punti da trattare; UID fisso `ricevuto-<origine>-<id>@mb21`.
 export type Ricevuto = { origine: string; id: string; inizio: string; fine: string | null; titolo: string; da_nome: string | null; link: string | null;
   luogo?: string | null; punti: { t: string; fatto?: boolean }[] | null; risposta?: string | null };
 export function eventoRicevuto(r: Ricevuto, adesso: Date) {
@@ -95,7 +95,7 @@ export function eventoRicevuto(r: Ricevuto, adesso: Date) {
   const dettagli = [r.link ? `Chiamata: ${r.link}` : '', punti.length ? ['Punti da trattare:', ...punti].join('\n') : ''].filter(Boolean).join('\n');
   return ['BEGIN:VEVENT', `UID:ricevuto-${r.origine}-${r.id}@mb21`, `DTSTAMP:${compatto(adesso)}`,
     `DTSTART;TZID=Europe/Rome:${aRoma(r.inizio)}`, `DTEND;TZID=Europe/Rome:${aRoma(fine)}`,
-    `SUMMARY:${testoIcs(`MB21 · ${r.titolo} · da ${r.da_nome || '—'}`)}`,
+    `SUMMARY:${testoIcs(`[MB] ${r.titolo} · da ${r.da_nome || '—'}`)}`,
     ...rigaLuogo(r.luogo),
     ...(dettagli ? [`DESCRIPTION:${testoIcs(dettagli)}`] : []),
     ...(r.risposta === 'non_ci_sono' ? ['STATUS:CANCELLED', 'TRANSP:TRANSPARENT'] : []),   // «Non ci sono»: resta nel calendario, ma non occupa

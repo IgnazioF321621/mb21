@@ -17,30 +17,30 @@ const fs = require('node:fs'), path = require('node:path');
     assert.equal(campo(r, 'UID'), 'UID:azione-a1@mb21');
     assert.equal(campo(r, 'DTSTART'), 'DTSTART;TZID=Europe/Rome:20261006T183000');
     assert.equal(campo(r, 'DTEND'), 'DTEND;TZID=Europe/Rome:20261006T193000');   // senza fine: un'ora
-    assert.equal(campo(r, 'SUMMARY'), 'SUMMARY:MB21 · PM 1a1 · Laura Ferri');
+    assert.equal(campo(r, 'SUMMARY'), 'SUMMARY:[MB] Laura Ferri · PM 1a1');
     assert.equal(campo(r, 'DESCRIPTION'), 'DESCRIPTION:Ospite: la moglie\\nPortare la brochure\; chiedere di Luca');   // il punto e virgola ora è protetto come vuole il formato
   });
 
-  prova('Incontro LdS con il nome della serata: «MB21 · Incontro LdS · Serata Rubino», un\'ora, UID fisso, niente note', () => {
+  prova('Incontro LdS con il nome della serata: «[MB] Incontro LdS · Serata Rubino», un\'ora, UID fisso, niente note', () => {
     const r = F.eventoSpazio(sp({ nome: 'Serata Rubino' }), ADESSO);
     assert.equal(campo(r, 'UID'), 'UID:spazio-s1@mb21');
-    assert.equal(campo(r, 'SUMMARY'), 'SUMMARY:MB21 · Incontro LdS · Serata Rubino');
+    assert.equal(campo(r, 'SUMMARY'), 'SUMMARY:[MB] Incontro LdS · Serata Rubino');
     assert.equal(campo(r, 'DTSTART'), 'DTSTART;TZID=Europe/Rome:20261007T200000');
     assert.equal(campo(r, 'DTEND'), 'DTEND;TZID=Europe/Rome:20261007T210000');
     assert.equal(campo(r, 'DESCRIPTION'), null);
     assert.deepEqual([r[0], r[r.length - 1]], ['BEGIN:VEVENT', 'END:VEVENT']);
   });
 
-  prova('Senza nome della serata: solo «MB21 · Incontro LdS»; Team e SdS/OPEN col loro nome', () => {
-    assert.equal(campo(F.eventoSpazio(sp({ nome: null }), ADESSO), 'SUMMARY'), 'SUMMARY:MB21 · Incontro LdS');
-    assert.equal(campo(F.eventoSpazio(sp({ nome: '   ' }), ADESSO), 'SUMMARY'), 'SUMMARY:MB21 · Incontro LdS');
-    assert.equal(campo(F.eventoSpazio(sp({ nome: undefined }), ADESSO), 'SUMMARY'), 'SUMMARY:MB21 · Incontro LdS');   // prima della migrazione la colonna non c'è
-    assert.equal(campo(F.eventoSpazio(sp({ tipo: 'Team', nome: 'Squadra Alfa' }), ADESSO), 'SUMMARY'), 'SUMMARY:MB21 · Incontro di Team · Squadra Alfa');
-    assert.equal(campo(F.eventoSpazio(sp({ tipo: 'Team' }), ADESSO), 'SUMMARY'), 'SUMMARY:MB21 · Incontro di Team');
+  prova('Senza nome della serata: solo «[MB] Incontro LdS»; Team e SdS/OPEN col loro nome', () => {
+    assert.equal(campo(F.eventoSpazio(sp({ nome: null }), ADESSO), 'SUMMARY'), 'SUMMARY:[MB] Incontro LdS');
+    assert.equal(campo(F.eventoSpazio(sp({ nome: '   ' }), ADESSO), 'SUMMARY'), 'SUMMARY:[MB] Incontro LdS');
+    assert.equal(campo(F.eventoSpazio(sp({ nome: undefined }), ADESSO), 'SUMMARY'), 'SUMMARY:[MB] Incontro LdS');   // prima della migrazione la colonna non c'è
+    assert.equal(campo(F.eventoSpazio(sp({ tipo: 'Team', nome: 'Squadra Alfa' }), ADESSO), 'SUMMARY'), 'SUMMARY:[MB] Incontro di Team · Squadra Alfa');
+    assert.equal(campo(F.eventoSpazio(sp({ tipo: 'Team' }), ADESSO), 'SUMMARY'), 'SUMMARY:[MB] Incontro di Team');
     // la SdS/OPEN è sempre la stessa: anche se per errore avesse un nome, non lo scrive
-    assert.equal(campo(F.eventoSpazio(sp({ tipo: 'SdS/OPEN', nome: 'Altro' }), ADESSO), 'SUMMARY'), 'SUMMARY:MB21 · SdS/OPEN');
+    assert.equal(campo(F.eventoSpazio(sp({ tipo: 'SdS/OPEN', nome: 'Altro' }), ADESSO), 'SUMMARY'), 'SUMMARY:[MB] SdS/OPEN');
     // virgole e punti e virgola nel nome sono protetti
-    assert.equal(campo(F.eventoSpazio(sp({ nome: 'Rubino, Smeraldo; sera' }), ADESSO), 'SUMMARY'), 'SUMMARY:MB21 · Incontro LdS · Rubino\\, Smeraldo\; sera');
+    assert.equal(campo(F.eventoSpazio(sp({ nome: 'Rubino, Smeraldo; sera' }), ADESSO), 'SUMMARY'), 'SUMMARY:[MB] Incontro LdS · Rubino\\, Smeraldo\; sera');
   });
 
   prova('La durata dell\'incontro (minuti) decide la fine; senza durata, un\'ora', () => {
@@ -76,7 +76,7 @@ const fs = require('node:fs'), path = require('node:path');
     const cal = F.calendario([], [sp({ nome: lungo })], ADESSO);
     assert.ok(cal.split('\r\n').every(r => new TextEncoder().encode(r).length <= 75));
     const riunito = cal.replace(/\r\n /g, '');
-    assert.ok(riunito.includes(`SUMMARY:MB21 · Incontro LdS · ${lungo}`));
+    assert.ok(riunito.includes(`SUMMARY:[MB] Incontro LdS · ${lungo}`));
   });
 
   prova('La funzione online legge gli incontri di gruppo, solo di tre tipi, e non rompe il calendario se la lettura non riesce', () => {
@@ -93,7 +93,7 @@ const fs = require('node:fs'), path = require('node:path');
     const e = F.eventoRicevuto(r, ADESSO);
     assert.equal(campo(e, 'UID'), 'UID:ricevuto-spazio-r1@mb21');
     assert.equal(campo(e, 'DTSTART'), 'DTSTART;TZID=Europe/Rome:20261007T200000'); assert.equal(campo(e, 'DTEND'), 'DTEND;TZID=Europe/Rome:20261007T213000');
-    assert.equal(campo(e, 'SUMMARY'), 'SUMMARY:MB21 · Serata Linea Rossi · da Ignazio');
+    assert.equal(campo(e, 'SUMMARY'), 'SUMMARY:[MB] Serata Linea Rossi · da Ignazio');
     assert.equal(campo(e, 'DESCRIPTION'), 'DESCRIPTION:Chiamata: https://zoom.us/j/555\\nPunti da trattare:\\n✓ Benvenuto ai nuovi\\n• Risultati del mese');
     assert.equal(campo(e, 'STATUS'), null); assert.equal(campo(e, 'LOCATION'), null);
     const dalVivo = F.eventoRicevuto({ ...r, link: null, luogo: ' Hotel Villa Rosa,  Catania ' }, ADESSO);
@@ -125,8 +125,8 @@ const fs = require('node:fs'), path = require('node:path');
     const righe = F.calendario([...cinque, doppia, tel, altraOra, altroTipo], [], ADESSO).replace(/\r\n /g, '').split('\r\n');
     assert.deepEqual(righe.filter(r => r.startsWith('UID:')), ['UID:azione-1@mb21', 'UID:azione-t1@mb21', 'UID:azione-6@mb21', 'UID:azione-7@mb21']);
     const somm = righe.filter(r => r.startsWith('SUMMARY:'));
-    assert.equal(somm[0], 'SUMMARY:MB21 · Laboratorio · Persona A\\, Persona B (+3)');   // come la riga dell'Agenda (nota 109)
-    assert.deepEqual(somm.slice(1), ['SUMMARY:MB21 · Contatto · Persona F', 'SUMMARY:MB21 · Laboratorio · Persona G', 'SUMMARY:MB21 · PM 1a1 · Persona H']);
+    assert.equal(somm[0], 'SUMMARY:[MB] Persona A\\, Persona B (+3) · Laboratorio');   // come la riga dell'Agenda (nota 109)
+    assert.deepEqual(somm.slice(1), ['SUMMARY:[MB] Persona F · Contatto', 'SUMMARY:[MB] Persona G · Laboratorio', 'SUMMARY:[MB] Persona H · PM 1a1']);
     assert.equal(righe.find(r => r.startsWith('DESCRIPTION:')),
       'DESCRIPTION:Persone: Persona A\\, Persona B\\, Persona C\\, Persona D\\, Persona E\\nPersona A: porta il quaderno\\nPersona C · Ospite: il marito');
     // due o tre persone: tutti i nomi nel titolo
