@@ -121,37 +121,54 @@ prova('P6, P5b e nota 047: l\'Admin trova la SdS/OPEN del lunedì già messa (co
   } finally { P.modo.admin = false; P.AG.ramo = ramo; }
 });
 
-prova('Il foglio di un incontro LdS/Team: il bottone grande «Metti il nome della serata» (o «Cambia il nome»), come «Metti un nome» dei PM; la SdS/OPEN non ce l\'ha', () => {
+prova('Il foglio di un incontro LdS/Team: il bottone grande «Che incontro è?» (o «Cambia l\'incontro», nota 171), come «Metti un nome» dei PM; la SdS/OPEN non ce l\'ha', () => {
   const spazio = (id, tipo, nome) => ({ id, user_id: 'io', tipo, inizio: iso(P.OGGI, '20:00'), durata: 60, nome });
   P.AG.spazi = [spazio('a', 'LOS', null), spazio('b', 'Team', 'Serata Rubino'), spazio('c', 'SdS/OPEN', null), spazio('d', 'Piano Marketing', null)];
   const bottoni = id => { pulisci(); P.foglioSpazio(id); return P.fogli[0].innerHTML.replace(/<svg[^>]*>.*?<\/svg>/g, ''); };
-  assert.match(bottoni('a'), /<button class="primario" id="sp-serata">\s*Metti il nome della serata<\/button>/);
-  assert.match(bottoni('b'), /<h3>Serata Rubino<\/h3>[\s\S]*<button class="primario" id="sp-serata">\s*Cambia il nome<\/button>/);
+  assert.match(bottoni('a'), /<button class="primario" id="sp-serata">\s*Che incontro è\?<\/button>/);
+  assert.match(bottoni('b'), /<h3>Serata Rubino<\/h3>[\s\S]*<button class="primario" id="sp-serata">\s*Cambia l'incontro<\/button>/);
   assert.doesNotMatch(bottoni('c'), /sp-serata/);
   assert.doesNotMatch(bottoni('d'), /sp-serata/);
   assert.match(bottoni('d'), /id="sp-nome">[\s\S]*Metti un nome/);   // il Piano Marketing ha il suo «Metti un nome»
   assert.match(bottoni('a'), /id="sp-cambia">\s*Cambia giorno e ora<\/button>/);   // giorno e ora non cambiano
 });
 
-prova('Il nome dal foglio: si apre un foglio piccolo, si salva, compare «Annulla» che rimette quello di prima', async () => {
+prova('Nota 171: il tipo dal foglio, dalla tendina «Che incontro LdS?»; «Nessuno» lo toglie; «Annulla» rimette quello di prima; l\'Admin aggiunge una voce nuova che resta tra le scelte', async () => {
+  const attendi = () => new Promise(r => setTimeout(r, 0));
   const s = { id: 'a', user_id: 'io', tipo: 'LOS', inizio: iso(P.OGGI, '20:00'), durata: 60, nome: 'Vecchia' };
   P.AG.spazi = [s];
   pulisci(); P.foglioSpazio('a');
-  P.fogli[0].clic('#sp-serata');                 // chiude il foglio e apre quello del nome
-  const f = P.fogli[1];
-  assert.match(f.innerHTML, /<input id="sn-nome"[^>]*value="Vecchia">/);
-  const campo = f.querySelector('#sn-nome'); campo.value = ' Linea  Rubino ';
+  P.fogli[0].clic('#sp-serata'); await attendi(); await attendi();   // chiude il foglio e apre quello del tipo (dopo la lettura delle voci)
+  let f = P.fogli.at(-1);
+  assert.match(f.innerHTML, /<label>Che incontro LdS\?<\/label>/);
+  assert.match(f.innerHTML, /<b>Vecchia<\/b>/);   // un nome di prima, anche fuori dall'elenco, resta scelto
+  assert.doesNotMatch(f.innerHTML, /data-voce-nuova|data-voce-via/);   // chi non è Admin sceglie e basta
+  f.clic('[data-tnd5]'); f.clic('[data-voce=""]');   // «Nessuno»
   await f.clic('#sn-si');
-  const up = P.scritture.find(x => x.tabella === 'spazi' && x.op === 'update');
-  assert.deepEqual(up.args[0], { nome: 'Linea Rubino' });
-  assert.match(P.avvisi[0].t, /Linea Rubino: nome messo/);
+  assert.deepEqual(P.scritture.find(x => x.tabella === 'spazi' && x.op === 'update').args[0], { nome: null });
+  assert.match(P.avvisi[0].t, /Nome tolto/);
   P.scritture.length = 0;
-  await P.avvisi[0].annulla();                   // Annulla: il nome di prima
+  await P.avvisi[0].annulla();
   assert.deepEqual(P.scritture.find(x => x.op === 'update').args[0], { nome: 'Vecchia' });
   // senza cambiare niente non scrive
-  pulisci(); P.foglioSpazio('a'); P.fogli[0].clic('#sp-serata');
-  await P.fogli[1].clic('#sn-si');
+  pulisci(); P.foglioSpazio('a'); P.fogli[0].clic('#sp-serata'); await attendi(); await attendi();
+  await P.fogli.at(-1).clic('#sn-si');
   assert.equal(P.scritture.length, 0);
+  // l'Admin: «+ Nuovo…» → scrive → «Aggiungi»: la voce entra nell'elenco condiviso e resta scelta
+  pulisci(); P.modo.admin = true;
+  try {
+    P.foglioSpazio('a'); for (let i = 0; i < 4; i++) await attendi();
+    P.fogli[0].clic('#sp-serata'); for (let i = 0; i < 4; i++) await attendi();
+    f = P.fogli.at(-1);
+    f.clic('[data-tnd5]'); assert.match(f.innerHTML, /data-voce-nuova/);
+    f.clic('[data-voce-nuova]');
+    f.querySelector('#voce-nuova').value = ' Linea  Rubino ';
+    await f.clic('[data-voce-salva]'); await attendi();
+    assert.deepEqual(P.scritture.find(x => x.tabella === 'voci_incontri' && x.op === 'insert').args[0], { tipo: 'LOS', nome: 'Linea Rubino' });
+    assert.match(f.innerHTML, /<b>Linea Rubino<\/b>/);
+    await f.clic('#sn-si');
+    assert.deepEqual(P.scritture.find(x => x.tabella === 'spazi' && x.op === 'update').args[0], { nome: 'Linea Rubino' });
+  } finally { P.modo.admin = false; }
 });
 
 prova('Il nome si legge dove l\'incontro compare: la riga degli impegni e il Programma della settimana', () => {
@@ -207,6 +224,29 @@ prova('169: ‹ › accanto a «Settimana N» cambiano settimana senza uscire da
     w.clic('[data-g]'); w.clic('#sp-aggiungi');
     assert.match(w.innerHTML, /id="sp-prima" aria-label="Settimana prima" disabled>‹[\s\S]*id="sp-dopo" aria-label="Settimana dopo" disabled>›/);   // prima «Crea»
   } finally { P.AG.giorno = giornoPrima; P.AG.settimana = settPrima; }
+});
+
+prova('Nota 171: in «Programmare la settimana», scelto un incontro LdS e toccato il giorno, «Che incontro LdS?»; la pastiglia e la riga salvata hanno il nome', async () => {
+  const attendi = () => new Promise(r => setTimeout(r, 0));
+  pulisci(); P.AG.spazi = []; P.modo.admin = true;
+  try {
+    await P.preparaSettimana();
+    const v = P.fogli.at(-1);
+    v.clic('[data-tipo-scelto="LOS"]'); v.clic('[data-g="2026-09-24"]');
+    assert.match(v.innerHTML, /<label>Che incontro LdS\?<\/label>/);
+    v.clic('.sp-voce [data-tnd5]'); v.clic('[data-voce-nuova]');
+    v.querySelector('#voce-nuova').value = 'Lab Prova';
+    await v.clic('[data-voce-salva]'); await attendi();
+    v.clic('#sp-aggiungi');
+    assert.match(v.innerHTML, /<span class="sp-chip"[^>]*>Incontro LdS \d\d:\d\d · Lab Prova<button/);
+    await v.clic('#sp-si');
+    const righe = P.scritture.find(x => x.tabella === 'spazi' && x.op === 'insert').args[0];
+    assert.ok(righe.some(r => r.tipo === 'LOS' && r.nome === 'Lab Prova'));
+    // la Consulenza no: niente «Che incontro?»
+    pulisci(); await P.preparaSettimana();
+    const w = P.fogli.find(f => /sp-tipi/.test(f.innerHTML)); w.clic('[data-tipo-scelto]', 1);   // Consulenza prodotti w.clic('[data-g="2026-09-24"]');
+    assert.doesNotMatch(w.innerHTML, /sp-voce/);
+  } finally { P.modo.admin = false; }
 });
 
 (async () => {

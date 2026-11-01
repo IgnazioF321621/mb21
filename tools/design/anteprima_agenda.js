@@ -117,6 +117,8 @@ const stub = {
     : nome === 'squadra per la linea' ? { data: finto.squadra, error: null }   // nota 108
     : nome === 'usa l\'app' ? { data: finto.usaApp === false ? null : 'u-app', error: null }   // nota 107: chi usa l'app (utente_del_contatto); false = nessuno
     : nome === 'codici delle schede' ? { data: finto.codici || [], error: null }
+    : nome === 'voci degli incontri' ? { data: finto.voci || [], error: null }   // nota 171: l'elenco condiviso dei tipi di Team e LdS
+    : nome === 'nuova voce' ? { data: { id: 'v-nuova', ...(scritture.at(-1) || { args: [{}] }).args[0] }, error: null }
     : nome === 'scheda dalla Mappa' ? { data: { id: 'scheda-' + ((scritture.at(-1) || { args: [{}] }).args[0].codice_amway || 'x') }, error: null }   // nota 105: le altre persone dello stesso incontro
     : nome === 'note Coach Yes' ? { data: finto.coachNote || [], error: null }   // nota 001
     : nome === 'chi ha una nota Coach Yes' ? { data: [], error: null }

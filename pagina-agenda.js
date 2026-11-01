@@ -2403,7 +2403,8 @@ async function preparaSettimana() {
   // come condivisione»): nasce senza condivisione (prima andava già alla persona del gruppo che usa l'app, P5b); si condivide a mano dal suo foglio.
   // Le SdS già condivise restano come sono.
   const sdsMia = eAdmin() && visto().id === ST.utente.id;
-  const st = { tipo: S.DA_PREPARARE[0], scelti: [], aperto: null, ora: '', avviso: '', sdsVia: false };
+  const st = { tipo: S.DA_PREPARARE[0], scelti: [], aperto: null, ora: '', avviso: '', sdsVia: false, voce: { voce: null, aperta: false, nuova: false } };   // nota 171: «Che incontro?»
+  await leggiVoci();
   const lun = settimana[S.SDS.giorno];
   const sds = () => (sdsMia && !st.sdsVia && S.sdsDaMettere(settimana, esistenti, oggi) ? [{ tipo: 'SdS/OPEN', giorno: lun, ora: S.SDS.ora, durata: S.SDS.durata }] : []);
   const ricevutiDi = g => (visto().id === ST.utente.id ? A.ricevutiComeEventi(AG.ricevuti, g, visto().id) : []);   // nota 049: le serate ricevute occupano l'ora
@@ -2451,7 +2452,8 @@ async function preparaSettimana() {
           gia.length || miei.length || sdsQui.length ? '' : '<small>tocca per aggiungere</small>'}</button>
           ${gia.map(x => `<span class="sp-gia">${esc(x.ora)} ${esc(x.testo)}</span>`).join('')}
           ${sdsQui.map(x => pastiglia('SdS/OPEN', `SdS/OPEN ${x.ora}`, 'data-sds-via')).join('')}
-          ${miei.map(x => pastiglia(x.tipo, `${S.TIPI[x.tipo].nome} ${x.ora}`, `data-togli="${x.i}"`)).join('')}</div>
+          ${miei.map(x => pastiglia(x.tipo, `${S.TIPI[x.tipo].nome} ${x.ora}${x.nome ? ' · ' + x.nome : ''}`, `data-togli="${x.i}"`)).join('')}</div>
+          ${st.aperto === g && S.puoAvereNome(st.tipo) ? voceIncontroHtml(st.tipo, st.voce) : ''}
           ${st.aperto === g ? `<div class="sp-ora-riga"><input type="time" id="sp-ora-nuova" aria-label="Ora" value="${esc(st.ora)}"><button type="button" class="primario" id="sp-aggiungi">Aggiungi</button></div>
           ${st.avviso ? `<div class="ag-scontro">${ic('attenzione')} ${esc(st.avviso)}</div>` : ''}` : ''}`;
       }).join('')}
@@ -2465,7 +2467,8 @@ async function preparaSettimana() {
     velo.querySelector('#sp-no').onclick = chiudi;
     velo.querySelector('#sp-prima').onclick = () => vaiSettimana(-1);   // nota 169
     velo.querySelector('#sp-dopo').onclick = () => vaiSettimana(1);
-    velo.querySelectorAll('[data-tipo-scelto]').forEach(b => { b.onclick = () => { st.tipo = b.dataset.tipoScelto; disegna(); }; });
+    velo.querySelectorAll('[data-tipo-scelto]').forEach(b => { b.onclick = () => { st.tipo = b.dataset.tipoScelto; st.voce = { voce: null, aperta: false, nuova: false }; disegna(); }; });
+    if (st.aperto && S.puoAvereNome(st.tipo)) collegaVoceIncontro(velo, st.tipo, st.voce, () => { const c = velo.querySelector('#sp-ora-nuova'); if (c) st.ora = c.value; disegna(); });   // nota 171
     velo.querySelectorAll('[data-g]').forEach(b => { b.onclick = () => {
       st.aperto = st.aperto === b.dataset.g ? null : b.dataset.g;
       st.ora = st.aperto ? (oreDi(st.aperto)[0] || '') : ''; st.avviso = '';   // la rotella parte dalla prima ora libera
@@ -2480,7 +2483,8 @@ async function preparaSettimana() {
       if (st.aperto === oggi && A.inMinuti(ora) <= A.inMinuti(A.partiRoma(new Date().toISOString()).ora)) { st.avviso = 'Quest\'ora di oggi è già passata: scegline un\'altra.'; return disegna(); }
       const scontri = scontriDi(st.aperto, ora);
       if (scontri.length) { st.avviso = `A quest'ora hai già ${scontri.join(', ')}`; return disegna(); }
-      st.scelti.push({ tipo: st.tipo, giorno: st.aperto, ora, durata: S.DURATA }); st.aperto = null; st.avviso = '';
+      st.scelti.push({ tipo: st.tipo, giorno: st.aperto, ora, durata: S.DURATA, ...(S.puoAvereNome(st.tipo) && st.voce.voce ? { nome: st.voce.voce } : {}) }); st.aperto = null; st.avviso = '';
+      st.voce = { voce: null, aperta: false, nuova: false };
       disegna();
     };
     velo.querySelectorAll('[data-togli]').forEach(b => { b.onclick = () => { st.scelti.splice(Number(b.dataset.togli), 1); disegna(); }; });
@@ -2522,7 +2526,7 @@ function foglioSpazio(id) {
     ${puntiHtml(s, 'spazi')}
     ${condivisioneSpazioHtml(s)}
     <div class="sp-comandi">${persona ? `<button class="primario" id="sp-nome">${ic('piu')} Metti un nome</button>` : ''}${dopo ? `<button class="primario" id="sp-persone">${ic('piu')} Aggiungi persone</button>` : ''}
-      ${S.puoAvereNome(s.tipo) ? `<button class="primario" id="sp-serata">${ic(S.pulisciNome(s.nome) ? 'modifica' : 'piu')} ${S.pulisciNome(s.nome) ? 'Cambia il nome' : 'Metti il nome della serata'}</button>` : ''}
+      ${S.puoAvereNome(s.tipo) ? `<button class="primario" id="sp-serata">${ic(S.pulisciNome(s.nome) ? 'modifica' : 'piu')} ${S.pulisciNome(s.nome) ? 'Cambia l\'incontro' : 'Che incontro è?'}</button>` : ''}
       <button id="sp-cambia">${ic('orario')} Cambia giorno e ora</button>
       <button class="link" id="sp-togli">${sds ? 'Questa settimana non c\'è' : persona ? 'Togli lo spazio' : dopo ? 'Togli la sessione' : 'Togli l\'incontro'}</button></div>
     <div id="sp-campi" hidden><div class="campo"><label>Giorno e ora</label><div class="ag-due-campi"><input id="sp-giorno" type="date" value="${o.giorno}"><input id="sp-ora" type="time" value="${o.ora}"></div></div>
@@ -2572,27 +2576,80 @@ function foglioSpazio(id) {
   };
 }
 
-// Il nome della serata di un incontro di Team o LdS (nota 022, Ignazio 04/10): un foglio piccolo col solo campo, come «Metti un nome» dei PM.
-// Vuoto = senza nome. Il nome si vede dove l'incontro compare; «Annulla» nell'avviso rimette quello di prima.
-function foglioNomeSerata(s) {
+// ── «Che incontro?» di Team e LdS (nota Pagine 171, Ignazio 01/11: «Sì, vanno bene» sul disegno incontri_171.png; poi «Admin, metti la possibilità nel
+// menu a tendina di eliminare o di aggiungere [voci] nuove, che poi vede anche [la partner]», «al momento solo Team e LdS») ──
+// Le scelte sono l'elenco unico e condiviso `voci_incontri` (migrazione 20261101221500): tutti lo leggono, una lettura piccola all'apertura del foglio;
+// solo l'Admin lo cambia dalla tendina («+ Nuovo…», ✕ sulla voce). Eliminare una voce non tocca gli incontri che hanno già quel nome. Il nome scelto va
+// in spazi.nome, come prima (nota 022): Agenda, Settimana e Calendario lo mostrano già. Senza la tabella (prima del rilascio) le scelte sono vuote.
+// Un pezzo solo, in «Programmare la settimana» e nel foglio dell'incontro: `st` = { voce, aperta, nuova } di chi lo usa, `ridisegna()` dopo ogni tocco.
+const VOCI = { righe: [] };
+async function leggiVoci() {
+  const { data, error } = await dbq('voci degli incontri', supa.from('voci_incontri').select('id, tipo, nome').order('nome'));
+  VOCI.righe = error || !Array.isArray(data) ? [] : data;
+}
+function voceIncontroHtml(tipo, st) {
+  const admin = eAdmin(), voci = VOCI.righe.filter(v => v.tipo === tipo);
+  if (st.voce && !voci.some(v => v.nome === st.voce)) voci.push({ id: '', nome: st.voce });   // un nome di prima, fuori dall'elenco: resta scelto
+  const riga = v => `<button type="button" data-voce="${esc(v.nome)}" class="${v.nome === st.voce ? 'scelto' : ''}"><span>${esc(v.nome)}</span>${v.nome === st.voce ? '<b>✓</b>' : ''}${
+    admin && v.id ? `<i class="voce-via" role="button" data-voce-via="${esc(v.id)}" aria-label="Elimina ${esc(v.nome)}">${ic('chiudi')}</i>` : ''}</button>`;
+  const dentro = `<button type="button" data-voce=""><span><small>Nessuno</small></span></button>${voci.map(riga).join('')}${admin ? `<button type="button" data-voce-nuova><span>${ic('piu')} Nuovo…</span></button>` : ''}`;
+  return `<div class="campo sp-voce"><label>Che ${esc(MB21Spazi.TIPI[tipo].piccolo)}?</label>${tendina5Html(st.voce ? `<b>${esc(st.voce)}</b>` : '<small>Scegli</small>', dentro, '', st.aperta)}
+    ${st.nuova ? `<div class="ag-due-campi sp-voce-nuova"><input id="voce-nuova" maxlength="${MB21Spazi.NOME_MAX}" autocomplete="off" placeholder="Il nome del nuovo incontro"><button type="button" class="primario" data-voce-salva>Aggiungi</button></div>
+      <div class="vn-aiuto">Da qui in poi è tra le scelte, anche per chi lavora con te.</div>` : ''}</div>`;
+}
+function collegaVoceIncontro(posto, tipo, st, ridisegna) {
+  posto.querySelectorAll('.sp-voce [data-tnd5]').forEach(b => { b.onclick = () => { st.aperta = !st.aperta; st.nuova = false; ridisegna(); }; });
+  posto.querySelectorAll('[data-voce]').forEach(b => { b.onclick = () => { st.voce = b.dataset.voce || null; st.aperta = false; ridisegna(); }; });
+  posto.querySelectorAll('[data-voce-via]').forEach(x => { x.onclick = async ev => {
+    if (ev && ev.stopPropagation) ev.stopPropagation();
+    const v = VOCI.righe.find(y => y.id === x.dataset.voceVia);
+    if (!v || !eAdmin()) return;
+    const { error } = await dbq('elimina voce', supa.from('voci_incontri').delete().eq('id', v.id));
+    if (error) return mostraToast('Non eliminata: riprova.');
+    VOCI.righe = VOCI.righe.filter(y => y.id !== v.id);
+    if (st.voce === v.nome) st.voce = null;
+    ridisegna();
+  }; });
+  const nuova = posto.querySelector('[data-voce-nuova]');
+  if (nuova) nuova.onclick = () => { st.nuova = true; st.aperta = false; ridisegna(); };
+  const salva = posto.querySelector('[data-voce-salva]');
+  if (salva) salva.onclick = async () => {
+    const nome = MB21Spazi.pulisciNome(posto.querySelector('#voce-nuova').value);
+    if (!nome || !eAdmin()) return;
+    if (!VOCI.righe.some(v => v.tipo === tipo && v.nome === nome)) {
+      const { data, error } = await dbq('nuova voce', supa.from('voci_incontri').insert({ tipo, nome }).select('id, tipo, nome').single());
+      if (error) return mostraToast('Non aggiunta: riprova.');
+      VOCI.righe.push(data || { id: '', tipo, nome });
+    }
+    st.voce = nome; st.nuova = false;
+    ridisegna();
+  };
+}
+
+// Il tipo di un incontro di Team o LdS (nota 022, Ignazio 04/10: il nome della serata; nota 171: si sceglie dall'elenco condiviso): un foglio piccolo
+// con la sola tendina. «Nessuno» = senza nome. Il nome si vede dove l'incontro compare; «Annulla» nell'avviso rimette quello di prima.
+async function foglioNomeSerata(s) {
   const S = MB21Spazi, o = S.orario(s), prima = S.pulisciNome(s.nome);
+  await leggiVoci();
+  const st = { voce: prima, aperta: !prima, nuova: false };
   const velo = document.createElement('div');
   velo.className = 'velo';
-  velo.innerHTML = `<div class="foglio sp-foglio" style="--tinta:${coloreSpazio(s.tipo)}">
-    <div class="testa-foglio"><h3>${esc(S.nome(s.tipo))}</h3><button id="sn-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
-    <p>${esc(dataLunga(o.giorno))} · ${o.ora}–${o.fine}</p>
-    <div class="campo"><label>Nome della serata <small>facoltativo</small></label>
-      <input id="sn-nome" maxlength="${S.NOME_MAX}" autocomplete="off" placeholder="Il nome, la tipologia, la linea o la squadra" value="${esc(prima || '')}"></div>
-    <div class="mc-fondo"><button class="link" id="sn-no">Annulla</button><button class="primario" id="sn-si">Salva</button></div></div>`;
   document.body.appendChild(velo);
   const chiudi = () => velo.remove();
   velo.onclick = ev => { if (ev.target === velo) chiudi(); };
-  velo.querySelector('#sn-x').onclick = chiudi;
-  velo.querySelector('#sn-no').onclick = chiudi;
-  const campo = velo.querySelector('#sn-nome');
-  campo.focus();
+  const disegna = () => {
+    velo.innerHTML = `<div class="foglio sp-foglio" style="--tinta:${coloreSpazio(s.tipo)}">
+    <div class="testa-foglio"><h3>${esc(S.nome(s.tipo))}</h3><button id="sn-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
+    <p>${esc(dataLunga(o.giorno))} · ${o.ora}–${o.fine}</p>
+    ${voceIncontroHtml(s.tipo, st)}
+    <div class="mc-fondo"><button class="link" id="sn-no">Annulla</button><button class="primario" id="sn-si">Salva</button></div></div>`;
+    velo.querySelector('#sn-x').onclick = chiudi;
+    velo.querySelector('#sn-no').onclick = chiudi;
+    velo.querySelector('#sn-si').onclick = salva;
+    collegaVoceIncontro(velo, s.tipo, st, disegna);
+  };
   const salva = async () => {
-    const nuovo = S.pulisciNome(campo.value);
+    const nuovo = S.pulisciNome(st.voce);
     if (nuovo === prima) return chiudi();
     const { error } = await dbq('nome della serata', supa.from('spazi').update({ nome: nuovo }).eq('id', s.id));
     if (error) return mostraToast('Non salvato: controlla la connessione e riprova.');
@@ -2603,8 +2660,7 @@ function foglioNomeSerata(s) {
       await apriAgenda(AG.giorno);
     });
   };
-  velo.querySelector('#sn-si').onclick = salva;
-  campo.onkeydown = ev => { if (ev.key === 'Enter') salva(); };
+  disegna();
 }
 
 // Nel Modulo Core (core_mese.dati.senza_open, i lunedì delle settimane senza OPEN): la settimana si segna, o si toglie il segno.
