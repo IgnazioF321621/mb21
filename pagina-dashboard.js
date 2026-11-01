@@ -200,6 +200,16 @@ function bottoniCodaHtml(r, spento) {
     }).join('')}</div>`).join('');
 }
 
+// Nota Pagine 161 (Ignazio 01/11, «ok» sulla foto catalogo_161.png): gli stessi esiti nella tendina «Scegli ▾» (tendina5Html, nota 116), per la card
+// aperta di «Da catalogare» dopo Prospect / Partner / Cliente; stessi `data-contatto` e `data-bottone`, quindi stessi tocchi (toccaBottone)
+function esitiCodaTendina(r, spento) {
+  const tutti = bottoniPer(r.categoria);
+  return `<div class="come-andata">Com'è andata la telefonata?</div>${tendina5Html('<small>Scegli</small>', MB21Agenda.esitiInDueRighe(tutti.map(b => b.etichetta)).flat().map(f => {
+    const i = tutti.findIndex(b => b.etichetta === f);
+    return `<button type="button"${tutti[i].classe ? ` class="${tutti[i].classe}"` : ''} data-contatto="${esc(r.id)}" data-bottone="${i}"${spento ? ' disabled' : ''}><span>${esc(f)}</span></button>`;
+  }).join(''))}`;
+}
+
 // Riga compatta con le parole di Glide («Azioni da completare»): nome · «modalità • area | esito» dell'ultima azione · frase del coach. Il tocco la apre (una sola aperta): dati, telefono, coach intero, bottoni.
 function rigaGlide(r) {
   const prima = [r.ultima_modalita || (r.contattato ? r.ultimo_tipo : 'Telefonata'), r.ultima_area || 'Attività'].filter(Boolean).join(' • ');
@@ -752,10 +762,11 @@ function collegaCarteCoda() {
   app.querySelectorAll('.riga-coda').forEach(b => {
     b.onclick = () => { if (LV.vista === 'persona') return; ST.aperta = ST.aperta === b.dataset.apri ? null : b.dataset.apri; disegnaOggi(); };   // nella scheda della persona la card resta aperta
   });
-  app.querySelectorAll('.bottoni button[data-contatto]').forEach(btn => {
+  collegaTendine5(app);   // nota 161: in «Da catalogare» la categoria e gli esiti sono tendine
+  app.querySelectorAll('.bottoni button[data-contatto], .tendina5 button[data-contatto]').forEach(btn => {
     btn.onclick = () => toccaBottone(btn.dataset.contatto, Number(btn.dataset.bottone));
   });
-  app.querySelectorAll('.bottoni button[data-cataloga]').forEach(btn => {
+  app.querySelectorAll('.tendina5 button[data-cataloga]').forEach(btn => {
     btn.onclick = () => toccaCategoria(btn.dataset.cataloga, Number(btn.dataset.scelta));
   });
   // L5 (Ignazio 23/10): «Altri 5» allarga l'elenco già letto e ridisegna, senza ricaricare la Dashboard
@@ -781,7 +792,6 @@ const CATEGORIE_CATALOGO = [
   { etichetta: 'Cliente', categoria: 'Cliente' }, { etichetta: 'Ex Partner/Cliente', categoria: 'Ex Partner/Cliente' },
   { etichetta: 'Non collegato', categoria: 'Unlinked' }, { etichetta: 'Archivia', categoria: 'Archiviato', classe: 'no' },
 ];
-const ICONE_CAT = { 'Prospect': 'prospect', 'Partner': 'partner', 'Cliente': 'cliente', 'Ex Partner/Cliente': 'ex', 'Unlinked': 'unlinked', 'Archiviato': 'archiviato' };
 // «Da catalogare» sta in Lista Nomi (Ignazio 01/10): una riga in cima alla lista, il tocco apre la pagina con le stesse card di prima
 function catalogoRigaHtml() {
   const cat = ST.catalogo;
@@ -857,24 +867,24 @@ function cardCatalogo(r) {
       <span class="rc-freccia">${aperta ? '⌃' : '›'}</span>
     </button>`;
   if (!aperta) return `<div class="card compatta ${classeCat(r.categoria)}" id="card-${esc(r.id)}">${testa}</div>`;
-  const luogo = [r.citta, r.fascia_eta].filter(Boolean).join(' · ');
-  const bottoni = r.categoria
-    ? bottoniCodaHtml(r, guardoAltri())   // come la coda, ma non conta nei contatti al giorno
-    : CATEGORIE_CATALOGO.map((b, i) =>
-      // scelta «A» di Ignazio (19/09, tools/design/confronto_catalogare.html): le tre categorie con cui si lavora hanno il tondo pieno del loro colore
-      // con l'icona, come i tondi delle persone; Ex, Unlinked e Archivia stanno sotto, scritte piccole
-      i < 3 ? `<button class="grande ${classeCat(b.categoria)}" data-cataloga="${esc(r.id)}" data-scelta="${i}" ${guardoAltri() ? 'disabled' : ''}><span>${ic(ICONE_CAT[b.categoria])}</span>${esc(b.etichetta)}</button>`
-        : `<button class="piccola ${b.classe || ''}" data-cataloga="${esc(r.id)}" data-scelta="${i}" ${guardoAltri() ? 'disabled' : ''}>${ic(ICONE_CAT[b.categoria])} ${esc(b.etichetta)}</button>`).join('');
+  const luogo = [r.citta, r.fascia_eta].filter(Boolean).join(' · '), spento = guardoAltri() ? ' disabled' : '';
+  // Nota Pagine 161 (Ignazio 01/11, «ok» sulla foto docs/prototipi/catalogo_161.png: «la scheda del contatto da catalogare ha ancora il vecchio stile»):
+  // i 4 tasti per contattare come nella testata della scheda (bianchi sulla tinta della categoria, grigia senza); la categoria nella tendina
+  // «Scegli la categoria ▾» del Nuovo contatto (tendinaCategoriaHtml, «Non collegato» con la sua spiegazione, «Archivia» in rosso); dopo Prospect /
+  // Partner / Cliente gli esiti nella tendina «Scegli ▾» (esitiCodaTendina, come la coda, ma non conta nei contatti al giorno). Prima: tre tondi
+  // grandi e tre scritte piccole (scelta «A» del 19/09) e la griglia di tasti degli esiti. Stessi tocchi e stesso salvataggio.
+  const scelta = r.categoria ? esitiCodaTendina(r, guardoAltri())
+    : `<div class="come-andata">Che categoria è?</div>${tendinaCategoriaHtml(CATEGORIE_CATALOGO.map(b => b.categoria), null,
+      (k, i) => ({ attr: `data-cataloga="${esc(r.id)}" data-scelta="${i}"${spento}`, nome: CATEGORIE_CATALOGO[i].etichetta, classe: CATEGORIE_CATALOGO[i].classe }))}`;
   return `
     <div class="card compatta aperta ${classeCat(r.categoria)}" id="card-${esc(r.id)}">
       ${testa}
       <div class="corpo">
         ${luogo ? `<div class="luogo">${esc(luogo)}</div>` : ''}
-        ${contattaHtml(r.telefono)}
+        <div class="testata cc-tasti ${classeCat(r.categoria)}">${contattaHtml(r.telefono)}</div>
         ${r.note ? `<div class="luogo">Note: ${esc(r.note)}</div>` : ''}
         ${r.referral_di ? `<div class="luogo">Contatto e/o Incaricato di: ${esc(r.referral_di)}</div>` : ''}
-        <div class="bottoni ${r.categoria ? 'due-righe' : 'scegli-cat'}">${bottoni}</div>
-        ${r.categoria ? '' : `<small class="mc-cat-nota">Non collegato: ${esc(MB21Lista.SPIEGA_CATEGORIA.Unlinked.toLowerCase())}</small>`}
+        ${scelta}
         <div class="cat-comandi">
           <button class="link" data-scheda="${esc(r.id)}">${ic('persona')} Apri contatto</button>
           ${guardoAltri() ? '' : `<button class="link elimina-qui" data-elimina-cat="${esc(r.id)}">${ic('elimina')} Elimina</button>`}

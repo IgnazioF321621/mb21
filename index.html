@@ -123,10 +123,6 @@
   .bottoni .appuntamento, .bottoni .ordine { flex: 1 1 100%; background: var(--ok-tinta); color: var(--ok); }
   .bottoni .ordine:has(+ .appuntamento), .bottoni .ordine + .appuntamento { flex: 1 1 40%; }   /* solo se gli esiti buoni sono due si dividono la riga */
   /* scegliere la categoria in «Da catalogare» (scelta «A» di Ignazio): tre tasselli con il tondo colorato e l'icona, il resto sotto in piccolo */
-  .bottoni.scegli-cat button.grande { flex: 1 1 28%; display: flex; flex-direction: column; align-items: center; gap: 7px; padding: 12px 4px 10px; border-radius: var(--raggio-riga); font-size: 14px; }
-  .bottoni.scegli-cat button.grande span { width: 44px; height: 44px; border-radius: 50%; background: var(--cat); color: #fff; display: grid; place-items: center; font-size: 21px; }
-  .bottoni.scegli-cat button.piccola { flex: 1 1 auto; background: none; color: var(--testo-soft); font-size: 13px; padding: 6px 2px; white-space: nowrap; }
-  .bottoni.scegli-cat button.piccola.no { flex: 1 1 auto; background: none; color: var(--pericolo); }
   .bottoni .no { flex: 1 1 100%; background: var(--pericolo-tinta); color: var(--pericolo); }
   /* Cantiere 39 (Ignazio 21/09: «ci stiamo evolvendo»): in coda gli stessi esiti di «Com'è andata?», sopra i buoni a due a due,
      sotto i non andati in fila. Supera la disposizione del 19/09 (buono intero in alto, negativo intero in fondo), che resta ai Riordini. */
@@ -268,7 +264,6 @@
   .cn .striscia { width: 4px; flex: none; align-self: stretch; }
   .cn .dentro { flex: 1; min-width: 0; padding: 9px 6px 9px 12px; }
   .cn .nome, .cn .prof, .cn .frase { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .mc-cat-nota { display: block; margin-top: 6px; font-size: 12.5px; color: var(--testo-soft); }   /* nota 037: cosa vuol dire «Non collegato» */
   .cn .cn-dichi { font-weight: 500; color: var(--testo-soft); }   /* nota 036: con «Tutti», di chi è il nome */
   /* la prima riga è solo del nome; «nuovo» e le targhette hanno una riga loro in fondo alla card (Ignazio 19/09: accanto al nome «ci si perde») */
   .cn-segni { display: flex; align-items: center; flex-wrap: wrap; gap: 5px; margin-top: 5px; }
@@ -667,6 +662,11 @@
   .ag-blocco.sezione .sez-testo b { display: block; font-weight: 600; }
   .ag-blocco.catalogare { --richiamo: var(--testo-soft); --richiamo-tinta: var(--sfondo); }
   .ag-blocco.fatta { --richiamo: var(--ok); --richiamo-tinta: var(--ok-tinta); }
+  /* nota Pagine 161: nella card aperta di «Da catalogare» i 4 tasti per contattare come nella testata della scheda: bianchi sulla tinta della categoria */
+  .card .cc-tasti { margin: 10px 0 4px; padding: 10px; border-radius: var(--raggio-riga); }
+  .card .cc-tasti .contatta { margin-top: 0; }
+  .card .cc-tasti .contatta a { background: var(--superficie); }
+  .card .cc-tasti.cat-nessuna { background: #EEF0F3; }
   .cat-comandi { display: flex; align-items: center; gap: 14px; }
   .cat-comandi button.link { margin-top: 12px; }
   .cat-comandi button.link.elimina-qui { display: inline; width: auto; margin-left: auto; }   /* all'estremo destro: lontano da «Apri contatto» (Ignazio 24/09) */

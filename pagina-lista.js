@@ -2147,10 +2147,13 @@ function apriModulo(c, poi = {}) {
 }
 
 // La tendina della Categoria (nota Pagine 127): chiusa dice la scelta col suo pallino, aperta l'elenco con ✓ e, sotto «Non collegato», cosa vuol dire.
-// Nel modulo del nome nuovo (la sezione Dati, dal seguito della nota 160, ha le pastiglie col colore della categoria).
-function tendinaCategoriaHtml(categorie, scelta) {
-  const pallino = k => `<i class="mc-pallino ${classeCat(k)}"></i>`, nome = k => esc(MB21Lista.nomeCategoria(k));
-  const voci = categorie.map(k => `<button type="button" class="${k === scelta ? 'scelto' : ''}" data-cat="${esc(k)}"><span>${pallino(k)}${nome(k)}${MB21Lista.SPIEGA_CATEGORIA[k] ? `<small>${esc(MB21Lista.SPIEGA_CATEGORIA[k])}</small>` : ''}</span>${k === scelta ? '<b>✓</b>' : ''}</button>`).join('');
+// Nel modulo del nome nuovo (la sezione Dati, dal seguito della nota 160, ha le pastiglie col colore della categoria) e, dalla nota Pagine 161, nella card
+// aperta di «Da catalogare»: lì `voce(k, i)` dà gli attributi del tasto (data-cataloga…), il nome scritto («Archivia») e la classe («no»: in rosso).
+function tendinaCategoriaHtml(categorie, scelta, voce = k => ({ attr: `data-cat="${esc(k)}"` })) {
+  const pallino = k => `<i class="mc-pallino ${classeCat(k)}"></i>`;
+  const voci = categorie.map((k, i) => { const v = voce(k, i), classe = [k === scelta ? 'scelto' : '', v.classe || ''].filter(Boolean).join(' ');
+    return `<button type="button" class="${classe}" ${v.attr}><span>${pallino(k)}${esc(v.nome || MB21Lista.nomeCategoria(k))}${MB21Lista.SPIEGA_CATEGORIA[k] ? `<small>${esc(MB21Lista.SPIEGA_CATEGORIA[k])}</small>` : ''}</span>${k === scelta ? '<b>✓</b>' : ''}</button>`; }).join('');
+  const nome = k => esc(MB21Lista.nomeCategoria(k));
   return tendina5Html(categorie.includes(scelta) ? `<b>${pallino(scelta)}${nome(scelta)}</b>` : '<small>Scegli la categoria</small>', voci);
 }
 
