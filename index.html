@@ -3073,6 +3073,11 @@ document.addEventListener('pointerdown', ev => { premutoSu = ev.target; }, true)
 document.addEventListener('click', ev => {
   const t = ev.target;
   if (t && t.classList && t.classList.contains('velo') && premutoSu && premutoSu !== t) ev.stopImmediatePropagation();
+  // Nota Pagine 179 (02/11, feedback della partner dall'iPad, app dalla Home: «non mi fa inserire il nominativo» nel «Nuovo nome»): lo stesso tranello
+  // della nota 124 dentro il foglio. Sull'iPad il foglio è al centro; toccato il campo sale in cima (nota 088) e il «click» dello stesso tocco cade su
+  // un'altra parte del foglio («Altre informazioni», il riquadro…): `lasciaIlCampo` toglieva il cursore e la tastiera si richiudeva subito. Regola unica:
+  // se la pressione era sul campo che ora ha il cursore, il click è suo: si ferma qui (niente cursore tolto, niente tasto premuto per sbaglio).
+  else if (premutoSu && campoDiTesto(premutoSu) && premutoSu === document.activeElement && t !== premutoSu) { ev.stopImmediatePropagation(); ev.preventDefault(); }
 }, true);
 document.addEventListener('click', ev => {
   const el = document.activeElement, t = ev.target;
