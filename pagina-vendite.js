@@ -298,11 +298,13 @@ async function moduloVendita(v, proposta) {
     rigaPrezzo();
   };
   // lo sconto da solo (nota 065, Ignazio 19/10, «A»): con prezzo e incassato scritti, sconto = prezzo − incassato, finché non lo scrivi tu;
-  // scritto a mano resta il tuo («scritto da te»); cancellato, torna quello calcolato
+  // scritto a mano resta il tuo («scritto da te»); cancellato, torna quello calcolato. Nota Pagine 181 (feedback della partner 31/10: «mi dà sconto applicato
+  // quando lo sconto non c'è stato»): mentre si scrive l'incassato il calcolo passa da valori a metà («2» → sconto 23,97); se poi non c'è più uno sconto
+  // da calcolare (incassato pari o sopra il prezzo, o un campo vuoto) quello calcolato prima si toglie, invece di restare
   let scontoAManoSi = !!(v && Number(v.sconto));
   const calcolaSconto = () => {
     const c = MB21Lista.scontoCalcolato(MB21Lista.importo($('v-prezzo').value), MB21Lista.importo($('v-incassato').value));
-    if (!scontoAManoSi && c != null) $('v-sconto').value = euro(c);
+    if (!scontoAManoSi) $('v-sconto').value = c != null ? euro(c) : '';
     $('v-sconto-come').textContent = scontoAManoSi ? (c != null ? 'scritto da te' : '') : c != null ? 'calcolato: prezzo al pubblico − incassato' : '';
     rigaPrezzo();
   };
