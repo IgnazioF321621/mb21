@@ -451,12 +451,19 @@
     border-radius: 999px; padding: 3px 11px; font-size: 15px; font-weight: 600; }
   .dt.cat-nessuna .dt-val:not(.dt-vuota) { background: #EEF0F3; color: #363E4C; -webkit-text-fill-color: #363E4C; }
   .dt .dt-val:not(.dt-vuota) em { color: inherit; opacity: .6; }
-  .dt-pil { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; } .dt-pil[hidden], .dt-comp[hidden] { display: none; }
+  .dt-pil { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; } .dt-pil[hidden] { display: none; }
   .dt-pil button { border: 0; font-size: 13.5px; font-weight: 600; padding: 6px 11px; border-radius: 999px; background: #F2F4F7; color: #3A4150; min-height: 34px; }
   .dt-pil button.si { background: var(--cat); color: #fff; }
-  .dt-comp { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
-  .dt-comp select, .dt-comp input, .dt .dt-sel { width: auto; margin: 0; border: 0; border-radius: 999px; background: #F2F4F7; padding: 6px 12px; font-size: 16px; min-height: 34px; }   /* 16 px: l'iPhone non ingrandisce al tocco */
-  .dt-comp input { width: 84px; }
+  /* nota Pagine 174: le scelte si scrivono; sotto il campo le voci che corrispondono (la prima accesa, frecce e Invio), un tocco sceglie */
+  .dt-scegli { margin-top: 4px; } .dt-scegli[hidden] { display: none; }
+  .dt .dt-scrivi { width: 100%; margin: 0; font-size: 16px; border: 2px solid var(--cat); border-radius: 10px; padding: 6px 8px; background: var(--superficie); box-sizing: border-box; }   /* 16 px: l'iPhone non ingrandisce */
+  .dt-sugg { margin-top: 4px; background: var(--superficie); border: 1px solid var(--bordo); border-radius: 12px; box-shadow: 0 6px 18px rgba(16,21,31,.12); overflow: hidden; }
+  .dt-sugg button { display: flex; justify-content: space-between; align-items: center; gap: 8px; width: 100%; border: 0; border-top: 1px solid var(--bordo); background: none; padding: 10px 12px; font: inherit; font-size: 16px; text-align: left; color: var(--testo); min-height: 44px; }
+  .dt-sugg button:first-child { border-top: 0; }
+  .dt-sugg button.acceso { background: var(--cat-tinta, var(--superficie-2)); }
+  .dt-sugg button.scelta span { font-weight: 700; }
+  .dt-sugg small, .dt-sugg-vuoto { color: var(--testo-tenue); font-size: 13px; }
+  .dt-sugg-vuoto { padding: 10px 12px; }
   .dt-sep { grid-column: 1 / -1; height: 1px; background: var(--linea); margin: 2px 0; }
   .dt-carico { font-size: 13px; color: var(--testo-tenue); }
   .dt-fisso { display: block; font-size: 16px; padding: 2px 0; }

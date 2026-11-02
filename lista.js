@@ -496,6 +496,21 @@
     return sigla ? `${t} (${sigla})` : t;
   }
   // Le città già scritte più spesso nella sua Lista, per il tocco veloce (le stesse parole, come le ha scritte)
+  // Nota Pagine 174 (Ignazio 02/11: «nei campi con le scelte… man mano che scrivi ti compare quello che ti serve»): le voci che contengono quello che si
+  // scrive, senza badare a maiuscole e accenti. `voci` = [[valore, nome, …]]; senza testo tutte.
+  const piano = t => String(t || '').normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+  const vociScritte = (voci, testo) => (piano(testo) ? (voci || []).filter(v => piano(v[1]).includes(piano(testo))) : (voci || []).slice());
+  // La Località (nota 174): prima le città che si usano già, poi i comuni che cominciano così («Torino (TO)»), al massimo `n` in tutto; una città fuori
+  // elenco (estera) si scrive com'è. `comuni` = dati/comuni.json ({ «torre del greco»: 'NA' }); prima i nomi più corti («tor» → Torino, Tortona…). → [[valore, nome, nota]]
+  const PICCOLE = new Set(['di', 'del', 'della', 'dei', 'delle', 'de', 'da', 'e', 'la', 'il', 'lo', 'le', 'sul', 'sulla', 'sui', 'al', 'alla', 'in', 'a', 'con', 'sopra', 'sotto']);
+  const nomeComune = k => k.split(' ').map((p, i) => (i && PICCOLE.has(p) ? p : p.replace(/(^|')([a-zà-ù])/g, (x, a, b) => a + b.toUpperCase()))).join(' ');
+  function cittaSuggerite(testo, frequenti, comuni, n = 6) {
+    const t = chiaveComune(testo);
+    const usate = (frequenti || []).filter(x => !t || chiaveComune(x).includes(t)).map(x => [x, x, 'la usi già']);
+    const gia = new Set(usate.map(x => chiaveComune(x[0].replace(/\s*\([^)]*\)\s*$/, ''))));
+    const dai = t && comuni ? Object.keys(comuni).filter(k => k.startsWith(t) && !gia.has(k)).sort((a, b) => a.length - b.length || a.localeCompare(b, 'it')).slice(0, Math.max(0, n - usate.length)).map(k => { const v = `${nomeComune(k)} (${comuni[k]})`; return [v, v, '']; }) : [];
+    return [...usate.slice(0, n), ...dai];
+  }
   function cittaFrequenti(righe, utenteId, n = 5) {
     const conti = new Map();
     (righe || []).forEach(r => { const c = (r.citta || '').trim(); if (c && r.user_id === utenteId) conti.set(c, (conti.get(c) || 0) + 1); });
@@ -731,7 +746,7 @@
   const nomeCategoria = c => NOMI_CATEGORIA[c] || c;
 
   const api = { cepPerCodice, importo, rigaPrezzo, QUOTA_PROVVIGIONE, IVA, contiVendita, contiStimati, scontoCalcolato, scontoAMano, NOMI_CATEGORIA, SPIEGA_CATEGORIA, nomeCategoria, CATEGORIE, FASCE_ETA, AREE, QUALI_PRODOTTI, interesseDa, areaDa, testoInteresse, PREFISSI, PASSI_ONBOARDING, AVVIO_DA_INCONTRO, passoAvvioDa, situazioneAvvio, FILTRI, GIORNI_NEW, eNuovo, piega, corrisponde, filtraContatti,
-    contaFiltri, cercaNomi, segnoOmonimi, viciniInLista, linkTelegram, linkTelegramCondividi, linkWhatsApp, compieOggi, azioniENote, MESI_RIORDINO, riordinoFra, mesiFra, modoRiordino, propostaRiordino, sezioneIniziale, giorniFermo, SENZA_PARLARE, fraseCard, ORDINI, componiTelefono, separaTelefono, trovaDoppioni, archiviatiUguali, contatoreOnboarding, prossimoPasso, entratoDa, partnerDaAvviare, partnerInPausa, proposteAvvio, pausaLunga, PASSI_SPENTI, postiBiglietto, postoSuo, momento, meseEvento, etichettaEvento, eventoAttivo, eventoDaMostrare, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, cepDaTogliere, cepDaAccendere, descrizioneCep, data, DATI_PERSONA, SESSI, LAVORI, nomeScelta, daCompletare, cittaFrequenti, cittaConProvincia, BRAND, coloreBrand, brandComprati, haVendite, daConsegnare, daConfermare, GIORNI_CONSEGNA_LONTANA, consegnaLontana, totaliVendite, momentoNelMese, momentiVendita, pagataSulSito, provvigioniMese, scontiMese, MESI_ANNO, provvigioniAnno, prossimoRiordino, rigaVendita, rigaFattore, numeroFattore, numero };
+    contaFiltri, cercaNomi, segnoOmonimi, viciniInLista, vociScritte, cittaSuggerite, linkTelegram, linkTelegramCondividi, linkWhatsApp, compieOggi, azioniENote, MESI_RIORDINO, riordinoFra, mesiFra, modoRiordino, propostaRiordino, sezioneIniziale, giorniFermo, SENZA_PARLARE, fraseCard, ORDINI, componiTelefono, separaTelefono, trovaDoppioni, archiviatiUguali, contatoreOnboarding, prossimoPasso, entratoDa, partnerDaAvviare, partnerInPausa, proposteAvvio, pausaLunga, PASSI_SPENTI, postiBiglietto, postoSuo, momento, meseEvento, etichettaEvento, eventoAttivo, eventoDaMostrare, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, cepDaTogliere, cepDaAccendere, descrizioneCep, data, DATI_PERSONA, SESSI, LAVORI, nomeScelta, daCompletare, cittaFrequenti, cittaConProvincia, BRAND, coloreBrand, brandComprati, haVendite, daConsegnare, daConfermare, GIORNI_CONSEGNA_LONTANA, consegnaLontana, totaliVendite, momentoNelMese, momentiVendita, pagataSulSito, provvigioniMese, scontiMese, MESI_ANNO, provvigioniAnno, prossimoRiordino, rigaVendita, rigaFattore, numeroFattore, numero };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Lista = api;
 })(this);

@@ -194,6 +194,17 @@
     return m ? { giorno: Number(m[3]), mese: Number(m[2]), anno: Number(m[1]) === ANNO_IGNOTO ? null : Number(m[1]) } : null;
   }
   const MESI = ['gennaio', 'febbraio', 'marzo', 'aprile', 'maggio', 'giugno', 'luglio', 'agosto', 'settembre', 'ottobre', 'novembre', 'dicembre'];
+  // Nota Pagine 174 (Ignazio 02/11): il compleanno si scrive. «12/3», «12-3-2000», «12 marzo», «12 mar 2000» → come compleannoDalModulo
+  // ({ giorno, mese, anno } · null se non si capisce ancora · 'errore' se la data non esiste); il mese anche a lettere, bastano le prime tre
+  function compleannoDaTesto(testo) {
+    const t = String(testo || '').toLowerCase().trim();
+    let m = t.match(/^(\d{1,2})\s*[/.-]\s*(\d{1,2})(?:\s*[/.-]\s*(\d{4}))?$/);
+    if (m) return compleannoDalModulo(m[1], m[2], m[3] || '');
+    m = t.match(/^(\d{1,2})\s+([a-zà-ù]{3,})(?:\s+(\d{4}))?$/);
+    if (!m) return null;
+    const mese = MESI.findIndex(x => x.startsWith(m[2]) || m[2].startsWith(x.slice(0, 3)));
+    return mese < 0 ? null : compleannoDalModulo(m[1], mese + 1, m[3] || '');
+  }
 
   // «2026-04-12» → «12 aprile 1985» · «1604-12-25» → «25 dicembre»
   function compleannoScritto(data) {
@@ -225,7 +236,7 @@
     };
   }
 
-  const api = { righeLogiche, daQuotedPrintable, leggiCompleanno, numeroMb21, leggiVcard, unisciDoppioni, motiviNome, preparaImport, rigaContatto, cambiaOmonimo, dataCompleanno, compleanniDaAggiungere, compleannoScritto, compleannoDalModulo, compleannoDaData, MESI };
+  const api = { compleannoDaTesto, righeLogiche, daQuotedPrintable, leggiCompleanno, numeroMb21, leggiVcard, unisciDoppioni, motiviNome, preparaImport, rigaContatto, cambiaOmonimo, dataCompleanno, compleanniDaAggiungere, compleannoScritto, compleannoDalModulo, compleannoDaData, MESI };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Rubrica = api;
 })(this);

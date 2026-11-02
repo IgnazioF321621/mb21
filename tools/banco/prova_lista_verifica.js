@@ -761,7 +761,7 @@ function datiVeri(c, { extra = { compleanno: null, sesso: null, lavoro: null, co
   const LSf = { righe: [{ ...c }, ...righe], datiExtra: extra ? { id: c.id, ...extra } : null, account: { id: c.id, dal: account }, sezione: 'dati', dopoCategoria: null };
   LSf.contatto = LSf.righe[0];
   const ctx = { esc, ic: n => `[${n}]`, MB21Lista: L, MB21Rubrica: require('../../rubrica.js'), MB21Coda: { oggiRoma: () => '2026-10-31' }, MB21Agenda: require('../../agenda.js'), LS: LSf,
-    soloGuardo: () => guardo, classeCat: k => 'cat-' + k, dbq: (n, p) => Promise.resolve(p), leggiComuni: async () => [], testoDoppioni: () => 'C\'è già un nome uguale',
+    soloGuardo: () => guardo, classeCat: k => 'cat-' + k, dbq: (n, p) => Promise.resolve(p), leggiComuni: async () => [], comuniPronti: null, testoDoppioni: () => 'C\'è già un nome uguale',
     supa: { from, rpc: (n, a) => { scritte.push({ rpc: n, a }); return Promise.resolve({ error: null }); } },
     aggiornaRiga: async id => { fatti.push('rileggi'); const i = LSf.righe.findIndex(x => x.id === id); const u = Object.assign({}, ...scritte.map(x => (x.rpc === 'cataloga_contatto' ? { categoria: x.a.p_categoria } : x.rpc === 'archivia_contatto' ? { categoria: 'Archiviato' } : x.op === 'update' ? x.v : {}))); delete u.aggiornato_il; if (i >= 0) LSf.righe[i] = { ...LSf.righe[i], ...u }; },
     chiediConferma: async (t, testo) => { domande.push([t, testo]); return conferma; }, mostraToast: (t, annulla) => avvisi.push({ t, annulla }),
@@ -778,40 +778,54 @@ function datiVeri(c, { extra = { compleanno: null, sesso: null, lavoro: null, co
 const aspetta = () => new Promise(r => setImmediate(r));
 const P1 = { id: 'c1', user_id: 'io', nome: 'Persona Uno', categoria: 'Prospect', telefono: '+393330000001', citta: null };
 
+// nota 174: una scelta si apre toccando il valore, si scrive, si sceglie la voce (o la si cerca con le frecce e Invio)
+const apriScelta = (D, k) => D.app.clic(`[data-dt-apri="${k}"]`);
+async function scrivoEScelgo(D, k, testo, nome) {
+  apriScelta(D, k);
+  const inp = D.$(`[data-dt-scrivi="${k}"]`); inp.value = testo; inp.oninput();
+  const voci = D.app.querySelectorAll(`[data-dt-sugg="${k}"] [data-dt-voce]`);
+  const i = voci.findIndex(v => v.innerHTML.replace(/&#39;|&#039;|&apos;/g, "'").includes(`<span>${nome}</span>`));
+  assert.ok(i >= 0, `${k}: «${nome}» tra ${voci.map(v => v.innerHTML).join(' | ')}`);
+  await voci[i].onclick();
+}
 prova('160 (seguito, «misto»): un riquadro solo come prima con tutte le voci, anche vuote («aggiungi»), niente titoli di gruppo, righe sottili; in fondo «Elimina dalla lista»', () => {
   const D = datiVeri(P1), h = D.app.innerHTML;
-  const ordine = ['data-dt="nome"', 'data-dt="telefono"', 'id="dt-cat"', 'data-dt="referral_di"', 'data-dt-pil="interesse"', 'data-dt="note"', 'class="dt-sep"',
-    'data-dt-pil="fascia_eta"', 'data-dt-comp="g"', 'data-dt-pil="sesso"', 'data-dt="professione"', 'data-dt-pil="lavoro"', 'data-dt="citta"', 'id="coppia"', 'id="dt-elimina"'];
+  const ordine = ['data-dt="nome"', 'data-dt="telefono"', 'id="dt-cat"', 'data-dt="referral_di"', 'data-dt-scrivi="interesse"', 'data-dt="note"', 'class="dt-sep"',
+    'data-dt-scrivi="fascia_eta"', 'data-dt-scrivi="comp"', 'data-dt-scrivi="sesso"', 'data-dt="professione"', 'data-dt-scrivi="lavoro"', 'data-dt-scrivi="citta"', 'id="coppia"', 'id="dt-elimina"'];
   const pos = ordine.map(x => h.indexOf(x));
   assert.ok(pos.every((p, i) => p > 0 && (!i || p > pos[i - 1])), JSON.stringify(pos));
   assert.equal(h.split('class="riquadro dt ').length - 1, 1);   // un riquadro solo
   assert.doesNotMatch(h, /<h4/);   // niente titoli «Chi è · Per l'attività · Dati personali»
   assert.equal(h.split('class="dt-sep"').length - 1, 2);
-  assert.match(h, /data-dt="citta" value="" placeholder="aggiungi" maxlength="40"/);
+  assert.match(h, /data-dt-apri="citta">aggiungi <em>▾<\/em>/);   // nota 174: anche la Località si scrive e si sceglie
   assert.match(h, /data-dt="telefono" type="tel" value="\+39 3330000001"/);   // il numero com'è, col prefisso
-  assert.match(h, /data-dt-pil="sesso" data-v="F" data-scelto="0" class="">Donna<\/button>/);
-  assert.match(h, /data-cat="Archiviato"/);   // anche «Archiviato» tra le categorie
   D.app.clic('#dt-elimina'); uguale(D.fatti, ['elimina c1']);   // la stessa funzione dei tre puntini
   assert.doesNotMatch(PL, /id="modifica">Modifica<\/button>/);
   // finché compleanno, sesso e lavoro non arrivano: «Carico…», e non si toccano
   const E = datiVeri(P1, { extra: null });
   assert.match(E.app.innerHTML, /<div class="dt-campo" id="dt-sesso"><small>Sesso<\/small><span class="dt-carico">Carico…<\/span><\/div>/);
-  assert.doesNotMatch(E.app.innerHTML, /data-dt-comp=/);
+  assert.doesNotMatch(E.app.innerHTML, /data-dt-scrivi="comp"/);
 });
 
-prova('160 (seguito): le scelte si leggono come testo con ▾ e al tocco aprono le pastiglie (una alla volta); il compleanno è scritto per intero; i tasti scelti col colore della categoria, senza categoria il grigio', () => {
+prova('174: le scelte si leggono come testo con ▾; al tocco si scrive subito, sotto tutte le voci, mentre scrivi solo quelle che corrispondono; una alla volta; Esc chiude', () => {
   const D = datiVeri(P1, { extra: { compleanno: '2000-03-12', sesso: 'F', lavoro: null, codice_amway: null } });
   const h = D.app.innerHTML;
-  assert.match(h, /<button type="button" class="dt-val" data-dt-apri="sesso">Donna <em>▾<\/em><\/button><div class="dt-pil" data-dt-fila="sesso" hidden>/);
+  assert.match(h, /<button type="button" class="dt-val" data-dt-apri="sesso">Donna <em>▾<\/em><\/button><div class="dt-scegli" data-dt-fila="sesso" hidden><input class="dt-scrivi" data-dt-scrivi="sesso"/);
   assert.match(h, /data-dt-apri="lavoro">aggiungi <em>▾<\/em>/);
-  assert.match(h, /data-dt-apri="comp">12 marzo 2000 <em>▾<\/em><\/button>\s*<div class="dt-comp" data-dt-fila="comp" hidden>/);   // niente rettangoli finché non si tocca
+  assert.match(h, /data-dt-apri="comp">12 marzo 2000 <em>▾<\/em><\/button>/);
   const eta = D.$('[data-dt-fila="fascia_eta"]'), sesso = D.$('[data-dt-fila="sesso"]');
-  D.app.clic('[data-dt-apri="fascia_eta"]'); assert.equal(eta.hidden, false);
-  D.app.clic('[data-dt-apri="sesso"]'); assert.equal(sesso.hidden, false); assert.equal(eta.hidden, true);   // una alla volta
-  D.app.clic('[data-dt-apri="sesso"]'); assert.equal(sesso.hidden, true);   // di nuovo: si richiude
+  apriScelta(D, 'fascia_eta'); assert.equal(eta.hidden, false);
+  assert.deepEqual(D.app.querySelectorAll('[data-dt-sugg="fascia_eta"] [data-dt-voce]').map(v => v.innerHTML.replace(/<[^>]+>/g, '')), ['18-20', '21-30', '31-40', '41-50', '51-60', '61+']);
+  apriScelta(D, 'sesso'); assert.equal(sesso.hidden, false); assert.equal(eta.hidden, true);   // una alla volta
+  const inp = D.$('[data-dt-scrivi="sesso"]'); inp.value = 'don'; inp.oninput();
+  assert.deepEqual(D.app.querySelectorAll('[data-dt-sugg="sesso"] [data-dt-voce]').map(v => v.innerHTML.replace(/<[^>]+>/g, '')), ['Donna']);
+  inp.value = ''; inp.oninput();
+  assert.deepEqual(D.app.querySelectorAll('[data-dt-sugg="sesso"] [data-dt-voce]').map(v => v.innerHTML.replace(/<[^>]+>/g, '')), ['Uomo', 'Donna', 'Togli']);   // con un valore: «Togli»
+  inp.onkeydown({ key: 'Escape' }); assert.equal(sesso.hidden, true);
+  apriScelta(D, 'sesso'); apriScelta(D, 'sesso'); assert.equal(sesso.hidden, true);   // di nuovo: si richiude
   assert.match(h, /<div class="riquadro dt cat-Prospect">/);   // il riquadro ha la classe della categoria (--cat)
-  assert.match(h, /data-cat="Partner" class="cat-Partner">Partner<\/button>/);   // ogni categoria col suo colore
-  assert.match(IDX, /\.dt-pil button\.si \{ background: var\(--cat\); color: #fff; \}/);
+  assert.match(IDX, /\.dt \.dt-scrivi \{[^}]*font-size: 16px; border: 2px solid var\(--cat\)/);   // 16 px: l'iPhone non ingrandisce
+  assert.match(IDX, /\.dt-sugg button\.acceso \{ background: var\(--cat-tinta/);
   assert.match(IDX, /\.dt \.dt-in:focus \{ outline: none; border: 2px solid var\(--cat\);/);
   assert.match(IDX, /\.cat-nessuna \{ --cat: var\(--testo-tenue\);/);   // non catalogato: grigio
   assert.match(PL, /<div class="riquadro dt \$\{classeCat\(c\.categoria\)\}">/);
@@ -820,6 +834,29 @@ prova('160 (seguito): le scelte si leggono come testo con ▾ e al tocco aprono 
   assert.match(IDX, /\.dt\.cat-nessuna \.dt-val:not\(\.dt-vuota\) \{ background: #EEF0F3;/);
   assert.match(IDX, /\.dt \.dt-val\.dt-vuota:not\(:disabled\):hover/);   // il passaggio del mouse non copre la tinta
   for (const k of ['prospect', 'cliente', 'partner', 'ex', 'unlinked', 'archiviato']) assert.match(IDX, new RegExp(`\\.cat-${k} \\{ --cat: var\\(--cat-${k}\\); --cat-tinta: var\\(--cat-${k}-tinta\\); --cat-scuro: #`));
+});
+
+prova('174: le frecce (Ignazio «poter scendere con le frecce nella lista»): giù e su accendono la voce, Invio sceglie quella accesa', async () => {
+  const D = datiVeri(P1);
+  apriScelta(D, 'lavoro');
+  const inp = D.$('[data-dt-scrivi="lavoro"]');
+  inp.onkeydown({ key: 'ArrowDown', preventDefault() {} }); inp.onkeydown({ key: 'ArrowDown', preventDefault() {} }); inp.onkeydown({ key: 'ArrowUp', preventDefault() {} });
+  assert.match(D.app.innerHTML, /data-dt-voce="1" class="acceso"><span>Autonomo<\/span>/);
+  await inp.onkeydown({ key: 'Enter', preventDefault() {} });
+  uguale(D.scritto(), [{ lavoro: 'autonomo' }]);
+  // l'Invio senza frecce sceglie la prima di quelle che restano
+  const E = datiVeri(P1); apriScelta(E, 'fascia_eta'); const i2 = E.$('[data-dt-scrivi="fascia_eta"]'); i2.value = '41'; i2.oninput();
+  await i2.onkeydown({ key: 'Enter', preventDefault() {} });
+  uguale(E.scritto(), [{ fascia_eta: '41-50' }]);
+});
+
+prova('174: il compleanno si scrive («12/3», «12/3/2000», «12 marzo») e sotto compare la data per intero; una data che non esiste non compare', async () => {
+  const D = datiVeri(P1);
+  await scrivoEScelgo(D, 'comp', '12/3/2000', '12 marzo 2000');
+  assert.ok(JSON.stringify(D.scritte).includes('2000-03-12'));
+  const E = datiVeri(P1); apriScelta(E, 'comp'); const inp = E.$('[data-dt-scrivi="comp"]');
+  inp.value = '12 mar'; inp.oninput(); assert.match(E.app.innerHTML, /<span>12 marzo<\/span>/);
+  inp.value = '31/2'; inp.oninput(); assert.match(E.app.innerHTML, /Scrivi la data: «12\/3» o «12\/3\/2000»/);
 });
 
 prova('160: il nome — prima/dopo: si salva da solo lasciando il campo, «Salvato · Annulla» lo rimette; vuoto no; un doppione chiede «Salvo lo stesso?»', async () => {
@@ -853,37 +890,45 @@ prova('160: il telefono — prima/dopo: prefisso e numero insieme («+39…»), 
 
 prova('160: la categoria — prima/dopo: una domanda con la frase semplice; «Cambia» salva con la funzione giusta; Partner → la domanda d\'invito; «no» → niente', async () => {
   const D = datiVeri(P1);
-  await D.app.clic('[data-cat="Partner"]');
+  await scrivoEScelgo(D, 'cat', 'part', 'Partner');
   uguale(D.domande, [['Categoria: Partner?', 'Persona Uno passa da Prospect a Partner.']]);
   uguale(D.scritto(), [{ categoria: 'Partner' }]); assert.ok(D.fatti.includes('invito Persona Uno'));
   const A = datiVeri(P1);
-  await A.app.clic('[data-cat="Archiviato"]');
+  await scrivoEScelgo(A, 'cat', 'arch', 'Archiviato');
   assert.match(A.domande[0][1], /^Persona Uno va negli Archiviati: le azioni da fare escono dall'Agenda\. Si ripristina quando vuoi\.$/);
   uguale(A.scritto(), ['archivia_contatto']);
   assert.match(A.avvisi.at(-1).t, /^Persona Uno spostato in Archiviati/); A.avvisi.at(-1).annulla(); assert.ok(A.fatti.includes('ripristina c1'));
-  const N = datiVeri(P1, { conferma: false }); await N.app.clic('[data-cat="Cliente"]'); uguale(N.scritte, []);
-  const S = datiVeri(P1); await S.app.clic('[data-cat="Prospect"]'); uguale(S.domande, []);   // la stessa: niente
+  const N = datiVeri(P1, { conferma: false }); await scrivoEScelgo(N, 'cat', 'cli', 'Cliente'); uguale(N.scritte, []);
+  const S = datiVeri(P1); await scrivoEScelgo(S, 'cat', '', 'Prospect'); uguale(S.domande, []);   // la stessa: niente
   assert.match(PL, /entra nella Lista come \$\{nome\(nuova\)\}: lo risenti da domani\./);   // da senza categoria
   // «Nuova azione» senza categoria (S5c): scelta la categoria, si apre «Nuova azione»
   const Z = datiVeri({ ...P1, categoria: null }); Z.ctx.LS.dopoCategoria = 'azione'; Z.ctx.d(Z.ctx.LS.contatto, Z.ctx.LS.datiExtra);
   assert.match(Z.app.innerHTML, /Per segnare un'azione serve la categoria: sceglila qui\./);
-  await Z.app.clic('[data-cat="Prospect"]');
+  assert.equal(Z.$('[data-dt-fila="cat"]').hidden, false);   // già aperta
+  const zi = Z.$('[data-dt-scrivi="cat"]'); zi.value = 'pro'; zi.oninput(); await zi.onkeydown({ key: 'Enter', preventDefault() {} });
   uguale(Z.scritto(), ['cataloga_contatto']); assert.equal(Z.fatti.at(-1), 'azione');
 });
 
-prova('160: le scelte a un tocco (età, sesso, lavoro, interesse) e i campi scritti (località, note…): un campo alla volta; un tocco sulla scelta già fatta la toglie', async () => {
+prova('160 e 174: le scelte (età, sesso, interesse, quali prodotti, località) si scrivono e si scelgono, una alla volta; «Togli» toglie; la Località anche fuori elenco, con la provincia', async () => {
   const D = datiVeri(P1);
-  await D.app.clic('[data-dt-pil="fascia_eta"][data-v="31-40"]');
-  await D.app.clic('[data-dt-pil="sesso"][data-v="F"]');
-  await D.app.clic('[data-dt-pil="interesse"][data-v="Prodotti"]');
+  await scrivoEScelgo(D, 'fascia_eta', '31', '31-40');
+  await scrivoEScelgo(D, 'sesso', 'do', 'Donna');
+  await scrivoEScelgo(D, 'interesse', 'prod', 'Prodotti');
   uguale(D.scritto(), [{ fascia_eta: '31-40' }, { sesso: 'F' }, { area: 'Prodotti' }]);
-  assert.match(D.app.innerHTML, /data-dt-pil="fascia_eta" data-v="31-40" data-scelto="1" class="si"/);
-  assert.match(D.app.innerHTML, /<small>Quali prodotti\?<\/small><select class="dt-sel" data-dt-quali>/);   // con Prodotti, quali
-  await D.app.clic('[data-dt-pil="sesso"][data-v="F"]');   // di nuovo: tolta
+  assert.match(D.app.innerHTML, /<small>Quali prodotti\?<\/small><button type="button" class="dt-val dt-vuota" data-dt-apri="quali">/);   // con Prodotti, quali
+  await scrivoEScelgo(D, 'quali', 'nutri', 'Nutrilite');
+  uguale(D.scritto().at(-1), { area: L.areaDa('Prodotti', 'Nutrilite') });
+  await scrivoEScelgo(D, 'sesso', '', 'Togli');   // di nuovo: tolta
   uguale(D.scritto().at(-1), { sesso: null });
-  const c = D.$('[data-dt="citta"]'); c.value = 'Roma'; await c.onchange();
-  uguale(D.scritto().at(-1), { citta: 'Roma' });
-  assert.ok(!D.fatti.slice(-2).includes('scheda'));   // la località non ridisegna la scheda
+  // la Località: le città che usa già, poi i comuni («Roma (RM)»); una fuori elenco com'è
+  const L2 = datiVeri(P1, { righe: [{ id: 'c7', user_id: 'io', nome: 'Persona Sette', citta: 'Torino (TO)' }] });
+  apriScelta(L2, 'citta'); await new Promise(r => setImmediate(r));
+  const ci = L2.$('[data-dt-scrivi="citta"]'); ci.value = 'tor'; ci.oninput();
+  assert.match(L2.app.innerHTML, /<span>Torino \(TO\)<\/span><small>la usi già<\/small>/);
+  assert.match(L2.app.innerHTML, /<span>Scrivi «tor» così com(&#39;|')è<\/span>/);
+  await scrivoEScelgo(L2, 'citta', 'Zurigo', 'Scrivi «Zurigo» così com\'è');
+  uguale(L2.scritto().at(-1), { citta: 'Zurigo' });
+  assert.ok(!L2.fatti.slice(-2).includes('scheda'));   // la località non ridisegna la scheda
   // guardando soltanto («Tutti»): campi spenti, niente «Elimina», niente salvataggi
   const G = datiVeri(P1, { guardo: true });
   assert.match(G.app.innerHTML, /data-dt="nome" value="Persona Uno" placeholder="—" disabled>/);

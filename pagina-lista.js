@@ -323,7 +323,7 @@ function disegnaDaCompletare() {
   }
 }
 // L'elenco dei comuni (dati/comuni.json, ~150 kB) si legge solo la prima volta che si salva una città; senza rete la città resta come è scritta
-let comuniLetti = null;
+let comuniLetti = null, comuniPronti = null;   // nota 174: `comuniPronti` = l'elenco già arrivato (i suggerimenti della Località)
 const leggiComuni = () => (comuniLetti = comuniLetti || fetch('dati/comuni.json').then(r => (r.ok ? r.json() : null)).catch(() => null)
   .then(c => { if (!c) comuniLetti = null; return c; }));
 // Un tocco = un campo scritto (solo se è ancora vuoto), con «Annulla» nel messaggio, come in «Da catalogare»
@@ -953,25 +953,23 @@ function disegnaDati(c, extra) {
   const L = MB21Lista, guardo = soloGuardo(), spento = guardo ? ' disabled' : '', vuoto = guardo ? '—' : 'aggiungi', freccia = guardo ? '' : ' <em>▾</em>';
   const conStorico = (lista, v) => (v && !lista.includes(v) ? [...lista, v] : lista);   // valori storici fuori elenco (es. «36-45») restano
   const testo = (k, etichetta, v, { max, pieno, lista, tipo } = {}) => `<div class="dt-campo${pieno ? ' dt-pieno' : ''}"><small>${etichetta}</small><input class="dt-in" data-dt="${k}"${tipo ? ` type="${tipo}"` : ''} value="${esc(v || '')}" placeholder="${vuoto}"${max ? ` maxlength="${Math.max(max, (v || '').length)}"` : ''}${lista ? ` list="${lista}"` : ''}${spento}></div>`;
-  // una scelta: il valore scritto con ▾; al tocco (collegaDati) si apre sotto la fila di pastiglie
+  // una scelta: il valore scritto con ▾ (a scheda chiusa la pastiglia nella tinta della categoria); al tocco (collegaDati) si apre sotto il campo da scrivere
+  // con le voci. Nota Pagine 174 (Ignazio 02/11, «si ok» su scelte_174.png: «man mano che scrivi ti compare quello che ti serve… ci clicchi e lo scegli»,
+  // poi «poter scendere con le frecce nella lista»): prima si apriva una fila di pastiglie; ora si scrive subito e le voci si filtrano; frecce e Invio.
   const valore = (k, t, prima = '') => `<button type="button" class="dt-val${t ? '' : ' dt-vuota'}" data-dt-apri="${k}"${spento}>${prima}${esc(t || vuoto)}${freccia}</button>`;
+  const scrivi = k => `<div class="dt-scegli" data-dt-fila="${k}" hidden><input class="dt-scrivi" data-dt-scrivi="${k}" autocomplete="off" autocapitalize="off" placeholder="scrivi o scegli"><div class="dt-sugg" data-dt-sugg="${k}" role="listbox"></div></div>`;
   const pastiglie = (k, etichetta, voci, v, attesa) => `<div class="dt-campo" id="dt-${k}"><small>${etichetta}</small>${attesa ? '<span class="dt-carico">Carico…</span>'
-    : `${valore(k, (voci.find(x => x[0] === v) || [])[1])}<div class="dt-pil" data-dt-fila="${k}" hidden>${voci.map(([val, t]) => `<button type="button" data-dt-pil="${k}" data-v="${esc(val)}" data-scelto="${val === v ? 1 : 0}" class="${val === v ? 'si' : ''}">${esc(t)}</button>`).join('')}</div>`}</div>`;
+    : `${valore(k, (voci.find(x => x[0] === v) || [])[1])}${scrivi(k)}`}</div>`;
   const tel = L.separaTelefono(c.telefono);
   const categorie = conStorico(L.CATEGORIE, c.categoria);
   const x = L.interesseDa(c.area);
   const miei = LS.righe.filter(r => r.user_id === c.user_id && r.id !== c.id);
   const fatti = extra && extra.contatti_fatti != null ? String(extra.contatti_fatti) : '';
   const codice = extra && extra.codice_amway;
-  const k = extra ? MB21Rubrica.compleannoDaData(extra.compleanno) : null;
   // la categoria: le pastiglie col colore di ognuna; «Nuova azione» senza categoria (S5c) la apre già, con l'avviso
   const categoria = `<div class="dt-campo${LS.dopoCategoria ? ' dt-pieno' : ''}" id="dt-cat"><small>Categoria</small>${LS.dopoCategoria ? '<div class="avviso" style="margin:4px 0 8px">Per segnare un\'azione serve la categoria: sceglila qui.</div>' : ''}
-    ${valore('cat', c.categoria ? L.nomeCategoria(c.categoria) : '', c.categoria ? `<i class="mc-pallino ${classeCat(c.categoria)}"></i>` : '')}
-    <div class="dt-pil" data-dt-fila="cat"${LS.dopoCategoria ? '' : ' hidden'}>${categorie.map(kc => `<button type="button" data-cat="${esc(kc)}" class="${classeCat(kc)}${kc === c.categoria ? ' si' : ''}">${esc(L.nomeCategoria(kc))}</button>`).join('')}</div></div>`;
-  const compleanno = `<div class="dt-campo" id="dt-comp"><small>Compleanno</small>${!extra ? '<span class="dt-carico">Carico…</span>' : `${valore('comp', MB21Rubrica.compleannoScritto(extra.compleanno))}
-    <div class="dt-comp" data-dt-fila="comp" hidden><select data-dt-comp="g"><option value="">Giorno</option>${Array.from({ length: 31 }, (_, i) => `<option${k && k.giorno === i + 1 ? ' selected' : ''}>${i + 1}</option>`).join('')}</select>
-      <select data-dt-comp="m"><option value="">Mese</option>${MB21Rubrica.MESI.map((m, i) => `<option value="${i + 1}"${k && k.mese === i + 1 ? ' selected' : ''}>${m}</option>`).join('')}</select>
-      <input data-dt-comp="a" inputmode="numeric" maxlength="4" placeholder="Anno" value="${k && k.anno ? k.anno : ''}"></div>`}</div>`;
+    ${valore('cat', c.categoria ? L.nomeCategoria(c.categoria) : '', c.categoria ? `<i class="mc-pallino ${classeCat(c.categoria)}"></i>` : '')}${scrivi('cat')}</div>`;
+  const compleanno = `<div class="dt-campo" id="dt-comp"><small>Compleanno</small>${!extra ? '<span class="dt-carico">Carico…</span>' : `${valore('comp', MB21Rubrica.compleannoScritto(extra.compleanno))}${scrivi('comp')}`}</div>`;   // nota 174: «12/3/2000» o «12 marzo»
   const account = c.categoria === 'Cliente' ? `<div class="dt-campo dt-pieno" id="dt-account"><small>Cliente con account</small><span class="dt-carico">Carico…</span></div>` : '';
   const html = `<div id="dati-riquadro"><div class="riquadro dt ${classeCat(c.categoria)}">
       ${testo('nome', 'Nominativo', c.nome, { pieno: true })}
@@ -980,7 +978,7 @@ function disegnaDati(c, extra) {
       ${account}
       ${testo('referral_di', 'Contatto e/o Incaricato di', c.referral_di, { lista: 'dt-ref-nomi' })}<datalist id="dt-ref-nomi">${miei.map(r => `<option value="${esc(r.nome)}">`).join('')}</datalist>
       ${pastiglie('interesse', 'Area di interesse', [['Attività', 'Attività'], ['Prodotti', 'Prodotti']], x.interesse)}
-      ${x.interesse === 'Prodotti' ? `<div class="dt-campo"><small>Quali prodotti?</small><select class="dt-sel" data-dt-quali${spento}><option value="">—</option>${L.QUALI_PRODOTTI.map(([v, t]) => `<option value="${esc(v)}"${x.quali === v ? ' selected' : ''}>${esc(t)}</option>`).join('')}</select></div>` : ''}
+      ${x.interesse === 'Prodotti' ? pastiglie('quali', 'Quali prodotti?', L.QUALI_PRODOTTI, x.quali) : ''}
       ${testo('note', 'Note', c.note, { max: 50 })}
       ${codice ? `<div class="dt-campo"><small>Codice Amway</small><button type="button" class="codice-copia" data-copia-codice="${esc(codice)}" aria-label="Copia il codice Amway ${esc(codice)}">${esc(codice)}${ic('copia')}</button></div>` : ''}
       <div class="dt-sep"></div>
@@ -989,7 +987,7 @@ function disegnaDati(c, extra) {
       ${pastiglie('sesso', 'Sesso', L.SESSI, extra && extra.sesso, !extra)}
       ${testo('professione', 'Professione', c.professione, { max: 40 })}
       ${pastiglie('lavoro', 'Tipo di lavoro', L.LAVORI, extra && extra.lavoro, !extra)}
-      ${testo('citta', 'Località', c.citta, { max: 40 })}
+      ${pastiglie('citta', 'Località', c.citta ? [[c.citta, c.citta]] : [], c.citta)}
       ${fatti ? `<div class="dt-campo"><small>Contatti fatti</small><span class="dt-fisso">${fatti}</span></div>` : ''}
       <div class="dt-sep"></div>
       <div id="coppia" class="dt-pieno"></div></div>
@@ -998,7 +996,7 @@ function disegnaDati(c, extra) {
   // com'è (con quello che c'è scritto e il cursore), anche quando i dati personali arrivano mentre si scrive
   const coppia = document.getElementById('coppia'), vecchio = document.getElementById('dati-riquadro');
   const attivo = vecchio && vecchio.contains && document.activeElement && vecchio.contains(document.activeElement) && document.activeElement.dataset ? document.activeElement : null;
-  const chiave = attivo && (attivo.dataset.dt ? `[data-dt="${attivo.dataset.dt}"]` : attivo.dataset.dtComp ? `[data-dt-comp="${attivo.dataset.dtComp}"]` : null);
+  const chiave = attivo && (attivo.dataset.dt ? `[data-dt="${attivo.dataset.dt}"]` : null);
   box.innerHTML = html;   // la sezione è solo questo riquadro
   const posto = document.getElementById('coppia');
   if (coppia && posto && coppia !== posto && posto.replaceWith) posto.replaceWith(coppia);
@@ -1024,41 +1022,59 @@ function collegaDati(c, extra) {
       return salvaDato(c, { [k]: v || null });
     };
   });
-  // una scelta si apre al tocco (le pastiglie sotto, su tutta la riga) e si richiude; se ne apre una alla volta
-  radice.querySelectorAll('[data-dt-apri]').forEach(b => { b.onclick = () => {
-    const fila = q(`[data-dt-fila="${b.dataset.dtApri}"]`);
-    if (!fila) return;
-    const apri = fila.hidden;
-    radice.querySelectorAll('[data-dt-fila]').forEach(f => { f.hidden = true; if (f.parentElement) f.parentElement.style.gridColumn = ''; });
-    fila.hidden = !apri;
-    if (apri && fila.parentElement) fila.parentElement.style.gridColumn = '1 / -1';
-  }; });
-  // le pastiglie: un tocco sceglie, un tocco su quella già scelta la toglie
-  radice.querySelectorAll('[data-dt-pil]').forEach(b => { b.onclick = () => {
-    const k = b.dataset.dtPil, v = b.dataset.scelto === '1' ? null : b.dataset.v;
-    if (k === 'interesse') return salvaDato(c, { area: v ? MB21Lista.areaDa(v, '') || null : null });
-    return salvaDato(c, { [k]: v });
-  }; });
-  const quali = q('[data-dt-quali]');
-  if (quali) quali.onchange = () => salvaDato(c, { area: MB21Lista.areaDa('Prodotti', quali.value) || null });
-  // il compleanno: si salva quando giorno e mese ci sono (o sono tolti tutti e due); una data che non esiste si dice
-  radice.querySelectorAll('[data-dt-comp]').forEach(el => { el.onchange = () => {
-    const [g, m, a] = ['g', 'm', 'a'].map(x => q(`[data-dt-comp="${x}"]`).value);
-    if (!!g !== !!m) return;
-    const comp = MB21Rubrica.compleannoDalModulo(g, m, a);
-    if (comp === 'errore') return mostraToast('Compleanno: scegli giorno e mese di una data che esiste (l\'anno di 4 cifre, se lo sai)');
-    return salvaDato(c, { compleanno: MB21Rubrica.dataCompleanno(comp) });
-  }; });
-  // la categoria: le pastiglie col colore di ognuna; scelta un'altra, una domanda con la frase semplice di cosa succede
-  const cat = q('#dt-cat');
-  if (cat) {
-    cat.querySelectorAll('[data-cat]').forEach(b => { b.onclick = async () => {
-      const nuova = b.dataset.cat;
-      if (nuova === c.categoria) return;
-      if (!await chiediConferma(`Categoria: ${MB21Lista.nomeCategoria(nuova)}?`, fraseCategoria(c, nuova), 'Cambia')) return;
-      return salvaDato(c, { categoria: nuova });
-    }; });
-  }
+  // Nota Pagine 174: le scelte si scrivono. Ogni campo ha le sue voci ([[valore, nome, nota]], filtrate da ciò che si scrive) e cosa fa quando se ne sceglie una;
+  // con un valore e niente scritto, in fondo «Togli». Frecce su e giù tra le voci, Invio sceglie quella accesa, Esc chiude; lasciando il campo si chiude.
+  // La Località accetta anche una città fuori elenco («Scrivi … così com'è», con la provincia se è un comune italiano).
+  const L = MB21Lista, x = L.interesseDa(c.area), comp = extra && extra.compleanno;
+  const tutte = (lista, v) => (v && !lista.some(y => y[0] === v) ? [...lista, [v, v]] : lista);   // valori storici fuori elenco restano scegliibili
+  const CAMPI = {
+    cat: { voci: () => tutte(L.CATEGORIE.map(k => [k, L.nomeCategoria(k)]), c.categoria), v: c.categoria, togli: false,
+      sceglie: async v => { if (v === c.categoria) return; if (!await chiediConferma(`Categoria: ${L.nomeCategoria(v)}?`, fraseCategoria(c, v), 'Cambia')) return; return salvaDato(c, { categoria: v }); } },
+    interesse: { voci: () => [['Attività', 'Attività'], ['Prodotti', 'Prodotti']], v: x.interesse, sceglie: v => salvaDato(c, { area: v ? L.areaDa(v, '') || null : null }) },
+    quali: { voci: () => L.QUALI_PRODOTTI, v: x.quali, sceglie: v => salvaDato(c, { area: L.areaDa('Prodotti', v || '') || null }) },
+    fascia_eta: { voci: () => tutte(L.FASCE_ETA.map(y => [y, y]), c.fascia_eta), v: c.fascia_eta, sceglie: v => salvaDato(c, { fascia_eta: v || null }) },
+    sesso: { voci: () => L.SESSI, v: extra && extra.sesso, sceglie: v => salvaDato(c, { sesso: v || null }) },
+    lavoro: { voci: () => L.LAVORI, v: extra && extra.lavoro, sceglie: v => salvaDato(c, { lavoro: v || null }) },
+    comp: { v: comp, voci: t => { const k = MB21Rubrica.compleannoDaTesto(t); if (!k || k === 'errore') return []; const d = MB21Rubrica.dataCompleanno(k); return [[d, MB21Rubrica.compleannoScritto(d)]]; },
+      vuote: 'Scrivi la data: «12/3» o «12/3/2000»', sceglie: v => salvaDato(c, { compleanno: v || null }) },
+    citta: { v: c.citta, libera: true, voci: t => L.cittaSuggerite(t, L.cittaFrequenti(LS.righe, c.user_id), comuniPronti),
+      sceglie: async v => salvaDato(c, { citta: v ? L.cittaConProvincia(v, await leggiComuni()) : null }) },
+  };
+  if (q('[data-dt-scrivi="citta"]')) leggiComuni().then(cc => { comuniPronti = cc; });   // l'elenco dei comuni (~150 kB), una volta, per i suggerimenti della Località
+  const chiudiTutti = () => radice.querySelectorAll('[data-dt-fila]').forEach(f => { f.hidden = true; if (f.parentElement) f.parentElement.style.gridColumn = ''; });
+  radice.querySelectorAll('[data-dt-scrivi]').forEach(inp => {
+    const k = inp.dataset.dtScrivi, campo = CAMPI[k], fila = q(`[data-dt-fila="${k}"]`), lista = q(`[data-dt-sugg="${k}"]`);
+    if (!campo || !fila || !lista) return;
+    let voci = [], acceso = 0;
+    const disegna = () => {
+      const t = inp.value;
+      voci = typeof campo.voci === 'function' && campo.voci.length ? campo.voci(t) : L.vociScritte(campo.voci(), t);
+      if (campo.libera && t.trim()) voci = [...voci, [t.trim(), `Scrivi «${t.trim()}» così com'è`, '']];
+      if (campo.v && !t.trim() && campo.togli !== false) voci = [...voci, ['', 'Togli', '']];
+      acceso = Math.min(acceso, Math.max(0, voci.length - 1));
+      lista.innerHTML = voci.length ? voci.map(([v, nome, nota], i) => `<button type="button" role="option" data-dt-voce="${i}" class="${i === acceso ? 'acceso' : ''}${v === campo.v && v ? ' scelta' : ''}"><span>${esc(nome)}</span>${nota ? `<small>${esc(nota)}</small>` : ''}</button>`).join('')
+        : `<div class="dt-sugg-vuoto">${esc(campo.vuote || 'Nessuna voce: prova con altre lettere')}</div>`;
+      lista.querySelectorAll('[data-dt-voce]').forEach(b => { b.onclick = () => scegli(Number(b.dataset.dtVoce)); });
+    };
+    const scegli = i => { const v = voci[i]; chiudiTutti(); if (!v) return; return campo.sceglie(v[0] || null); };
+    inp.oninput = () => { acceso = 0; disegna(); };
+    inp.onkeydown = e => {
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { if (e.preventDefault) e.preventDefault(); acceso = (acceso + (e.key === 'ArrowDown' ? 1 : -1) + voci.length) % Math.max(1, voci.length); disegna(); }
+      else if (e.key === 'Enter') { if (e.preventDefault) e.preventDefault(); if (voci.length) return scegli(acceso); }
+      else if (e.key === 'Escape') chiudiTutti();
+    };
+    inp.onblur = () => setTimeout(() => { if (document.activeElement !== inp) { fila.hidden = true; if (fila.parentElement) fila.parentElement.style.gridColumn = ''; } }, 200);   // il tocco su una voce arriva prima
+    const apri = radice.querySelector(`[data-dt-apri="${k}"]`);
+    if (apri) apri.onclick = () => {
+      const era = !fila.hidden;
+      chiudiTutti();
+      if (era) return;
+      fila.hidden = false;
+      if (fila.parentElement) fila.parentElement.style.gridColumn = '1 / -1';
+      inp.value = ''; acceso = 0; disegna(); inp.focus();
+    };
+    if (k === 'cat' && LS.dopoCategoria) { fila.hidden = false; if (fila.parentElement) fila.parentElement.style.gridColumn = '1 / -1'; disegna(); }   // S5c: già aperta
+  });
   // «Cliente con account» (V4, nota 080): Sì/No e «Dal» (mai nel futuro), letto una volta (accountDi, lo stesso della testata)
   if (q('#dt-account')) accountDi(c).then(dal => {
     const posto = document.getElementById('dt-account');
