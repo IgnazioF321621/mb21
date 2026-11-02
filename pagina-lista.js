@@ -1161,8 +1161,10 @@ async function dopoDato(c, cambi, rileggi = false) {
   LS.contatto = LS.righe.find(x => x.id === c.id) || LS.contatto;
   const chiavi = Object.keys(cambi);
   if (rileggi || chiavi.some(k => ['nome', 'telefono', 'categoria'].includes(k))) return disegnaScheda();
-  if (chiavi.every(k => ['referral_di', 'note', 'professione', 'citta', 'compleanno'].includes(k))) {   // scritti sul posto: restano come sono (la località con la provincia)
-    for (const k of chiavi) { const el = document.querySelector(`#dati-riquadro [data-dt="${k}"]`); if (el && el !== document.activeElement) el.value = LS.contatto[k] || ''; }
+  // scritti sul posto: restano come sono. Nota Pagine 177 (Ignazio 02/11: «scrivo la località e poi faccio Invio, mi rimane sul vecchio nome»): dalla 174 Località
+  // e Compleanno sono scelte (la pastiglia col valore), quindi si ridisegnano come le altre scelte; qui restano solo i campi scritti
+  if (chiavi.every(k => ['referral_di', 'note', 'professione'].includes(k))) {
+    for (const k of chiavi) { const el = document.querySelector(`#dati-riquadro [data-dt="${k}"]`); if (el && el !== document.activeElement) { el.value = LS.contatto[k] || ''; el.size = Math.max(4, el.value.length + 1); } }
     return;
   }
   disegnaDati(LS.contatto, LS.datiExtra && LS.datiExtra.id === c.id ? LS.datiExtra : null);

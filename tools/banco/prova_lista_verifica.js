@@ -1004,6 +1004,26 @@ prova('175 e 176: col Tab sulla scelta basta scrivere (si apre con il tasto già
   assert.match(IDX, /\.dt \.dt-val:focus-visible \{ outline: 3px solid/);
 });
 
+prova('177: scelta una voce (col tocco o con Invio), la pastiglia mostra subito il valore nuovo: Località, Compleanno, Età, Sesso, Tipo di lavoro, Area, Categoria', async () => {
+  const testoDi = (D, k) => D.$(`[data-dt-apri="${k}"]`).innerHTML.replace(/<[^>]+>/g, '').replace('▾', '').trim();
+  // col tocco
+  const D = datiVeri(P1);
+  await scrivoEScelgo(D, 'citta', 'Zurigo', 'Scrivi «Zurigo» così com\'è'); assert.equal(testoDi(D, 'citta'), 'Zurigo');
+  await scrivoEScelgo(D, 'comp', '12/3', '12 marzo'); assert.equal(testoDi(D, 'comp'), '12 marzo');
+  await scrivoEScelgo(D, 'fascia_eta', '41', '41-50'); assert.equal(testoDi(D, 'fascia_eta'), '41-50');
+  await scrivoEScelgo(D, 'sesso', 'uo', 'Uomo'); assert.equal(testoDi(D, 'sesso'), 'Uomo');
+  await scrivoEScelgo(D, 'lavoro', 'aut', 'Autonomo'); assert.equal(testoDi(D, 'lavoro'), 'Autonomo');
+  await scrivoEScelgo(D, 'interesse', 'prod', 'Prodotti'); assert.equal(testoDi(D, 'interesse'), 'Prodotti');
+  // con Invio (la Località, come l'ha vista Ignazio)
+  const E = datiVeri(P1);
+  apriScelta(E, 'citta'); const ci = E.$('[data-dt-scrivi="citta"]'); ci.value = 'Ginevra'; ci.oninput();
+  await ci.onkeydown({ key: 'Enter', preventDefault() {} });
+  assert.equal(testoDi(E, 'citta'), 'Ginevra');
+  apriScelta(E, 'lavoro'); const la = E.$('[data-dt-scrivi="lavoro"]'); la.value = 'dip'; la.oninput();
+  await la.onkeydown({ key: 'Enter', preventDefault() {} });
+  assert.equal(testoDi(E, 'lavoro'), 'Dipendente');
+});
+
 (async () => {
   for (const [nome, fn] of coda) { await fn(); ok++; console.log('OK  ' + nome); }
   console.log(`\n${ok} prove superate`);
