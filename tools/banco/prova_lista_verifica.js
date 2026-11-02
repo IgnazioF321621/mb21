@@ -797,8 +797,8 @@ prova('160 (seguito, «misto»): un riquadro solo come prima con tutte le voci, 
   assert.equal(h.split('class="riquadro dt ').length - 1, 1);   // un riquadro solo
   assert.doesNotMatch(h, /<h4/);   // niente titoli «Chi è · Per l'attività · Dati personali»
   assert.equal(h.split('class="dt-sep"').length - 1, 2);
-  assert.match(h, /data-dt-apri="citta">aggiungi <em>▾<\/em>/);   // nota 174: anche la Località si scrive e si sceglie
-  assert.match(h, /data-dt-mostra="telefono">\+39 3330000001<\/button><input class="dt-in" data-dt="telefono" hidden type="tel" value="\+39 3330000001"/);   // il numero com'è, col prefisso
+  assert.match(h, /data-dt-apri="citta" tabindex="0">aggiungi <em>▾<\/em>/);   // nota 174: anche la Località si scrive e si sceglie
+  assert.match(h, /data-dt-mostra="telefono" aria-hidden="true">\+39 3330000001<\/span><input class="dt-in" data-dt="telefono" type="tel" value="\+39 3330000001"/);   // il numero com'è, col prefisso
   D.app.clic('#dt-elimina'); uguale(D.fatti, ['elimina c1']);   // la stessa funzione dei tre puntini
   assert.doesNotMatch(PL, /id="modifica">Modifica<\/button>/);
   // finché compleanno, sesso e lavoro non arrivano: «Carico…», e non si toccano
@@ -810,9 +810,9 @@ prova('160 (seguito, «misto»): un riquadro solo come prima con tutte le voci, 
 prova('174: le scelte si leggono come testo con ▾; al tocco si scrive subito, sotto tutte le voci, mentre scrivi solo quelle che corrispondono; una alla volta; Esc chiude', () => {
   const D = datiVeri(P1, { extra: { compleanno: '2000-03-12', sesso: 'F', lavoro: null, codice_amway: null } });
   const h = D.app.innerHTML;
-  assert.match(h, /<button type="button" class="dt-val" data-dt-apri="sesso">Donna <em>▾<\/em><\/button><div class="dt-scegli" data-dt-fila="sesso" hidden><input class="dt-scrivi" data-dt-scrivi="sesso"/);
-  assert.match(h, /data-dt-apri="lavoro">aggiungi <em>▾<\/em>/);
-  assert.match(h, /data-dt-apri="comp">12 marzo 2000 <em>▾<\/em><\/button>/);
+  assert.match(h, /<button type="button" class="dt-val" data-dt-apri="sesso" tabindex="0">Donna <em>▾<\/em><\/button><div class="dt-scegli" data-dt-fila="sesso" hidden><input class="dt-scrivi" data-dt-scrivi="sesso"/);
+  assert.match(h, /data-dt-apri="lavoro" tabindex="0">aggiungi <em>▾<\/em>/);
+  assert.match(h, /data-dt-apri="comp" tabindex="0">12 marzo 2000 <em>▾<\/em><\/button>/);
   const eta = D.$('[data-dt-fila="fascia_eta"]'), sesso = D.$('[data-dt-fila="sesso"]');
   apriScelta(D, 'fascia_eta'); assert.equal(eta.hidden, false);
   assert.deepEqual(D.app.querySelectorAll('[data-dt-sugg="fascia_eta"] [data-dt-voce]').map(v => v.innerHTML.replace(/<[^>]+>/g, '')), ['18-20', '21-30', '31-40', '41-50', '51-60', '61+']);
@@ -915,7 +915,7 @@ prova('160 e 174: le scelte (età, sesso, interesse, quali prodotti, località) 
   await scrivoEScelgo(D, 'sesso', 'do', 'Donna');
   await scrivoEScelgo(D, 'interesse', 'prod', 'Prodotti');
   uguale(D.scritto(), [{ fascia_eta: '31-40' }, { sesso: 'F' }, { area: 'Prodotti' }]);
-  assert.match(D.app.innerHTML, /<small>Quali prodotti\?<\/small><button type="button" class="dt-val dt-vuota" data-dt-apri="quali">/);   // con Prodotti, quali
+  assert.match(D.app.innerHTML, /<small>Quali prodotti\?<\/small><button type="button" class="dt-val dt-vuota" data-dt-apri="quali" tabindex="0">/);   // con Prodotti, quali
   await scrivoEScelgo(D, 'quali', 'nutri', 'Nutrilite');
   uguale(D.scritto().at(-1), { area: L.areaDa('Prodotti', 'Nutrilite') });
   await scrivoEScelgo(D, 'sesso', '', 'Togli');   // di nuovo: tolta
@@ -931,7 +931,7 @@ prova('160 e 174: le scelte (età, sesso, interesse, quali prodotti, località) 
   assert.ok(!L2.fatti.slice(-2).includes('scheda'));   // la località non ridisegna la scheda
   // guardando soltanto («Tutti»): campi spenti, niente «Elimina», niente salvataggi
   const G = datiVeri(P1, { guardo: true });
-  assert.match(G.app.innerHTML, /data-dt-mostra="nome" disabled>Persona Uno<\/button><input class="dt-in" data-dt="nome" hidden value="Persona Uno" placeholder="—" disabled>/);
+  assert.match(G.app.innerHTML, /data-dt-mostra="nome" aria-hidden="true">Persona Uno<\/span><input class="dt-in" data-dt="nome" value="Persona Uno" placeholder="—" disabled>/);
   assert.doesNotMatch(G.app.innerHTML, /dt-elimina/);
 });
 
@@ -1000,7 +1000,7 @@ prova('175 e 176: col Tab sulla scelta basta scrivere (si apre con il tasto già
   // 176: nell'HTML le Note hanno la loro classe; lo stile fa pastiglie gli altri campi scritti e «Contatti fatti»
   assert.match(D.app.innerHTML, /<input class="dt-in dt-nota" data-dt="note"/);
   assert.match(IDX, /\.dt \.dt-fisso \{[^}]*background: var\(--cat-tinta\); color: var\(--cat-scuro\);/);
-  assert.match(D.app.innerHTML, /<button type="button" class="dt-val dt-testo" data-dt-mostra="nome">Persona Uno<\/button>/);   // nota 178: i dati scritti sono pastiglie col testo
+  assert.match(D.app.innerHTML, /<span class="dt-val dt-testo" data-dt-mostra="nome" aria-hidden="true">Persona Uno<\/span>/);   // nota 178: i dati scritti sono pastiglie col testo
   assert.match(IDX, /\.dt \.dt-val:focus-visible \{ outline: 3px solid/);
 });
 
@@ -1024,23 +1024,32 @@ prova('177: scelta una voce (col tocco o con Invio), la pastiglia mostra subito 
   assert.equal(testoDi(E, 'lavoro'), 'Dipendente');
 });
 
-prova('178 (Ignazio 02/11: «taglia il nome»): i dati scritti sono pastiglie col testo intero (vanno a capo); un tocco o un tasto apre il campo, lasciandolo torna la pastiglia col testo nuovo; le Note sono il campo di sempre', async () => {
+prova('178 e 179: i dati scritti si leggono interi (la pastiglia va a capo); il campo da scrivere c\'è sempre (sopra la pastiglia, trasparente: tocco e Tab, anche in Safari, arrivano a lui), si scrive e si salva; le Note sono il campo di sempre', async () => {
   const lungo = 'Persona Con Un Nome Lunghissimo Davvero Lungo';
   const D = datiVeri({ ...P1, referral_di: lungo });
-  assert.match(D.app.innerHTML, new RegExp(`data-dt-mostra="referral_di">${lungo}</button><input class="dt-in" data-dt="referral_di" hidden`));
+  assert.match(D.app.innerHTML, new RegExp(`<div class="dt-campo dt-con-testo"><small>Contatto e/o Incaricato di</small><span class="dt-val dt-testo" data-dt-mostra="referral_di" aria-hidden="true">${lungo}</span><input class="dt-in" data-dt="referral_di" value="${lungo}"`));
+  assert.doesNotMatch(D.app.innerHTML, /<input[^>]* hidden/);   // 179: nessun campo nascosto
   assert.match(IDX, /\.dt \.dt-val \{ max-width: 100%; white-space: normal; overflow-wrap: anywhere; text-align: left; \}/);   // a capo, mai tagliata
-  const p = D.$('[data-dt-mostra="referral_di"]'), el = D.$('[data-dt="referral_di"]');
-  p.onclick(); assert.equal(p.hidden, true); assert.equal(el.hidden, false);
-  el.value = 'Persona Ventidue'; await el.onchange(); el.onblur();
+  assert.match(IDX, /\.dt \.dt-con-testo \.dt-in:not\(:focus\) \{ position: absolute;[^}]*opacity: 0;/);
+  assert.match(IDX, /\.dt \.dt-con-testo:focus-within \.dt-testo \{ display: none; \}/);
+  // il Nominativo si cambia e si salva (il caso del feedback); la pastiglia segue quello che si scrive
+  const nome = D.$('[data-dt="nome"]');
+  nome.value = 'Persona Uno Nuova'; nome.oninput();
+  assert.match(D.$('[data-dt-mostra="nome"]').innerHTML, /Persona Uno Nuova/);
+  await nome.onchange();
+  uguale(D.scritto().at(-1), { nome: 'Persona Uno Nuova' });
+  const el = D.$('[data-dt="referral_di"]'); el.value = 'Persona Ventidue'; el.oninput(); await el.onchange();
   uguale(D.scritto().at(-1), { referral_di: 'Persona Ventidue' });
-  assert.equal(p.hidden, false); assert.equal(el.hidden, true); assert.match(p.innerHTML, /Persona Ventidue/);
-  // col Tab e un tasto: si scrive da capo
-  const t = D.$('[data-dt-mostra="professione"]');
-  if (t) { t.onkeydown({ key: 'C', preventDefault() {} }); assert.equal(D.$('[data-dt="professione"]').value, 'C'); }
-  // vuoto: il campo da scrivere, come prima; le Note sempre il campo
+  // vuoto: il campo da scrivere, come prima; il Nominativo vuoto si scrive (e non si salva vuoto); le Note sempre il campo
   const V = datiVeri({ ...P1, professione: null });
   assert.doesNotMatch(V.app.innerHTML, /data-dt-mostra="professione"/); assert.match(V.app.innerHTML, /data-dt="professione" value="" placeholder="aggiungi"/);
   assert.doesNotMatch(V.app.innerHTML, /data-dt-mostra="note"/);
+  const N = datiVeri({ ...P1, nome: '' });
+  assert.doesNotMatch(N.app.innerHTML, /data-dt-mostra="nome"/);
+  const nn = N.$('[data-dt="nome"]'); nn.value = 'Persona Nuova'; await nn.onchange();
+  uguale(N.scritto().at(-1), { nome: 'Persona Nuova' });
+  // le scelte: anche Safari le raggiunge col Tab
+  assert.match(D.app.innerHTML, /data-dt-apri="sesso" tabindex="0">/);
 });
 
 (async () => {

@@ -458,7 +458,10 @@
   /* nota 178 (Ignazio 02/11: «taglia il nome»): le pastiglie si leggono sempre intere, larghe quanto il testo e a capo se non ci stanno */
   .dt .dt-val { max-width: 100%; white-space: normal; overflow-wrap: anywhere; text-align: left; }
   .dt .dt-val.dt-testo { border-radius: 14px; }   /* su più righe resta una pastiglia */
-  .dt .dt-in[hidden], .dt .dt-val[hidden] { display: none; }
+  /* nota 179: il campo da scrivere sta sopra la pastiglia, trasparente: tocco e Tab (anche in Safari) arrivano a lui; scrivendo si vede lui e la pastiglia no */
+  .dt .dt-con-testo { position: relative; }
+  .dt .dt-con-testo .dt-in:not(:focus) { position: absolute; left: 0; right: 0; bottom: 0; top: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+  .dt .dt-con-testo:focus-within .dt-testo { display: none; }
   .dt .dt-val:focus-visible { outline: 3px solid #2563EB; outline-offset: 2px; }   /* nota 175: col Tab si vede su quale scelta si è (i campi scritti hanno il loro bordo) */
   .dt .dt-val:not(.dt-vuota) em { color: inherit; opacity: .6; }
   .dt-pil { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; } .dt-pil[hidden] { display: none; }
