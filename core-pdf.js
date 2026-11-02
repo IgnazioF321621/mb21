@@ -121,7 +121,7 @@
 
     // 3 · Clienti: due colonne affiancate come nel modulo (1-10 · 11-20, o di più), in fondo il totale VP
     y0 = y; y = testa(xs, y, 3, 'Sviluppa 100 VP o 10 clienti al mese', m.s3.raggiunto) + 4.2;   // nota 097: fatta con la prima delle due
-    conto(xs, y, `${m.s3.quanti}/${m.s3.obiettivo} clienti · ${num(m.s3.vp) || 0} VP`);
+    conto(xs, y, `${m.s3.quanti}/${m.s3.obiettivo} clienti · ${num(m.s3.vp) || 0} VP${m.s3.daMappa ? ` · ${num(m.s3.vpConta)} VP personali` : ''}`);   // nota 180
     y += 2.5;
     const MEZZA = (COL - 2) / 2, altriCli = altri(cliTutti, 2 * nC);
     for (let k = 0; k < 2; k++) {

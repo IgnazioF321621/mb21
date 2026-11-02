@@ -153,4 +153,27 @@ prova('Tracce, solo settembre 2026 (Ignazio 27/09): conta il totale, giorni cumu
   assert.deepEqual([pagOtt.s5.aTotale, pagOtt.s5.fatta], [false, false]);
 });
 
+prova('Nota 180: «Sviluppa 100 VP» conta i VP personali della mappa (123,45 su 100 → fatta), senza mappa i VP dei clienti', () => {
+  const K = require('../../check.js');
+  const mese = '2026-11';
+  const vendite = [{ contatto_id: 'c1', data: '2026-11-01', vp: 22.5 }, { contatto_id: 'c2', data: '2026-11-01', vp: 12 }];
+  // il difetto: mappa caricata con 123,45 VP personali, 2 clienti con 34,5 VP → diceva «mancano 66 VP o 8 clienti»
+  const m = C.modulo({ mese, vendite, obiettivi: { vpp_amway: 123.45 } });
+  assert.deepEqual([m.s3.raggiunto, m.s3.vpConta, m.s3.daMappa, m.s3.vp], [true, 123.45, true, 34.5]);
+  assert.equal(m.abitudini[2], true);
+  assert.equal(m.s2.vp, 88.95);   // il consumo personale non cambia: VP della mappa meno VP dei clienti
+  const voce = K.percorso({ lc1: { luci: [], accese: 0 }, modulo: m, sponsor: 0 }).gradini[1].voci[2];
+  assert.deepEqual([voce.testo, voce.fatto, voce.stato], ['Sviluppa 100 VP (10 clienti)', true, '123,45 su 100']);
+  // mappa sotto i 100: manca la differenza, senza «dai clienti»
+  const sotto = C.modulo({ mese, vendite, obiettivi: { vpp_amway: 60 } });
+  const p = K.percorso({ lc1: { luci: [], accese: 0 }, modulo: sotto, sponsor: 0 }).gradini[1];
+  assert.equal(sotto.s3.raggiunto, false);
+  assert.equal(p.voci[2].stato, 'mancano 40 VP o 8 clienti');
+  assert.ok(p.mancano.some(x => x.cosa === '40 VP o 8 clienti in più'));
+  // senza mappa nel mese: come prima, i VP dei clienti
+  const senza = C.modulo({ mese, vendite });
+  assert.deepEqual([senza.s3.daMappa, senza.s3.vpConta, senza.s3.raggiunto], [false, 34.5, false]);
+  assert.ok(K.percorso({ lc1: { luci: [], accese: 0 }, modulo: senza, sponsor: 0 }).gradini[1].mancano.some(x => x.cosa === '66 VP dai clienti o 8 clienti in più'));
+});
+
 console.log(`\n${ok} prove superate`);

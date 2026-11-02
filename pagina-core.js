@@ -61,7 +61,7 @@ function moduloCoreHtml(m) {
     <div class="vn-aiuto">${m.s2.auto ? `VP personali Amway ${num(m.s2.vpAmway)} − VP venduti ai clienti ${num(m.s2.vpClienti)}: quello che resta è consumo.` : 'Senza dati Amway del mese si scrive a mano: VP personali meno VP venduti ai clienti.'}</div>`, m.s2.vp != null && m.s2.vp > 0);
 
   const s3 = sez(3, 'Sviluppa 100 VP (10 clienti)', `
-    <div class="cm-conto"><b>${m.s3.quanti}</b>/${m.s3.obiettivo} clienti · <b>${num(m.s3.vp)}</b> VP</div>
+    <div class="cm-conto"><b>${m.s3.quanti}</b>/${m.s3.obiettivo} clienti · <b>${num(m.s3.vp)}</b> VP${m.s3.daMappa ? ` · <b>${num(m.s3.vpConta)}</b> VP personali` : ''}</div>
     ${m.s3.righe.length ? `<table class="cm-tab"><thead><tr><th></th><th>Nome cliente</th><th class="r">Valore Punti</th></tr></thead><tbody>
       ${m.s3.righe.map((r, i) => `<tr><td>${i + 1}</td><td class="nome">${esc(r.nome)}</td><td class="r">${num(r.vp)}</td></tr>`).join('')}
       ${vuote(Math.max(m.s3.obiettivo, m.s3.righe.length), m.s3.righe.length).map((_, i) => `<tr class="vuota"><td>${m.s3.righe.length + i + 1}</td><td></td><td></td></tr>`).join('')}

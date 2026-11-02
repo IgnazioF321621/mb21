@@ -276,11 +276,11 @@ const moduloVuoto = K.modulo({ mese: '2026-10', obiettivi: { vpp_amway: 187.5 },
 
 prova('Percorso: un consiglio per ogni gradino, in parallelo (Ignazio 27/09); il Core non ripete il biglietto che manca nelle luci', () => {
   const p = C.percorso({ lc1: lc1Di(187.5, false), modulo: moduloVuoto });
-  assert.deepEqual(p.gradini.map(g => [g.chiave, g.stato, g.fatto]), [['leader1', '3 su 4', false], ['core', '1 su 7', false], ['pace', '2 su 3', false]]);
+  assert.deepEqual(p.gradini.map(g => [g.chiave, g.stato, g.fatto]), [['leader1', '3 su 4', false], ['core', '2 su 7', false], ['pace', '2 su 3', false]]);
   assert.equal(p.doveSei, null);
   assert.deepEqual(p.gradini[0].consiglio, { cosa: 'il biglietto WES', peso: 0.2, vai: 'segni' });   // il tocco porta ai biglietti
   assert.deepEqual(p.gradini[1].consiglio, { cosa: "il counseling, l'edificazione e il no-crossline", peso: 0.3, vai: 'core' });
-  assert.deepEqual(p.gradini[1].mancano.map(x => x.cosa).slice(0, 2), ['8 Piani Marketing in più', '100 VP dai clienti o 10 clienti in più']);   // nota 097: tutte e due, basta la prima
+  assert.deepEqual(p.gradini[1].mancano.map(x => x.cosa).slice(0, 2), ['8 Piani Marketing in più', 'una traccia ogni giorno (0 su 20 giorni finora)']);   // nota 180: 187,5 VP personali della mappa → «Sviluppa 100 VP» è fatta
   const incontri = p.gradini[1].mancano.map(x => x.cosa).join(' | ');
   assert.match(incontri, /gli OPEN \(0 su 5\) e il biglietto BBS/);   // il BBS è acceso nelle luci: il Core lo dice ancora (qui il modulo finto è senza biglietti)
   assert.doesNotMatch(incontri, /biglietto WES/);                         // il WES manca nelle luci: lo consiglia il 1° livello
@@ -328,7 +328,7 @@ prova('Voci delle 7 abitudini (Ignazio 27/09): «N su 15 giorni finora» nel mes
   assert.equal(voci[1].stato, '188 VP');   // nota 137 (Ignazio 28/10: «anche il numero»): il consumo personale fatto dice i VP
   const fintoCore = { ...moduloVuoto, fatte: 7, abitudini: [true, true, true, true, true, true, true] };
   const tutte = C.percorso({ lc1: lc1Di(187.5, true), modulo: fintoCore }).gradini[1].voci;
-  assert.deepEqual(tutte.map(v => v.stato), ['0 su 8', '188 VP', '0 clienti su 10', '0 su 20 giorni finora', '0 su 20 giorni finora', 'OPEN 0 su 5', 'fatto']);   // (abitudini finte: i numeri sono quelli del modulo vuoto)
+  assert.deepEqual(tutte.map(v => v.stato), ['0 su 8', '188 VP', '187,50 su 100', '0 su 20 giorni finora', '0 su 20 giorni finora', 'OPEN 0 su 5', 'fatto']);   // (abitudini finte: i numeri sono quelli del modulo vuoto; nota 180: i VP personali «187,50 su 100» come la riga «100 VP»)
   // mese chiuso: i giorni sono quelli del mese, senza «finora»
   const chiuso = C.percorso({ lc1: C.lc1({ mese: '2026-10-01', oggi: '2026-12-05', obiettivi: [{ mese: '2026-10-01', vpp_amway: 187.5 }], biglietti: [], cep: cepSempre, eventi: ev }), modulo: moduloVuoto });
   assert.equal(chiuso.gradini[1].voci[3].stato, '0 su 31');
@@ -452,9 +452,9 @@ prova('Scala dei bonus (01/10): una riga per gradino con le colonne dei Segni Vi
 });
 
 prova('Dove porta il tocco (27/09, stella cometa): biglietti e CEP → segni, PM e clienti → MB Plan, tracce → Training › Studia e pagine → I miei libri (nota 084), squadra → Modulo Core', () => {
-  const p = C.percorso({ lc1: lc1Di(40, false), modulo: moduloVuoto, sponsor: 0 });
+  const p = C.percorso({ lc1: lc1Di(40, false), modulo: K.modulo({ mese: '2026-10', obiettivi: { vpp_amway: 40 }, oggi: '2026-10-20' }), sponsor: 0 });   // nota 180: 40 VP personali
   const dove = Object.fromEntries(p.gradini[1].mancano.map(x => [x.cosa.split(' (')[0], x.vai]));
-  assert.deepEqual(dove, { '8 Piani Marketing in più': 'agenda', '100 VP dai clienti o 10 clienti in più': 'agenda', 'una traccia ogni giorno': 'studia', '10 pagine ogni giorno': 'libri',   /* nota 084: Training › Studia e I miei libri */
+  assert.deepEqual(dove, { '8 Piani Marketing in più': 'agenda', '60 VP o 10 clienti in più': 'agenda', 'una traccia ogni giorno': 'studia', '10 pagine ogni giorno': 'libri',   /* nota 084: Training › Studia e I miei libri */
     'gli OPEN': 'segni', "il counseling, l'edificazione e il no-crossline": 'core' });
   assert.equal(p.gradini[0].consiglio.vai, 'segni');   // il biglietto WES
   assert.equal(C.percorso({ lc1: lc1Di(40, true), modulo: moduloVuoto }).gradini[0].consiglio.vai, undefined);   // 100 VP: nessun posto nell'app dove si fa

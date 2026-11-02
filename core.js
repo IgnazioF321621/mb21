@@ -92,8 +92,12 @@
     // Nota Pagine 097 (Ignazio 25/10, «sì»): «Sviluppa 100 VP o 10 clienti» è fatta appena arriva la PRIMA delle due: 100 VP dai clienti nel mese
     // oppure 10 clienti diversi (prima contavano solo i 10 clienti: con 3 clienti e 300 VP risultava non fatta)
     const vpClienti = Math.round(clienti.reduce((t, r) => t + r.vp, 0) * 100) / 100;   // arrotondato: la somma dei decimali dava «29,560000000000002» (Fiammetta, 22/09)
+    // Nota Pagine 180 (Ignazio 02/11: «100 punti personali, non di squadra, e quelli io li ho fatti»): i 100 VP sono i VP PERSONALI della
+    // mappa caricata (`obiettivi_mese.vpp_amway`, lo stesso numero del «100 VP» di Leader 1° livello); senza mappa nel mese, come prima, i VP dei clienti
+    const vpMappa = obiettivi && obiettivi.vpp_amway != null && obiettivi.vpp_amway !== '' ? Number(obiettivi.vpp_amway) : null;
+    const vpConta = vpMappa != null ? vpMappa : vpClienti;
     const s3 = { righe: clienti, quanti: clienti.length, obiettivo: OBIETTIVI.clienti, obiettivoVp: OBIETTIVI.vpClienti,
-      raggiunto: clienti.length >= OBIETTIVI.clienti || vpClienti >= OBIETTIVI.vpClienti, vp: vpClienti };
+      raggiunto: clienti.length >= OBIETTIVI.clienti || vpConta >= OBIETTIVI.vpClienti, vp: vpClienti, vpConta, daMappa: vpMappa != null };
 
     // 2 · Consumare i prodotti Amway (Ignazio 22/09): il consumo personale = i VP personali Amway del mese MENO i VP venduti
     // ai clienti (chi compra solo per vendere non consuma). Senza dati Amway vale quello scritto a mano.
