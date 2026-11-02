@@ -450,6 +450,12 @@
   .dt .dt-val:not(.dt-vuota), .dt .dt-val:not(.dt-vuota):disabled { display: inline-block; width: auto; margin: 0; background: var(--cat-tinta); color: var(--cat-scuro); -webkit-text-fill-color: var(--cat-scuro);
     border-radius: 999px; padding: 3px 11px; font-size: 15px; font-weight: 600; }
   .dt.cat-nessuna .dt-val:not(.dt-vuota) { background: #EEF0F3; color: #363E4C; -webkit-text-fill-color: #363E4C; }
+  /* nota Pagine 176 (Ignazio 02/11): anche i dati scritti (nome, telefono, contatto, professione) e «Contatti fatti» a pastiglia, tranne le Note; scrivendo,
+     il campo torna quello di sempre (16 px, bordo della categoria) */
+  .dt .dt-in:not(.dt-nota):not(:placeholder-shown):not(:focus), .dt .dt-fisso { display: inline-block; width: auto; max-width: 100%; margin: 0; background: var(--cat-tinta); color: var(--cat-scuro);
+    -webkit-text-fill-color: var(--cat-scuro); border: 0; border-radius: 999px; padding: 3px 11px; font-size: 15px; font-weight: 600; }
+  .dt.cat-nessuna .dt-in:not(.dt-nota):not(:placeholder-shown):not(:focus), .dt.cat-nessuna .dt-fisso { background: #EEF0F3; color: #363E4C; -webkit-text-fill-color: #363E4C; }
+  .dt .dt-val:focus-visible { outline: 3px solid #2563EB; outline-offset: 2px; }   /* nota 175: col Tab si vede su quale scelta si è (i campi scritti hanno il loro bordo) */
   .dt .dt-val:not(.dt-vuota) em { color: inherit; opacity: .6; }
   .dt-pil { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; } .dt-pil[hidden] { display: none; }
   .dt-pil button { border: 0; font-size: 13.5px; font-weight: 600; padding: 6px 11px; border-radius: 999px; background: #F2F4F7; color: #3A4150; min-height: 34px; }

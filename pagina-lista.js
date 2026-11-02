@@ -952,7 +952,9 @@ function disegnaDati(c, extra) {
   if (!box) return;
   const L = MB21Lista, guardo = soloGuardo(), spento = guardo ? ' disabled' : '', vuoto = guardo ? '—' : 'aggiungi', freccia = guardo ? '' : ' <em>▾</em>';
   const conStorico = (lista, v) => (v && !lista.includes(v) ? [...lista, v] : lista);   // valori storici fuori elenco (es. «36-45») restano
-  const testo = (k, etichetta, v, { max, pieno, lista, tipo } = {}) => `<div class="dt-campo${pieno ? ' dt-pieno' : ''}"><small>${etichetta}</small><input class="dt-in" data-dt="${k}"${tipo ? ` type="${tipo}"` : ''} value="${esc(v || '')}" placeholder="${vuoto}"${max ? ` maxlength="${Math.max(max, (v || '').length)}"` : ''}${lista ? ` list="${lista}"` : ''}${spento}></div>`;
+  // nota Pagine 176 (Ignazio 02/11, «si va bene» su dati_175.png): a scheda chiusa anche i dati scritti sono pastiglie nella tinta della categoria (lo stile, in
+  // index.html; `size` le fa larghe quanto il testo), tranne le Note; toccati (o col Tab) si scrivono come prima
+  const testo = (k, etichetta, v, { max, pieno, lista, tipo } = {}) => `<div class="dt-campo${pieno ? ' dt-pieno' : ''}"><small>${etichetta}</small><input class="dt-in${k === 'note' ? ' dt-nota' : ''}" data-dt="${k}" size="${Math.max(4, (v || '').length + 1)}"${tipo ? ` type="${tipo}"` : ''} value="${esc(v || '')}" placeholder="${vuoto}"${max ? ` maxlength="${Math.max(max, (v || '').length)}"` : ''}${lista ? ` list="${lista}"` : ''}${spento}></div>`;
   // una scelta: il valore scritto con ▾ (a scheda chiusa la pastiglia nella tinta della categoria); al tocco (collegaDati) si apre sotto il campo da scrivere
   // con le voci. Nota Pagine 174 (Ignazio 02/11, «si ok» su scelte_174.png: «man mano che scrivi ti compare quello che ti serve… ci clicchi e lo scegli»,
   // poi «poter scendere con le frecce nella lista»): prima si apriva una fila di pastiglie; ora si scrive subito e le voci si filtrano; frecce e Invio.
@@ -1015,6 +1017,7 @@ function collegaDati(c, extra) {
   const q = s => radice.querySelector(s);
   radice.querySelectorAll('input.dt-in').forEach(el => {
     el.onkeydown = e => { if (e.key === 'Enter') el.blur(); };
+    el.oninput = () => { el.size = Math.max(4, el.value.length + 1); };   // nota 176: la pastiglia larga quanto il testo
     el.onchange = () => {
       const k = el.dataset.dt, v = el.value.trim();
       if (k === 'nome') { if (!v) { el.value = c.nome; return mostraToast('Il nome non può restare vuoto'); } return salvaDato(c, { nome: v }); }
@@ -1052,7 +1055,7 @@ function collegaDati(c, extra) {
       if (campo.libera && t.trim()) voci = [...voci, [t.trim(), `Scrivi «${t.trim()}» così com'è`, '']];
       if (campo.v && !t.trim() && campo.togli !== false) voci = [...voci, ['', 'Togli', '']];
       acceso = Math.min(acceso, Math.max(0, voci.length - 1));
-      lista.innerHTML = voci.length ? voci.map(([v, nome, nota], i) => `<button type="button" role="option" data-dt-voce="${i}" class="${i === acceso ? 'acceso' : ''}${v === campo.v && v ? ' scelta' : ''}"><span>${esc(nome)}</span>${nota ? `<small>${esc(nota)}</small>` : ''}</button>`).join('')
+      lista.innerHTML = voci.length ? voci.map(([v, nome, nota], i) => `<button type="button" role="option" tabindex="-1" data-dt-voce="${i}" class="${i === acceso ? 'acceso' : ''}${v === campo.v && v ? ' scelta' : ''}"><span>${esc(nome)}</span>${nota ? `<small>${esc(nota)}</small>` : ''}</button>`).join('')
         : `<div class="dt-sugg-vuoto">${esc(campo.vuote || 'Nessuna voce: prova con altre lettere')}</div>`;
       lista.querySelectorAll('[data-dt-voce]').forEach(b => { b.onclick = () => scegli(Number(b.dataset.dtVoce)); });
     };
@@ -1072,6 +1075,14 @@ function collegaDati(c, extra) {
       fila.hidden = false;
       if (fila.parentElement) fila.parentElement.style.gridColumn = '1 / -1';
       inp.value = ''; acceso = 0; disegna(); inp.focus();
+    };
+    // Nota Pagine 175 (Ignazio 02/11: «se attraverso la tab si arrivava alla voce e si iniziava a scrivere, iniziava la tendina»): sulla scelta raggiunta col
+    // Tab basta scrivere: si apre il campo con quel tasto già scritto e le voci; le voci non prendono il Tab (tabindex -1), quindi un altro Tab passa al campo dopo
+    if (apri) apri.onkeydown = e => {
+      if (!e.key || e.key.length !== 1 || e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.preventDefault) e.preventDefault();
+      if (fila.hidden) apri.onclick();
+      inp.value = e.key; acceso = 0; disegna(); inp.focus();
     };
     if (k === 'cat' && LS.dopoCategoria) { fila.hidden = false; if (fila.parentElement) fila.parentElement.style.gridColumn = '1 / -1'; disegna(); }   // S5c: già aperta
   });

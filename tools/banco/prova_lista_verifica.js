@@ -798,7 +798,7 @@ prova('160 (seguito, «misto»): un riquadro solo come prima con tutte le voci, 
   assert.doesNotMatch(h, /<h4/);   // niente titoli «Chi è · Per l'attività · Dati personali»
   assert.equal(h.split('class="dt-sep"').length - 1, 2);
   assert.match(h, /data-dt-apri="citta">aggiungi <em>▾<\/em>/);   // nota 174: anche la Località si scrive e si sceglie
-  assert.match(h, /data-dt="telefono" type="tel" value="\+39 3330000001"/);   // il numero com'è, col prefisso
+  assert.match(h, /data-dt="telefono" size="15" type="tel" value="\+39 3330000001"/);   // il numero com'è, col prefisso
   D.app.clic('#dt-elimina'); uguale(D.fatti, ['elimina c1']);   // la stessa funzione dei tre puntini
   assert.doesNotMatch(PL, /id="modifica">Modifica<\/button>/);
   // finché compleanno, sesso e lavoro non arrivano: «Carico…», e non si toccano
@@ -931,7 +931,7 @@ prova('160 e 174: le scelte (età, sesso, interesse, quali prodotti, località) 
   assert.ok(!L2.fatti.slice(-2).includes('scheda'));   // la località non ridisegna la scheda
   // guardando soltanto («Tutti»): campi spenti, niente «Elimina», niente salvataggi
   const G = datiVeri(P1, { guardo: true });
-  assert.match(G.app.innerHTML, /data-dt="nome" value="Persona Uno" placeholder="—" disabled>/);
+  assert.match(G.app.innerHTML, /data-dt="nome" size="\d+" value="Persona Uno" placeholder="—" disabled>/);
   assert.doesNotMatch(G.app.innerHTML, /dt-elimina/);
 });
 
@@ -985,6 +985,23 @@ prova('Nota 080, punto 2: la migrazione aggiunge account_cliente_dal IN FONDO a 
   const nuovo = corpo.slice(corpo.indexOf('\n') + 1).trim().replace(') AS contatti_fatti,\n    c.account_cliente_dal\n', ') AS contatti_fatti\n');
   assert.equal(nuovo, prima);
   assert.doesNotMatch(corpo, /drop |grant |revoke /i);
+});
+
+prova('175 e 176: col Tab sulla scelta basta scrivere (si apre con il tasto già scritto, le voci fuori dal Tab); i dati scritti a pastiglia tranne le Note', async () => {
+  const D = datiVeri(P1);
+  const b = D.$('[data-dt-apri="fascia_eta"]');
+  b.onkeydown({ key: '4', preventDefault() {} });
+  assert.equal(D.$('[data-dt-fila="fascia_eta"]').hidden, false);
+  assert.equal(D.$('[data-dt-scrivi="fascia_eta"]').value, '4');
+  assert.deepEqual(D.app.querySelectorAll('[data-dt-sugg="fascia_eta"] [data-dt-voce]').map(v => v.innerHTML.replace(/<[^>]+>/g, '')), ['31-40', '41-50']);
+  assert.match(D.app.innerHTML, /role="option" tabindex="-1" data-dt-voce="0"/);
+  b.onkeydown({ key: 'Tab' }); b.onkeydown({ key: 'c', metaKey: true });   // Tab e scorciatoie: niente
+  assert.equal(D.$('[data-dt-scrivi="fascia_eta"]').value, '4');
+  // 176: nell'HTML le Note hanno la loro classe; lo stile fa pastiglie gli altri campi scritti e «Contatti fatti»
+  assert.match(D.app.innerHTML, /<input class="dt-in dt-nota" data-dt="note"/);
+  assert.match(IDX, /\.dt \.dt-in:not\(\.dt-nota\):not\(:placeholder-shown\):not\(:focus\), \.dt \.dt-fisso \{[^}]*background: var\(--cat-tinta\); color: var\(--cat-scuro\);/);
+  assert.match(IDX, /\.dt\.cat-nessuna \.dt-in:not\(\.dt-nota\):not\(:placeholder-shown\):not\(:focus\), \.dt\.cat-nessuna \.dt-fisso \{ background: #EEF0F3;/);
+  assert.match(IDX, /\.dt \.dt-val:focus-visible \{ outline: 3px solid/);
 });
 
 (async () => {
