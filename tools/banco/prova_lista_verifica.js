@@ -798,7 +798,7 @@ prova('160 (seguito, «misto»): un riquadro solo come prima con tutte le voci, 
   assert.doesNotMatch(h, /<h4/);   // niente titoli «Chi è · Per l'attività · Dati personali»
   assert.equal(h.split('class="dt-sep"').length - 1, 2);
   assert.match(h, /data-dt-apri="citta">aggiungi <em>▾<\/em>/);   // nota 174: anche la Località si scrive e si sceglie
-  assert.match(h, /data-dt="telefono" size="15" type="tel" value="\+39 3330000001"/);   // il numero com'è, col prefisso
+  assert.match(h, /data-dt-mostra="telefono">\+39 3330000001<\/button><input class="dt-in" data-dt="telefono" hidden type="tel" value="\+39 3330000001"/);   // il numero com'è, col prefisso
   D.app.clic('#dt-elimina'); uguale(D.fatti, ['elimina c1']);   // la stessa funzione dei tre puntini
   assert.doesNotMatch(PL, /id="modifica">Modifica<\/button>/);
   // finché compleanno, sesso e lavoro non arrivano: «Carico…», e non si toccano
@@ -931,7 +931,7 @@ prova('160 e 174: le scelte (età, sesso, interesse, quali prodotti, località) 
   assert.ok(!L2.fatti.slice(-2).includes('scheda'));   // la località non ridisegna la scheda
   // guardando soltanto («Tutti»): campi spenti, niente «Elimina», niente salvataggi
   const G = datiVeri(P1, { guardo: true });
-  assert.match(G.app.innerHTML, /data-dt="nome" size="\d+" value="Persona Uno" placeholder="—" disabled>/);
+  assert.match(G.app.innerHTML, /data-dt-mostra="nome" disabled>Persona Uno<\/button><input class="dt-in" data-dt="nome" hidden value="Persona Uno" placeholder="—" disabled>/);
   assert.doesNotMatch(G.app.innerHTML, /dt-elimina/);
 });
 
@@ -999,8 +999,8 @@ prova('175 e 176: col Tab sulla scelta basta scrivere (si apre con il tasto già
   assert.equal(D.$('[data-dt-scrivi="fascia_eta"]').value, '4');
   // 176: nell'HTML le Note hanno la loro classe; lo stile fa pastiglie gli altri campi scritti e «Contatti fatti»
   assert.match(D.app.innerHTML, /<input class="dt-in dt-nota" data-dt="note"/);
-  assert.match(IDX, /\.dt \.dt-in:not\(\.dt-nota\):not\(:placeholder-shown\):not\(:focus\), \.dt \.dt-fisso \{[^}]*background: var\(--cat-tinta\); color: var\(--cat-scuro\);/);
-  assert.match(IDX, /\.dt\.cat-nessuna \.dt-in:not\(\.dt-nota\):not\(:placeholder-shown\):not\(:focus\), \.dt\.cat-nessuna \.dt-fisso \{ background: #EEF0F3;/);
+  assert.match(IDX, /\.dt \.dt-fisso \{[^}]*background: var\(--cat-tinta\); color: var\(--cat-scuro\);/);
+  assert.match(D.app.innerHTML, /<button type="button" class="dt-val dt-testo" data-dt-mostra="nome">Persona Uno<\/button>/);   // nota 178: i dati scritti sono pastiglie col testo
   assert.match(IDX, /\.dt \.dt-val:focus-visible \{ outline: 3px solid/);
 });
 
@@ -1022,6 +1022,25 @@ prova('177: scelta una voce (col tocco o con Invio), la pastiglia mostra subito 
   apriScelta(E, 'lavoro'); const la = E.$('[data-dt-scrivi="lavoro"]'); la.value = 'dip'; la.oninput();
   await la.onkeydown({ key: 'Enter', preventDefault() {} });
   assert.equal(testoDi(E, 'lavoro'), 'Dipendente');
+});
+
+prova('178 (Ignazio 02/11: «taglia il nome»): i dati scritti sono pastiglie col testo intero (vanno a capo); un tocco o un tasto apre il campo, lasciandolo torna la pastiglia col testo nuovo; le Note sono il campo di sempre', async () => {
+  const lungo = 'Persona Con Un Nome Lunghissimo Davvero Lungo';
+  const D = datiVeri({ ...P1, referral_di: lungo });
+  assert.match(D.app.innerHTML, new RegExp(`data-dt-mostra="referral_di">${lungo}</button><input class="dt-in" data-dt="referral_di" hidden`));
+  assert.match(IDX, /\.dt \.dt-val \{ max-width: 100%; white-space: normal; overflow-wrap: anywhere; text-align: left; \}/);   // a capo, mai tagliata
+  const p = D.$('[data-dt-mostra="referral_di"]'), el = D.$('[data-dt="referral_di"]');
+  p.onclick(); assert.equal(p.hidden, true); assert.equal(el.hidden, false);
+  el.value = 'Persona Ventidue'; await el.onchange(); el.onblur();
+  uguale(D.scritto().at(-1), { referral_di: 'Persona Ventidue' });
+  assert.equal(p.hidden, false); assert.equal(el.hidden, true); assert.match(p.innerHTML, /Persona Ventidue/);
+  // col Tab e un tasto: si scrive da capo
+  const t = D.$('[data-dt-mostra="professione"]');
+  if (t) { t.onkeydown({ key: 'C', preventDefault() {} }); assert.equal(D.$('[data-dt="professione"]').value, 'C'); }
+  // vuoto: il campo da scrivere, come prima; le Note sempre il campo
+  const V = datiVeri({ ...P1, professione: null });
+  assert.doesNotMatch(V.app.innerHTML, /data-dt-mostra="professione"/); assert.match(V.app.innerHTML, /data-dt="professione" value="" placeholder="aggiungi"/);
+  assert.doesNotMatch(V.app.innerHTML, /data-dt-mostra="note"/);
 });
 
 (async () => {

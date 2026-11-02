@@ -952,9 +952,11 @@ function disegnaDati(c, extra) {
   if (!box) return;
   const L = MB21Lista, guardo = soloGuardo(), spento = guardo ? ' disabled' : '', vuoto = guardo ? '—' : 'aggiungi', freccia = guardo ? '' : ' <em>▾</em>';
   const conStorico = (lista, v) => (v && !lista.includes(v) ? [...lista, v] : lista);   // valori storici fuori elenco (es. «36-45») restano
-  // nota Pagine 176 (Ignazio 02/11, «si va bene» su dati_175.png): a scheda chiusa anche i dati scritti sono pastiglie nella tinta della categoria (lo stile, in
-  // index.html; `size` le fa larghe quanto il testo), tranne le Note; toccati (o col Tab) si scrivono come prima
-  const testo = (k, etichetta, v, { max, pieno, lista, tipo } = {}) => `<div class="dt-campo${pieno ? ' dt-pieno' : ''}"><small>${etichetta}</small><input class="dt-in${k === 'note' ? ' dt-nota' : ''}" data-dt="${k}" size="${Math.max(4, (v || '').length + 1)}"${tipo ? ` type="${tipo}"` : ''} value="${esc(v || '')}" placeholder="${vuoto}"${max ? ` maxlength="${Math.max(max, (v || '').length)}"` : ''}${lista ? ` list="${lista}"` : ''}${spento}></div>`;
+  // nota Pagine 176 (Ignazio 02/11, «si va bene» su dati_175.png): a scheda chiusa anche i dati scritti sono pastiglie nella tinta della categoria, tranne le Note;
+  // toccati (o col Tab e un tasto) si scrivono come prima. Nota 178 (Ignazio 02/11: «praticamente, taglia il nome»): la pastiglia è il testo (`dt-val dt-testo`,
+  // va a capo e si legge sempre intero) e il campo da scrivere resta nascosto finché non serve; un campo vuoto è il campo da scrivere, come prima
+  const pastigliaTesto = (k, v) => (v && k !== 'note' ? `<button type="button" class="dt-val dt-testo" data-dt-mostra="${k}"${spento}>${esc(v)}</button>` : '');
+  const testo = (k, etichetta, v, { max, pieno, lista, tipo } = {}) => `<div class="dt-campo${pieno ? ' dt-pieno' : ''}"><small>${etichetta}</small>${pastigliaTesto(k, v)}<input class="dt-in${k === 'note' ? ' dt-nota' : ''}" data-dt="${k}"${v && k !== 'note' ? ' hidden' : ''}${tipo ? ` type="${tipo}"` : ''} value="${esc(v || '')}" placeholder="${vuoto}"${max ? ` maxlength="${Math.max(max, (v || '').length)}"` : ''}${lista ? ` list="${lista}"` : ''}${spento}></div>`;
   // una scelta: il valore scritto con ▾ (a scheda chiusa la pastiglia nella tinta della categoria); al tocco (collegaDati) si apre sotto il campo da scrivere
   // con le voci. Nota Pagine 174 (Ignazio 02/11, «si ok» su scelte_174.png: «man mano che scrivi ti compare quello che ti serve… ci clicchi e lo scegli»,
   // poi «poter scendere con le frecce nella lista»): prima si apriva una fila di pastiglie; ora si scrive subito e le voci si filtrano; frecce e Invio.
@@ -1004,7 +1006,8 @@ function disegnaDati(c, extra) {
   if (coppia && posto && coppia !== posto && posto.replaceWith) posto.replaceWith(coppia);
   collegaDati(c, extra);
   const di = chiave && document.querySelector('#dati-riquadro ' + chiave);
-  if (di && !di.disabled) { di.value = attivo.value; di.focus(); if (attivo.selectionStart != null && di.setSelectionRange) try { di.setSelectionRange(attivo.selectionStart, attivo.selectionEnd); } catch (e) { /* select */ } }
+  if (di && !di.disabled) { const m = document.querySelector(`#dati-riquadro [data-dt-mostra="${attivo.dataset.dt}"]`); if (m) m.hidden = true; di.hidden = false;   // nota 178: si stava scrivendo: resta il campo
+    di.value = attivo.value; di.focus(); if (attivo.selectionStart != null && di.setSelectionRange) try { di.setSelectionRange(attivo.selectionStart, attivo.selectionEnd); } catch (e) { /* select */ } }
 }
 
 // I tocchi della sezione Dati: ogni campo salva solo sé stesso (salvaDato)
@@ -1017,7 +1020,14 @@ function collegaDati(c, extra) {
   const q = s => radice.querySelector(s);
   radice.querySelectorAll('input.dt-in').forEach(el => {
     el.onkeydown = e => { if (e.key === 'Enter') el.blur(); };
-    el.oninput = () => { el.size = Math.max(4, el.value.length + 1); };   // nota 176: la pastiglia larga quanto il testo
+    // nota 178: la pastiglia del testo; un tocco (o Invio, o un tasto arrivati col Tab) apre il campo, lasciandolo torna la pastiglia col testo intero
+    const mostra = radice.querySelector(`[data-dt-mostra="${el.dataset.dt}"]`);
+    if (mostra) {
+      const scrivi = tasto => { mostra.hidden = true; el.hidden = false; if (tasto != null) el.value = tasto; el.focus(); };
+      mostra.onclick = () => scrivi();
+      mostra.onkeydown = e => { if (e.key && e.key.length === 1 && !e.metaKey && !e.ctrlKey && !e.altKey) { if (e.preventDefault) e.preventDefault(); scrivi(e.key); } };
+      el.onblur = () => { const v = el.value.trim(); if (!v) return; mostra.innerHTML = esc(v); mostra.hidden = false; el.hidden = true; };
+    }
     el.onchange = () => {
       const k = el.dataset.dt, v = el.value.trim();
       if (k === 'nome') { if (!v) { el.value = c.nome; return mostraToast('Il nome non può restare vuoto'); } return salvaDato(c, { nome: v }); }
@@ -1164,7 +1174,7 @@ async function dopoDato(c, cambi, rileggi = false) {
   // scritti sul posto: restano come sono. Nota Pagine 177 (Ignazio 02/11: «scrivo la località e poi faccio Invio, mi rimane sul vecchio nome»): dalla 174 Località
   // e Compleanno sono scelte (la pastiglia col valore), quindi si ridisegnano come le altre scelte; qui restano solo i campi scritti
   if (chiavi.every(k => ['referral_di', 'note', 'professione'].includes(k))) {
-    for (const k of chiavi) { const el = document.querySelector(`#dati-riquadro [data-dt="${k}"]`); if (el && el !== document.activeElement) { el.value = LS.contatto[k] || ''; el.size = Math.max(4, el.value.length + 1); } }
+    for (const k of chiavi) { const el = document.querySelector(`#dati-riquadro [data-dt="${k}"]`); if (el && el !== document.activeElement) { el.value = LS.contatto[k] || ''; const m = document.querySelector(`#dati-riquadro [data-dt-mostra="${k}"]`); if (m && el.value) m.innerHTML = esc(el.value); } }
     return;
   }
   disegnaDati(LS.contatto, LS.datiExtra && LS.datiExtra.id === c.id ? LS.datiExtra : null);

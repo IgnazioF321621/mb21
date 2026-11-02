@@ -62,7 +62,7 @@ prova('091 (b): «Contatti fatti» si conta aprendo «Dati» della scheda (stess
   app.innerHTML = '<div id="sezione"></div>';
   await ctx.extra(c);
   assert.doesNotMatch(app.innerHTML, /Contatti fatti/);
-  assert.match(app.innerHTML, /<small>Note<\/small><input class="dt-in dt-nota" data-dt="note" size="\d+" value="Nota finta"/);   // nota 160: si scrive sul posto
+  assert.match(app.innerHTML, /<small>Note<\/small><input class="dt-in dt-nota" data-dt="note" value="Nota finta"/);   // nota 160: si scrive sul posto
 });
 
 prova('091: l\'Admin legge con COLONNE_LISTA senza contatti_fatti e con da_rubrica in fondo; lista_nomi dà ai partner le STESSE colonne', () => {
