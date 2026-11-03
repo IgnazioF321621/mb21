@@ -36,7 +36,7 @@ function profilo(aperte = []) {
     mioTrainingHtml: () => '<div class="pf-box pf-voce" id="finto-training">Il mio Training</div>',
     calendarioHtml: () => '<div class="pf-box pf-voce" id="finto-calendario">MB21 nel tuo calendario</div>', versione: () => '', rigaSuHtml: x => x,
     toccoScaricaLista() {}, collegaMieiSegni() {}, collegaMioAvvio() {}, collegaAvvisi() {}, collegaCalendario() {}, mostraTab() {}, foglioFoto() {}, salvaTelefono() {},
-    scegliNumero() {}, apriLibri() {}, apriBenvenuto() {}, foglioPassword: (...a) => tocchi.push(['password', ...a]), foglioPrivacy() {}, supa: { auth: { signOut() {} } }, TRN: {},
+    scegliNumero() {}, SCELTA_NUMERO: false, apriLibri() {}, apriBenvenuto() {}, foglioPassword: (...a) => tocchi.push(['password', ...a]), foglioPrivacy() {}, supa: { auth: { signOut() {} } }, TRN: {},
   };
   const nomi = Object.keys(stub);
   new Function(...nomi, codice)(...nomi.map(n => stub[n]));
@@ -48,7 +48,7 @@ prova('089: due titoletti — «La mia crescita» (Perché ho iniziato, Segni Vi
   const { h } = profilo();
   assert.equal((h.match(/<div class="zona-oggi">/g) || []).length, 2);   // il titoletto della Dashboard («Approfondisci»): stesso codice
   const seq = ['<div class="zona-oggi">La mia crescita</div>', 'Perché ho iniziato', 'id="finto-segni"', 'id="finto-training"', 'id="pf-libri"',
-    '<div class="zona-oggi">Impostazioni</div>', 'data-voce="dati"', 'id="pf-numero"', 'data-voce="avvisi"', 'id="finto-calendario"', 'id="pf-scarica-lista"', 'id="pf-privacy"', 'id="pf-esci"'];
+    '<div class="zona-oggi">Impostazioni</div>', 'data-voce="dati"', 'data-voce="avvisi"', 'id="finto-calendario"', 'id="pf-scarica-lista"', 'id="pf-privacy"', 'id="pf-esci"'];
   const posti = seq.map(x => dove(h, x));
   assert.deepEqual(posti, [...posti].sort((a, b) => a - b), 'ordine: ' + seq.join(' › '));
   // «I miei libri» subito dopo il Training (prima stava dopo il calendario)
@@ -60,7 +60,8 @@ prova('089: «Cambia password» non è più una riga a sé: sta dentro «I tuoi 
   assert.doesNotMatch(chiusa.h, /pf-password/);   // a voce chiusa non si vede: una riga in meno
   const { h, app, tocchi } = profilo(['dati']);
   assert.match(h, /<small>Nome, email e codice Amway li cambia l'Admin\.<\/small>\s*<button class="link" id="pf-password" style="display:block;margin-top:6px">\[password\] Cambia password ›<\/button>/);
-  assert.ok(dove(h, 'id="pf-password"') < dove(h, 'id="pf-numero"'));
+  assert.ok(dove(h, 'id="pf-password"') < dove(h, 'data-voce="avvisi"'));
+  assert.ok(!h.includes('id="pf-numero"'));   // nota 182: «Contatti al giorno» spenta (sempre 5)
   app.clic('#pf-password');
   assert.deepEqual(tocchi, [['password', false]]);
   assert.equal((PROFILO.match(/rigaProfilo\('pf-password'/g) || []).length, 1);   // poi (nota 098, Ignazio 27/10): riga a sé solo nella veste v5 (prova_profilo_v5.js)

@@ -29,7 +29,7 @@ function profilo(v5, aperte = []) {
     mioTrainingHtml: () => '<div class="pf-box pf-voce" id="finto-training">Il mio Training</div>',
     calendarioHtml: () => '<div class="pf-box pf-voce" id="finto-calendario">MB21 nel tuo calendario</div>', versione: () => '<div id="finta-versione"></div>', rigaSuHtml: x => x,
     toccoScaricaLista() {}, collegaMieiSegni() {}, collegaMioAvvio() {}, collegaAvvisi() {}, collegaCalendario() {}, mostraTab: () => tocchi.push(['tab']), foglioFoto() {}, salvaTelefono() {},
-    foglioSegnala() {}, scegliNumero() {}, apriLibri() {}, apriBenvenuto() {}, foglioPassword: (...a) => tocchi.push(['password', ...a]), foglioPrivacy() {},
+    foglioSegnala() {}, scegliNumero() {}, SCELTA_NUMERO: false, apriLibri() {}, apriBenvenuto() {}, foglioPassword: (...a) => tocchi.push(['password', ...a]), foglioPrivacy() {},
     supa: { auth: { signOut: () => tocchi.push(['esci']) } }, TRN: {},
   };
   const nomi = Object.keys(stub);
@@ -44,7 +44,7 @@ prova('v5: tre gruppi a righe — «Il tuo account» (I tuoi dati, Cambia passwo
   assert.equal((h.match(/<div class="p6-gruppo">/g) || []).length, 4);
   const seq = ['<div class="zona-oggi">Il tuo account</div><div class="p6-gruppo">', 'data-voce="dati"', 'id="pf-password"',
     '<div class="zona-oggi">La mia crescita</div><div class="p6-gruppo">', 'Perché ho iniziato', 'id="finto-segni"', 'id="finto-training"', 'id="pf-libri"',
-    '<div class="zona-oggi">Impostazioni</div><div class="p6-gruppo">', 'id="pf-numero"', 'data-voce="avvisi"', 'id="finto-calendario"', 'id="pf-scarica-lista"', 'id="pf-privacy"',
+    '<div class="zona-oggi">Impostazioni</div><div class="p6-gruppo">', 'data-voce="avvisi"', 'id="finto-calendario"', 'id="pf-scarica-lista"', 'id="pf-privacy"',
     '<div class="p6-gruppo"><button class="p6-esci" id="pf-esci">Esci da MB21</button></div>', 'id="finta-versione"'];
   const posti = seq.map(x => dove(h, x));
   assert.deepEqual(posti, [...posti].sort((a, b) => a - b), 'ordine: ' + seq.join(' › '));

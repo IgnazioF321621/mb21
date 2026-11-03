@@ -71,6 +71,24 @@ function richiamiDiOggi(candidati, inPausa) {
   const presi = new Set(daSentire.map(c => c.id));
   return { daSentire, resto: candidati.filter(c => !presi.has(c.id)), fatti: ore.size - daSentire.length };
 }
+// Nota Pagine 182 (Ignazio 03/11: «da sentire 5, ma con la possibilità di caricarne altri 5»): «Carica altri 5» allarga la coda di oggi di 5 posti,
+// come «Altri 5» di Da catalogare. Il numero in più vale per oggi e per chi lo ha chiesto; si ricorda sul telefono, così riaprendo l'app non si perde.
+const CHIAVE_ALTRI_CODA = 'mb21_altri_coda', ALTRI_CODA = 5;
+function altriCoda(oggi) {
+  try { const x = JSON.parse(localStorage.getItem(CHIAVE_ALTRI_CODA)); return x && x.giorno === oggi && x.di === ST.utente.id ? Number(x.n) || 0 : 0; } catch (e) { return 0; }
+}
+function caricaAltriCoda() {
+  const oggi = MB21Coda.oggiRoma();
+  try { localStorage.setItem(CHIAVE_ALTRI_CODA, JSON.stringify({ giorno: oggi, di: ST.utente.id, n: altriCoda(oggi) + ALTRI_CODA })); } catch (e) {}
+  ST.dashLetta = 0;   // la coda si rifà con i posti in più
+  caricaOggi();
+}
+// il pulsante sotto i Contatti del giorno: solo per sé, in rete, fuori pausa, e se ci sono ancora persone da sentire oltre a quelle in elenco
+function altriCodaHtml() {
+  const r = ST.risultato, st = ST.stato || {};
+  if (!r || guardoAltri() || ST.offline || st.contatti_al_giorno === 0 || !r.ancora) return '';
+  return `<button class="primario" id="altri-coda">Carica altri ${ALTRI_CODA}</button>`;
+}
 async function caricaOggi() {
   const oggi = MB21Coda.oggiRoma();
   if (dashFresca(oggi)) return disegnaOggi();
@@ -98,7 +116,8 @@ async function caricaOggi() {
     // nota Pagine 098 (Ignazio 26/10, «A»): chi ha un «Richiamare» per oggi (la lettura dei Contatti di oggi di caricaOggiV5, la stessa dell'Agenda) ed è
     // ancora da sentire entra in cima, IN PIÙ ai posti della coda; quello già sentito oggi (non è più tra i candidati) non toglie un posto alla coda
     const rich = richiamiDiOggi(candidati, stato.contatti_al_giorno === 0);
-    risultato = MB21Coda.calcolaCoda(MB21Coda.senzaScelte(rich.resto, SCE.righe), oggi, posti + rich.fatti, stato.contatti_al_giorno === 0);   // 0 = in pausa
+    risultato = MB21Coda.calcolaCoda(MB21Coda.senzaScelte(rich.resto, SCE.righe), oggi, posti + rich.fatti + (altro ? 0 : altriCoda(oggi)), stato.contatti_al_giorno === 0);   // 0 = in pausa; nota 182: + «Carica altri 5»
+    risultato.ancora = risultato.candidati > risultato.coda.length;   // nota 182: ci sono altre persone da sentire oltre a quelle della coda di oggi
     risultato.coda = [...rich.daSentire, ...risultato.coda];
     if (!altro && risultato.nuoviInCoda.length) {
       await dbqAvvisa('ingresso in coda', supa.from('contatti').update({ in_coda_dal: oggi })
@@ -457,13 +476,14 @@ function disegnaOggiLV() {
       return x.motivo === 'coda' ? rigaCoda(x.dato, sotto) : rigaPersona(x.motivo, x.id, x.nome, sotto, x.motivo === 'conf' ? null : x.contatto_id);
     });
     const chiuse = LV.fatte.filter(x => gruppoDi(x.tipo) === g.chiave).map(x => rigaFatta(x.nome));
-    let extra = '';
+    let extra = '', extra2 = '';
     if (g.chiave === 'contattare') {
       if (inPausa) extra = altro ? `<div class="sotto">${ic('visione')} ${esc(nomeDi(visto()))} ha scelto una pausa: 0 contatti al giorno.</div>`
         : `<div class="vuoto">Sei in pausa: 0 contatti al giorno. Quando ti va, scegli da dove ripartire.</div><button class="primario" id="ds-riparto" ${ST.offline ? 'disabled' : ''}>Riparto</button>`;
       else if (altro && r.coda.length) extra = `<div class="sotto">${ic('visione')} Gli esiti della coda li preme ${esc(nomeDi(visto()))} dalla sua app.</div>`;
     }
-    return righe.length || chiuse.length || extra ? `<div class="lv-dom">${esc(g.titolo)}</div>${extra}${righe.join('')}${chiuse.join('')}` : '';
+    if (g.chiave === 'contattare') extra2 = altriCodaHtml();
+    return righe.length || chiuse.length || extra || extra2 ? `<div class="lv-dom">${esc(g.titolo)}</div>${extra}${righe.join('')}${chiuse.join('')}${extra2}` : '';
   });
   const finito = !e.gruppi.length && !inPausa;
   let html = indietroLV() + `<h1>Chi sento oggi?</h1><div class="sotto">${esc(dataEstesa(ST.oggi))}${e.conto ? ` · ${e.conto}` : ''}</div>` + (ST.offline ? `<div class="avviso">Sei offline: questa è la coda salvata. Solo lettura.${percheHtml('offline')}</div>` : '')
@@ -471,6 +491,8 @@ function disegnaOggiLV() {
   app.innerHTML = html + versione();
   app.querySelectorAll('[data-lv-persona]').forEach(b => b.onclick = () => { ST.aperta = b.dataset.lvPersona.split('|')[1]; vaiLV('persona', { persona: b.dataset.lvPersona }); });
   app.querySelectorAll('[data-non-ora]').forEach(b => b.onclick = () => nonOra(b.dataset.nonOra));
+  const ac = document.getElementById('altri-coda');
+  if (ac) ac.onclick = caricaAltriCoda;
   attaccaIndietroLV();
   const vai = LV.vaiA; LV.vaiA = null;   // dall'Agenda «N riordini da sentire»: si scende al primo riordino
   const primo = vai && app.querySelector(`[data-lv-persona^="${vai === 'riordini' ? 'rio' : vai}|"]`);
@@ -1102,6 +1124,17 @@ function chiediData(bottone, nome) {
   });
 }
 
+// Nota Pagine 182 (Ignazio 03/11): i Contatti del giorno sono sempre 5, con «Carica altri 5». La scelta 1-10 è spenta («spegnila, non togliere»):
+// SCELTA_NUMERO = false nasconde la riga «Contatti al giorno» del Profilo; scegliNumero resta qui sotto, non chiamata. Anche la pausa (0) è tolta
+// (Ignazio: «togli»): chi fosse già in pausa con «Riparto» torna a 5 subito, senza foglio (ripartoDaPausa).
+const SCELTA_NUMERO = false;
+async function ripartoDaPausa() {
+  const { error } = await dbq('contatti al giorno', supa.rpc('imposta_contatti_al_giorno', { p_numero: MB21Coda.CAPIENZA }));
+  if (error) return mostraToast('Non salvato: controlla la connessione e riprova.');
+  ST.stato.contatti_al_giorno = MB21Coda.CAPIENZA;
+  ST.dashLetta = 0;   // la coda si rifà con i 5 del giorno
+  caricaOggi();
+}
 // Contatti al giorno (1-10): è il massimo di esiti dalla coda in un giorno. Dal cantiere 25 si cambia nel Profilo
 // (Ignazio 17/09: «solo profilo»); in Dashboard resta la scritta «Fatti N di M». `dopo` = cosa ridisegnare.
 function scegliNumero(dopo = caricaOggi) {
@@ -1962,7 +1995,7 @@ function collegaDashboard() {
   const su = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; };
   collegaPartnerSelect();
   su('ds-storico', foglioStorico);   // nota 092: «Gli ultimi 12 mesi» con «Tutti»
-  su('ds-riparto', () => scegliNumero(caricaOggi));   // 02/10: dalla pausa si riparte scegliendo quanti
+  su('ds-riparto', () => (SCELTA_NUMERO ? scegliNumero(caricaOggi) : ripartoDaPausa()));   // 02/10: dalla pausa si riparte scegliendo quanti; nota 182: con 5
   su('ds-profilo', () => { PF.aperte.clear(); ST.tab = 'profilo'; mostraTab(); window.scrollTo(0, 0); });   // cantiere 25 · 25 bis: si entra con tutte le voci chiuse
   collegaDomandaBiglietto(app, () => { ST.tab = 'oggi'; mostraTab(); });   // la Dashboard si ridisegna e i segni si aggiornano
   su('ds-obiettivi', apriObiettivi);

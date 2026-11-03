@@ -33,7 +33,7 @@ function profilo(avvio = null) {
     ST: { utente: { id: 'io', nome_cognome: 'Persona A', email: 'a@esempio.it', telefono: '+39 333 0000000', avvisi_quando: {} }, stato: { contatti_al_giorno: 5 } }, AV: { stato: 'acceso' },
     percheRigheHtml: p => p.map(x => `<span>${x}</span>`), mioPassiHtml: () => '<div class="passi-finti"></div>', nomeDi: u => u.nome_cognome,
     dentroCerchio: () => 'PA', mieiSegniHtml: () => '', mioTrainingHtml: () => '', calendarioHtml: () => '', versione: () => '<div class="versione">Novità · Versione finta</div>', rigaSuHtml: x => x,
-    collegaMieiSegni() {}, collegaMioAvvio() {}, collegaAvvisi() {}, collegaCalendario() {}, mostraTab() {}, foglioFoto() {}, salvaTelefono() {}, scegliNumero() {},
+    collegaMieiSegni() {}, collegaMioAvvio() {}, collegaAvvisi() {}, collegaCalendario() {}, mostraTab() {}, foglioFoto() {}, salvaTelefono() {}, scegliNumero() {}, SCELTA_NUMERO: false,
     apriLibri() {}, apriBenvenuto() {}, foglioPassword() {}, foglioPrivacy() {}, foglioNovita() {}, supa: { auth: { signOut() {} } }, TRN: {},
   };
   const nomi = Object.keys(stub);

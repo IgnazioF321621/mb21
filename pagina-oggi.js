@@ -328,7 +328,7 @@ function disegnaOggiV5() {
 function o5Vai(go) {
   const tab = t => { ST.tab = t; LS.ritorno = null; mostraTab(); window.scrollTo(0, 0); };
   if (go === 'contatti') {
-    if ((ST.stato || {}).contatti_al_giorno === 0 && !guardoAltri() && !ST.offline) return scegliNumero(caricaOggi);   // in pausa: si riparte scegliendo quanti
+    if ((ST.stato || {}).contatti_al_giorno === 0 && !guardoAltri() && !ST.offline) return SCELTA_NUMERO ? scegliNumero(caricaOggi) : ripartoDaPausa();   // in pausa: si riparte (nota 182: con 5, senza scegliere)
     return vaiLV('oggi');
   }
   if (go === 'sera') return vaiLV('ckgiorno', { ckData: null });   // nota 098: «Il mio giorno» è la scheda Giorno del Check
@@ -424,10 +424,12 @@ function disegnaContattiV5() {
       comandi: chipPartnerSelect(), destra: e.totale ? o5Anello(e.fatti, e.totale, 62) : '' })}
       ${primo ? `<button class="v5-inizia" data-lv-persona="${primo.motivo}|${esc(primo.id)}">Inizia da ${esc(primo.nome)}</button>` : ''}</div>`
     + `<div class="c5-corpo">${ST.offline ? `<div class="avviso">Sei offline: questa è la coda salvata. Solo lettura.${percheHtml('offline')}</div>` : ''}${extra}${gruppi}${fatte}
-      ${finito ? `<div class="vuoto">Per oggi hai finito. ${ic('complimenti')}</div>` : ''}
+      ${finito ? `<div class="vuoto">Per oggi hai finito. ${ic('complimenti')}</div>` : ''}${altriCodaHtml()}
       </div>` + versione();   // Ignazio 26/10: «Da seguire» (tracce condivise e il mio percorso) non sta più qui: è in fondo al Giorno dell'Agenda
   app.querySelectorAll('[data-lv-persona]').forEach(b => b.onclick = () => { ST.aperta = b.dataset.lvPersona.split('|')[1]; vaiLV('persona', { persona: b.dataset.lvPersona }); });
   app.querySelectorAll('[data-non-ora]').forEach(b => b.onclick = () => nonOra(b.dataset.nonOra));
+  const ac = document.getElementById('altri-coda');   // nota 182
+  if (ac) ac.onclick = caricaAltriCoda;
   attaccaIndietroLV();
   collegaTestaV5();
   const vai = LV.vaiA; LV.vaiA = null;   // da «Clienti» di Oggi (o dall'Agenda): si scende al primo riordino

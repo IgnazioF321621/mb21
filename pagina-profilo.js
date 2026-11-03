@@ -55,7 +55,7 @@ async function apriProfiloDiAltro(p) {
       <div class="pf-riga"><span>Telefono</span><b>${esc(d.telefono || '—')}</b></div>
       <div class="pf-riga"><span>Email</span><b>${esc(d.email || '—')}</b></div>
       <div class="pf-riga"><span>Codice Amway</span><b>${esc(d.partner_id || '—')}</b></div>
-      <div class="pf-riga"><span>Contatti al giorno</span><b>${n === 0 ? 'In pausa' : esc(String(n == null ? '—' : n))}</b></div></div></div>
+      ${SCELTA_NUMERO ? `<div class="pf-riga"><span>Contatti al giorno</span><b>${n === 0 ? 'In pausa' : esc(String(n == null ? '—' : n))}</b></div>` : ''}</div></div>
     <div class="pf-box"><div class="pf-corpo"><b>${ic('segnivitali')} Segni Vitali</b>
       ${scheda ? `<div class="pf-targhe">${targhe}</div>` : '<small>Non c\'è ancora una scheda col suo codice Amway nella tua lista.</small>'}</div></div>
     ${restoProfiloDiAltro(d, perc && !perc.error ? perc.data : null, trn, disp && !disp.error ? disp.data || [] : null)}
@@ -188,7 +188,7 @@ function disegnaProfilo() {
       <button class="primario" id="pf-tel-salva">Salva telefono</button>
       <small>Nome, email e codice Amway li cambia l'Admin.</small>
       ${v5 ? '' : `<button class="link" id="pf-password" style="display:block;margin-top:6px">${ic('password')} Cambia password ›</button>`}` });
-  const impostazioni = `${rigaProfilo('pf-numero', ic('telefonate') + ' Contatti al giorno', numero === 0 ? 'In pausa' : esc(String(numero || '—')))}
+  const impostazioni = `${SCELTA_NUMERO ? rigaProfilo('pf-numero', ic('telefonate') + ' Contatti al giorno', numero === 0 ? 'In pausa' : esc(String(numero || '—'))) : ''}
     ${avvisiNuoviHtml(avvisi[s] || avvisi.no_supporto, statoAvvisi)}
     ${calendarioHtml()}
     ${typeof toccoScaricaLista === 'function' ? rigaProfilo('pf-scarica-lista', ic('file') + ' Scarica la mia lista', '', 'Schede, azioni e note in un file Excel') : ''}
