@@ -67,11 +67,13 @@ prova('scelto 💬 Messaggio, l\'esito si salva come Messaggio (anche nella chat
   assert.match(W.html('c1'), /data-modo="Telefonata" data-modo-di="c1" aria-pressed="true"/);
 });
 
-prova('una funzione sola in tutti e tre i posti: il foglio «Com\'è andata?», la coda e «Da catalogare»; nessuna «telefonata» nelle scritte', () => {
-  assert.match(PO, /<h3>Com'è andata\?<\/h3><p class="sotto">\$\{esc\(nome\)\}<\/p>\n\s*\$\{modoContattoHtml\(id\)\}/);
-  assert.match(PO, /collegaModoContatto\(velo\);/);
-  assert.match(PO, /await moduloEsito\(id, nome, cat, colore\);/);
-  assert.match(PD, /<div class="come-andata">Com'è andata\?<\/div>\$\{modoContattoHtml\(r\.id\)\}/);
+prova('una funzione sola in tutti e tre i posti: la scheda di Contatti del giorno (nota 188, senza secondo foglio), la coda e «Da catalogare»; nessuna «telefonata» nelle scritte', () => {
+  assert.match(PO, /<b>Com'è andata\?<\/b>\$\{fatto \? [^\n]*\n\s*: esitiTendinaHtml\(\{ id, categoria: cat \}, spento, '<small>Scegli l\\'esito<\/small>'\)\}<\/div>/);
+  assert.match(PO, /collegaTendine5\(app\); collegaModoContatto\(app\);/);
+  assert.match(PO, /btn\.onclick = \(\) => toccaBottone\(btn\.dataset\.contatto, Number\(btn\.dataset\.bottone\)\)/);
+  assert.doesNotMatch(PO, /function moduloEsito|p5-esito/);
+  assert.match(PD, /<div class="come-andata">Com'è andata\?<\/div>\$\{esitiTendinaHtml\(r, spento\)\}/);
+  assert.match(PD, /return `\$\{modoContattoHtml\(r\.id\)\}\$\{tendina5Html\(etichetta,/);
   assert.match(PD, /\$\{modoContattoHtml\(r\.id\)\}\n\s*<div class="bottoni due-righe">/);
   assert.match(PD, /collegaModoContatto\(app\);/);
   assert.doesNotMatch(PD + PO, /Com'è andata la telefonata|Telefonata · \$\{esc\(nome\)\}/);

@@ -437,31 +437,6 @@ function disegnaContattiV5() {
   if (primoVai && primoVai.scrollIntoView) primoVai.scrollIntoView({ block: 'start' });
 }
 
-// Il modulo al centro per l'esito (nota 088: ogni foglio al centro): l'esito a discesa, «Andato bene» e «Non andato», con gli esiti veri della categoria
-// (bottoniPer, gli stessi tasti di adesso). Restituisce la posizione dell'esito in bottoniPer (quella che legge toccaBottone) o null.
-// Nota 187: sopra l'esito 📞 Telefonata · 💬 Messaggio (modoContattoHtml, pagina-dashboard.js); la scelta resta in MODO_CONTATTO[id] per toccaBottone.
-function moduloEsito(id, nome, categoria, colore) {
-  const tutti = bottoniPer(categoria), [buoni, no] = MB21Agenda.esitiInDueRighe(tutti.map(b => b.etichetta)).concat([[]]);
-  const opz = l => l.map(f => `<option value="${tutti.findIndex(b => b.etichetta === f)}">${esc(f)}</option>`).join('');
-  return new Promise(risolvi => {
-    const velo = document.createElement('div');
-    velo.className = 'velo';
-    velo.innerHTML = `<div class="foglio e5"><h3>Com'è andata?</h3><p class="sotto">${esc(nome)}</p>
-      ${modoContattoHtml(id)}
-      <label class="e5-campo"><span>Esito</span><select id="e5-esito"><option value="" selected disabled>Scegli l'esito</option>
-        <optgroup label="Andato bene">${opz(buoni)}</optgroup>${no.length ? `<optgroup label="Non andato">${opz(no)}</optgroup>` : ''}</select></label>
-      <div class="e5-tasti"><button class="link" id="e5-no">Annulla</button><button class="primario" id="e5-si" style="background:${colore}" disabled>Scegli l'esito</button></div></div>`;
-    document.body.appendChild(velo);
-    collegaModoContatto(velo);
-    const chiudi = v => { velo.remove(); risolvi(v); };
-    const sel = velo.querySelector('#e5-esito'), si = velo.querySelector('#e5-si');
-    sel.onchange = () => { si.disabled = sel.value === ''; si.textContent = sel.value === '' ? 'Scegli l\'esito' : 'Salva'; };
-    velo.onclick = ev => { if (ev.target === velo) chiudi(null); };
-    velo.querySelector('#e5-no').onclick = () => chiudi(null);
-    si.onclick = () => { if (sel.value !== '') chiudi(Number(sel.value)); };
-  });
-}
-
 function disegnaPersonaV5() {
   const [tipo, id] = String(LV.persona).split('|');
   const r = ST.risultato || { coda: [], dareSeguito: [] };
@@ -485,7 +460,7 @@ function disegnaPersonaV5() {
     const spento = ST.offline || guardoAltri();
     corpo = `<div class="card compatta aperta p5-card ${classeCat(cat)}" id="card-${esc(id)}"><div class="corpo">
       <div class="p5-blocco"><b>Com'è andata?</b>${fatto ? `<span class="p5-dato">${ic('fatto')} ${esc(fatto.esito)}</span>`
-        : `<button class="p5-esito" id="p5-esito" ${spento ? 'disabled' : ''}><span>Scegli l'esito della telefonata</span><span>⌄</span></button>`}</div>
+        : esitiTendinaHtml({ id, categoria: cat }, spento, '<small>Scegli l\'esito</small>')}</div>
       ${ricordoHtml(id, nome)}${preparaChiamataHtml(id)}
       ${dato.professione ? `<div class="prof">${esc(dato.professione)}</div>` : ''}${luogo ? `<div class="luogo">${esc(luogo)}</div>` : ''}
       <button class="link" data-scheda="${esc(id)}">${ic('persona')} Apri contatto</button></div></div>`;
@@ -504,11 +479,11 @@ function disegnaPersonaV5() {
     ancora: () => ST.tab === 'oggi' && LV.vista === 'persona' && LV.persona === chiave, ridisegna: () => disegnaOggi(), leggi: () => leggiCose5(chiContatto) });
   const tr = document.getElementById('p5-traccia-si');
   if (tr) tr.onclick = () => condividiAperturaV5(chiContatto, tr);
-  const b = document.getElementById('p5-esito');
-  if (b) b.onclick = async () => {
-    const i = await moduloEsito(id, nome, cat, colore);
-    if (i !== null) toccaBottone(id, i);   // da qui tutto come adesso: i fogli della data o dell'appuntamento, il salvataggio, «Annulla»
-  };
+  // nota 188: «Com'è andata?» con 📞 / 💬 e la tendina degli esiti già nella scheda (esitiTendinaHtml); il tocco su un esito → toccaBottone, da lì tutto come prima
+  if (telefonata && !fatto) {
+    collegaTendine5(app); collegaModoContatto(app);
+    app.querySelectorAll('.p5-card .tendina5 button[data-contatto]').forEach(btn => { btn.onclick = () => toccaBottone(btn.dataset.contatto, Number(btn.dataset.bottone)); });
+  }
 }
 
 // ── v5, terza pagina: la testata dell'Agenda (Regia 25/10 sera; solo la veste: sotto, l'Agenda è quella di adesso) ──

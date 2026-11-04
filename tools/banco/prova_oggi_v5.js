@@ -217,7 +217,9 @@ function mondoContatti({ fatte = [], admin = false, persona = null } = {}) {
     ricordoHtml: () => '', preparaChiamataHtml: () => '', classeCat: c => 'cat-' + c, CONF: { righe: [gruppi[0].righe[0].dato] }, SCE: { righe: [] }, RIO: { righe: [] },
     confermeHtml: id => `<div class="card conferma" id="conf-${id}">card della conferma di adesso</div>`, riordiniHtml: () => '', sceltaHtml: () => '', disegnaPersonaLV: () => chiamate.push(['personaLV']),
     bottoniPer: () => ['PM Fissato', 'Relazione', 'Richiamare', 'No Risposta', 'Telefono spento', 'No Interesse'].map(etichetta => ({ etichetta })),
-    modoContattoHtml: id => `<div class="modo-contatto" data-di="${id}"></div>`, collegaModoContatto: () => chiamate.push(['modo']),   // nota 187: le vere in prova_modo_contatto_187.js
+    // note 187-188: le vere in prova_modo_contatto_187.js (finte qui: 📞 / 💬 e la tendina con un esito, «Richiamare» in posizione 2)
+    esitiTendinaHtml: (r, spento, et) => `<div class="modo-contatto" data-di="${r.id}"></div><div class="tnd5"><button type="button" class="sel5" data-tnd5>${et}<em>▾</em></button><div class="ag-scelte tendina5"><button type="button" data-contatto="${r.id}" data-bottone="2"${spento ? ' disabled' : ''}><span>Richiamare</span></button></div></div>`,
+    collegaModoContatto: () => chiamate.push(['modo']), collegaTendine5: () => chiamate.push(['tendine']),
     toccaBottone: (id, i) => chiamate.push(['esito', id, i]), vaiLV: (v, x) => chiamate.push(['lv', v, x || null]),
     // nota 098: il finto database delle letture nuove (registra le richieste; `dati[tabella]` è quello che risponde)
     letture: [], dati: { azioni: [] }, SCRITTURE: { ultima: 0 }, disegnaOggi: () => chiamate.push(['ridisegna']),
@@ -227,7 +229,7 @@ function mondoContatti({ fatte = [], admin = false, persona = null } = {}) {
     cose5: [], cosePersonaHtml: (c, opz) => { W.ctx.cose5.push({ c, opz }); },
     document: { getElementById: id => (id === 'segnala' ? W.sg : W.app.getElementById(id)), querySelector: s => W.app.querySelector(s),
       createElement: () => { const n = new Nodo(); n.remove = () => { n.rimosso = true; }; fogli.push(n); return n; }, body: { appendChild() {} } } });
-  vm.runInContext('this.contatti = disegnaContattiV5; this.persona = disegnaPersonaV5; this.modulo = moduloEsito;', W.ctx);   // pagina-oggi.js è già caricato da mondo()
+  vm.runInContext('this.contatti = disegnaContattiV5; this.persona = disegnaPersonaV5;', W.ctx);   // pagina-oggi.js è già caricato da mondo()
   return { ...W, fogli, chiamate };
 }
 
@@ -261,16 +263,13 @@ prova('095 seconda pagina: la scheda nel colore della categoria; «Scegli l\'esi
   assert.match(testo(h), /PA Persona A Prospect · da richiamare/);
   assert.match(h, /<div class="contatta">\+393330000001<\/div>/);   // i tasti per sentirla, quelli di adesso
   assert.match(h, /<div class="card compatta aperta p5-card cat-Prospect" id="card-c1">/);   // la card che toccaBottone usa
-  W.app.clic('#p5-esito');
-  const f = W.fogli.at(-1);
-  assert.match(f.innerHTML, /<optgroup label="Andato bene"><option value="0">PM Fissato<\/option><option value="1">Relazione<\/option><option value="2">Richiamare<\/option><\/optgroup><optgroup label="Non andato"><option value="3">No Risposta<\/option>/);
-  assert.match(f.innerHTML, /id="e5-si" style="background:var\(--cat-prospect\)" disabled>Scegli l'esito<\/button>/);
-  assert.match(f.innerHTML, /<h3>Com'è andata\?<\/h3><p class="sotto">Persona A<\/p>\s*<div class="modo-contatto" data-di="c1"><\/div>/);   // nota 187: non più «Telefonata · nome»; sopra l'esito 📞 / 💬   // spento finché non si sceglie
-  f.querySelector('#e5-esito').value = '2'; f.querySelector('#e5-esito').onchange();
-  assert.equal(f.querySelector('#e5-si').textContent, 'Salva');
-  f.querySelector('#e5-si').onclick();
+  // nota 188 (Ignazio 04/11, «forse recuperiamo un passaggio»): sotto «Com'è andata?» subito 📞 / 💬 e la tendina «Scegli l'esito», niente secondo foglio
+  assert.match(h, /<div class="p5-blocco"><b>Com'è andata\?<\/b><div class="modo-contatto" data-di="c1"><\/div><div class="tnd5"><button type="button" class="sel5" data-tnd5><small>Scegli l'esito<\/small>/);
+  assert.doesNotMatch(h, /p5-esito|della telefonata/);
+  W.app.clic('.tendina5 button[data-contatto="c1"]');
   await new Promise(r => setImmediate(r));
-  assert.deepEqual(JSON.parse(JSON.stringify(W.chiamate.filter(c => c[0] !== 'ridisegna'))), [['modo'], ['esito', 'c1', 2]]);   // (il ridisegno è quello delle letture della nota 098)
+  assert.equal(W.fogli.length, 0);   // nessun foglio in mezzo
+  assert.deepEqual(JSON.parse(JSON.stringify(W.chiamate.filter(c => c[0] !== 'ridisegna'))), [['tendine'], ['modo'], ['esito', 'c1', 2]]);   // (il ridisegno è quello delle letture della nota 098)
   // una conferma tiene la sua card di adesso, dentro la veste nuova (colore Cliente oro)
   const C = mondoContatti({ persona: 'conf|a1' }); C.ctx.persona();
   assert.match(C.app.innerHTML, /--zc:var\(--cat-cliente\)/);   // Cliente oro (--cat-cliente #D99A00) assert.match(C.app.innerHTML, /card della conferma di adesso/); assert.doesNotMatch(C.app.innerHTML, /p5-esito/);

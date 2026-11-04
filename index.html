@@ -2913,17 +2913,11 @@
   .p5-ultime > div small { font-size: 14px; white-space: nowrap; margin-left: auto; }   /* la data con l'anno non si taglia: se manca spazio va a capo */
   .p5-blocco { display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px; }
   .p5-blocco b { font-size: 18px; }
-  .p5-esito { display: flex; justify-content: space-between; align-items: center; width: 100%; background: var(--sfondo); border: 0; border-radius: 14px; padding: 13px 14px; font: inherit; font-size: 16px; font-weight: 700; color: var(--testo); }
-  .e5 h3 { margin: 0; } .e5 .sotto { margin: 2px 0 14px; }
-  /* nota 187: come l'hai contattato, sopra l'esito (foglio «Com'è andata?», coda, «Da catalogare») */
+  .p5-blocco .modo-contatto, .p5-blocco .tnd5 { margin: 0; }   /* nota 188: 📞 / 💬 e la tendina degli esiti già nella scheda */
+  /* nota 187: come l'hai contattato, sopra l'esito (scheda di Contatti del giorno, coda, «Da catalogare»); nota 188: tolto il secondo foglio (.e5, .p5-esito) */
   .modo-contatto { display: flex; gap: 8px; margin: 0 0 12px; }
   .modo-contatto button { flex: 1; min-height: 44px; border-radius: 12px; border: 1.5px solid var(--linea); background: var(--superficie); color: var(--testo-soft); font: inherit; font-size: 15px; font-weight: 700; cursor: pointer; }
   .modo-contatto button[aria-pressed="true"] { border-color: var(--testo); background: var(--testo); color: var(--superficie); }
-  .e5-campo { display: flex; flex-direction: column; gap: 6px; }
-  .e5-campo span { font-size: 13px; font-weight: 800; color: var(--testo-soft); letter-spacing: .04em; text-transform: uppercase; }
-  .e5-campo select { font: inherit; font-size: 17px; font-weight: 600; padding: 13px 14px; border: 1.5px solid var(--linea); border-radius: 14px; background: var(--superficie); color: var(--testo); min-height: 50px; }
-  .e5-tasti { display: flex; gap: 10px; margin-top: 16px; }
-  .e5-tasti .link { flex: 1; } .e5-tasti .primario { flex: 2; }
   .o5-tessere { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 6px; }
   .o5-tessera { border: 0; font: inherit; color: #fff; cursor: pointer; border-radius: 22px; min-height: 104px; padding: 14px;
     display: flex; flex-direction: column; justify-content: space-between; align-items: flex-start; text-align: left; }

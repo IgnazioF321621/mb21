@@ -210,7 +210,7 @@ function bottoniPer(categoria) {
 }
 // Nota Pagine 187 (Ignazio 04/11, scelta «A»: «se mandi un messaggio, dovrebbe essere un po' più generico»): sopra l'esito due tasti, 📞 Telefonata
 // (già scelto) e 💬 Messaggio; l'esito si salva con il modo scelto (registra_esito, p_modalita). Una funzione sola per il foglio «Com'è andata?» di Contatti
-// del giorno (moduloEsito, pagina-oggi.js), la card della coda e quella di «Da catalogare». Gli esiti sono gli stessi per i due modi (agenda.js, TIPI).
+// del giorno (dalla nota 188 dentro la scheda, esitiTendinaHtml), la card della coda e quella di «Da catalogare». Gli esiti sono gli stessi per i due modi (agenda.js, TIPI).
 // La scelta resta in MODO_CONTATTO finché l'esito non è salvato; collegaModoContatto cambia il tasto acceso senza ridisegnare.
 const MODI_CONTATTO = [['Telefonata', '📞 Telefonata'], ['Messaggio', '💬 Messaggio']];
 const MODO_CONTATTO = {};
@@ -243,8 +243,14 @@ function bottoniCodaHtml(r, spento) {
 // Nota Pagine 161 (Ignazio 01/11, «ok» sulla foto catalogo_161.png): gli stessi esiti nella tendina «Scegli ▾» (tendina5Html, nota 116), per la card
 // aperta di «Da catalogare» dopo Prospect / Partner / Cliente; stessi `data-contatto` e `data-bottone`, quindi stessi tocchi (toccaBottone)
 function esitiCodaTendina(r, spento) {
+  return `<div class="come-andata">Com'è andata?</div>${esitiTendinaHtml(r, spento)}`;
+}
+// Nota Pagine 188 (Ignazio 04/11: «com'è andata e poi, invece di scegliere l'esito, già i tasti Telefonato o Messaggio, e poi Esito»): 📞 / 💬 e sotto la tendina
+// degli esiti, una funzione sola per «Da catalogare» e per la scheda della persona di Contatti del giorno (prima lì un tasto apriva un secondo foglio, moduloEsito).
+// Il tocco su un esito chiama toccaBottone (data-contatto, data-bottone), con i suoi fogli di adesso (data, appuntamento, rientro) e la freccia per annullare.
+function esitiTendinaHtml(r, spento, etichetta = '<small>Scegli</small>') {
   const tutti = bottoniPer(r.categoria);
-  return `<div class="come-andata">Com'è andata?</div>${modoContattoHtml(r.id)}${tendina5Html('<small>Scegli</small>', MB21Agenda.esitiInDueRighe(tutti.map(b => b.etichetta)).flat().map(f => {
+  return `${modoContattoHtml(r.id)}${tendina5Html(etichetta, MB21Agenda.esitiInDueRighe(tutti.map(b => b.etichetta)).flat().map(f => {
     const i = tutti.findIndex(b => b.etichetta === f);
     return `<button type="button"${tutti[i].classe ? ` class="${tutti[i].classe}"` : ''} data-contatto="${esc(r.id)}" data-bottone="${i}"${spento ? ' disabled' : ''}><span>${esc(f)}</span></button>`;
   }).join(''))}`;
