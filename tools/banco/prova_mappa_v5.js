@@ -25,7 +25,7 @@ function mondo({ admin = true } = {}) {
     document: { getElementById: id => app.getElementById(id) }, mostraToast: t => chiamate.push(['toast', t]),
     toccaTarga: (c, k) => chiamate.push(['tocca', c.id, k]) };
   vm.createContext(ctx);
-  vm.runInContext([require('./testa_v5.js')(PO), pezzo(PO, 'function testaMappaV5'), riga(PL, 'const targheDaToccare = '), pezzo(PL, 'function targheHtml'), PM, 'this.MP = MP; this.disegna = disegnaMappa;'].join('\n'), ctx);
+  vm.runInContext([require('./testa_v5.js')(PO), pezzo(PO, 'function testaMappaV5'), riga(PL, 'const targheDaToccare = '), pezzo(PL, 'function targheHtml'), PM, 'this.MP = MP; this.disegna = disegnaMappa; this.mappaCaricata = mappaCaricata;'].join('\n'), ctx);
   Object.assign(ctx.MP, {
     squadra: [{ partner_id: 'P000', sponsor_id: null, nome: 'ADMIN, FINTO' }, { partner_id: 'P001', sponsor_id: 'P000', nome: 'A, PERSONA' }, { partner_id: 'P002', sponsor_id: 'P000', nome: 'B, PERSONA' },
       { partner_id: 'P003', sponsor_id: 'P001', nome: 'C, PERSONA' }],
@@ -143,6 +143,17 @@ prova('Al caricamento subito la testata v5 con «…», mai il titolo vecchio', 
   assert.match(PM, /if \(!MP\.squadra\) app\.innerHTML = `\$\{mappaV5\(\) \? testaMappaV5\('…', ''\) : '<h1>Mappa<\/h1>'\}<div class="vuoto">Carico il gruppo…<\/div>`;/);
   const W = mondo();
   assert.match(W.ctx.testaMappaV5('…', ''), /<h1>Mappa<\/h1><span>…<\/span>/);
+});
+
+prova('Nota 186: sotto la ricerca «Mappa caricata il … alle …», dall\'ora del caricamento già letta con i volumi (nessuna lettura in più)', () => {
+  const W = mondo();
+  W.ctx.MP.volumi = W.ctx.MP.volumi.map(v => ({ ...v, aggiornato_il: '2026-11-02T20:40:12.474+00:00' }));
+  W.ctx.disegna();
+  const h = W.app.innerHTML;
+  assert.match(h, /id="mp-cerca"[^>]*><div class="mp-caricata">Mappa caricata il 2 novembre alle 21:40<\/div>/);   // ora di Roma
+  assert.equal(W.ctx.mappaCaricata([{ aggiornato_il: '2025-03-05T08:00:00Z' }]), '<div class="mp-caricata">Mappa caricata il 5 marzo 2025 alle 09:00</div>');   // un altro anno: con l'anno
+  const V = mondo(); V.ctx.disegna();
+  assert.doesNotMatch(V.app.innerHTML, /mp-caricata/);   // senza la data, nessuna riga
 });
 
 console.log(`\n${ok} prove superate`);

@@ -213,6 +213,17 @@ function mesePulito(m) {
   return m ? `${String(m).slice(4, 6)}/${String(m).slice(0, 4)}` : '—';
 }
 
+// nota 186 (Ignazio 04/11): «l'ultima volta che è stata caricata la mappa», piccola ma visibile sotto la ricerca. Nessuna lettura in più:
+// ogni Carica dell'Admin scrive la stessa ora (aggiornato_il) su tutti i volumi del mese, e i volumi dell'ultimo mese sono già in MP.volumi
+function mappaCaricata(volumi = MP.volumi) {
+  const t = (volumi || []).reduce((m, v) => (v && v.aggiornato_il && v.aggiornato_il > m ? v.aggiornato_il : m), '');
+  if (!t) return '';
+  const d = new Date(t), anno = x => x.toLocaleDateString('it-IT', { timeZone: 'Europe/Rome', year: 'numeric' });
+  const giorno = d.toLocaleDateString('it-IT', { timeZone: 'Europe/Rome', day: 'numeric', month: 'long', ...(anno(d) === anno(new Date()) ? {} : { year: 'numeric' }) });
+  const ora = d.toLocaleTimeString('it-IT', { timeZone: 'Europe/Rome', hour: '2-digit', minute: '2-digit' });
+  return `<div class="mp-caricata">Mappa caricata il ${esc(giorno)} alle ${esc(ora)}</div>`;
+}
+
 function disegnaMappa() {
   const M = MB21Mappa;
   if (MP.completa) return disegnaCompleta();
@@ -240,7 +251,7 @@ function disegnaMappa() {
     ${v5 ? `<div class="mp-filtri"><button data-mpfiltro="tutti" class="${MP.filtro === 'tutti' ? 'scelto' : ''}">Tutti ${conta.tutti}</button>${soloLista ? '' : `<button id="mp-tutto">${MP.aperti.size ? 'Chiudi tutto' : 'Apri tutto'}</button>`}<span class="m5-legenda">WES · BBS · CEP</span></div>` : `<div class="mp-filtri">${etichette.map(([k, t]) =>
       `<button data-mpfiltro="${k}" class="${MP.filtro === k ? 'scelto' : ''}">${escIcone(t)} ${k === 'tutti' ? conta.tutti : conta[k]}</button>`).join('')}
       <button id="mp-tutto">${MP.aperti.size ? 'Chiudi tutto' : 'Apri tutto'}</button></div>`}
-    <input class="mp-cerca" id="mp-cerca" type="search" placeholder="Cerca un nome o un codice" value="${esc(MP.cerca)}">`;
+    <input class="mp-cerca" id="mp-cerca" type="search" placeholder="Cerca un nome o un codice" value="${esc(MP.cerca)}">${mappaCaricata()}`;
 
   if (!cime.length) {
     html += `<div class="vuoto">Nessun dato del gruppo. L'Admin carica il file Amway del mese.</div>`;
