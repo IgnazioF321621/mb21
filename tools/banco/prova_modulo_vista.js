@@ -319,6 +319,25 @@ prova('Nota 183 (Ignazio 04/11: «che spunti la stessa scheda… quando tocchi i
   assert.match(cg, /foglioAggiungi\(\{ giorno: AG\.giorno, ora: A\.daMinuti\(minuti\) \}\)/);
   assert.doesNotMatch(cg, /nuovoAppuntamento/);
   assert.equal((src.match(/id="ag-tocca"/g) || []).length, 1);   // lo strato del tocco nasce in un posto solo (grigliaGiorno)
+  // «la stessa possibilità… nella schermata settimana, nella schermata mese»: la colonna vuota della Settimana con l'ora toccata, il giorno del Mese senza ora
+  const sett = src.slice(src.indexOf('function collegaGrigliaSettimana('), src.indexOf('function pannelloDestro('));
+  assert.match(sett, /foglioAggiungi\(\{ giorno: b\.dataset\.vai, ora: A\.daMinuti\(/);
+  const mese = src.slice(src.indexOf('function disegnaMese('), src.indexOf('function inizioScalaMB('));
+  assert.match(mese, /if \(!sulNumero\) return foglioAggiungi\(\{ giorno: b\.dataset\.giorno \}\);/);   // il numero apre il giorno, come prima
+  const anno = src.slice(src.indexOf('function collegaMesiMini('), src.indexOf('function elencoDaFareHtml('));
+  assert.match(anno, /closest\('\.cc-n'\)[\s\S]*?if \(!sulNumero\) return foglioAggiungi\(\{ giorno: b\.dataset\.giorno \}\);/);   // Anno: come il Mese
+  assert.match(sett, /\[data-testa-giorno\]'\)\.forEach\(b => \{ b\.onclick = \(\) => \{ prima\(\); AG\.vista = 'giorno';[^\n]*apriAgenda\(b\.dataset\.testaGiorno\)/);   // Settimana: il nome apre il giorno
+  P.AG.settimana = P.A.settimana(P.OGGI);
+  assert.equal((P.vista('settimana').match(/data-testa-giorno="/g) || []).length, 7);
+  pulisci();
+  P.foglioAggiungi({ giorno: '2026-12-10' }); await attendi();
+  f = P.fogli.at(-1);
+  assert.match(f.innerHTML, /giovedì 10 dicembre</); assert.doesNotMatch(f.innerHTML, / alle /);
+  await f.clic('[data-strada="persona"]'); await attendi(); await attendi();
+  await sceltoDaLista(P.fogli.at(-1), P.finto.contatti[0].nome); await attendi();
+  await scegli(P.fogli.at(-1), 'tipo', 'Appuntamento'); await attendi();
+  assert.equal(P.fogli.at(-1).querySelector('#na-giorno').value, '2026-12-10');   // il giorno toccato; l'ora proposta come dal «+»
+  assert.match(P.fogli.at(-1).querySelector('#na-ora').value, /^\d\d:\d\d$/);
 }));
 
 prova('Nota 001: il segnale Coach Yes accanto al nome solo sulle telefonate da fare (MB Plan) e nel modulo «+» della telefonata; il tocco apre «Coach Yes» con le note', async () => {

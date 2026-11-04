@@ -767,7 +767,14 @@ function disegnaMese() {
   const mp = document.getElementById('mm-prima'), md = document.getElementById('mm-dopo');
   if (mp) mp.onclick = () => vaiMese(-1);
   if (md) md.onclick = () => vaiMese(1);
-  app.querySelectorAll('.mm-g').forEach(b => { b.onclick = () => { AG.vista = 'giorno'; AG.aperta = null; AG.portato = null; apriAgenda(b.dataset.giorno); }; });
+  // nota 183 (Ignazio 04/11, «A»): il tocco sul giorno apre il foglio del «+» per quel giorno; il tocco sul numero apre la pagina del giorno, come prima
+  app.querySelectorAll('.mm-g').forEach(b => {
+    b.onclick = ev => {
+      const sulNumero = ev && ev.target && ev.target.closest && ev.target.closest('.mm-n');
+      if (!sulNumero) return foglioAggiungi({ giorno: b.dataset.giorno });
+      AG.vista = 'giorno'; AG.aperta = null; AG.portato = null; apriAgenda(b.dataset.giorno);
+    };
+  });
 }
 
 // Il primo giorno della scala: giorno, lunedì, primo del mese, primo dell'anno
@@ -831,7 +838,14 @@ function mesiMiniHtml(mesi, oggi) {
   return `<div class="mn-mesi">${mesi.map(m => meseMiniHtml(m, oggi, punti, conCose)).join('')}</div>`;
 }
 function collegaMesiMini() {
-  app.querySelectorAll('.mn [data-giorno]').forEach(b => { b.onclick = () => { AG.vista = 'giorno'; AG.aperta = null; AG.portato = null; apriAgenda(b.dataset.giorno); }; });
+  // nota 183 (Ignazio 04/11): il tocco sul giorno apre il foglio del «+» per quel giorno; il tocco sul numero apre la pagina del giorno, come nel Mese
+  app.querySelectorAll('.mn [data-giorno]').forEach(b => {
+    b.onclick = ev => {
+      const sulNumero = ev && ev.target && ev.target.closest && ev.target.closest('.cc-n');
+      if (!sulNumero) return foglioAggiungi({ giorno: b.dataset.giorno });
+      AG.vista = 'giorno'; AG.aperta = null; AG.portato = null; apriAgenda(b.dataset.giorno);
+    };
+  });
   app.querySelectorAll('.mn-titolo[data-mese]').forEach(b => { b.onclick = () => { AG.vista = 'mese'; apriAgenda(b.dataset.mese); }; });
 }
 // L'elenco «Da fare» di una scala (mese, settimana, anno): le righe con il loro legame e il campo «Per chi è?» + testo
@@ -945,7 +959,8 @@ function disegnaSettimana() {
   };
   app.querySelectorAll('.ss-g').forEach(b => { b.onclick = () => { AG.vista = 'giorno'; AG.aperta = null; AG.portato = null; apriAgenda(b.dataset.apri); }; });
 }
-// I tocchi della griglia a sette colonne: un blocco apre il suo giorno e l'impegno, una colonna vuota apre il giorno
+// I tocchi della griglia a sette colonne: un blocco apre il suo giorno e l'impegno, il vuoto di una colonna apre il foglio del «+» a quell'ora (nota 183),
+// il nome del giorno in cima alla colonna apre il giorno (nota 183, la stessa regola del numero nel Mese e nell'Anno)
 function collegaGrigliaSettimana(radice, prima) {
   const A = MB21Agenda;
   radice.querySelectorAll('.ag-sev').forEach(b => {
@@ -958,7 +973,17 @@ function collegaGrigliaSettimana(radice, prima) {
       if (e) foglioEvento(A.eventiDelGiorno([e], g)[0] || e);
     };
   });
-  radice.querySelectorAll('.ag-colonna[data-vai]').forEach(b => { b.onclick = () => { prima(); AG.vista = 'giorno'; AG.portato = null; AG.aperta = null; apriAgenda(b.dataset.vai); }; });
+  // nota 183 (Ignazio 04/11: «la stessa possibilità deve essere data nella schermata settimana»): il vuoto di una colonna apre il foglio del «+» con quel
+  // giorno e l'ora toccata, al quarto d'ora, come nella Timeline del giorno (prima apriva il giorno)
+  radice.querySelectorAll('[data-testa-giorno]').forEach(b => { b.onclick = () => { prima(); AG.vista = 'giorno'; AG.portato = null; AG.aperta = null; apriAgenda(b.dataset.testaGiorno); }; });
+  radice.querySelectorAll('.ag-colonna[data-vai]').forEach(b => {
+    b.onclick = ev => {
+      const ore = b.parentElement, riquadro = ore.getBoundingClientRect();
+      const minuti = A.alQuarto(Number(ore.dataset.da) + (ev.clientY - riquadro.top) / Number(ore.dataset.alt || ALT_ORA_SETT) * 60);
+      prima();
+      foglioAggiungi({ giorno: b.dataset.vai, ora: A.daMinuti(Math.max(0, Math.min(1425, minuti))) });
+    };
+  });
 }
 
 // Il pannello di destra sul telefono / iPad in verticale: il mese con i pallini e sotto la Timeline, come la terza colonna del Mac
@@ -1534,14 +1559,14 @@ function grigliaSettimana(opz) {
   const y = m => Math.round((m - da) / 60 * ALT_ORA_SETT);
   const quanti = giorni.reduce((n, x) => n + x.d.blocchi.length, 0) + spaziSett.flat().length;
   let h = `<div class="ag-sett-testa">${giorni.map(({ g, d }, i) =>
-    `<div class="${g === oggi ? 'oggi' : ''} ${g === AG.giorno ? 'scelto' : ''}">${A.GIORNI[i]}<b>${Number(g.slice(8))}</b></div>`).join('')}</div>`;
+    `<button type="button" class="${g === oggi ? 'oggi' : ''} ${g === AG.giorno ? 'scelto' : ''}" data-testa-giorno="${g}" aria-label="Apri il giorno ${Number(g.slice(8))}">${A.GIORNI[i]}<b>${Number(g.slice(8))}</b></button>`).join('')}</div>`;   // nota 183: il nome del giorno apre il giorno
   h += `<div class="ag-griglia sett"><div class="ag-ore" data-da="${da}" data-alt="${ALT_ORA_SETT}" style="height:${y(a)}px">`;
   for (let m = da; m <= a; m += 60) {
     h += `<div class="ag-lin" style="top:${y(m)}px"><b>${m === 1440 ? '24' : m / 60}</b></div>`;
   }
   giorni.forEach(({ g, d }, i) => {
     const larga = 100 / 7, sinG = i * larga;
-    h += `<button class="ag-colonna ag-libero${g === oggi ? ' oggi' : ''}${g === AG.giorno ? ' scelto' : ''}" data-vai="${g}" aria-label="Apri il giorno ${Number(g.slice(8))}" style="left:${sinG}%;width:${larga}%"></button>`;
+    h += `<button class="ag-colonna ag-libero${g === oggi ? ' oggi' : ''}${g === AG.giorno ? ' scelto' : ''}" data-vai="${g}" aria-label="Aggiungi qualcosa il giorno ${Number(g.slice(8))} a quest'ora" style="left:${sinG}%;width:${larga}%"></button>`;
     // i blocchi che si accavallano si uniscono in uno solo che dice quanti sono: nella colonna stretta
     // della settimana due nomi diventerebbero «G.» e «N.», che non si leggono (Ignazio 21/09)
     const gruppi = new Map();
@@ -1578,7 +1603,7 @@ function grigliaSettimana(opz) {
     if (ora >= da && ora <= a) h += `<div class="ag-adesso" style="top:${y(ora)}px"><i></i></div>`;
   }
   h += `</div></div>`;
-  if (!quanti) h += `<div class="ag-sett-vuoto">Settimana libera. Tocca un giorno per fissare qualcosa.</div>`;
+  if (!quanti) h += `<div class="ag-sett-vuoto">Settimana libera. Tocca un'ora per aggiungere qualcosa.</div>`;
   else {
     // il riassunto della settimana: che lavoro c'è, non solo quando (qui il colore è quello del TIPO di lavoro)
     // nota 170: con gli incontri e gli spazi della settimana («1 SdS/OPEN · 2 Incontri LdS»), dopo gli appuntamenti; gli incontri con più persone una volta
@@ -2364,15 +2389,18 @@ function foglioStrade(titolo, sotto, voci, conIndietro) {
     velo.querySelectorAll('[data-strada]').forEach(b => { b.onclick = () => fine(b.dataset.strada); });
   });
 }
-// Nota Pagine 183 (Ignazio 04/11: «che spunti la stessa scheda, stessa cosa che c'è quando tocchi il +»): il tocco su un orario vuoto della Timeline
-// apre questo stesso foglio con `da` = { giorno, ora }; il sottotitolo dice il giorno e l'ora toccati, e Appuntamento e Serata partono da lì.
+// Nota Pagine 183 (Ignazio 04/11: «che spunti la stessa scheda, stessa cosa che c'è quando tocchi il +»; «la stessa possibilità… nella schermata settimana,
+// nella schermata mese e nella schermata anno»): una funzione sola per il «+» e per i tocchi su Giorno, Settimana (`da` = { giorno, ora }) e Mese
+// (`da` = { giorno }, senza ora: il modulo propone l'ora come dal «+» e la si cambia). Il sottotitolo dice il giorno (e l'ora) toccati; Appuntamento e
+// Serata partono da lì; «Programmare la settimana» apre la settimana del giorno toccato.
 async function foglioAggiungi(da) {
   if (vediTutti()) return mostraToast('Con «Tutti» scegli prima il partner nel Partner Select');
   const A = MB21Agenda, lun = AG.settimana[0], dom = AG.settimana[6], mese = g => A.titoloMese(g).toLowerCase();
-  const quando = da && da.giorno && da.ora ? { giorno: da.giorno, ora: da.ora } : { giorno: AG.giorno };
+  const toccato = !!(da && typeof da.giorno === 'string' && da.giorno);   // dal «+» arriva l'evento del clic, non un giorno
+  const quando = toccato ? { giorno: da.giorno, ...(da.ora ? { ora: da.ora } : {}) } : { giorno: AG.giorno };
   if (eAdmin() && !CONDIVISIONE_LINEE && AG.ramo === undefined) await caricaRamoApp();   // P5b: per sapere a chi si può mandare (una lettura)
   const persone = personeAppDelGruppo(), nomi = persone.map(p => p.nome).join(', ');
-  const k = await foglioStrade('Cosa vuoi aggiungere?', quando.ora ? `${dataLunga(quando.giorno)} alle ${quando.ora}`
+  const k = await foglioStrade('Cosa vuoi aggiungere?', toccato ? `${dataLunga(quando.giorno)}${quando.ora ? ` alle ${quando.ora}` : ''}`
     : `Settimana ${A.numeroSettimana(lun)} · ${Number(lun.slice(8))} ${lun.slice(5, 7) === dom.slice(5, 7) ? '' : mese(lun) + ' '}– ${Number(dom.slice(8))} ${mese(dom)}`, [
     { k: 'settimana', icona: 'scala-settimana', tinta: 'var(--mb-programma, #2c4a7c)', titolo: 'Programmare la settimana', sotto: 'Piani Marketing, Consulenze e incontri della settimana' },
     { k: 'persona', icona: 'persona', tinta: 'var(--cat-partner)', titolo: 'Appuntamento', sotto: 'Piano Marketing, Consulenza, Appuntamento, Telefonata… con un nome della tua lista' },
@@ -2380,7 +2408,10 @@ async function foglioAggiungi(da) {
     ...(puoSerataTeam() && (CONDIVISIONE_LINEE || (typeof SERATA_DA_MANDARE !== 'undefined' && SERATA_DA_MANDARE)) ? [CONDIVISIONE_LINEE ? { k: 'team', icona: 'squadra', tinta: 'var(--gr-crescita)', titolo: 'Serata con il Team o una Linea', sotto: 'La trovano nella loro Agenda' }
       : { k: 'manda', icona: 'squadra', tinta: 'var(--gr-crescita)', titolo: 'Serata da mandare', sotto: `${persone.length === 1 ? 'La riceve' : 'La ricevono'}: ${nomi}` }] : [])]);
   if (!k) return;
-  if (k === 'settimana') return preparaSettimana();
+  if (k === 'settimana') {
+    if (!AG.settimana.includes(quando.giorno)) { AG.vista = 'settimana'; AG.aperta = null; AG.portato = null; await apriAgenda(quando.giorno); }   // dal Mese: quella settimana
+    return preparaSettimana();
+  }
   if (k === 'cosa') return apriCampoCosa();
   if (k === 'manda') return nuovoAppuntamento({ ...quando, condividi: 'linea' });   // P5b: la persona è già scelta se è una sola
   return nuovoAppuntamento({ ...quando, ...(k === 'team' ? { condividi: 'team' } : {}) });
