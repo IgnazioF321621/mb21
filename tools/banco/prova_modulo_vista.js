@@ -299,6 +299,7 @@ prova('Nota 183 (Ignazio 04/11: «che spunti la stessa scheda… quando tocchi i
   assert.match(f.innerHTML, /<h3>Cosa vuoi aggiungere\?<\/h3>/);
   assert.deepEqual(strade(f), ['settimana', 'persona', 'team']);
   assert.match(f.innerHTML, / alle 15:30/); assert.doesNotMatch(f.innerHTML, /Settimana \d+ ·/);
+  assert.doesNotMatch(f.innerHTML, /data-strada="giorno"/);   // dalle Timeline (con l'ora) nemmeno
   // Appuntamento: il modulo parte con l'ora toccata
   await f.clic('[data-strada="persona"]'); await attendi(); await attendi();
   await sceltoDaLista(P.fogli.at(-1), P.finto.contatti[0].nome); await attendi();   // l'ora si vede scelti la persona e il tipo
@@ -313,6 +314,7 @@ prova('Nota 183 (Ignazio 04/11: «che spunti la stessa scheda… quando tocchi i
   pulisci();
   P.foglioAggiungi({ type: 'click' }); await attendi();
   assert.match(P.fogli.at(-1).innerHTML, /Settimana \d+ ·/);
+  assert.doesNotMatch(P.fogli.at(-1).innerHTML, /data-strada="giorno"/);   // dal «+» la riga non c'è
   // il tocco sul vuoto, in tutte le Timeline del giorno (una funzione sola: collegaGriglia), apre questo foglio e non più il modulo diretto
   const src = require('node:fs').readFileSync(require('node:path').join(__dirname, '../../pagina-agenda.js'), 'utf8');
   const cg = src.slice(src.indexOf('function collegaGriglia('), src.indexOf("radice.querySelectorAll('.ag-ev')", src.indexOf('function collegaGriglia(')));
@@ -325,7 +327,7 @@ prova('Nota 183 (Ignazio 04/11: «che spunti la stessa scheda… quando tocchi i
   const mese = src.slice(src.indexOf('function disegnaMese('), src.indexOf('function inizioScalaMB('));
   assert.match(mese, /if \(!sulNumero\) return foglioAggiungi\(\{ giorno: b\.dataset\.giorno \}\);/);   // il numero apre il giorno, come prima
   const anno = src.slice(src.indexOf('function collegaMesiMini('), src.indexOf('function elencoDaFareHtml('));
-  assert.match(anno, /closest\('\.cc-n'\)[\s\S]*?if \(!sulNumero\) return foglioAggiungi\(\{ giorno: b\.dataset\.giorno \}\);/);   // Anno: come il Mese
+  assert.match(anno, /\.mn \[data-giorno\]'\)\.forEach\(b => \{ b\.onclick = \(\) => foglioAggiungi\(\{ giorno: b\.dataset\.giorno \}\); \}\);/);   // Anno: tutto il giorno, numero compreso
   assert.match(sett, /\[data-testa-giorno\]'\)\.forEach\(b => \{ b\.onclick = \(\) => \{ prima\(\); AG\.vista = 'giorno';[^\n]*apriAgenda\(b\.dataset\.testaGiorno\)/);   // Settimana: il nome apre il giorno
   P.AG.settimana = P.A.settimana(P.OGGI);
   assert.equal((P.vista('settimana').match(/data-testa-giorno="/g) || []).length, 7);
@@ -333,6 +335,9 @@ prova('Nota 183 (Ignazio 04/11: «che spunti la stessa scheda… quando tocchi i
   P.foglioAggiungi({ giorno: '2026-12-10' }); await attendi();
   f = P.fogli.at(-1);
   assert.match(f.innerHTML, /giovedì 10 dicembre</); assert.doesNotMatch(f.innerHTML, / alle /);
+  assert.equal([...f.innerHTML.matchAll(/data-strada="([^"]+)"/g)].map(m => m[1]).at(-1), 'giorno');   // in fondo «Apri il giorno ›»
+  assert.match(f.innerHTML, /<b>Apri il giorno<\/b><small>giovedì 10 dicembre<\/small><\/span><em>›<\/em>/);
+  assert.match(src, /if \(k === 'giorno'\) \{ AG\.vista = 'giorno';[^\n]*return apriAgenda\(quando\.giorno\); \}/);   // la riga apre il giorno toccato
   await f.clic('[data-strada="persona"]'); await attendi(); await attendi();
   await sceltoDaLista(P.fogli.at(-1), P.finto.contatti[0].nome); await attendi();
   await scegli(P.fogli.at(-1), 'tipo', 'Appuntamento'); await attendi();

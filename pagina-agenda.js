@@ -838,14 +838,8 @@ function mesiMiniHtml(mesi, oggi) {
   return `<div class="mn-mesi">${mesi.map(m => meseMiniHtml(m, oggi, punti, conCose)).join('')}</div>`;
 }
 function collegaMesiMini() {
-  // nota 183 (Ignazio 04/11): il tocco sul giorno apre il foglio del «+» per quel giorno; il tocco sul numero apre la pagina del giorno, come nel Mese
-  app.querySelectorAll('.mn [data-giorno]').forEach(b => {
-    b.onclick = ev => {
-      const sulNumero = ev && ev.target && ev.target.closest && ev.target.closest('.cc-n');
-      if (!sulNumero) return foglioAggiungi({ giorno: b.dataset.giorno });
-      AG.vista = 'giorno'; AG.aperta = null; AG.portato = null; apriAgenda(b.dataset.giorno);
-    };
-  });
+  // nota 183 (Ignazio 04/11, «A»): il tocco su tutto il giorno, numero compreso, apre il foglio del «+» per quel giorno; il giorno si apre da «Apri il giorno ›»
+  app.querySelectorAll('.mn [data-giorno]').forEach(b => { b.onclick = () => foglioAggiungi({ giorno: b.dataset.giorno }); });
   app.querySelectorAll('.mn-titolo[data-mese]').forEach(b => { b.onclick = () => { AG.vista = 'mese'; apriAgenda(b.dataset.mese); }; });
 }
 // L'elenco «Da fare» di una scala (mese, settimana, anno): le righe con il loro legame e il campo «Per chi è?» + testo
@@ -2406,8 +2400,11 @@ async function foglioAggiungi(da) {
     { k: 'persona', icona: 'persona', tinta: 'var(--cat-partner)', titolo: 'Appuntamento', sotto: 'Piano Marketing, Consulenza, Appuntamento, Telefonata… con un nome della tua lista' },
     ...(senzaLinguette() ? [{ k: 'cosa', icona: 'fatto', tinta: '#1F7A30', titolo: 'Una cosa da fare', sotto: 'Si scrive nel «Da fare» della pagina che stai guardando' }] : []),
     ...(puoSerataTeam() && (CONDIVISIONE_LINEE || (typeof SERATA_DA_MANDARE !== 'undefined' && SERATA_DA_MANDARE)) ? [CONDIVISIONE_LINEE ? { k: 'team', icona: 'squadra', tinta: 'var(--gr-crescita)', titolo: 'Serata con il Team o una Linea', sotto: 'La trovano nella loro Agenda' }
-      : { k: 'manda', icona: 'squadra', tinta: 'var(--gr-crescita)', titolo: 'Serata da mandare', sotto: `${persone.length === 1 ? 'La riceve' : 'La ricevono'}: ${nomi}` }] : [])]);
+      : { k: 'manda', icona: 'squadra', tinta: 'var(--gr-crescita)', titolo: 'Serata da mandare', sotto: `${persone.length === 1 ? 'La riceve' : 'La ricevono'}: ${nomi}` }] : []),
+    // nota 183 (Ignazio 04/11, «A»): da un giorno del Mese o dell'Anno (toccato, senza ora) in fondo «Apri il giorno ›»; dal «+» e dalle Timeline no
+    ...(toccato && !quando.ora ? [{ k: 'giorno', icona: 'agenda', tinta: 'var(--testo-soft)', titolo: 'Apri il giorno', sotto: dataLunga(quando.giorno) }] : [])]);
   if (!k) return;
+  if (k === 'giorno') { AG.vista = 'giorno'; AG.aperta = null; AG.portato = null; return apriAgenda(quando.giorno); }
   if (k === 'settimana') {
     if (!AG.settimana.includes(quando.giorno)) { AG.vista = 'settimana'; AG.aperta = null; AG.portato = null; await apriAgenda(quando.giorno); }   // dal Mese: quella settimana
     return preparaSettimana();
