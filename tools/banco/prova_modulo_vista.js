@@ -327,7 +327,7 @@ prova('Nota 183 (Ignazio 04/11: «che spunti la stessa scheda… quando tocchi i
   const mese = src.slice(src.indexOf('function disegnaMese('), src.indexOf('function inizioScalaMB('));
   assert.match(mese, /if \(!sulNumero\) return foglioAggiungi\(\{ giorno: b\.dataset\.giorno \}\);/);   // il numero apre il giorno, come prima
   const anno = src.slice(src.indexOf('function collegaMesiMini('), src.indexOf('function elencoDaFareHtml('));
-  assert.match(anno, /\.mn \[data-giorno\]'\)\.forEach\(b => \{ b\.onclick = \(\) => foglioAggiungi\(\{ giorno: b\.dataset\.giorno \}\); \}\);/);   // Anno: tutto il giorno, numero compreso
+  assert.match(anno, /\.mn \[data-giorno\]'\)\.forEach\(b => toccoODoppio\(b, \(\) => foglioAggiungi\(\{ giorno: b\.dataset\.giorno \}\), \(\) => apriIlGiorno\(b\.dataset\.giorno\)\)\);/);   // Anno: tutto il giorno, numero compreso; due tocchi: il giorno (nota 185)
   assert.match(sett, /\[data-testa-giorno\]'\)\.forEach\(b => \{ b\.onclick = \(\) => \{ prima\(\); AG\.vista = 'giorno';[^\n]*apriAgenda\(b\.dataset\.testaGiorno\)/);   // Settimana: il nome apre il giorno
   P.AG.settimana = P.A.settimana(P.OGGI);
   assert.equal((P.vista('settimana').match(/data-testa-giorno="/g) || []).length, 7);
@@ -387,6 +387,35 @@ prova('Nota 184 (Ignazio 04/11: «quantomeno si vedono gli appuntamenti già fat
   const src = require('node:fs').readFileSync(require('node:path').join(__dirname, '../../pagina-agenda.js'), 'utf8');
   const sett = src.slice(src.indexOf('function giorniSettimanaHtml('), src.indexOf('function periodoBreve('));
   assert.match(sett, /spaziDelGiorno\(g\)\.map\(rigaSsSpazio\)/); assert.match(sett, /ricevutiDelGiornoMB\(g\)\.map\(rigaSsRicevuto\)/); assert.match(sett, /ev\.map\(e => rigaSsEvento\(e, opz\)\)/);
+});
+
+prova('Nota 185 (Ignazio 04/11: «cliccando sul giorno due volte, si va alla pagina del giorno»): un tocco fa quello di prima dopo una breve attesa, due tocchi aprono il giorno; Settimana, Mese e Anno con una funzione sola', async () => {
+  const vm = require('node:vm'), fs = require('node:fs'), path = require('node:path');
+  const src = fs.readFileSync(path.join(__dirname, '../../pagina-agenda.js'), 'utf8');
+  const timer = [];
+  const c = { setTimeout: (fn, ms) => { timer.push({ fn, ms, via: false }); return timer.length; }, clearTimeout: id => { if (timer[id - 1]) timer[id - 1].via = true; },
+    AG: {}, aperti: [], apriAgenda: g => c.aperti.push(g) };
+  vm.createContext(c);
+  vm.runInContext(src.slice(src.indexOf('const DOPPIO_MS'), src.indexOf('// I tocchi della griglia a sette colonne:')) + '\nthis.toccoODoppio = toccoODoppio; this.DOPPIO_MS = DOPPIO_MS;', c);
+  const el = {}, singoli = [], doppi = [];
+  c.toccoODoppio(el, ev => singoli.push(ev.clientY), () => doppi.push(1));
+  // un tocco: niente subito, poi (passata l'attesa) quello di prima, con il punto toccato
+  el.onclick({ clientY: 120, target: null });
+  assert.deepEqual([singoli.length, doppi.length, timer.at(-1).ms], [0, 0, 300]);
+  timer.at(-1).fn();
+  assert.deepEqual([singoli, doppi.length], [[120], 0]);
+  // due tocchi vicini: il giorno, e il primo non apre il foglio
+  el.onclick({ clientY: 50 }); el.onclick({ clientY: 52 });
+  assert.equal(timer.at(-1).via, true); assert.deepEqual([singoli.length, doppi.length], [1, 1]);
+  // dopo il doppio si riparte da capo
+  el.onclick({ clientY: 70 }); timer.at(-1).fn();
+  assert.deepEqual([singoli, doppi.length], [[120, 70], 1]);
+  // collegato nei tre posti, e niente zoom del doppio tocco sul telefono
+  assert.match(src, /toccoODoppio\(b, ev => \{\s+const ore = b\.parentElement[\s\S]*?\}, \(\) => \{ prima\(\); apriIlGiorno\(b\.dataset\.vai\); \}\);/);   // Settimana: la colonna
+  assert.match(src, /toccoODoppio\(b, ev => \{\s+const sulNumero[\s\S]*?\}, \(\) => apriIlGiorno\(b\.dataset\.giorno\)\);/);   // Mese
+  assert.match(src, /\.mn \[data-giorno\]'\)\.forEach\(b => toccoODoppio\(/);   // Anno
+  const idx = fs.readFileSync(path.join(__dirname, '../../index.html'), 'utf8');
+  assert.match(idx, /\.ag-colonna, \.mm-g, \.mn-griglia button \{ touch-action: manipulation; \}/);
 });
 
 prova('Nota 001: il segnale Coach Yes accanto al nome solo sulle telefonate da fare (MB Plan) e nel modulo «+» della telefonata; il tocco apre «Coach Yes» con le note', async () => {

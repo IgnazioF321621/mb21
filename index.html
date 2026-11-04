@@ -1966,6 +1966,7 @@
   .ag-griglia.sett .ag-lin b { left: -30px; width: 26px; font-size: 10.5px; }
   .ag-griglia.sett .ag-adesso b { display: none; }
   .ag-colonna { position: absolute; top: 0; bottom: 0; right: auto; border-left: 1px solid var(--bordo); background: none; padding: 0; }   /* left e width arrivano dallo stile della colonna */
+  .ag-colonna, .mm-g, .mn-griglia button { touch-action: manipulation; }   /* nota 185: il doppio tocco apre il giorno, senza lo zoom del telefono */
   .ag-colonna:first-of-type { border-left: 0; }
   .ag-colonna.oggi { background: var(--superficie-2); }
   .ag-colonna.scelto { background: rgba(16,21,31,.05); }

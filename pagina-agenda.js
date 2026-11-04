@@ -770,12 +770,13 @@ function disegnaMese() {
   if (mp) mp.onclick = () => vaiMese(-1);
   if (md) md.onclick = () => vaiMese(1);
   // nota 183 (Ignazio 04/11, «A»): il tocco sul giorno apre il foglio del «+» per quel giorno; il tocco sul numero apre la pagina del giorno, come prima
+  // nota 185: due tocchi sul giorno aprono il giorno (toccoODoppio)
   app.querySelectorAll('.mm-g').forEach(b => {
-    b.onclick = ev => {
-      const sulNumero = ev && ev.target && ev.target.closest && ev.target.closest('.mm-n');
+    toccoODoppio(b, ev => {
+      const sulNumero = ev.target && ev.target.closest && ev.target.closest('.mm-n');
       if (!sulNumero) return foglioAggiungi({ giorno: b.dataset.giorno });
-      AG.vista = 'giorno'; AG.aperta = null; AG.portato = null; apriAgenda(b.dataset.giorno);
-    };
+      apriIlGiorno(b.dataset.giorno);
+    }, () => apriIlGiorno(b.dataset.giorno));
   });
 }
 
@@ -841,7 +842,7 @@ function mesiMiniHtml(mesi, oggi) {
 }
 function collegaMesiMini() {
   // nota 183 (Ignazio 04/11, «A»): il tocco su tutto il giorno, numero compreso, apre il foglio del «+» per quel giorno; il giorno si apre da «Apri il giorno ›»
-  app.querySelectorAll('.mn [data-giorno]').forEach(b => { b.onclick = () => foglioAggiungi({ giorno: b.dataset.giorno }); });
+  app.querySelectorAll('.mn [data-giorno]').forEach(b => toccoODoppio(b, () => foglioAggiungi({ giorno: b.dataset.giorno }), () => apriIlGiorno(b.dataset.giorno)));   // nota 185: due tocchi aprono il giorno
   app.querySelectorAll('.mn-titolo[data-mese]').forEach(b => { b.onclick = () => { AG.vista = 'mese'; apriAgenda(b.dataset.mese); }; });
 }
 // L'elenco «Da fare» di una scala (mese, settimana, anno): le righe con il loro legame e il campo «Per chi è?» + testo
@@ -961,6 +962,18 @@ function disegnaSettimana() {
   };
   app.querySelectorAll('.ss-g').forEach(b => { b.onclick = () => { AG.vista = 'giorno'; AG.aperta = null; AG.portato = null; apriAgenda(b.dataset.apri); }; });
 }
+// Nota Pagine 185 (Ignazio 04/11: «cliccando sul giorno due volte, si va alla pagina del giorno specifico»): un tocco solo fa quello di prima,
+// due tocchi vicini aprono il giorno. Il tocco solo aspetta DOPPIO_MS per sapere se ne arriva un secondo (così il foglio non si apre al primo dei due);
+// vale per il dito (iPhone, iPad: `touch-action: manipulation` toglie lo zoom del doppio tocco) e per il clic del Mac. Una funzione sola per Settimana, Mese e Anno.
+const DOPPIO_MS = 300;
+function toccoODoppio(el, singolo, doppio) {
+  el.onclick = ev => {
+    if (el._attesa) { clearTimeout(el._attesa); el._attesa = null; return doppio(); }
+    const dati = { clientY: ev && ev.clientY, target: ev && ev.target };   // il punto del primo tocco (l'ora nella Settimana)
+    el._attesa = setTimeout(() => { el._attesa = null; singolo(dati); }, DOPPIO_MS);
+  };
+}
+const apriIlGiorno = g => { AG.vista = 'giorno'; AG.aperta = null; AG.portato = null; apriAgenda(g); };
 // I tocchi della griglia a sette colonne: un blocco apre il suo giorno e l'impegno, il vuoto di una colonna apre il foglio del «+» a quell'ora (nota 183),
 // il nome del giorno in cima alla colonna apre il giorno (nota 183, la stessa regola del numero nel Mese e nell'Anno)
 function collegaGrigliaSettimana(radice, prima) {
@@ -979,12 +992,12 @@ function collegaGrigliaSettimana(radice, prima) {
   // giorno e l'ora toccata, al quarto d'ora, come nella Timeline del giorno (prima apriva il giorno)
   radice.querySelectorAll('[data-testa-giorno]').forEach(b => { b.onclick = () => { prima(); AG.vista = 'giorno'; AG.portato = null; AG.aperta = null; apriAgenda(b.dataset.testaGiorno); }; });
   radice.querySelectorAll('.ag-colonna[data-vai]').forEach(b => {
-    b.onclick = ev => {
+    toccoODoppio(b, ev => {
       const ore = b.parentElement, riquadro = ore.getBoundingClientRect();
       const minuti = A.alQuarto(Number(ore.dataset.da) + (ev.clientY - riquadro.top) / Number(ore.dataset.alt || ALT_ORA_SETT) * 60);
       prima();
       foglioAggiungi({ giorno: b.dataset.vai, ora: A.daMinuti(Math.max(0, Math.min(1425, minuti))) });
-    };
+    }, () => { prima(); apriIlGiorno(b.dataset.vai); });   // nota 185: due tocchi sulla colonna aprono il giorno
   });
 }
 
