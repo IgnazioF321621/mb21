@@ -290,6 +290,37 @@ prova('Nota 005 e Agenda P5 (Ignazio 23/10): un foglio solo «Cosa vuoi aggiunge
   assert.match(idx, /const puoTeam = \(\) => puoSerataTeam\(\) && !opz\.contatto && !opz\.spazio;/);   // una regola sola, foglio e modulo
 }));
 
+prova('Nota 183 (Ignazio 04/11: «che spunti la stessa scheda… quando tocchi il +»): il tocco su un orario vuoto della Timeline apre il foglio del «+» con quel giorno e quell\'ora', conLinee(async () => {
+  const strade = f => [...f.innerHTML.matchAll(/data-strada="([^"]+)"/g)].map(m => m[1]);
+  // lo stesso foglio, con le stesse voci; il sottotitolo dice il giorno e l'ora toccati
+  pulisci(); P.modo.admin = true;
+  P.foglioAggiungi({ giorno: P.OGGI, ora: '15:30' }); await attendi();
+  let f = P.fogli.at(-1);
+  assert.match(f.innerHTML, /<h3>Cosa vuoi aggiungere\?<\/h3>/);
+  assert.deepEqual(strade(f), ['settimana', 'persona', 'team']);
+  assert.match(f.innerHTML, / alle 15:30/); assert.doesNotMatch(f.innerHTML, /Settimana \d+ ·/);
+  // Appuntamento: il modulo parte con l'ora toccata
+  await f.clic('[data-strada="persona"]'); await attendi(); await attendi();
+  await sceltoDaLista(P.fogli.at(-1), P.finto.contatti[0].nome); await attendi();   // l'ora si vede scelti la persona e il tipo
+  await scegli(P.fogli.at(-1), 'tipo', 'Appuntamento'); await attendi();
+  assert.equal(P.fogli.at(-1).querySelector('#na-ora').value, '15:30');
+  // Serata con il Team: anche lei con l'ora toccata
+  pulisci(); P.modo.admin = true;
+  P.foglioAggiungi({ giorno: P.OGGI, ora: '21:00' }); await attendi();
+  await P.fogli.at(-1).clic('[data-strada="team"]'); await attendi(); await attendi();
+  assert.equal(P.fogli.at(-1).querySelector('#na-ora').value, '21:00');
+  // dal «+» (il clic passa l'evento, non un orario): come prima, la settimana nel sottotitolo
+  pulisci();
+  P.foglioAggiungi({ type: 'click' }); await attendi();
+  assert.match(P.fogli.at(-1).innerHTML, /Settimana \d+ ·/);
+  // il tocco sul vuoto, in tutte le Timeline del giorno (una funzione sola: collegaGriglia), apre questo foglio e non più il modulo diretto
+  const src = require('node:fs').readFileSync(require('node:path').join(__dirname, '../../pagina-agenda.js'), 'utf8');
+  const cg = src.slice(src.indexOf('function collegaGriglia('), src.indexOf("radice.querySelectorAll('.ag-ev')", src.indexOf('function collegaGriglia(')));
+  assert.match(cg, /foglioAggiungi\(\{ giorno: AG\.giorno, ora: A\.daMinuti\(minuti\) \}\)/);
+  assert.doesNotMatch(cg, /nuovoAppuntamento/);
+  assert.equal((src.match(/id="ag-tocca"/g) || []).length, 1);   // lo strato del tocco nasce in un posto solo (grigliaGiorno)
+}));
+
 prova('Nota 001: il segnale Coach Yes accanto al nome solo sulle telefonate da fare (MB Plan) e nel modulo «+» della telefonata; il tocco apre «Coach Yes» con le note', async () => {
   pulisci();
   P.CY.di = 'io'; P.CY.letta = Date.now(); P.CY.ids = new Set(['ct1', 'c-isa']);

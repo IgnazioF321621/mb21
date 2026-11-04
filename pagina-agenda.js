@@ -1370,7 +1370,8 @@ function foglioCronologia(eventi, opz) {
   if (rif) foglio.scrollTop = Math.max(0, rif.offsetTop - 160);
 }
 
-// I tocchi sulla griglia a orario: il vuoto fissa a quell'ora, il blocco apre il foglio dell'impegno.
+// I tocchi sulla griglia a orario: il vuoto apre il foglio del «+» con quell'ora (nota 183; prima l'appuntamento diretto), il blocco apre il foglio dell'impegno.
+// Una funzione sola per tutte le Timeline del giorno: Giorno, pannello di destra, Timeline a tutto foglio.
 function collegaGriglia(radice, eventi, prima) {
   const A = MB21Agenda;
   const tocca = radice.querySelector('#ag-tocca');
@@ -1379,7 +1380,7 @@ function collegaGriglia(radice, eventi, prima) {
     const ore = tocca.parentElement, riquadro = ore.getBoundingClientRect();
     const minuti = A.alQuarto(Number(ore.dataset.da) + (ev.clientY - riquadro.top) / ALT_ORA * 60);
     if (prima) prima();
-    nuovoAppuntamento({ giorno: AG.giorno, ora: A.daMinuti(minuti) });
+    foglioAggiungi({ giorno: AG.giorno, ora: A.daMinuti(minuti) });
   };
   radice.querySelectorAll('.ag-ev').forEach(b => {
     const e = eventi.find(x => x.id === b.dataset.evento);
@@ -1454,7 +1455,7 @@ function grigliaGiorno(eventi, opz) {
     h += `<div class="ag-doppi">${ic('attenzione')} ${dVeri.sovrapposti} impegni${esc(diChi)} si accavallano: controlla che sia voluto.</div>`;
   }
   h += `<div class="ag-griglia"><div class="ag-ore" data-da="${d.da}" data-alt="${ALT_ORA}" style="height:${altezza}px">`;
-  h += `<button class="ag-libero" id="ag-tocca" aria-label="Fissa un appuntamento a quest'ora"></button>`;
+  h += `<button class="ag-libero" id="ag-tocca" aria-label="Aggiungi qualcosa a quest'ora"></button>`;
   for (let m = d.da; m <= d.a; m += 60) {
     h += `<div class="ag-lin" style="top:${y(m)}px"><b>${m === 1440 ? '24' : m / 60}</b></div>`;
     if (m + 30 < d.a) h += `<div class="ag-mezza" style="top:${y(m + 30)}px"></div>`;
@@ -2363,12 +2364,16 @@ function foglioStrade(titolo, sotto, voci, conIndietro) {
     velo.querySelectorAll('[data-strada]').forEach(b => { b.onclick = () => fine(b.dataset.strada); });
   });
 }
-async function foglioAggiungi() {
+// Nota Pagine 183 (Ignazio 04/11: «che spunti la stessa scheda, stessa cosa che c'è quando tocchi il +»): il tocco su un orario vuoto della Timeline
+// apre questo stesso foglio con `da` = { giorno, ora }; il sottotitolo dice il giorno e l'ora toccati, e Appuntamento e Serata partono da lì.
+async function foglioAggiungi(da) {
   if (vediTutti()) return mostraToast('Con «Tutti» scegli prima il partner nel Partner Select');
   const A = MB21Agenda, lun = AG.settimana[0], dom = AG.settimana[6], mese = g => A.titoloMese(g).toLowerCase();
+  const quando = da && da.giorno && da.ora ? { giorno: da.giorno, ora: da.ora } : { giorno: AG.giorno };
   if (eAdmin() && !CONDIVISIONE_LINEE && AG.ramo === undefined) await caricaRamoApp();   // P5b: per sapere a chi si può mandare (una lettura)
   const persone = personeAppDelGruppo(), nomi = persone.map(p => p.nome).join(', ');
-  const k = await foglioStrade('Cosa vuoi aggiungere?', `Settimana ${A.numeroSettimana(lun)} · ${Number(lun.slice(8))} ${lun.slice(5, 7) === dom.slice(5, 7) ? '' : mese(lun) + ' '}– ${Number(dom.slice(8))} ${mese(dom)}`, [
+  const k = await foglioStrade('Cosa vuoi aggiungere?', quando.ora ? `${dataLunga(quando.giorno)} alle ${quando.ora}`
+    : `Settimana ${A.numeroSettimana(lun)} · ${Number(lun.slice(8))} ${lun.slice(5, 7) === dom.slice(5, 7) ? '' : mese(lun) + ' '}– ${Number(dom.slice(8))} ${mese(dom)}`, [
     { k: 'settimana', icona: 'scala-settimana', tinta: 'var(--mb-programma, #2c4a7c)', titolo: 'Programmare la settimana', sotto: 'Piani Marketing, Consulenze e incontri della settimana' },
     { k: 'persona', icona: 'persona', tinta: 'var(--cat-partner)', titolo: 'Appuntamento', sotto: 'Piano Marketing, Consulenza, Appuntamento, Telefonata… con un nome della tua lista' },
     ...(senzaLinguette() ? [{ k: 'cosa', icona: 'fatto', tinta: '#1F7A30', titolo: 'Una cosa da fare', sotto: 'Si scrive nel «Da fare» della pagina che stai guardando' }] : []),
@@ -2377,8 +2382,8 @@ async function foglioAggiungi() {
   if (!k) return;
   if (k === 'settimana') return preparaSettimana();
   if (k === 'cosa') return apriCampoCosa();
-  if (k === 'manda') return nuovoAppuntamento({ giorno: AG.giorno, condividi: 'linea' });   // P5b: la persona è già scelta se è una sola
-  return nuovoAppuntamento({ giorno: AG.giorno, ...(k === 'team' ? { condividi: 'team' } : {}) });
+  if (k === 'manda') return nuovoAppuntamento({ ...quando, condividi: 'linea' });   // P5b: la persona è già scelta se è una sola
+  return nuovoAppuntamento({ ...quando, ...(k === 'team' ? { condividi: 'team' } : {}) });
 }
 
 // «Una cosa da fare» dal «+» (v5, nota 098): apre il campo di sempre del Da fare della vista che si guarda (nel Giorno «+ Una cosa da fare»)
