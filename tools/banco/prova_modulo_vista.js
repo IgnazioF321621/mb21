@@ -345,6 +345,50 @@ prova('Nota 183 (Ignazio 04/11: «che spunti la stessa scheda… quando tocchi i
   assert.match(P.fogli.at(-1).querySelector('#na-ora').value, /^\d\d:\d\d$/);
 }));
 
+prova('Nota 184 (Ignazio 04/11: «quantomeno si vedono gli appuntamenti già fatti»): dal Mese e dall\'Anno il foglio del «+» mostra in cima gli impegni del giorno, o «Giornata libera»', async () => {
+  const testo = h => h.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+  const impegni = h => (/<div class="st-impegni">([\s\S]*?)<\/div>/.exec(h) || [])[1];
+  // un giorno già letto dall'Agenda (Mese, o l'Anno sul mese aperto): le righe dell'elenco della Settimana, in ordine di ora, nessuna lettura in più
+  pulisci();
+  const conImpegni = P.AG.azioni.map(e => P.A.partiRoma(e.inizio).giorno).find(g => P.A.eventiDelGiorno(P.AG.azioni, g).length);
+  assert.ok(conImpegni, 'nel banco serve un giorno con impegni');
+  P.AG.lettiDa = P.A.spostaGiorno(conImpegni, -20); P.AG.lettiA = P.A.spostaGiorno(conImpegni, 20);
+  try {
+    P.foglioAggiungi({ giorno: conImpegni }); await attendi(); await attendi();
+    let f = P.fogli.at(-1), dentro = impegni(f.innerHTML);
+    const attese = P.A.incontri(P.A.eventiDelGiorno(P.AG.azioni, conImpegni));
+    assert.equal((dentro.match(/class="ss-riga/g) || []).length, attese.length);
+    const ore = [...dentro.matchAll(/<em>(\d\d:\d\d)<\/em>/g)].map(m => m[1]);
+    assert.deepEqual(ore, [...ore].sort());
+    assert.ok(f.innerHTML.indexOf('st-impegni') < f.innerHTML.indexOf('data-strada='));   // in cima, sopra le scelte
+    assert.equal(chiamate('impegni_ricevuti').length, 0);   // già letti: niente letture
+    // un giorno fuori da quelli letti (l'Anno): si leggono solo quel giorno, con le stesse richieste dell'Agenda
+    P.finto.giornoApp = [{ id: 'g-1', user_id: 'io', tipo_azione: 'Piano Marketing', modalita: 'PM 1a1', completata: false, inizio: P.A.isoDaRoma('2027-03-10', '10:00'), fine: P.A.isoDaRoma('2027-03-10', '11:00'), contatti: { nome: 'Gino Finto', categoria: 'Prospect' } }];
+    P.foglioAggiungi({ giorno: '2027-03-10' }); await attendi(); await attendi(); await attendi();
+    f = P.fogli.at(-1);
+    assert.match(testo(impegni(f.innerHTML)), /10:00 [^]*Gino Finto/);   // «10:00 Piano Marketing · Gino Finto»
+    assert.equal(chiamate('impegni_ricevuti').length, 1);
+    // niente impegni: «Giornata libera»; lettura che non riesce: lo si dice, e «Apri il giorno» resta
+    P.finto.giornoApp = [];
+    P.foglioAggiungi({ giorno: '2027-03-11' }); await attendi(); await attendi(); await attendi();
+    assert.match(impegni(P.fogli.at(-1).innerHTML), /Giornata libera/);
+    P.finto.giornoErrore = true;
+    P.foglioAggiungi({ giorno: '2027-03-12' }); await attendi(); await attendi(); await attendi();
+    assert.match(impegni(P.fogli.at(-1).innerHTML), /Non riesco a leggere gli impegni/);
+    assert.match(P.fogli.at(-1).innerHTML, /data-strada="giorno"/);
+    // dal «+» e dalle Timeline (con l'ora) niente impegni in cima
+    P.finto.giornoErrore = false;
+    P.foglioAggiungi({ type: 'click' }); await attendi();
+    assert.doesNotMatch(P.fogli.at(-1).innerHTML, /st-impegni/);
+    P.foglioAggiungi({ giorno: conImpegni, ora: '15:30' }); await attendi();
+    assert.doesNotMatch(P.fogli.at(-1).innerHTML, /st-impegni/);
+  } finally { P.AG.lettiDa = null; P.AG.lettiA = null; P.finto.giornoApp = null; P.finto.giornoErrore = false; }
+  // le righe sono le stesse dell'elenco della Settimana: una funzione sola
+  const src = require('node:fs').readFileSync(require('node:path').join(__dirname, '../../pagina-agenda.js'), 'utf8');
+  const sett = src.slice(src.indexOf('function giorniSettimanaHtml('), src.indexOf('function periodoBreve('));
+  assert.match(sett, /spaziDelGiorno\(g\)\.map\(rigaSsSpazio\)/); assert.match(sett, /ricevutiDelGiornoMB\(g\)\.map\(rigaSsRicevuto\)/); assert.match(sett, /ev\.map\(e => rigaSsEvento\(e, opz\)\)/);
+});
+
 prova('Nota 001: il segnale Coach Yes accanto al nome solo sulle telefonate da fare (MB Plan) e nel modulo «+» della telefonata; il tocco apre «Coach Yes» con le note', async () => {
   pulisci();
   P.CY.di = 'io'; P.CY.letta = Date.now(); P.CY.ids = new Set(['ct1', 'c-isa']);

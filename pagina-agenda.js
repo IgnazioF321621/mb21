@@ -77,6 +77,7 @@ async function caricaAgendaLetture() {
   // non si leggono più a ogni apertura; «Vedi tutto» in fondo al foglio le carica (AG.tutteLeCose). Le cose dell'anno sono poche e restano sempre.
   const limite = AG.tutteLeCose ? null : A.spostaGiorno(oggi, -366), dal = limite ? `,giorno.gte.${limite}` : '';
   const coseDa = griglia0 < AG.settimana[0] ? griglia0 : AG.settimana[0], coseA = griglia1 > AG.settimana[6] ? griglia1 : AG.settimana[6];
+  AG.lettiDa = null;   // nota 184: i giorni letti (appuntamenti, spazi, ricevuti), [lettiDa, lettiA): si scrivono a lettura finita
   PRE.dati = null;
   if (!vediTutti()) try {
     const { data, error } = await dbq('Agenda in una lettura', supa.rpc('apri_agenda', { p_utente: visto().id, p_giorno: AG.giorno, p_da: da, p_a: a,
@@ -128,6 +129,7 @@ async function caricaAgendaLetture() {
   const conOrario = new Set(MB21Agenda.eventiDelGiorno(AG.azioni, AG.giorno).map(e => e.contatto_id));
   AG.telefonate = !tel ? null : AG.giorno === oggi ? { oggi: true, ...tel.data } : { oggi: false, inCoda: (tel.data || []).filter(c => !conOrario.has(c.id)) };
   await ricordi;
+  AG.lettiDa = A.partiRoma(da).giorno; AG.lettiA = A.partiRoma(a).giorno;   // nota 184: il foglio del «+» sa quali giorni ha già
   AG.lettaChiave = chiaveAgenda(); AG.lettaAlle = Date.now();   // letta adesso: per 15 minuti, senza scritture, non si rilegge
 }
 
@@ -895,17 +897,23 @@ function disegnaAnno() {
 
 // ── Il foglio della SETTIMANA (cantiere 41, vista D; Ignazio 22/09): sette righe, una per giorno, con gli impegni
 // compatti; sotto le cose da fare della settimana; la griglia a sette colonne a orario a destra (Mac) o nella linguetta.
+// Le righe corte di un impegno (ora e nome), le stesse nell'elenco della Settimana e nel foglio del «+» aperto da un giorno (nota 184)
+function rigaSsEvento(e, opz) {
+  const A = MB21Agenda, cat = (e.contatti && e.contatti.categoria) || e.categoria;
+  return `<span class="ss-riga${e.completata ? ' fatta' : ''}"><i class="${classeCat(cat)}"></i><em>${esc(A.orario(e).split('–')[0])}</em>${esc(A.riga(e, opz).titolo)}</span>`;
+}
+const rigaSsSpazio = x => `<span class="ss-riga ss-spazio" style="--tinta:${coloreSpazio(x.tipo)}"><i></i><em>${MB21Spazi.orario(x).ora}</em>${esc(MB21Spazi.titolo(x))}${MB21Spazi.daRiempire(x.tipo) ? ' · da riempire' : ''}</span>`;
+const rigaSsRicevuto = x => `<span class="ss-riga ss-ricevuto"><i></i><em>${esc(MB21Agenda.orario(x).split('–')[0])}</em>${esc(MB21Agenda.titoloRicevuto(x))}</span>`;
 function giorniSettimanaHtml(opz, oggi) {
   const A = MB21Agenda;
   return `<div class="ss-giorni">${AG.settimana.map((g, i) => {
     const ev = A.incontri(A.eventiDelGiorno(AG.azioni, g));   // nota 109
     const cose = A.coseDelGiorno(AG.cose, g, oggi);   // le cose da fare di quel giorno, sotto gli impegni (come i riferimenti di NotePlan)
     const coseHtml = cose.map(c => `<span class="ss-riga ss-cosa${c.fatto_il ? ' fatta' : ''}"><i></i>${c.ora ? `<em>${esc(String(c.ora).slice(0, 5))}</em>` : ''}${esc(c.testo)}</span>`).join('')
-      + spaziDelGiorno(g).map(x => `<span class="ss-riga ss-spazio" style="--tinta:${coloreSpazio(x.tipo)}"><i></i><em>${MB21Spazi.orario(x).ora}</em>${esc(MB21Spazi.titolo(x))}${MB21Spazi.daRiempire(x.tipo) ? ' · da riempire' : ''}</span>`).join('')
-      + ricevutiDelGiornoMB(g).map(x => `<span class="ss-riga ss-ricevuto"><i></i><em>${esc(A.orario(x).split('–')[0])}</em>${esc(A.titoloRicevuto(x))}</span>`).join('');
+      + spaziDelGiorno(g).map(rigaSsSpazio).join('')
+      + ricevutiDelGiornoMB(g).map(rigaSsRicevuto).join('');
     return `<button class="ss-g${g === oggi ? ' oggi' : ''}" data-apri="${g}"><span class="ss-data"><small>${A.GIORNI_SETTIMANA[i]}</small><b>${Number(g.slice(8))}</b></span>
-      <span class="ss-ev">${ev.length ? ev.map(e => { const cat = (e.contatti && e.contatti.categoria) || e.categoria;
-        return `<span class="ss-riga${e.completata ? ' fatta' : ''}"><i class="${classeCat(cat)}"></i><em>${esc(A.orario(e).split('–')[0])}</em>${esc(A.riga(e, opz).titolo)}</span>`; }).join('') : (coseHtml ? '' : '<span class="ss-libera">giornata libera</span>')}${coseHtml}</span></button>`;
+      <span class="ss-ev">${ev.length ? ev.map(e => rigaSsEvento(e, opz)).join('') : (coseHtml ? '' : '<span class="ss-libera">giornata libera</span>')}${coseHtml}</span></button>`;
   }).join('')}</div>`;
 }
 // v5 (Ignazio 26/10: «nel titolo evitiamo il numero della settimana, mettiamo soltanto inizio e fine»): «21–27 set», «26 ott – 1 nov»,
@@ -2368,11 +2376,11 @@ function spaziComeBlocchi(g) {
 // subito il loro modulo: «Programmare la settimana» (preparaSettimana) · «Appuntamento» (nuovoAppuntamento; fino al 28/10 «… con una persona», nota 115) · «Serata con il Team
 // o una Linea» (il modulo con «Tutto il Team» già scelto; la Linea si sceglie lì). La terza la vede solo chi può (puoSerataTeam, index.html).
 // `voci`: { k, icona, titolo, sotto, tinta }; risolve la `k` scelta, 'indietro' o null
-function foglioStrade(titolo, sotto, voci, conIndietro) {
+function foglioStrade(titolo, sotto, voci, conIndietro, sopra = '') {   // `sopra`: html tra il sottotitolo e le voci (nota 184: gli impegni del giorno)
   return new Promise(risolvi => {
     const velo = document.createElement('div');
     velo.className = 'velo';
-    velo.innerHTML = `<div class="foglio mc strade">${conIndietro ? `<button class="link st-indietro" id="st-indietro">‹ ${esc(conIndietro)}</button>` : ''}<h3>${esc(titolo)}</h3><p>${esc(sotto)}</p>
+    velo.innerHTML = `<div class="foglio mc strade">${conIndietro ? `<button class="link st-indietro" id="st-indietro">‹ ${esc(conIndietro)}</button>` : ''}<h3>${esc(titolo)}</h3><p>${esc(sotto)}</p>${sopra}
       ${voci.map(v => `<button type="button" class="strada" data-strada="${esc(v.k)}"><span class="st-tondo" style="--tinta:${v.tinta}">${ic(v.icona)}</span><span class="st-testo"><b>${esc(v.titolo)}</b><small>${esc(v.sotto)}</small></span><em>›</em></button>`).join('')}
       <button class="link" id="st-no">Annulla</button></div>`;
     document.body.appendChild(velo);
@@ -2382,6 +2390,34 @@ function foglioStrade(titolo, sotto, voci, conIndietro) {
     const ind = velo.querySelector('#st-indietro'); if (ind) ind.onclick = () => fine('indietro');
     velo.querySelectorAll('[data-strada]').forEach(b => { b.onclick = () => fine(b.dataset.strada); });
   });
+}
+// Nota Pagine 184: gli impegni di un giorno per il foglio del «+» — appuntamenti (con i richiami e le telefonate programmate), spazi e impegni ricevuti.
+// Se il giorno è tra quelli già letti dall'Agenda (la settimana e la griglia del mese) si prendono da lì, senza letture; se no (l'Anno) si leggono
+// solo per quel giorno, con le stesse richieste dell'Agenda. Torna { ev, spazi, ricevuti } oppure null se la lettura non riesce.
+async function impegniDelGiorno(g) {
+  const A = MB21Agenda;
+  if (AG.lettiDa && g >= AG.lettiDa && g < AG.lettiA) return { ev: A.incontri(A.eventiDelGiorno(AG.azioni, g)), spazi: spaziDelGiorno(g), ricevuti: ricevutiDelGiornoMB(g) };
+  const da = A.isoDaRoma(g, '00:00'), a = A.isoDaRoma(A.spostaGiorno(g, 1), '00:00'), ids = idVisti();
+  const [app1, ric, sp, rc] = await Promise.all([
+    dbq('impegni del giorno', supa.from('azioni').select(CAMPI_AZIONE).in('user_id', ids).neq('tipo_azione', 'Contatto').gte('inizio', da).lt('inizio', a)),
+    dbq('contatti del giorno', supa.from('azioni').select(CAMPI_AZIONE).in('user_id', ids).eq('tipo_azione', 'Contatto')
+      .or(`and(data_scelta.gte."${da}",data_scelta.lt."${a}"),and(data_scelta.is.null,completata.eq.false,inizio.gte."${da}",inizio.lt."${a}")`)),
+    vediSpazi() ? dbq('spazi del giorno', supa.from('spazi').select('*').eq('user_id', visto().id).gte('inizio', da).lt('inizio', a).order('inizio')) : null,
+    vediTutti() ? null : dbq('impegni ricevuti del giorno', supa.rpc('impegni_ricevuti', { p_da: da, p_a: a })),
+  ]);
+  if ([app1, ric].some(r => !r || r.error)) return null;
+  const azioni = A.azioniAgenda([...app1.data, ...ric.data]);
+  return { ev: A.incontri(A.eventiDelGiorno(azioni, g)), spazi: sp && !sp.error ? MB21Spazi.delGiorno(sp.data, g) : [],
+    ricevuti: rc && !rc.error && Array.isArray(rc.data) ? A.ricevutiDelGiorno(rc.data, g) : [] };
+}
+// in ordine di ora: «10:00 Piano Marketing · Nome», con le righe dell'elenco della Settimana (rigaSsEvento, rigaSsSpazio, rigaSsRicevuto)
+function impegniFoglioHtml(imp) {
+  if (!imp) return `<div class="st-impegni"><span class="ss-libera">Non riesco a leggere gli impegni di questo giorno: «Apri il giorno» li mostra.</span></div>`;
+  const A = MB21Agenda, opz = { mioId: vediTutti() ? null : visto().id, admin: eAdmin() };
+  const righe = [...imp.ev.map(e => ({ ora: A.orario(e).split('–')[0], h: rigaSsEvento(e, opz) })),
+    ...imp.spazi.map(x => ({ ora: MB21Spazi.orario(x).ora, h: rigaSsSpazio(x) })),
+    ...imp.ricevuti.map(x => ({ ora: A.orario(x).split('–')[0], h: rigaSsRicevuto(x) }))].sort((x, y) => (x.ora < y.ora ? -1 : x.ora > y.ora ? 1 : 0));
+  return `<div class="st-impegni">${righe.length ? righe.map(r => r.h).join('') : '<span class="ss-libera">Giornata libera</span>'}</div>`;
 }
 // Nota Pagine 183 (Ignazio 04/11: «che spunti la stessa scheda, stessa cosa che c'è quando tocchi il +»; «la stessa possibilità… nella schermata settimana,
 // nella schermata mese e nella schermata anno»): una funzione sola per il «+» e per i tocchi su Giorno, Settimana (`da` = { giorno, ora }) e Mese
@@ -2394,6 +2430,9 @@ async function foglioAggiungi(da) {
   const quando = toccato ? { giorno: da.giorno, ...(da.ora ? { ora: da.ora } : {}) } : { giorno: AG.giorno };
   if (eAdmin() && !CONDIVISIONE_LINEE && AG.ramo === undefined) await caricaRamoApp();   // P5b: per sapere a chi si può mandare (una lettura)
   const persone = personeAppDelGruppo(), nomi = persone.map(p => p.nome).join(', ');
+  // nota 184 (Ignazio 04/11: «se non si apre la pagina o quantomeno si vedono gli appuntamenti già fatti, diventa complicato rendersi conto»): da un giorno
+  // del Mese o dell'Anno, in cima gli impegni già fissati quel giorno (le righe dell'elenco della Settimana), o «Giornata libera»
+  const sopra = toccato && !quando.ora ? impegniFoglioHtml(await impegniDelGiorno(quando.giorno)) : '';
   const k = await foglioStrade('Cosa vuoi aggiungere?', toccato ? `${dataLunga(quando.giorno)}${quando.ora ? ` alle ${quando.ora}` : ''}`
     : `Settimana ${A.numeroSettimana(lun)} · ${Number(lun.slice(8))} ${lun.slice(5, 7) === dom.slice(5, 7) ? '' : mese(lun) + ' '}– ${Number(dom.slice(8))} ${mese(dom)}`, [
     { k: 'settimana', icona: 'scala-settimana', tinta: 'var(--mb-programma, #2c4a7c)', titolo: 'Programmare la settimana', sotto: 'Piani Marketing, Consulenze e incontri della settimana' },
@@ -2402,7 +2441,7 @@ async function foglioAggiungi(da) {
     ...(puoSerataTeam() && (CONDIVISIONE_LINEE || (typeof SERATA_DA_MANDARE !== 'undefined' && SERATA_DA_MANDARE)) ? [CONDIVISIONE_LINEE ? { k: 'team', icona: 'squadra', tinta: 'var(--gr-crescita)', titolo: 'Serata con il Team o una Linea', sotto: 'La trovano nella loro Agenda' }
       : { k: 'manda', icona: 'squadra', tinta: 'var(--gr-crescita)', titolo: 'Serata da mandare', sotto: `${persone.length === 1 ? 'La riceve' : 'La ricevono'}: ${nomi}` }] : []),
     // nota 183 (Ignazio 04/11, «A»): da un giorno del Mese o dell'Anno (toccato, senza ora) in fondo «Apri il giorno ›»; dal «+» e dalle Timeline no
-    ...(toccato && !quando.ora ? [{ k: 'giorno', icona: 'agenda', tinta: 'var(--testo-soft)', titolo: 'Apri il giorno', sotto: dataLunga(quando.giorno) }] : [])]);
+    ...(toccato && !quando.ora ? [{ k: 'giorno', icona: 'agenda', tinta: 'var(--testo-soft)', titolo: 'Apri il giorno', sotto: dataLunga(quando.giorno) }] : [])], undefined, sopra);
   if (!k) return;
   if (k === 'giorno') { AG.vista = 'giorno'; AG.aperta = null; AG.portato = null; return apriAgenda(quando.giorno); }
   if (k === 'settimana') {

@@ -108,7 +108,11 @@ const stub = {
   supa: { from: tabella, rpc: (nome, args) => { scritture.push({ tabella: 'rpc:' + nome, op: 'rpc', args: [args] }); return fine; } }, dbq: async nome => (nome === 'ripetizione già c\'è' ? { data: scelta.esiste ? [{ id: 'gia' }] : [], error: null }
     : nome === 'punto nel Da fare' ? { data: { id: 'nuovo-1', testo: 'x', giorno: OGGI, scala: 'giorno' }, error: null }   // `.single()`: una riga sola, non un elenco
     // impegni condivisi (nota 027): le risposte finte del database
-    : nome === 'impegni ricevuti' || nome === 'impegni nuovi' ? { data: finto.ricevuti, error: null }
+    : nome === 'impegni ricevuti' || nome === 'impegni nuovi' || nome === 'impegni ricevuti del giorno' ? { data: finto.ricevuti, error: null }
+    // nota 184: gli impegni di un giorno fuori da quelli già letti (l'Anno); `finto.giornoErrore` = la lettura non riesce
+    : nome === 'impegni del giorno' ? (finto.giornoErrore ? { data: null, error: 'rete' } : { data: finto.giornoApp || [], error: null })
+    : nome === 'contatti del giorno' ? { data: [], error: null }
+    : nome === 'spazi del giorno' ? { data: finto.giornoSpazi || [], error: null }
     : nome === 'risposte impegno' ? { data: finto.risposte, error: null }
     : nome === 'condividi azione' ? { data: finto.condividi, error: null }
     // nota 103: con più persone il modulo scrive un elenco di righe e riceve un elenco di id
@@ -130,7 +134,7 @@ const stub = {
   MB21Agenda: A, MB21Icone, MB21Spazi, MB21Perche: require(path.join(BASE, 'perche.js')), app, AG, LIMITE_SENZA_ESITO: 50, MB21Mappa: require(path.join(BASE, 'mappa.js')), MB21Lista: require(path.join(BASE, 'lista.js')),
   ST: { utente: { id: 'io', partner_id: 'IO1' }, tab: 'agenda' }, RIO: { righe: [{}] }, CONF: { righe: [{}, {}] }, FATTO_APERTO: new Set(),
   MB21Coda: { ...require(path.join(BASE, 'coda.js')), oggiRoma: () => OGGI, adesso: () => A.isoDaRoma(OGGI, '12:00') },   // il motore vero (contoGiorno), con l'oggi fermo e «adesso» a mezzogiorno
-  vediTutti: () => modo.tutti, visto: () => ({ id: 'io' }), eAdmin: () => modo.admin, soloGuardo: () => false,
+  vediTutti: () => modo.tutti, visto: () => ({ id: 'io' }), eAdmin: () => modo.admin, soloGuardo: () => false, idVisti: () => ['io'], CAMPI_AZIONE: '*',
   partnerSelect: () => '', collegaPartnerSelect: () => {}, versione: () => '', rigaSuHtml: x => x, sulComputer: () => false, apriFuori: u => stub.window.open && stub.window.open(u, '_blank', 'noopener'),   // nota 166: come sul telefono
   contattaHtml: () => '<div class="contatta"><a href="#">Chiama</a><a href="#">Messaggio</a><a href="#">WhatsApp</a><a href="#">Telegram</a></div>',
   rigaPortato: n => 'portato da ' + n,
