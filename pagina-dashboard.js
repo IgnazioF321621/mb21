@@ -208,6 +208,27 @@ function bottoniPer(categoria) {
   const esiti = MB21Agenda.fasiPer(cat, 'Contatto', 'Telefonata');
   return esiti.map(f => ({ etichetta: f, chiave: `${cat}-Contatto-${f}`, ...(COSA_FA_ESITO[f] || {}) }));
 }
+// Nota Pagine 187 (Ignazio 04/11, scelta «A»: «se mandi un messaggio, dovrebbe essere un po' più generico»): sopra l'esito due tasti, 📞 Telefonata
+// (già scelto) e 💬 Messaggio; l'esito si salva con il modo scelto (registra_esito, p_modalita). Una funzione sola per il foglio «Com'è andata?» di Contatti
+// del giorno (moduloEsito, pagina-oggi.js), la card della coda e quella di «Da catalogare». Gli esiti sono gli stessi per i due modi (agenda.js, TIPI).
+// La scelta resta in MODO_CONTATTO finché l'esito non è salvato; collegaModoContatto cambia il tasto acceso senza ridisegnare.
+const MODI_CONTATTO = [['Telefonata', '📞 Telefonata'], ['Messaggio', '💬 Messaggio']];
+const MODO_CONTATTO = {};
+const modoDi = id => MODO_CONTATTO[id] || 'Telefonata';
+function modoContattoHtml(id) {
+  return `<div class="modo-contatto" role="group" aria-label="Come l'hai contattato">${MODI_CONTATTO.map(([k, t]) =>
+    `<button type="button" data-modo="${k}" data-modo-di="${esc(id)}" aria-pressed="${modoDi(id) === k}">${esc(t)}</button>`).join('')}</div>`;
+}
+function collegaModoContatto(dove) {
+  const tasti = [...dove.querySelectorAll('.modo-contatto button[data-modo]')];
+  tasti.forEach(b => {
+    b.onclick = () => {
+      MODO_CONTATTO[b.dataset.modoDi] = b.dataset.modo;
+      tasti.filter(x => x.dataset.modoDi === b.dataset.modoDi).forEach(x => x.setAttribute('aria-pressed', String(x.dataset.modo === b.dataset.modo)));
+    };
+  });
+}
+
 // I bottoni di una riga della coda (e dei Dare Seguito scaduti): sopra gli esiti buoni, sotto quelli non andati, come in «Com'è andata?»
 // (MB21Agenda.esitiInDueRighe). `data-bottone` resta la posizione in bottoniPer: è quella che legge chi raccoglie il tocco.
 function bottoniCodaHtml(r, spento) {
@@ -223,7 +244,7 @@ function bottoniCodaHtml(r, spento) {
 // aperta di «Da catalogare» dopo Prospect / Partner / Cliente; stessi `data-contatto` e `data-bottone`, quindi stessi tocchi (toccaBottone)
 function esitiCodaTendina(r, spento) {
   const tutti = bottoniPer(r.categoria);
-  return `<div class="come-andata">Com'è andata la telefonata?</div>${tendina5Html('<small>Scegli</small>', MB21Agenda.esitiInDueRighe(tutti.map(b => b.etichetta)).flat().map(f => {
+  return `<div class="come-andata">Com'è andata?</div>${modoContattoHtml(r.id)}${tendina5Html('<small>Scegli</small>', MB21Agenda.esitiInDueRighe(tutti.map(b => b.etichetta)).flat().map(f => {
     const i = tutti.findIndex(b => b.etichetta === f);
     return `<button type="button"${tutti[i].classe ? ` class="${tutti[i].classe}"` : ''} data-contatto="${esc(r.id)}" data-bottone="${i}"${spento ? ' disabled' : ''}><span>${esc(f)}</span></button>`;
   }).join(''))}`;
@@ -261,6 +282,7 @@ function cardContatto(r, dareSeguito) {
         ${r.professione ? `<div class="prof">${esc(r.professione)}</div>` : ''}
         ${luogo ? `<div class="luogo">${esc(luogo)}</div>` : ''}
         ${contattaHtml(r.telefono)}
+        ${modoContattoHtml(r.id)}
         <div class="bottoni due-righe">${bottoni}</div>
         <button class="link" data-scheda="${esc(r.id)}">${ic('persona')} Apri contatto</button>
       </div>
@@ -789,6 +811,7 @@ function collegaCarteCoda() {
     b.onclick = () => { if (LV.vista === 'persona') return; ST.aperta = ST.aperta === b.dataset.apri ? null : b.dataset.apri; disegnaOggi(); };   // nella scheda della persona la card resta aperta
   });
   collegaTendine5(app);   // nota 161: in «Da catalogare» la categoria e gli esiti sono tendine
+  collegaModoContatto(app);   // nota 187: 📞 Telefonata · 💬 Messaggio
   app.querySelectorAll('.bottoni button[data-contatto], .tendina5 button[data-contatto]').forEach(btn => {
     btn.onclick = () => toccaBottone(btn.dataset.contatto, Number(btn.dataset.bottone));
   });
@@ -986,7 +1009,7 @@ function trovaInCoda(id) {
   return null;
 }
 
-async function toccaBottone(id, indice) {
+async function toccaBottone(id, indice, modalita = modoDi(id)) {
   const pos = trovaInCoda(id);
   if (!pos) return;
   const bottone = bottoniPer(pos.contatto.categoria)[indice];
@@ -1002,13 +1025,14 @@ async function toccaBottone(id, indice) {
   const card = document.getElementById('card-' + id);
   card.querySelectorAll('button').forEach(b => { b.disabled = true; });
   const daCoda = pos.lista === 'coda';   // i Dare Seguito non contano nei contatti al giorno
-  const { data: esito, error } = await registraEsito(id, bottone, data, daCoda);
+  const { data: esito, error } = await registraEsito(id, bottone, data, daCoda, modalita);
   if (error) {
     if (appuntamento) await dbq('togli appuntamento', supa.from('azioni').delete().eq('id', appuntamento.id));
     card.querySelectorAll('button').forEach(b => { b.disabled = false; });
     return mostraToast('Non salvato: controlla la connessione e riprova.');
   }
   if (appuntamento) esito.appuntamento_id = appuntamento.id;
+  delete MODO_CONTATTO[id];   // nota 187: salvato, la prossima volta si riparte da Telefonata
   // «Ordina da solo» (V4 Vendite, 22/10): il cliente è segnato «Ha un account cliente»; se non parte, l'esito resta e lo si dice
   if (bottone.account) await accountDaEsito(esito.azione_id, null, bottone.etichetta);   // la stessa funzione di Agenda, scheda e «Cambia esito»
   // Consulenza Prodotti fissata: il contatto esce dalla coda e lo segue l'appuntamento, come per PM Fissato e Appuntamento: dal 04/10 lo fa
@@ -1026,10 +1050,10 @@ async function toccaBottone(id, indice) {
     salvaCache();
     if (restaV5) LV.restaSu = { ...pos.contatto, esito: bottone.etichetta };   // disegnaPersonaV5 tiene aperta la sua scheda
     disegnaOggi();
-    segnaAzione(`${pos.contatto.nome} · ${appuntamento ? 'appuntamento fissato' : bottone.etichetta}${rientro ? ' · risentirlo il ' + dataBreve(rientro) : ''}`, () => annulla(pos, esito), () => toccaBottone(id, indice));   // nota 162
+    segnaAzione(`${pos.contatto.nome} · ${appuntamento ? 'appuntamento fissato' : bottone.etichetta}${rientro ? ' · risentirlo il ' + dataBreve(rientro) : ''}`, () => annulla(pos, esito), () => toccaBottone(id, indice, modalita));   // nota 162
     // per ultimo il momento di riflessione (cantiere 42), sulla telefonata appena registrata; con «Ordine» alla chiusura del modulo Vendita
     // (la categoria serve al coach: la chat delle telefonate è per chi non è Partner né Cliente)
-    const riflessione = () => chiediRiflessione({ id: esito.azione_id, contatto_id: id, user_id: pos.contatto.user_id, incontro: appuntamento || undefined, tipo_azione: 'Contatto', modalita: 'Telefonata',
+    const riflessione = () => chiediRiflessione({ id: esito.azione_id, contatto_id: id, user_id: pos.contatto.user_id, incontro: appuntamento || undefined, tipo_azione: 'Contatto', modalita,
       contatti: { nome: pos.contatto.nome, categoria: pos.contatto.categoria } }, bottone.etichetta);
     if (bottone.vendita) registraVenditaDa(id, pos.contatto.nome, pos.contatto.categoria, undefined, riflessione)   // «Ordine»: «La registri adesso?»
       .then(registrata => { if (!registrata) riflessione(); });
@@ -1053,9 +1077,9 @@ function appuntamentoDaCoda(contatto, esito) {
 }
 
 // Un esito (Dashboard e scheda contatto usano lo stesso codice) e il suo annullamento.
-function registraEsito(contattoId, bottone, data, daCoda) {
+function registraEsito(contattoId, bottone, data, daCoda, modalita = 'Telefonata') {
   return dbq('registra esito', supa.rpc('registra_esito',
-    { p_contatto: contattoId, p_chiave: bottone.chiave, p_data: data, p_da_coda: daCoda }));
+    { p_contatto: contattoId, p_chiave: bottone.chiave, p_data: data, p_modalita: modalita, p_da_coda: daCoda }));
 }
 // Prima l'esito (il database rifiuta se nel frattempo ce n'è un altro, nota 045), poi l'appuntamento nato con lui: se il secondo passo non riesce resta un appuntamento
 // in più da eliminare, non un esito vivo senza appuntamento (prima l'ordine era l'opposto)

@@ -439,17 +439,20 @@ function disegnaContattiV5() {
 
 // Il modulo al centro per l'esito (nota 088: ogni foglio al centro): l'esito a discesa, «Andato bene» e «Non andato», con gli esiti veri della categoria
 // (bottoniPer, gli stessi tasti di adesso). Restituisce la posizione dell'esito in bottoniPer (quella che legge toccaBottone) o null.
-function moduloEsito(nome, categoria, colore) {
+// Nota 187: sopra l'esito 📞 Telefonata · 💬 Messaggio (modoContattoHtml, pagina-dashboard.js); la scelta resta in MODO_CONTATTO[id] per toccaBottone.
+function moduloEsito(id, nome, categoria, colore) {
   const tutti = bottoniPer(categoria), [buoni, no] = MB21Agenda.esitiInDueRighe(tutti.map(b => b.etichetta)).concat([[]]);
   const opz = l => l.map(f => `<option value="${tutti.findIndex(b => b.etichetta === f)}">${esc(f)}</option>`).join('');
   return new Promise(risolvi => {
     const velo = document.createElement('div');
     velo.className = 'velo';
-    velo.innerHTML = `<div class="foglio e5"><h3>Com'è andata?</h3><p class="sotto">Telefonata · ${esc(nome)}</p>
+    velo.innerHTML = `<div class="foglio e5"><h3>Com'è andata?</h3><p class="sotto">${esc(nome)}</p>
+      ${modoContattoHtml(id)}
       <label class="e5-campo"><span>Esito</span><select id="e5-esito"><option value="" selected disabled>Scegli l'esito</option>
         <optgroup label="Andato bene">${opz(buoni)}</optgroup>${no.length ? `<optgroup label="Non andato">${opz(no)}</optgroup>` : ''}</select></label>
       <div class="e5-tasti"><button class="link" id="e5-no">Annulla</button><button class="primario" id="e5-si" style="background:${colore}" disabled>Scegli l'esito</button></div></div>`;
     document.body.appendChild(velo);
+    collegaModoContatto(velo);
     const chiudi = v => { velo.remove(); risolvi(v); };
     const sel = velo.querySelector('#e5-esito'), si = velo.querySelector('#e5-si');
     sel.onchange = () => { si.disabled = sel.value === ''; si.textContent = sel.value === '' ? 'Scegli l\'esito' : 'Salva'; };
@@ -503,7 +506,7 @@ function disegnaPersonaV5() {
   if (tr) tr.onclick = () => condividiAperturaV5(chiContatto, tr);
   const b = document.getElementById('p5-esito');
   if (b) b.onclick = async () => {
-    const i = await moduloEsito(nome, cat, colore);
+    const i = await moduloEsito(id, nome, cat, colore);
     if (i !== null) toccaBottone(id, i);   // da qui tutto come adesso: i fogli della data o dell'appuntamento, il salvataggio, «Annulla»
   };
 }

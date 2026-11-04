@@ -126,7 +126,7 @@ prova('«avanti» nei punti principali: esiti di Agenda e scheda, cambio esito, 
 });
 prova('«Da catalogare»: i tocchi passano da segnaAzione con «rifai» = lo stesso tocco', () => {
   assert.match(PD, /segnaAzione\(`\$\{contatto\.nome\} · \$\{scelta\.etichetta\}`, \(\) => annullaCatalogo\(contatto, prima, daChiamare, indice, scelta\.categoria\), \(\) => toccaCategoria\(id, indice\)\)/);
-  assert.match(PD, /segnaAzione\([^\n]*\(\) => annulla\(pos, esito\), \(\) => toccaBottone\(id, indice\)\)/);
+  assert.match(PD, /segnaAzione\([^\n]*\(\) => annulla\(pos, esito\), \(\) => toccaBottone\(id, indice, modalita\)\)/);   // nota 187: rifà con lo stesso modo (Telefonata o Messaggio)
 });
 prova('«Da catalogare»: se nel frattempo la categoria è cambiata non si rimette quella vecchia', async () => {
   const chiamate = [];
