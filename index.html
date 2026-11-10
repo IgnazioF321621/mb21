@@ -3814,6 +3814,13 @@ function bloccoEsiti(a, categoria, aperto = false) {
   const gruppi = MB21Agenda.passiEsito(a, categoria, FATTO_APERTO.has(a.id));
   if (!gruppi) return '';
   const chiusa = gruppi.every(p => p.passo.startsWith('cambia'));
+  // nota Pagine 190 (feedback di Ignazio 10/11, «A»): una telefonata fissata (Contatto · Telefonata/Messaggio) come in Contatti del giorno: «Com'è andata?»,
+  // 📞 / 💬 col modo con cui era fissata, la tendina degli esiti (stessi data-esito, stessi tocchi). PM, appuntamenti, consegne: come prima
+  if (typeof conModoContatto === 'function' && conModoContatto(a) && gruppi.length === 1 && (!chiusa || aperto)) {
+    const p = gruppi[0];
+    return `<div class="blocco-esiti" data-blocco="${esc(a.id)}"><div class="come-andata">Com'è andata?</div>${modoContattoHtml(a.id, a.modalita)}${tendinaEsitiHtml(p.bottoni,
+      f => `data-esito="${esc(f)}"`, { etichetta: p.attuale ? `<b>${esc(MB21Agenda.nomePasso(p.attuale))}</b>` : '<small>Scegli l\'esito</small>', attuale: p.attuale, extra: `data-azione="${esc(a.id)}" data-passo="${p.passo}"` })}</div>`;
+  }
   const dentro = chiusa && !aperto
     ? `<button class="link" data-apri-esiti style="padding:4px 0;font-size:13px">Cambia esito ›</button>`
     : gruppi.map(p => `<div class="come-andata">${esc(p.titolo)}</div>
@@ -3852,8 +3859,10 @@ function collegaEsiti(el, a, contatto, dopo) {
     };
   });
   collegaTendine5(el);   // nota 116
-  el.querySelectorAll('[data-azione][data-passo] [data-esito]').forEach(b => b.onclick = () => {
+  if (typeof collegaModoContatto === 'function') collegaModoContatto(el);   // nota 190
+  el.querySelectorAll('[data-azione][data-passo] [data-esito]').forEach(b => b.onclick = async () => {
     if (soloGuardo() || b.classList.contains('attuale')) return;
+    if (typeof modoPrimaDiChiudere === 'function' && !(await modoPrimaDiChiudere(a))) return;   // nota 190: il modo cambiato si salva prima
     const passo = b.closest('[data-passo]').dataset.passo, esito = b.dataset.esito;
     const e = { ...a, categoria: a.categoria || contatto.categoria, contatti: { nome: contatto.nome, categoria: contatto.categoria } };
     const fase = MB21Agenda.fattoDi(a.tipo_azione);

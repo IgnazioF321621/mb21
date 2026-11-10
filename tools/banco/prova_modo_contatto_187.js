@@ -73,7 +73,7 @@ prova('una funzione sola in tutti e tre i posti: la scheda di Contatti del giorn
   assert.match(PO, /btn\.onclick = \(\) => toccaBottone\(btn\.dataset\.contatto, Number\(btn\.dataset\.bottone\)\)/);
   assert.doesNotMatch(PO, /function moduloEsito|p5-esito/);
   assert.match(PD, /<div class="come-andata">Com'è andata\?<\/div>\$\{esitiTendinaHtml\(r, spento\)\}/);
-  assert.match(PD, /return `\$\{modoContattoHtml\(r\.id\)\}\$\{tendina5Html\(etichetta,/);
+  assert.match(PD, /return `\$\{modoContattoHtml\(r\.id\)\}\$\{tendinaEsitiHtml\(etichette, f => `data-contatto="\$\{esc\(r\.id\)\}" data-bottone="\$\{etichette\.indexOf\(f\)\}"`, \{ spento, etichetta \}\)\}`;/);   // nota 190: la tendina condivisa
   assert.match(PD, /\$\{modoContattoHtml\(r\.id\)\}\n\s*<div class="bottoni due-righe">/);
   assert.match(PD, /collegaModoContatto\(app\);/);
   assert.doesNotMatch(PD + PO, /Com'è andata la telefonata|Telefonata · \$\{esc\(nome\)\}/);
