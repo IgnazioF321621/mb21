@@ -132,6 +132,24 @@ function duePassate(f: (modo: Modo) => Senza | null): MessaggioSera | null {
 }
 
 // ☀️ IL BUONGIORNO: parte sempre che ci sia qualcosa da dire. Se ci sono appuntamenti, solo quelli; se no, telefonate e riordini; poi le tre voci.
+// Nota Pagine 189 (Ignazio 10/11, «B»): nel Buongiorno le telefonate sono i contatti del giorno ancora da fare PIÙ, persona per persona, le telefonate fissate
+// a mano ancora aperte (oggi o rimaste dai giorni prima, come «Telefonata · scelta» dell'app: MB21Coda.telefonateScelte) e i «Richiamare» con il giorno di
+// oggi di chi è ancora da sentire (rientro arrivato, come richiamiDiOggi). Ogni persona conta una volta. Chi non ne ha: 0, il conto resta quello di prima.
+export type RigaInPiu = { user_id: string; contatto_id: string | null; esito: string | null; scelta_a_mano: boolean | null; completata: boolean | null;
+  inizio: string | null; data_scelta: string | null; contatti?: { rientro_il: string | null } | null };
+export function telefonateInPiu(righe: RigaInPiu[], oggi: string): Map<string, number> {
+  const chi = new Map<string, Set<string>>();
+  for (const r of righe || []) {
+    const scelta = !!r.scelta_a_mano && !r.completata && !r.esito && !!r.inizio && giornoDi(r.inizio) <= oggi;
+    const richiamo = r.esito === 'Richiamare' && !!r.data_scelta && giornoDi(r.data_scelta) === oggi && !!r.contatti?.rientro_il && r.contatti.rientro_il <= oggi;
+    if (!scelta && !richiamo) continue;
+    const s = chi.get(r.user_id) ?? new Set<string>();
+    s.add(r.contatto_id ?? `${r.inizio}`);
+    chi.set(r.user_id, s);
+  }
+  return new Map([...chi].map(([u, s]) => [u, s.size]));
+}
+
 export type DatiMattino = Consigli & {
   nome?: string; appuntamenti: number; conferme: number; telefonate: number; riordini: number;
   inPausa: boolean;   // «0 contatti al giorno»: niente telefonate da contare

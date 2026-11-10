@@ -30,7 +30,7 @@
 //   ha già detto: segno `voce:<cosa>:<giorno>:<utente>` in avvisi_mandati); il Training anche la sera, se durante il giorno non è stato fatto.
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import webpush from 'npm:web-push@3.6.7';
-import { avvisoSpostato, MINUTI_SPOSTATO, scelta, riepilogoDomani, complimentiDelGiorno, messaggioSera, messaggioMattino, righeConsigli, avvisoObiettivi, invitoObiettivi, haObiettivi, rigaTraguardo, raggruppaPerUtente, elencoImpegni, type Impegno, type Traguardo, type Consigli, type RigheConsigli, oraDi as oraRomaDi, giornoDi as giornoRomaDi } from './regole.ts';
+import { avvisoSpostato, MINUTI_SPOSTATO, scelta, riepilogoDomani, complimentiDelGiorno, messaggioSera, messaggioMattino, righeConsigli, avvisoObiettivi, invitoObiettivi, haObiettivi, rigaTraguardo, raggruppaPerUtente, elencoImpegni, telefonateInPiu, type Impegno, type Traguardo, type Consigli, type RigheConsigli, oraDi as oraRomaDi, giornoDi as giornoRomaDi } from './regole.ts';
 
 const URL_SUPABASE = Deno.env.get('SUPABASE_URL')!;
 const CHIAVE_SERVIZIO = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -332,7 +332,7 @@ Deno.serve(async (req) => {
     // Riordini da sentire (cantiere 29): STESSA REGOLA di `MB21Agenda.riordiniDaSentire` in agenda.js (qui l'app non arriva, va tenuta uguale a mano):
     // telefonate di riordino nate dalle vendite, senza esito e non completate, da oggi indietro; più quelle importate da Glide
     // (Contatto con glide_id ed esito «Riordino», non completate) dal 1° settembre 2026 (INIZIO_RIORDINI_GLIDE) a oggi.
-    const [{ data: attivi, error: e1 }, { data: fatti, error: e2 }, { data: appuntamenti, error: e3 }, { data: daCoda, error: e4 }, { data: vendite, error: e5 }, { data: glide, error: e6 }] = await Promise.all([
+    const [{ data: attivi, error: e1 }, { data: fatti, error: e2 }, { data: appuntamenti, error: e3 }, { data: daCoda, error: e4 }, { data: vendite, error: e5 }, { data: glide, error: e6 }, { data: inPiu, error: e7 }] = await Promise.all([
       db.from('utenti').select('id, nome, contatti_al_giorno, prossimo_traguardo').eq('accesso_attivo', true).is('eliminato_il', null),
       db.from('azioni').select('user_id').eq('da_coda', true).gte('inizio', g.inizio).lt('inizio', g.fine),   // esiti dalla coda già dati oggi
       db.from('azioni').select('user_id, contatto_id, inizio, confermato_il').neq('tipo_azione', 'Contatto').eq('completata', false).gte('inizio', g.inizio).lt('inizio', g.fine),
@@ -340,8 +340,12 @@ Deno.serve(async (req) => {
       db.from('vendite').select('user_id, azione:azioni!azione_riordino_id(completata, esito, inizio)').not('azione_riordino_id', 'is', null),
       db.from('azioni').select('user_id').eq('tipo_azione', 'Contatto').eq('esito', 'Riordino').not('glide_id', 'is', null).or('completata.is.null,completata.eq.false')
         .gte('inizio', giornoRoma('2026-09-01').inizio).lt('inizio', g.fine),
+      // nota Pagine 189: telefonate fissate a mano ancora aperte (fino a oggi) e «Richiamare» con il giorno di oggi; una lettura sola per tutti (telefonateInPiu)
+      db.from('azioni').select('user_id, contatto_id, esito, scelta_a_mano, completata, inizio, data_scelta, contatti(rientro_il)').eq('tipo_azione', 'Contatto')
+        .or(`and(scelta_a_mano.eq.true,completata.eq.false,esito.is.null,inizio.lt."${g.fine}"),and(esito.eq.Richiamare,data_scelta.gte."${g.inizio}",data_scelta.lt."${g.fine}")`),
     ]);
-    const err = e1 || e2 || e3 || e4 || e5 || e6;
+    const err = e1 || e2 || e3 || e4 || e5 || e6 || e7;
+    const piu = telefonateInPiu(inPiu ?? [], oggi);
     if (err) return risposta({ errore: err.message }, 500);
     const { data: dispositivi } = await db.from('avvisi_dispositivi').select('user_id');
     const conDispositivo = new Set((dispositivi ?? []).map(x => x.user_id));
@@ -369,7 +373,7 @@ Deno.serve(async (req) => {
       const avviso = messaggioMattino({
         ...mio.consigli, dette: mio.dette, nome: String(u.nome ?? ''),
         appuntamenti: miei.length, conferme: miei.filter(a => !a.confermato && a.quando > new Date(adesso).toISOString() && a.quando <= limiteConferme).length,
-        telefonate: Math.max(0, u.contatti_al_giorno - (fatti ?? []).filter(x => x.user_id === u.id).length),
+        telefonate: Math.max(0, u.contatti_al_giorno - (fatti ?? []).filter(x => x.user_id === u.id).length) + (piu.get(u.id) ?? 0),   // nota 189: + fissate e Richiamare di oggi
         riordini: riordiniDi.filter(id => id === u.id).length, inPausa: u.contatti_al_giorno === 0,
       });
       if (!avviso) continue;
