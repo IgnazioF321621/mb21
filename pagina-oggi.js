@@ -84,11 +84,15 @@ const GIORNATA_ANELLI = [58, 40, 22];
 // i conti di oggi, solo da dati già letti: Contatti (sentiti su contatti del giorno, come il riquadro Contatti), Appuntamenti (O5.appuntamenti),
 // Ripasso (carte risposte oggi su risposte + ancora da ripassare, nota 147 «A»: anche le nuove). Un dato non ancora letto: «Leggo…»
 function o5Giornata() {
-  const st = ST.stato || {}, totC = st.contatti_al_giorno || 0, mio = O5.di === visto().id && O5.giorno === ST.oggi;
+  const st = ST.stato || {}, mio = O5.di === visto().id && O5.giorno === ST.oggi;
   const ap = mio ? O5.appuntamenti : null, t = mio ? O5.training : null, trnOk = typeof TRAINING_VISIBILE === 'undefined' || TRAINING_VISIBILE;
+  // nota Pagine 189 (Ignazio 06/11: «uniformare tutto ciò che riguarda il calcolo dei contatti nel giorno in tutte le variabili»): lo stesso conto di
+  // Contatti del giorno, della tessera «Chi sento oggi?», del numero sull'icona e dell'Agenda (elencoDiOggi: coda, «Richiamare» di oggi, telefonate fissate,
+  // conferme, riordini, Dare Seguito). Prima qui «x su 5»: il numero del giorno, senza Richiamare né telefonate fissate
+  const c = ST.risultato ? elencoDiOggi() : null;
   const righe = [
-    { k: 'contatti', nome: 'Contatti', colore: 'var(--z-contatti)', testo: '#B34E00', fatti: Math.min(st.fatti_oggi || 0, totC), totale: totC,
-      vuoto: totC ? '' : (guardoAltri() ? 'In pausa · 0 contatti al giorno' : 'Sei in pausa oggi') },
+    { k: 'contatti', nome: 'Contatti', colore: 'var(--z-contatti)', testo: '#B34E00', fatti: c ? c.fatti : 0, totale: c ? c.totale : 0,
+      vuoto: !c ? 'Leggo i contatti…' : c.totale ? '' : st.contatti_al_giorno === 0 ? (guardoAltri() ? 'In pausa · 0 contatti al giorno' : 'Sei in pausa oggi') : 'Nessun contatto oggi' },
     { k: 'agenda', nome: 'Appuntamenti', colore: 'var(--z-agenda)', testo: '#0866D6', fatti: ap ? ap.fatti : 0, totale: ap ? ap.totale : 0,
       vuoto: !ap ? 'Leggo l\'Agenda…' : ap.totale ? '' : 'Nessun appuntamento oggi' },
   ];

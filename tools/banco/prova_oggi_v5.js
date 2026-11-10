@@ -29,6 +29,7 @@ function mondo({ stato = { contatti_al_giorno: 5, fatti_oggi: 3 }, codaNomi = ['
     visto: () => ({ id: 'io', partner_id: 'P1' }), guardoAltri: () => altro, vediTutti: () => false, eAdmin: () => admin, oraRoma: () => ora, dataEstesa: () => 'domenica 25 ottobre',
     nuovoInAvvio: () => nuovo, percorsoDash: () => percorso, MB21Mappa: { nomeLeggibile: n => n }, conteggioVoci: CONTEGGIO_VOCI, elencoVoci: ELENCO_VOCI, nomeGradino: g => g.titolo, mancaCorto: xs => xs.join(', '), fraseTraguardo: () => 'frase',
     dashboardTesta: senza => `<div id="finta-testa">${senza ? '' : 'fascia'}</div>`, PS: { persone: admin ? [{ id: 'io' }, { id: 'u2' }] : [] }, nomeVisto: () => 'Persona Due Finta', rigaTelefonoHtml: () => '', daSeguireHtml: () => '<div id="finto-seguire"></div>', percheHtml: () => '', altriCodaHtml: () => '', caricaAltriCoda: () => {}, cerchiettoProfilo: () => '<button id="ds-profilo">IF</button>', versione: () => '',
+    elencoDiOggi: () => ({ gruppi: [], fatti: stato.fatti_oggi || 0, totale: stato.contatti_al_giorno ? Math.max(stato.contatti_al_giorno, stato.fatti_oggi || 0) : 0 }),   // nota 189: il conto unico (finto; il vero in dashboard.js)
     foglioSegnala: () => vai.push('feedback'), vaiLV: (v, x) => vai.push(['lv', v, x || null]), apriCheck: () => vai.push('check'), scegliNumero: () => vai.push('riparto'), SCELTA_NUMERO: false, ripartoDaPausa: () => vai.push('riparto'), caricaOggi() {},
     mostraTab: () => vai.push(['tab', ctx.ST.tab]), vaiAlPrimoLivello: () => vai.push('primo'), disegnaOggi: () => vai.push('ridisegna'), TRAINING_VISIBILE: true,
     window: { scrollTo() {} }, document: { getElementById: id => (id === 'segnala' ? sg : app.getElementById(id)), querySelector: s => app.querySelector(s) } };
@@ -571,6 +572,14 @@ prova('147: «La tua giornata» in cima a Oggi — tre anelli e il conto a parol
   const h = W.app.innerHTML, t = testo(h);
   assert.ok(h.indexOf('o5-giornata') < h.indexOf('o5-settimana'));   // in cima
   assert.match(t, /LA TUA GIORNATA CONTATTI 4 su 5 APPUNTAMENTI 1 su 2 RIPASSO 12 su 20 carte/);
+  // nota 189 (Ignazio 06/11: «uniformare … in tutte le variabili»): la riga CONTATTI è lo stesso conto di Contatti del giorno (elencoDiOggi), con i
+  // «Richiamare» di oggi e le telefonate fissate: 5 della coda + 3 = «4 su 8», non più «su 5»
+  W.ctx.elencoDiOggi = () => ({ gruppi: [], fatti: 4, totale: 8 }); W.ctx.disegna();
+  assert.match(testo(W.app.innerHTML), /CONTATTI 4 su 8 APPUNTAMENTI/);
+  assert.match(PO, /const c = ST\.risultato \? elencoDiOggi\(\) : null;/);
+  assert.doesNotMatch(PO, /totC|Math\.min\(st\.fatti_oggi/);
+  W.ctx.ST.risultato = null; W.ctx.disegna(); assert.match(testo(W.app.innerHTML), /CONTATTI Leggo i contatti…/);
+  W.ctx.ST.risultato = { coda: [] }; W.ctx.elencoDiOggi = () => ({ gruppi: [], fatti: 0, totale: 0 }); W.ctx.disegna(); assert.match(testo(W.app.innerHTML), /CONTATTI Nessun contatto oggi/);
   assert.equal((h.match(/stroke-dasharray/g) || []).length, 3);   // tre anelli pieni in parte
   W.app.clic('.o5-gn-riga', 0); W.app.clic('.o5-gn-riga', 1); W.app.clic('.o5-gn-riga', 2);
   assert.deepEqual(JSON.parse(JSON.stringify(W.vai.filter(x => typeof x !== 'string'))), [['lv', 'oggi', null], ['tab', 'agenda'], ['tab', 'training']]);
