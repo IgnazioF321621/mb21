@@ -87,7 +87,7 @@ prova('L\'Admin dal «+»: «Nessuno · Tutto il Team · Una Linea» subito; con
   await scegli(v, 'condividi', 'team');
   assert.doesNotMatch(v.innerHTML, /id="na-scegli"/); assert.doesNotMatch(v.innerHTML, /Area e tipo/);
   assert.doesNotMatch(v.innerHTML, /data-scelta="serataTipo"/); assert.match(v.innerHTML, /id="na-serata"/);   // nota 005: da me in giù è sempre Team assert.match(v.innerHTML, /id="na-giorno"/); assert.match(v.innerHTML, /id="na-dove"/);
-  assert.match(v.innerHTML, /data-scelta="durata"[\s\S]*?data-v="60" class="scelto"/);
+  assert.match(v.innerHTML, /data-tendina="durata"[^>]*><b>1 ora<\/b>/);   // nota 192 punto 2: con più di tre voci la durata è una tendina (chiusa dice la scelta, 60 minuti)
   v.querySelector('#na-serata').value = 'Serata Linea Rossi';
   v.querySelector('#na-dove').value = 'zoom.us/j/9';
   v.querySelector('#na-punti').value = 'Benvenuto\nRisultati';

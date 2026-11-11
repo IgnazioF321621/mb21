@@ -3736,6 +3736,23 @@ function tendina5Html(etichetta, voci, attr = '', aperta = false) {
 function collegaTendine5(el) {
   el.querySelectorAll('[data-tnd5]').forEach(b => { b.onclick = () => b.parentElement.classList.toggle('aperta'); });
 }
+// Nota Pagine 192 punto 2 (Ignazio 11/11, «A»: a tendina le scelte con molte voci dentro i fogli): una scelta fra voci `[[valore, nome]]` nella stessa tendina;
+// `attr` è l'attributo che tiene il valore (lo stesso di prima: chi raccoglie il tocco non cambia), `id` va sull'elenco (così «#id [attr]» trova le voci).
+// Toccata una voce, chi la raccoglie chiama segnaSceltaTendina(b): la voce prende la ✓, la tendina si richiude e dice la scelta (senza ridisegnare il foglio)
+function tendinaSceltaHtml(voci, attuale, attr, id = '') {
+  const e = v => String(v) === String(attuale ?? ''), sc = voci.find(([v]) => e(v));
+  return tendina5Html(sc ? `<b>${esc(sc[1])}</b>` : '<small>Scegli</small>', voci.map(([v, t]) =>
+    `<button type="button" ${attr}="${esc(v)}"${e(v) ? ' class="scelto"' : ''}><span>${esc(t)}</span>${e(v) ? '<b>✓</b>' : ''}</button>`).join(''), id ? `id="${id}"` : '');
+}
+function segnaSceltaTendina(b) {
+  const t = b.closest && b.closest('.tnd5');
+  if (!t) return;
+  t.querySelectorAll('.tendina5 > button').forEach(x => { x.classList.toggle('scelto', x === b); const ok = x.querySelector(':scope > b'); if (ok) ok.remove(); });
+  b.insertAdjacentHTML('beforeend', '<b>✓</b>');
+  const nome = b.querySelector('span'), sel = t.querySelector('.sel5');
+  if (sel && nome) sel.innerHTML = `<b>${esc(nome.textContent)}</b><em>▾</em>`;
+  t.classList.remove('aperta');
+}
 // Nota Pagine 192 (Ignazio 11/11: «la versione degli esiti e non solo deve essere nella forma "tendina a discesa"»): ogni esito di ogni tipo, in ogni posto,
 // nella tendina con «Com'è andata?»; i passi restano quelli di sempre (PM e Follow Up: prima «È avvenuto?», poi il risultato). Titolo ed etichetta: qui
 const titoloEsito = passo => (passo === 'avvenuto' || passo === 'cambia-avvenuto' ? 'È avvenuto?' : 'Com\'è andata?');
@@ -4444,8 +4461,10 @@ async function nuovoAppuntamento(opz = {}) {
     // `link` e `punti` (nota Pagine 026, 05/10): il link della chiamata online e i punti da trattare, uno per riga; il riquadro dei punti si apre con un tocco
     const campi = { giorno: opz.giorno || MB21Coda.oggiRoma(), ora: oraIniziale, fine: A.daMinuti(Math.min(1440, A.inMinuti(oraIniziale) + 60)), ospite: '', note: '', dove: '', punti: '', serata: '' };
     if (m) Object.assign(campi, { fine: m.fine ? A.partiRoma(m.fine).ora : campi.fine, note: m.note || '', dove: m.link || m.luogo || '', punti: (m.punti || []).map(p => p.t).join('\n') });   // nota 105
-    const scelte = (nome, voci, attuale, etichette) => `<div class="ag-scelte" data-scelta="${nome}">${voci.map((v, i) =>
-      `<button data-v="${esc(v)}" class="${String(v) === String(attuale) ? 'scelto' : ''}">${esc(etichette ? etichette[i] : v)}</button>`).join('')}</div>`;
+    // nota 192 punto 2 (Ignazio 11/11, «A»: a tendina le scelte con molte voci, a tasti quelle da 2-3): più di tre voci → la stessa tendina qui sotto
+    // (stesse data-scelta e data-v, quindi stessi tocchi e stessi salvataggi); fino a tre restano tasti
+    const scelte = (nome, voci, attuale, etichette) => (voci.length > 3 ? tendina(nome, voci, attuale, etichette) : `<div class="ag-scelte" data-scelta="${nome}">${voci.map((v, i) =>
+      `<button data-v="${esc(v)}" class="${String(v) === String(attuale) ? 'scelto' : ''}">${esc(etichette ? etichette[i] : v)}</button>`).join('')}</div>`);
     // Note Pagine 105-107 (Ignazio 27/10, «sì così»): al posto delle pastiglie una scelta che scende, come «Scegli i passi dell'incontro ▾». Chiusa dice la
     // scelta fatta; toccata scende la lista (le stesse `data-scelta` e `data-v` di prima, quindi gli stessi tocchi); scelto, si richiude. Si apre da sola la
     // prima che manca (il tipo, poi il sottotipo): per un appuntamento normale i tocchi restano quelli di prima. `st.tendina`: quella aperta a mano ('' = nessuna).

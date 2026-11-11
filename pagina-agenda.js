@@ -471,13 +471,13 @@ function foglioCosa(c, oggi, opz = {}) {
     ${sposta ? `<div class="campo"><label>${ic(c.scala === 'mese' ? 'scala-mese' : 'scala-settimana')} ${c.scala === 'mese' ? 'Mese' : 'Settimana'}</label>
       <div class="fc-scala"><button type="button" class="freccia" id="fc-sc-prima" aria-label="Prima">‹</button><b id="fc-sc-nome"></b><button type="button" class="freccia" id="fc-sc-dopo" aria-label="Dopo">›</button></div>
       <label style="margin-top:10px">${ic('scala-giorno')} Giorno <small>facoltativo</small></label>
-      ${c.scala === 'mese' ? '<input type="date" id="fc-sc-giorno">' : '<div class="ag-scelte" id="fc-sc-giorni"></div>'}
+      ${c.scala === 'mese' ? '<input type="date" id="fc-sc-giorno">' : '<div id="fc-sc-giorni"></div>'}
       <div class="vn-aiuto" id="fc-sc-aiuto"></div></div>` : ''}
     ${!c.giorno || (c.scala || 'giorno') === 'giorno' ? `<div class="campo"><label>${ic('orario')} Giorno e ora <small>l'ora è facoltativa</small></label>
       <div class="ag-due-campi"><input type="date" id="fc-giorno" value="${esc(rip ? oggi : (c.giorno || ''))}"><input type="time" id="fc-ora" value="${esc(c.ora ? String(c.ora).slice(0, 5) : '')}"></div>
       ${pilloleDurata('fc-durate', c.durata || 30, c.ora ? String(c.ora).slice(0, 5) : '')}
       <div class="vn-aiuto">Occupa quell'ora nella Timeline, tratteggiata: non è un appuntamento e non conta da nessuna parte.${c.ora ? ' <button type="button" class="link" id="fc-togli-ora">Togli l\'ora</button>' : ''}</div></div>` : ''}
-    ${ripetizioni.length && !c.fatto_il ? `<div class="campo"><label>↻ Si ripete <small>quando la spunti, ricompare da sola</small></label><div class="ag-scelte" id="fc-ripeti">${[['', 'Mai'], ...ripetizioni].map(([k, t]) => `<button type="button" data-ripeti="${k}" class="${(ripetiScelta || '') === k ? 'scelto' : ''}">${t}</button>`).join('')}</div></div>` : ''}
+    ${ripetizioni.length && !c.fatto_il ? `<div class="campo"><label>↻ Si ripete <small>quando la spunti, ricompare da sola</small></label>${tendinaSceltaHtml([['', 'Mai'], ...ripetizioni], ripetiScelta || '', 'data-ripeti', 'fc-ripeti')}</div>` : ''}
     ${rapide.length ? `<div class="campo"><label>${ic('agenda')} ${inProgramma ? 'Sposta a' : 'Metti in programma'} <small>con un tocco</small></label><div class="ag-scelte" id="fc-rapide">${rapide.map(([k, t]) => `<button type="button" data-rapida="${k}">${t}</button>`).join('')}</div></div>` : ''}
     <button class="primario" id="fc-salva">Salva</button>
     <div class="fc-comandi">${c.fatto_il || ['giorno', 'settimana', 'mese'].includes(c.scala || 'giorno') ? '' : `<button class="link" id="fc-domani">${ic('agenda')} ${c.scala === 'anno' ? "Sposta all'anno dopo" : 'Sposta a domani'}</button>`}
@@ -500,8 +500,10 @@ function foglioCosa(c, oggi, opz = {}) {
       nome.textContent = sposta.nome();
       const g = sposta.giorni();
       if (pillole) {
-        pillole.innerHTML = g.map((x, i) => `<button type="button" data-g="${x}" class="${sposta.giorno === x ? 'scelto' : ''}">${A.GIORNI[i]} ${Number(x.slice(8))}</button>`).join('');
-        pillole.querySelectorAll('[data-g]').forEach(b => { b.onclick = () => { sposta.giorno = sposta.giorno === b.dataset.g ? null : b.dataset.g; aggiorna(); }; });
+        // nota 192 punto 2: il giorno a tendina; «Senza giorno» al posto del secondo tocco che lo toglieva
+        pillole.innerHTML = tendinaSceltaHtml([['', 'Senza giorno'], ...g.map((x, i) => [x, `${A.GIORNI[i]} ${Number(x.slice(8))}`])], sposta.giorno || '', 'data-g');
+        collegaTendine5(pillole);
+        pillole.querySelectorAll('[data-g]').forEach(b => { b.onclick = () => { sposta.giorno = b.dataset.g || null; aggiorna(); }; });
       }
       if (data) { data.min = g[0]; data.max = g[g.length - 1]; data.value = sposta.giorno || ''; }
       aiuto.textContent = sposta.giorno ? `Diventa una cosa di ${dataLunga(sposta.giorno)}: la trovi in quel Giorno.` : `Senza giorno resta tra le cose ${c.scala === 'mese' ? 'del mese' : 'della settimana'}.`;
@@ -521,7 +523,8 @@ function foglioCosa(c, oggi, opz = {}) {
   };
   let durata = c.durata || 30;
   collegaPilloleDurata(velo, 'fc-durate', () => { const o = velo.querySelector('#fc-ora'); return o && o.value; }, d => { durata = d; });
-  velo.querySelectorAll('#fc-ripeti [data-ripeti]').forEach(b => { b.onclick = () => { ripetiScelta = b.dataset.ripeti; velo.querySelectorAll('#fc-ripeti [data-ripeti]').forEach(x => x.classList.toggle('scelto', x === b)); }; });
+  collegaTendine5(velo);   // nota 192 punto 2: «Si ripete» e i giorni a tendina
+  velo.querySelectorAll('#fc-ripeti [data-ripeti]').forEach(b => { b.onclick = () => { ripetiScelta = b.dataset.ripeti; segnaSceltaTendina(b); }; });
   const apriC = velo.querySelector('#fc-apri-contatto');
   if (apriC) apriC.onclick = () => { chiudi(); apriContattoDa(c.contatto_id); };
   const togli = velo.querySelector('#fc-togli-ora');
@@ -1448,15 +1451,17 @@ const DURATE_COSA = MB21Agenda.DURATE;
 function pilloleDurata(id, durata, oraInizio) {
   const altra = !DURATE_COSA.some(([m]) => m === durata);
   const fine = oraInizio && durata ? MB21Agenda.daMinuti(Math.min(1439, MB21Agenda.inMinuti(oraInizio) + durata)) : '';
-  return `<div class="ag-scelte" id="${id}">${DURATE_COSA.map(([m, t]) => `<button type="button" data-durata="${m}" class="${!altra && durata === m ? 'scelto' : ''}">${t}</button>`).join('')}<button type="button" data-durata="altra" class="${altra ? 'scelto' : ''}">Altra…</button></div>
+  // nota 192 punto 2: la durata nella tendina (tendinaSceltaHtml), stesse voci e stesso data-durata
+  return `${tendinaSceltaHtml([...DURATE_COSA.map(([m, t]) => [m, t]), ['altra', 'Altra…']], altra ? 'altra' : durata, 'data-durata', id)}
     <div class="fc-fine"${altra ? '' : ' hidden'}><label>Finisce alle <input type="time" data-fine="${id}" value="${esc(fine)}"></label></div>`;
 }
 // la durata scelta: una pillola, oppure «Altra…» con l'ora di fine (differenza dall'ora d'inizio, almeno 5 minuti)
 function collegaPilloleDurata(radice, id, campoOra, cambia) {
   const box = radice.querySelector('#' + id), fine = radice.querySelector(`[data-fine="${id}"]`);
   if (!box) return;
+  collegaTendine5(box.parentElement);   // nota 192: la durata è una tendina
   box.querySelectorAll('[data-durata]').forEach(b => { b.onclick = () => {
-    box.querySelectorAll('[data-durata]').forEach(x => x.classList.toggle('scelto', x === b));
+    segnaSceltaTendina(b);
     fine.parentElement.parentElement.hidden = b.dataset.durata !== 'altra';
     if (b.dataset.durata !== 'altra') cambia(Number(b.dataset.durata));
   }; });
@@ -1803,7 +1808,8 @@ const puntiSolaLetturaHtml = r => {
   return `<div class="pt pt-lettura"><div class="pt-testa"><b>Punti da trattare</b><small>li spunta chi organizza</small></div>${punti.map(p => `<div class="pt-riga${p.fatto ? ' fatta' : ''}"><span class="pt-segno">${p.fatto ? '✓' : '•'}</span><span class="pt-testo">${testoConLink(p.t)}</span></div>`).join('')}</div>`;
 };
 // le due risposte; nel pop-up anche «Decido dopo» accanto (Ignazio 05/10): toglie la riga dal pop-up senza salvare niente, l'impegno resta «nuovo»
-const rispostaBottoniHtml = (r, attr, conDopo) => `<div class="ag-scelte ric-risposta">${MB21Agenda.RISPOSTE.map(([k, n]) => `<button type="button" ${attr}="${k}" class="${r.risposta === k ? 'scelto' : ''}">${esc(n)}</button>`).join('')}${conDopo ? `<button type="button" ${attr}="dopo" class="dopo">Decido dopo</button>` : ''}</div>`;
+// nota 192 punto 2 (Ignazio 11/11, «A»): la risposta nella tendina (stesse chiavi e stesso attributo, quindi stessi tocchi e stesso salvataggio)
+const rispostaBottoniHtml = (r, attr, conDopo) => `<div class="ric-risposta">${tendinaSceltaHtml([...MB21Agenda.RISPOSTE, ...(conDopo ? [['dopo', 'Decido dopo']] : [])], r.risposta || '', attr)}</div>`;
 // Il foglio di un impegno ricevuto: cosa, da chi, quando, «Entra nella chiamata», i punti (sola lettura), «Partecipi? Partecipo / Non posso».
 // Agenda P7 (Ignazio 23/10): è l'UNICO foglio dell'impegno ricevuto, dall'Agenda e all'apertura dell'app. `serie` (all'apertura): { pos, tot, poi }:
 // in cima «Hai un nuovo appuntamento · 1 di 2», accanto alle risposte anche «Decido dopo»; «Decido dopo», la X o un tocco fuori non salvano niente
@@ -1830,6 +1836,7 @@ function foglioRicevuto(r, serie) {
       <div class="campo"><label>${A.conOspiti(r) ? 'Conferma della presenza' : 'Partecipi?'}</label>${rispostaBottoniHtml(r, 'data-ri-risposta', !!serie)}</div>
       ${ospitiHtml(r)}</div>`;
     velo.querySelector('#ri-x').onclick = chiudi;
+    collegaTendine5(velo);   // nota 192: la risposta a tendina
     velo.querySelectorAll('[data-ri-risposta]').forEach(b => { b.onclick = async () => {
       const k = b.dataset.riRisposta;
       if (k === 'dopo') return chiudi();

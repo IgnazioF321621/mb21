@@ -30,7 +30,7 @@ const codice = [
   fra('const CLASSI_CAT = {', '\nfunction classeCat'),
   riga('function classeCat'), riga('function ic('), riga('function escIcone'),
   funzione('esc'), riga('function percheHtml'), riga('function diPerche'),   // «Perché?» (nota 048)
-  funzione('tendina5Html'), funzione('collegaTendine5'), riga('const titoloEsito'), riga('const etichettaEsito'), funzione('tendinaEsitiHtml'),   // nota 192: la tendina degli esiti (prima bottoniEsiti)
+  funzione('tendina5Html'), funzione('collegaTendine5'), riga('const titoloEsito'), riga('const etichettaEsito'), funzione('tendinaEsitiHtml'), funzione('tendinaSceltaHtml'), funzione('segnaSceltaTendina'),   // nota 192: la tendina degli esiti (prima bottoniEsiti) e delle scelte
   funzione('elencoEsitoHtml'), funzione('bloccoEsiti'), funzione('statoAzione'), funzione('avvisoSovrapposti'), riga('function iniziali('),
   fra('const CY = {', '\nfunction doveSono').replace('const COACH_YES = false;', 'let COACH_YES = false;'),   // nota 001: il segnale Coach Yes, vero; nota 093: spento, le prove lo riaccendono (impostaCoachYes)
   // P5b: l'interruttore, qui cambiabile dalle prove (impostaLinee)
