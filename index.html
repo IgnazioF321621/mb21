@@ -2915,8 +2915,9 @@
   .p5-blocco b { font-size: 18px; }
   .p5-blocco .modo-contatto, .p5-blocco .tnd5 { margin: 0; }   /* nota 188: 📞 / 💬 e la tendina degli esiti già nella scheda */
   /* nota 187: come l'hai contattato, sopra l'esito (scheda di Contatti del giorno, coda, «Da catalogare»); nota 188: tolto il secondo foglio (.e5, .p5-esito) */
-  .modo-contatto { display: flex; gap: 8px; margin: 0 0 12px; }
-  .modo-contatto button { flex: 1; min-height: 44px; border-radius: 12px; border: 1.5px solid var(--linea); background: var(--superficie); color: var(--testo-soft); font: inherit; font-size: 15px; font-weight: 700; cursor: pointer; }
+  .modo-contatto { display: flex; gap: 6px; margin: 0 0 12px; }
+  .modo-contatto button { flex: 1; min-width: 0; min-height: 52px; padding: 5px 4px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border-radius: 12px; border: 1.5px solid var(--linea); background: var(--superficie); color: var(--testo-soft); font: inherit; font-size: 14px; font-weight: 700; line-height: 1.2; cursor: pointer; }   /* nota 191: tre tasti; se stretti vanno a capo dentro il tasto */
+  .modo-contatto .mc-ic { font-size: 18px; line-height: 1; }
   .modo-contatto button[aria-pressed="true"] { border-color: var(--testo); background: var(--testo); color: var(--superficie); }
   .o5-tessere { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 6px; }
   .o5-tessera { border: 0; font: inherit; color: #fff; cursor: pointer; border-radius: 22px; min-height: 104px; padding: 14px;
@@ -4969,8 +4970,6 @@ async function nuovoAppuntamento(opz = {}) {
 // si spostano sull'ospite con «L'esito è dell'ospite» (il contatto di prima diventa «Portato da»).
 // Coda: se è l'ultima azione del contatto e cambia l'esito o il contatto, il rientro si ricalcola (modifica_azione). Avviso con Annulla.
 // opz: { dopo() → ridisegna chi l'ha aperto, ritorno: 'report' | 'griglia' per «Apri contatto» (senza = niente bottone) }
-// nota 191: i nomi dei modi di un Contatto nel foglio «Modifica», con le icone dei tasti 📞 / 💬 (note 187-190)
-const NOMI_MODO_MODIFICA = { Telefonata: '📞 Telefonata', Messaggio: '💬 Messaggio', Presenza: '🤝 Di persona' };
 async function foglioAzione(id, opz = {}) {
   if (soloGuardo()) return;
   const { data: a, error } = await dbq('azione da modificare', supa.from('azioni')
@@ -4989,7 +4988,7 @@ async function foglioAzione(id, opz = {}) {
   // Nota Pagine 191 (feedback di Ignazio 11/11: «ho messo esito per poi volerlo correggere e mi esce ancora versione vecchia»): per un Contatto il foglio
   // «Modifica» ha la forma di Contatti del giorno, scheda e Agenda (note 187-190): «Com'è andata?», i tasti del modo nello stile .modo-contatto e la tendina
   // dell'esito (tendinaEsitiHtml). Stessi valori (st.sottotipo, st.esito) e stesso «Salva»; gli altri tipi come prima
-  const contatto = a.tipo_azione === 'Contatto' && typeof tendinaEsitiHtml === 'function';
+  const contatto = a.tipo_azione === 'Contatto' && typeof tendinaEsitiHtml === 'function' && typeof tastoModo === 'function';   // i nomi dei modi: MODI_CONTATTO (pagina-dashboard.js)
   // cantiere 37: qui si può cambiare anche quanto dura (prima si poteva solo quando si fissava)
   const duraOra = a.inizio && a.fine && Date.parse(a.fine) > Date.parse(a.inizio) ? Math.round((Date.parse(a.fine) - Date.parse(a.inizio)) / 60000) : 0;
   const { giorno, ora } = a.inizio ? A.partiRoma(a.inizio) : { giorno: MB21Coda.oggiRoma(), ora: '18:30' };
@@ -5009,7 +5008,7 @@ async function foglioAzione(id, opz = {}) {
     <div class="riquadro mc-g" style="margin-top:14px"><div id="fa-persone"></div></div>
     <h4 class="mc-t">Tipo ed esito</h4><div class="riquadro mc-g">
     ${contatto ? `<div class="campo"><label>Com'è andata?</label><div class="modo-contatto" role="group" aria-label="Come l'hai contattato" id="fa-sottotipi">${s.sottotipi.map(x =>
-      `<button type="button" data-v="${esc(x)}" aria-pressed="false">${esc(NOMI_MODO_MODIFICA[x] || x)}</button>`).join('')}</div></div>`
+      `<button type="button" data-v="${esc(x)}" aria-pressed="false">${tastoModo(x)}</button>`).join('')}</div></div>`
     : s.sottotipi.length ? `<div class="campo"><label>${esc(A.etichettaSottotipo(a.tipo_azione))}</label><div class="ag-scelte" id="fa-sottotipi">${s.sottotipi.map(x => `<button data-v="${esc(x)}">${esc(x)}</button>`).join('')}</div></div>` : ''}
     <div class="campo"><label id="fa-esito-titolo">Esito</label><div id="fa-esiti"></div><div class="sotto" id="fa-esito-nota" style="margin:4px 0 0"></div></div>
     </div><h4 class="mc-t">Data e note</h4><div class="riquadro mc-g">

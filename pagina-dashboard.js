@@ -212,18 +212,25 @@ function bottoniPer(categoria) {
 // (già scelto) e 💬 Messaggio; l'esito si salva con il modo scelto (registra_esito, p_modalita). Una funzione sola per il foglio «Com'è andata?» di Contatti
 // del giorno (dalla nota 188 dentro la scheda, esitiTendinaHtml), la card della coda e quella di «Da catalogare». Gli esiti sono gli stessi per i due modi (agenda.js, TIPI).
 // La scelta resta in MODO_CONTATTO finché l'esito non è salvato; collegaModoContatto cambia il tasto acceso senza ridisegnare.
-const MODI_CONTATTO = [['Telefonata', '📞 Telefonata'], ['Messaggio', '💬 Messaggio']];
+// Nota Pagine 191 (Ignazio 11/11: «il contatto può essere nelle tre versioni… tutto deve essere allineato»): anche «Di persona», salvato come la modalità
+// che c'era già («Presenza»): stessi conti e stesse consegne. Una lista sola per Contatti del giorno, coda, «Da catalogare», scheda, Agenda e Modifica
+const SIMBOLO_DI_PERSONA = '👥';
+const MODI_CONTATTO = [['Telefonata', '📞', 'Telefonata'], ['Messaggio', '💬', 'Messaggio'], ['Presenza', SIMBOLO_DI_PERSONA, 'Di persona']];
+const modoDa = x => MODI_CONTATTO.find(m => m[0] === x) || [x, '', x];
+const nomeModo = x => modoDa(x).slice(1).filter(Boolean).join(' ');   // «📞 Telefonata»
+// il dentro del tasto: il simbolo sopra, la parola sotto (tre tasti stanno anche sull'iPhone più stretto, tutti uguali)
+const tastoModo = x => { const [, s, t] = modoDa(x); return `${s ? `<span class="mc-ic" aria-hidden="true">${s}</span>` : ''}<span>${esc(t)}</span>`; };
 const MODO_CONTATTO = {};
 // `base` (nota 190): il modo già scritto nella telefonata fissata (azioni.modalita), acceso finché non se ne tocca un altro
 const modoDi = (id, base = 'Telefonata') => MODO_CONTATTO[id] || base || 'Telefonata';
 function modoContattoHtml(id, base = 'Telefonata') {
-  return `<div class="modo-contatto" role="group" aria-label="Come l'hai contattato">${MODI_CONTATTO.map(([k, t]) =>
-    `<button type="button" data-modo="${k}" data-modo-di="${esc(id)}" aria-pressed="${modoDi(id, base) === k}">${esc(t)}</button>`).join('')}</div>`;
+  return `<div class="modo-contatto" role="group" aria-label="Come l'hai contattato">${MODI_CONTATTO.map(([k]) =>
+    `<button type="button" data-modo="${k}" data-modo-di="${esc(id)}" aria-pressed="${modoDi(id, base) === k}">${tastoModo(k)}</button>`).join('')}</div>`;
 }
 // Nota Pagine 190 (feedback di Ignazio 10/11: «c'è ancora la versione vecchia per quanto riguarda l'esito»; «A»): la stessa forma anche per le telefonate
 // fissate (azioni Contatto · Telefonata/Messaggio) nella scheda contatto, in Agenda (bloccoEsiti, index.html) e in «Telefonata · scelta» (sceltaHtml).
 // Vale per i Contatto fatti al telefono o per messaggio, non per le consegne né per i richiami dalla coda (quelli non si chiudono lì).
-const conModoContatto = a => !!a && a.tipo_azione === 'Contatto' && ['Telefonata', 'Messaggio'].includes(a.modalita || 'Telefonata') && !a.data_scelta && !MB21Agenda.eConsegna(a);
+const conModoContatto = a => !!a && a.tipo_azione === 'Contatto' && MODI_CONTATTO.some(m => m[0] === (a.modalita || 'Telefonata')) && !a.data_scelta && !MB21Agenda.eConsegna(a);   // nota 191: anche «Presenza» (non le consegne)
 // Prima di chiudere (o cambiare l'esito di) una telefonata fissata: se il modo scelto è diverso da quello scritto, si aggiorna azioni.modalita
 // (una scrittura sola, solo in quel caso; le funzioni del database non cambiano). false = non salvato: ci si ferma.
 async function modoPrimaDiChiudere(a) {

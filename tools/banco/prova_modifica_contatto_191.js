@@ -1,5 +1,5 @@
 // Nota Pagine 191 (feedback di Ignazio 11/11: «ho messo esito per poi volerlo correggere e mi esce ancora versione vecchia»): il foglio «Modifica» di un
-// Contatto con la forma delle note 187-190: «Com'è andata?», i tasti del modo (📞 Telefonata · 💬 Messaggio · 🤝 Di persona) e la tendina dell'esito;
+// Contatto con la forma delle note 187-190: «Com'è andata?», i tasti del modo (📞 Telefonata · 💬 Messaggio · 👥 Di persona, la lista unica MODI_CONTATTO) e la tendina dell'esito;
 // stesso «Salva» (modifica_azione con modalità ed esito scelti). Codice vero di index.html e pagina-dashboard.js, app finta, dati finti.
 // Uso: node tools/banco/prova_modifica_contatto_191.js
 const assert = require('node:assert/strict'), vm = require('node:vm'), fs = require('node:fs'), path = require('node:path');
@@ -24,9 +24,9 @@ async function apri(az) {
     accountDaEsito: async () => false, allineaRigaCoda: async () => {}, aggiornaRiga: async () => {}, passoInCache() {}, mostraToast() {},
     chiediConferma: async () => false, sceltaContatto: async () => null, apriContattoDa() {}, dataLunga: x => x, nuovoAppuntamento: () => { throw new Error('non per un contatto'); } };
   vm.createContext(ctx);
-  vm.runInContext([pezzo(PD, 'const COSA_FA_ESITO'), pezzo(PD, 'function tendinaEsitiHtml'), pezzo(IDX, 'function tendina5Html'), pezzo(IDX, 'function collegaTendine5'),
+  vm.runInContext([pezzo(PD, 'const COSA_FA_ESITO'), pezzo(PD, 'const SIMBOLO_DI_PERSONA'), pezzo(PD, 'function tendinaEsitiHtml'), pezzo(IDX, 'function tendina5Html'), pezzo(IDX, 'function collegaTendine5'),
     tra(IDX, '// «Cosa avete fatto?» (note Azioni 031-032)', 'function bloccoEsiti('), pezzo(IDX, 'function bottoniEsiti('),
-    tra(IDX, '// I passi dell\'incontro dal foglio «Modifica»', 'async function chiudiAppuntamento'), tra(IDX, '// nota 191: i nomi dei modi', '// Scelta di un contatto tra i propri'),
+    tra(IDX, '// I passi dell\'incontro dal foglio «Modifica»', 'async function chiudiAppuntamento'), tra(IDX, 'async function foglioAzione(', '// Scelta di un contatto tra i propri'),
     'this.foglioAzione = foglioAzione;'].join('\n'), ctx);
   await ctx.foglioAzione(az.id, { dopo: async () => {} });
   await new Promise(r => setTimeout(r, 0));
@@ -38,7 +38,7 @@ const tel = o => ({ id: 't1', contatto_id: 'c1', user_id: 'u1', portato_da: null
 prova('il Modifica di una telefonata: «Com\'è andata?», i tasti del modo nello stile nuovo (acceso quello dell\'azione) e la tendina con l\'esito di adesso ✓; niente più fila di tasti', async () => {
   const { v } = await apri(tel());
   const h = v.innerHTML;
-  assert.match(h, /<label>Com'è andata\?<\/label><div class="modo-contatto" role="group" aria-label="Come l'hai contattato" id="fa-sottotipi"><button type="button" data-v="Telefonata"[^>]*>📞 Telefonata<\/button><button type="button" data-v="Messaggio"[^>]*>💬 Messaggio<\/button><button type="button" data-v="Presenza"[^>]*>🤝 Di persona<\/button>/);
+  assert.match(h, /<label>Com'è andata\?<\/label><div class="modo-contatto" role="group" aria-label="Come l'hai contattato" id="fa-sottotipi"><button type="button" data-v="Telefonata"[^>]*><span class="mc-ic" aria-hidden="true">📞<\/span><span>Telefonata<\/span><\/button><button type="button" data-v="Messaggio"[^>]*><span class="mc-ic" aria-hidden="true">💬<\/span><span>Messaggio<\/span><\/button><button type="button" data-v="Presenza"[^>]*><span class="mc-ic" aria-hidden="true">👥<\/span><span>Di persona<\/span><\/button>/);
   const esiti = v.querySelector('#fa-esiti').innerHTML;
   assert.match(esiti, /<div class="tnd5"><button type="button" class="sel5" data-tnd5><b>No Interesse<\/b><em>▾<\/em><\/button><div class="ag-scelte tendina5" data-passo="cambia">/);
   assert.match(esiti, /class="no scelto" data-v="No Interesse"><span>No Interesse<\/span><b>✓<\/b>/);
@@ -62,7 +62,7 @@ prova('una telefonata ancora da fare: «Scegli l\'esito»; gli appuntamenti non 
   const { v } = await apri(tel({ esito: null, completata: false }));
   assert.match(v.querySelector('#fa-esiti').innerHTML, /<small>Scegli l'esito<\/small>/);
   assert.match(IDX, /if \(a\.tipo_azione !== 'Contatto' && !opz\.soloEsito && typeof nuovoAppuntamento === 'function'\) return nuovoAppuntamento/);
-  assert.match(IDX, /const contatto = a\.tipo_azione === 'Contatto' && typeof tendinaEsitiHtml === 'function';/);
+  assert.match(IDX, /const contatto = a\.tipo_azione === 'Contatto' && typeof tendinaEsitiHtml === 'function' && typeof tastoModo === 'function';/);
 });
 
 (async () => {

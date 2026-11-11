@@ -23,7 +23,7 @@ function mondo(idx = IDX, conNuove = true) {
   vm.createContext(ctx);
   const pezzi = [pezzo(PD, 'const COSA_FA_ESITO'), pezzo(idx, 'function tendina5Html'), pezzo(idx, 'function collegaTendine5'), pezzo(idx, 'function elencoEsitoHtml'),
     'const FATTO_APERTO = new Set();', pezzo(idx, 'function bloccoEsiti'), pezzo(idx, 'function collegaEsiti')];
-  if (conNuove) pezzi.unshift(pezzo(PD, 'const MODI_CONTATTO'), pezzo(PD, 'function collegaModoContatto'), riga(PD, 'const conModoContatto'), pezzo(PD, 'async function modoPrimaDiChiudere'), pezzo(PD, 'function tendinaEsitiHtml'));
+  if (conNuove) pezzi.unshift(pezzo(PD, 'const SIMBOLO_DI_PERSONA'), pezzo(PD, 'function collegaModoContatto'), riga(PD, 'const conModoContatto'), pezzo(PD, 'async function modoPrimaDiChiudere'), pezzo(PD, 'function tendinaEsitiHtml'));
   vm.runInContext(pezzi.join('\n') + ';this.blocco = bloccoEsiti; this.collega = collegaEsiti;' + (conNuove ? 'this.MODO = MODO_CONTATTO; this.primaDi = modoPrimaDiChiudere;' : ''), ctx);
   return ctx;
 }
@@ -41,12 +41,12 @@ function dom(html, a) {
 prova('telefonata fissata da chiudere: «Com\'è andata?», 📞 acceso (fissata al telefono) e la tendina «Scegli l\'esito» con gli esiti del Prospect', () => {
   const W = mondo(), h = W.blocco(tel(), 'Prospect');
   assert.match(h, /^<div class="blocco-esiti" data-blocco="z1"><div class="come-andata">Com'è andata\?<\/div><div class="modo-contatto"/);
-  assert.match(h, /data-modo="Telefonata" data-modo-di="z1" aria-pressed="true">📞 Telefonata/);
+  assert.match(h, /data-modo="Telefonata" data-modo-di="z1" aria-pressed="true"><span class="mc-ic" aria-hidden="true">📞<\/span><span>Telefonata<\/span>/);
   assert.match(h, /<small>Scegli l'esito<\/small>/);
   assert.match(h, /data-azione="z1" data-passo="unico"/);
   assert.deepEqual([...h.matchAll(/data-esito="([^"]+)"/g)].map(m => m[1]), A.esitiInDueRighe(A.fasiPer('Prospect', 'Contatto', 'Telefonata')).flat());
   assert.doesNotMatch(h, /Com'è andato il contatto/);
-  assert.match(W.blocco(tel({ modalita: 'Messaggio' }), 'Prospect'), /data-modo="Messaggio" data-modo-di="z1" aria-pressed="true">💬 Messaggio/);   // fissata come messaggio
+  assert.match(W.blocco(tel({ modalita: 'Messaggio' }), 'Prospect'), /data-modo="Messaggio" data-modo-di="z1" aria-pressed="true"><span class="mc-ic" aria-hidden="true">💬<\/span><span>Messaggio<\/span>/);   // fissata come messaggio
 });
 
 prova('già chiusa: resta «Cambia esito ›»; aperta, la stessa forma con l\'esito di adesso ✓', () => {
@@ -65,11 +65,16 @@ prova('PM, appuntamenti, Follow Up, consegne, richiami dalla coda e Presenza: id
     [{ id: 'p3', tipo_azione: 'Follow Up', modalita: 'Follow Up', completata: false, esito: null }, 'Prospect'],
     [{ id: 'p4', tipo_azione: 'Appuntamento', modalita: 'Avvio', completata: false, esito: null }, 'Partner'],
     [{ id: 'p5', tipo_azione: 'Contatto', modalita: 'Presenza', completata: false, esito: null, note: 'Consegna · prodotto finto' }, 'Cliente'],
-    [{ id: 'p6', tipo_azione: 'Contatto', modalita: 'Presenza', completata: false, esito: null }, 'Prospect'],
     [{ id: 'p7', tipo_azione: 'Contatto', modalita: 'Telefonata', completata: true, esito: 'Richiamare', data_scelta: '2026-11-10T15:00:00Z' }, 'Prospect'],
     [{ id: 'p8', tipo_azione: 'Consulenza PRD', modalita: 'Consulenza', completata: false, esito: null }, 'Cliente'],
   ];
   for (const [a, cat] of casi) for (const aperto of [false, true]) assert.equal(W.blocco(a, cat, aperto), P.blocco(a, cat, aperto), `${a.tipo_azione} ${a.modalita} ${aperto}`);
+});
+
+prova('nota 191: un Contatto «di persona» (Presenza, non consegna) ha la stessa forma, con 👥 Di persona acceso', () => {
+  const h = mondo().blocco(tel({ id: 'p6', modalita: 'Presenza' }), 'Prospect');
+  assert.match(h, /<div class="come-andata">Com'è andata\?<\/div><div class="modo-contatto"/);
+  assert.match(h, /data-modo="Presenza" data-modo-di="p6" aria-pressed="true"><span class="mc-ic" aria-hidden="true">👥<\/span><span>Di persona<\/span>/);
 });
 
 prova('il modo: se resta quello di prima nessuna scrittura; se cambia, azioni.modalita si aggiorna PRIMA di chiudere, e la chiusura porta il modo nuovo', async () => {
@@ -83,7 +88,7 @@ prova('il modo: se resta quello di prima nessuna scrittura; se cambia, azioni.mo
   const e = dom(V.blocco(b, 'Prospect'), b);
   V.collega(e, b, { nome: 'Persona Finta', categoria: 'Prospect' }, () => {});
   e.modi.find(x => x.dataset.modo === 'Messaggio').onclick();
-  assert.deepEqual(e.modi.map(x => x.attr['aria-pressed']), ['false', 'true']);
+  assert.deepEqual(e.modi.map(x => x.attr['aria-pressed']), ['false', 'true', 'false']);
   await e.esiti.find(x => x.dataset.esito === 'No Risposta').onclick();
   assert.deepEqual(JSON.parse(JSON.stringify(V.scritte)), [['azioni', { modalita: 'Messaggio' }, 'z2']]);
   assert.deepEqual(JSON.parse(JSON.stringify(V.chiusure)), [['chiudi', 'Messaggio', 'No Risposta']]);
