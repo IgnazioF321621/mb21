@@ -43,7 +43,8 @@ class Nodo {
       const nodo = this;
       const el = { tag: t.tag, attr: t.attr, dataset, onclick: null, oninput: null, onkeydown: null, onchange: null, onsubmit: null, disabled: false, hidden: 'hidden' in t.attr,
         value: t.attr.value || '', checked: false, style: {}, textContent: '', classList: { toggle() {}, add() {}, remove() {} },
-        parentElement: t.padre >= 0 && tag ? this.elemento(tag[t.padre], tag) : null, hasAttribute: n => n in t.attr, getAttribute: n => t.attr[n], scrollIntoView() {}, focus() {}, addEventListener() {}, closest: () => null,
+        parentElement: t.padre >= 0 && tag ? this.elemento(tag[t.padre], tag) : null, hasAttribute: n => n in t.attr, getAttribute: n => t.attr[n], setAttribute: (n, v) => { t.attr[n] = String(v); },   // nota 191: aria-pressed dei tasti del modo
+        scrollIntoView() {}, focus() {}, addEventListener() {}, closest: () => null,
         // il dentro dell'elemento: leggerlo e riscriverlo (come velo.querySelector('#na-corpo').innerHTML = …)
         get innerHTML() { const a = nodo._adesso(t); return a ? nodo._html.slice(a.pos + a.apertura, a.fine) : ''; },
         set innerHTML(v) {

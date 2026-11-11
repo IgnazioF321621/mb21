@@ -4969,6 +4969,8 @@ async function nuovoAppuntamento(opz = {}) {
 // si spostano sull'ospite con «L'esito è dell'ospite» (il contatto di prima diventa «Portato da»).
 // Coda: se è l'ultima azione del contatto e cambia l'esito o il contatto, il rientro si ricalcola (modifica_azione). Avviso con Annulla.
 // opz: { dopo() → ridisegna chi l'ha aperto, ritorno: 'report' | 'griglia' per «Apri contatto» (senza = niente bottone) }
+// nota 191: i nomi dei modi di un Contatto nel foglio «Modifica», con le icone dei tasti 📞 / 💬 (note 187-190)
+const NOMI_MODO_MODIFICA = { Telefonata: '📞 Telefonata', Messaggio: '💬 Messaggio', Presenza: '🤝 Di persona' };
 async function foglioAzione(id, opz = {}) {
   if (soloGuardo()) return;
   const { data: a, error } = await dbq('azione da modificare', supa.from('azioni')
@@ -4984,6 +4986,10 @@ async function foglioAzione(id, opz = {}) {
   // punto si apra (Agenda, scheda della persona, Report, Griglia PM). Qui restano le telefonate e la correzione dell'esito (`soloEsito`, dal suo «correggi»).
   if (a.tipo_azione !== 'Contatto' && !opz.soloEsito && typeof nuovoAppuntamento === 'function') return nuovoAppuntamento({ modifica: { ...a, portato }, dopo: opz.dopo, resta: true });
   const A = MB21Agenda, s = A.sceltePerModifica(a);
+  // Nota Pagine 191 (feedback di Ignazio 11/11: «ho messo esito per poi volerlo correggere e mi esce ancora versione vecchia»): per un Contatto il foglio
+  // «Modifica» ha la forma di Contatti del giorno, scheda e Agenda (note 187-190): «Com'è andata?», i tasti del modo nello stile .modo-contatto e la tendina
+  // dell'esito (tendinaEsitiHtml). Stessi valori (st.sottotipo, st.esito) e stesso «Salva»; gli altri tipi come prima
+  const contatto = a.tipo_azione === 'Contatto' && typeof tendinaEsitiHtml === 'function';
   // cantiere 37: qui si può cambiare anche quanto dura (prima si poteva solo quando si fissava)
   const duraOra = a.inizio && a.fine && Date.parse(a.fine) > Date.parse(a.inizio) ? Math.round((Date.parse(a.fine) - Date.parse(a.inizio)) / 60000) : 0;
   const { giorno, ora } = a.inizio ? A.partiRoma(a.inizio) : { giorno: MB21Coda.oggiRoma(), ora: '18:30' };
@@ -5002,7 +5008,9 @@ async function foglioAzione(id, opz = {}) {
       <div><small>${esc(a.tipo_azione || 'Azione')}</small><b>${esc(st.contatto.nome)}</b></div><button id="fa-x" aria-label="Chiudi">${ic('chiudi')}</button></div>
     <div class="riquadro mc-g" style="margin-top:14px"><div id="fa-persone"></div></div>
     <h4 class="mc-t">Tipo ed esito</h4><div class="riquadro mc-g">
-    ${s.sottotipi.length ? `<div class="campo"><label>${esc(A.etichettaSottotipo(a.tipo_azione))}</label><div class="ag-scelte" id="fa-sottotipi">${s.sottotipi.map(x => `<button data-v="${esc(x)}">${esc(x)}</button>`).join('')}</div></div>` : ''}
+    ${contatto ? `<div class="campo"><label>Com'è andata?</label><div class="modo-contatto" role="group" aria-label="Come l'hai contattato" id="fa-sottotipi">${s.sottotipi.map(x =>
+      `<button type="button" data-v="${esc(x)}" aria-pressed="false">${esc(NOMI_MODO_MODIFICA[x] || x)}</button>`).join('')}</div></div>`
+    : s.sottotipi.length ? `<div class="campo"><label>${esc(A.etichettaSottotipo(a.tipo_azione))}</label><div class="ag-scelte" id="fa-sottotipi">${s.sottotipi.map(x => `<button data-v="${esc(x)}">${esc(x)}</button>`).join('')}</div></div>` : ''}
     <div class="campo"><label id="fa-esito-titolo">Esito</label><div id="fa-esiti"></div><div class="sotto" id="fa-esito-nota" style="margin:4px 0 0"></div></div>
     </div><h4 class="mc-t">Data e note</h4><div class="riquadro mc-g">
     <div class="campo"><label>${dallaCoda ? 'Telefonata fatta il' : senzaOra ? 'Giorno' : 'Giorno e ora'}</label><div class="ag-due-campi"><input type="date" id="fa-giorno" value="${giorno}"><input type="time" id="fa-ora" value="${ora}"${senzaOra ? ' hidden' : ''}></div>
@@ -5062,6 +5070,16 @@ async function foglioAzione(id, opz = {}) {
     }
     const gruppi = A.RISULTATI[a.tipo_azione] ? A.passiEsito(stato, a.contatti ? a.contatti.categoria : null, st.fattoAperto)
       : [{ passo: 'cambia', titolo: 'Esito', bottoni: A.sceltePerModifica(stato).esiti, attuale: st.esito }];
+    if (contatto && gruppi.length === 1) {   // nota 191: la tendina dell'esito, sotto i tasti del modo (il titolo «Com'è andata?» sta sopra di loro)
+      const g = gruppi[0];
+      $('fa-esito-titolo').style.display = 'none'; $('fa-esito-nota').textContent = '';   // lo stile dei campi mostra le etichette anche con «hidden»
+      $('fa-esiti').innerHTML = tendinaEsitiHtml(g.bottoni, f => `data-v="${esc(f)}"`, { etichetta: g.attuale ? `<b>${esc(A.nomePasso(g.attuale))}</b>` : '<small>Scegli l\'esito</small>', attuale: g.attuale, extra: `data-passo="${g.passo}"` });
+      collegaTendine5($('fa-esiti'));
+      $('fa-esiti').querySelectorAll('[data-v]').forEach(b => b.onclick = () => { st.esito = b.dataset.v; st.fattoAperto = false; disegnaScelte(); });
+      velo.querySelectorAll('#fa-sottotipi button').forEach(b => { b.classList.toggle('scelto', b.dataset.v === st.sottotipo); b.setAttribute('aria-pressed', String(b.dataset.v === st.sottotipo)); });
+      if (dallaCoda) $('fa-scelta-titolo').textContent = st.esito === 'Richiamare' ? 'Da richiamare il' : A.ESITI_CON_GIORNO.includes(st.esito) ? 'Appuntamento il' : 'Giorno scelto';
+      return;
+    }
     $('fa-esito-titolo').textContent = gruppi.length === 1 ? gruppi[0].titolo : '';
     $('fa-esito-nota').textContent = gruppi.some(g => g.passo === 'risultato') ? (st.esito ? `${st.esito}: fatto, risultato da dare` : 'Fatto: scegli il risultato') : '';
     $('fa-esiti').innerHTML = gruppi.map((g, i) => `${gruppi.length > 1 ? `<div class="come-andata" style="border:0;margin-top:${i ? 8 : 0}px;padding:0">${esc(g.titolo)}</div>` : ''}
