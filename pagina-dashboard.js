@@ -227,21 +227,6 @@ function modoContattoHtml(id, base = 'Telefonata') {
   return `<div class="modo-contatto" role="group" aria-label="Come l'hai contattato">${MODI_CONTATTO.map(([k]) =>
     `<button type="button" data-modo="${k}" data-modo-di="${esc(id)}" aria-pressed="${modoDi(id, base) === k}">${tastoModo(k)}</button>`).join('')}</div>`;
 }
-// Nota Pagine 190 (feedback di Ignazio 10/11: «c'è ancora la versione vecchia per quanto riguarda l'esito»; «A»): la stessa forma anche per le telefonate
-// fissate (azioni Contatto · Telefonata/Messaggio) nella scheda contatto, in Agenda (bloccoEsiti, index.html) e in «Telefonata · scelta» (sceltaHtml).
-// Vale per i Contatto fatti al telefono o per messaggio, non per le consegne né per i richiami dalla coda (quelli non si chiudono lì).
-const conModoContatto = a => !!a && a.tipo_azione === 'Contatto' && MODI_CONTATTO.some(m => m[0] === (a.modalita || 'Telefonata')) && !a.data_scelta && !MB21Agenda.eConsegna(a);   // nota 191: anche «Presenza» (non le consegne)
-// Prima di chiudere (o cambiare l'esito di) una telefonata fissata: se il modo scelto è diverso da quello scritto, si aggiorna azioni.modalita
-// (una scrittura sola, solo in quel caso; le funzioni del database non cambiano). false = non salvato: ci si ferma.
-async function modoPrimaDiChiudere(a) {
-  if (!conModoContatto(a)) return true;
-  const prima = a.modalita || 'Telefonata', m = modoDi(a.id, prima);
-  if (m === prima) return true;
-  const { error } = await dbq('modo del contatto', supa.from('azioni').update({ modalita: m }).eq('id', a.id));
-  if (error) { mostraToast('Non salvato: controlla la connessione e riprova.'); return false; }
-  a.modalita = m; delete MODO_CONTATTO[a.id];
-  return true;
-}
 function collegaModoContatto(dove) {
   const tasti = [...dove.querySelectorAll('.modo-contatto button[data-modo]')];
   tasti.forEach(b => {
@@ -1379,8 +1364,8 @@ function sottoScelta(a) {
 function sceltaHtml(a) {   // tappa 7: il giorno e l'ora stanno già sotto il nome, qui solo la nota
   const categoria = (a.contatti && a.contatti.categoria) || a.categoria, nome = a.contatti ? a.contatti.nome : '';
   const tutti = bottoniPer(categoria), spento = ST.offline || soloGuardo();
-  // nota 190: «Com'è andata?», 📞 / 💬 (acceso il modo con cui era fissata) e la tendina degli esiti, come in Contatti del giorno (prima la fila di tasti)
-  const esiti = `<div class="come-andata">Com'è andata?</div>${modoContattoHtml(a.id, a.modalita)}${tendinaEsitiHtml(tutti.map(b => b.etichetta),
+  // nota 190: «Com'è andata?» e la tendina degli esiti (prima la fila di tasti); nota 192: il modo è già scritto (la telefonata è fissata), niente 📞 / 💬 / 🗣️
+  const esiti = `<div class="come-andata">Com'è andata?</div>${tendinaEsitiHtml(tutti.map(b => b.etichetta),
     f => `data-scelta-id="${esc(a.id)}" data-scelta-esito="${esc(f)}"`, { spento, etichetta: '<small>Scegli l\'esito</small>' })}`;
   return `<div class="card compatta aperta ${classeCat(categoria)}" data-scelta="${esc(a.id)}">
       <div class="corpo">
@@ -1398,7 +1383,7 @@ async function rileggiStato() {
   if (!error && data) ST.stato = data;
 }
 function collegaScelte() {
-  collegaTendine5(app); collegaModoContatto(app);   // nota 190
+  collegaTendine5(app);   // nota 190
   app.querySelectorAll('[data-scelta-esito]').forEach(b => {
     const a = SCE.righe.find(x => x.id === b.dataset.sceltaId);
     if (!a) return;
@@ -1406,7 +1391,7 @@ function collegaScelte() {
     const dopo = async () => { await Promise.all([caricaScelte(ST.oggi), rileggiStato(), aggiornaRiga(a.contatto_id)]); salvaCache(); disegnaOggi(); };
     // senza orario l'ora della telefonata è adesso (la mette anche il database, chiudendo): così non passa per «storico» e il coach si apre
     const e = { ...a, categoria: a.categoria || (a.contatti && a.contatti.categoria), inizio: a.senza_ora ? new Date().toISOString() : a.inizio };
-    b.onclick = async () => { if (await modoPrimaDiChiudere(a)) chiudiAppuntamento({ ...e, modalita: a.modalita }, b.dataset.sceltaEsito, { dopo }); };   // nota 190: prima il modo, se cambiato
+    b.onclick = () => chiudiAppuntamento(e, b.dataset.sceltaEsito, { dopo });
   });
 }
 
