@@ -1,5 +1,5 @@
 // Nota Pagine 191 (feedback di Ignazio 11/11: «ho messo esito per poi volerlo correggere e mi esce ancora versione vecchia»): il foglio «Modifica» di un
-// Contatto con la forma delle note 187-190: «Com'è andata?», i tasti del modo (📞 Telefonata · 💬 Messaggio · 👥 Di persona, la lista unica MODI_CONTATTO) e la tendina dell'esito;
+// Contatto con la forma delle note 187-190: «Com'è andata?», i tasti del modo (📞 Telefonata · 💬 Messaggio · 🗣️ Di persona, la lista unica MODI_CONTATTO) e la tendina dell'esito;
 // stesso «Salva» (modifica_azione con modalità ed esito scelti). Codice vero di index.html e pagina-dashboard.js, app finta, dati finti.
 // Uso: node tools/banco/prova_modifica_contatto_191.js
 const assert = require('node:assert/strict'), vm = require('node:vm'), fs = require('node:fs'), path = require('node:path');
@@ -38,7 +38,7 @@ const tel = o => ({ id: 't1', contatto_id: 'c1', user_id: 'u1', portato_da: null
 prova('il Modifica di una telefonata: «Com\'è andata?», i tasti del modo nello stile nuovo (acceso quello dell\'azione) e la tendina con l\'esito di adesso ✓; niente più fila di tasti', async () => {
   const { v } = await apri(tel());
   const h = v.innerHTML;
-  assert.match(h, /<label>Com'è andata\?<\/label><div class="modo-contatto" role="group" aria-label="Come l'hai contattato" id="fa-sottotipi"><button type="button" data-v="Telefonata"[^>]*><span class="mc-ic" aria-hidden="true">📞<\/span><span>Telefonata<\/span><\/button><button type="button" data-v="Messaggio"[^>]*><span class="mc-ic" aria-hidden="true">💬<\/span><span>Messaggio<\/span><\/button><button type="button" data-v="Presenza"[^>]*><span class="mc-ic" aria-hidden="true">👥<\/span><span>Di persona<\/span><\/button>/);
+  assert.match(h, /<label>Com'è andata\?<\/label><div class="modo-contatto" role="group" aria-label="Come l'hai contattato" id="fa-sottotipi"><button type="button" data-v="Telefonata"[^>]*><span class="mc-ic" aria-hidden="true">📞<\/span><span>Telefonata<\/span><\/button><button type="button" data-v="Messaggio"[^>]*><span class="mc-ic" aria-hidden="true">💬<\/span><span>Messaggio<\/span><\/button><button type="button" data-v="Presenza"[^>]*><span class="mc-ic" aria-hidden="true">🗣️<\/span><span>Di persona<\/span><\/button>/);
   const esiti = v.querySelector('#fa-esiti').innerHTML;
   assert.match(esiti, /<div class="tnd5"><button type="button" class="sel5" data-tnd5><b>No Interesse<\/b><em>▾<\/em><\/button><div class="ag-scelte tendina5" data-passo="cambia">/);
   assert.match(esiti, /class="no scelto" data-v="No Interesse"><span>No Interesse<\/span><b>✓<\/b>/);

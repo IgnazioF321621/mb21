@@ -38,7 +38,7 @@ function contenitore(html) {
 prova('i due tasti: 📞 Telefonata già scelto, 💬 Messaggio spento; il tocco accende quello toccato e spegne l\'altro', () => {
   const W = mondo();
   const h = W.html('c1');
-  assert.equal(h, '<div class="modo-contatto" role="group" aria-label="Come l&#39;hai contattato"><button type="button" data-modo="Telefonata" data-modo-di="c1" aria-pressed="true"><span class="mc-ic" aria-hidden="true">📞</span><span>Telefonata</span></button><button type="button" data-modo="Messaggio" data-modo-di="c1" aria-pressed="false"><span class="mc-ic" aria-hidden="true">💬</span><span>Messaggio</span></button><button type="button" data-modo="Presenza" data-modo-di="c1" aria-pressed="false"><span class="mc-ic" aria-hidden="true">👥</span><span>Di persona</span></button></div>'.replace('l&#39;hai', "l'hai"));
+  assert.equal(h, '<div class="modo-contatto" role="group" aria-label="Come l&#39;hai contattato"><button type="button" data-modo="Telefonata" data-modo-di="c1" aria-pressed="true"><span class="mc-ic" aria-hidden="true">📞</span><span>Telefonata</span></button><button type="button" data-modo="Messaggio" data-modo-di="c1" aria-pressed="false"><span class="mc-ic" aria-hidden="true">💬</span><span>Messaggio</span></button><button type="button" data-modo="Presenza" data-modo-di="c1" aria-pressed="false"><span class="mc-ic" aria-hidden="true">🗣️</span><span>Di persona</span></button></div>'.replace('l&#39;hai', "l'hai"));
   const d = contenitore(h); W.collega(d);
   d.tasti[1].onclick();
   assert.equal(W.MODO.c1, 'Messaggio');

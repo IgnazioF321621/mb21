@@ -214,7 +214,7 @@ function bottoniPer(categoria) {
 // La scelta resta in MODO_CONTATTO finché l'esito non è salvato; collegaModoContatto cambia il tasto acceso senza ridisegnare.
 // Nota Pagine 191 (Ignazio 11/11: «il contatto può essere nelle tre versioni… tutto deve essere allineato»): anche «Di persona», salvato come la modalità
 // che c'era già («Presenza»): stessi conti e stesse consegne. Una lista sola per Contatti del giorno, coda, «Da catalogare», scheda, Agenda e Modifica
-const SIMBOLO_DI_PERSONA = '👥';
+const SIMBOLO_DI_PERSONA = '🗣️';   // scelta di Ignazio 11/11 («C»)
 const MODI_CONTATTO = [['Telefonata', '📞', 'Telefonata'], ['Messaggio', '💬', 'Messaggio'], ['Presenza', SIMBOLO_DI_PERSONA, 'Di persona']];
 const modoDa = x => MODI_CONTATTO.find(m => m[0] === x) || [x, '', x];
 const nomeModo = x => modoDa(x).slice(1).filter(Boolean).join(' ');   // «📞 Telefonata»

@@ -71,10 +71,10 @@ prova('PM, appuntamenti, Follow Up, consegne, richiami dalla coda e Presenza: id
   for (const [a, cat] of casi) for (const aperto of [false, true]) assert.equal(W.blocco(a, cat, aperto), P.blocco(a, cat, aperto), `${a.tipo_azione} ${a.modalita} ${aperto}`);
 });
 
-prova('nota 191: un Contatto «di persona» (Presenza, non consegna) ha la stessa forma, con 👥 Di persona acceso', () => {
+prova('nota 191: un Contatto «di persona» (Presenza, non consegna) ha la stessa forma, con 🗣️ Di persona acceso', () => {
   const h = mondo().blocco(tel({ id: 'p6', modalita: 'Presenza' }), 'Prospect');
   assert.match(h, /<div class="come-andata">Com'è andata\?<\/div><div class="modo-contatto"/);
-  assert.match(h, /data-modo="Presenza" data-modo-di="p6" aria-pressed="true"><span class="mc-ic" aria-hidden="true">👥<\/span><span>Di persona<\/span>/);
+  assert.match(h, /data-modo="Presenza" data-modo-di="p6" aria-pressed="true"><span class="mc-ic" aria-hidden="true">🗣️<\/span><span>Di persona<\/span>/);
 });
 
 prova('il modo: se resta quello di prima nessuna scrittura; se cambia, azioni.modalita si aggiorna PRIMA di chiudere, e la chiusura porta il modo nuovo', async () => {
