@@ -79,6 +79,13 @@ prova('PM, appuntamenti, Follow Up, consegne, consulenze e richiami dalla coda: 
 
 prova('un Contatto «di persona» (Presenza, non consegna): la stessa forma, senza tasti del modo', () => {
   const h = mondo().blocco(tel({ id: 'p6', modalita: 'Presenza' }), 'Prospect');
+  // nota 192 (Ignazio 11/11: «quando c'è un contatto di presenza, non centra la consegna dei prodotti»): la consegna è solo Presenza CON la nota «Consegna · …»
+  // che scrive la vendita (agenda.js eConsegna, trigger mb21_vendita_agenda); un Di persona normale ha gli esiti dei contatti, mai «Ordine fatto» / «Sposta la consegna»
+  assert.deepEqual([...h.matchAll(/data-esito="([^"]+)"/g)].map(m => m[1]), A.esitiInDueRighe(A.fasiPer('Prospect', 'Contatto', 'Presenza')).flat());
+  assert.doesNotMatch(h, /consegna|data-consegna/i);
+  assert.equal(A.eConsegna(tel({ modalita: 'Presenza', note: 'Ci siamo visti al bar' })), false);
+  assert.equal(A.eConsegna(tel({ modalita: 'Presenza', note: 'Consegna · prodotto finto' })), true);
+  assert.equal(A.eConsegna(tel({ modalita: 'Presenza', note: null })), false);
   assert.match(h, /<div class="come-andata">Com(?:'|&#39;)è andata\?<\/div>\s*<div class="tnd5">/); assert.doesNotMatch(h, /modo-contatto/);
 });
 
