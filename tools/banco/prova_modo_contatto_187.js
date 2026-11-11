@@ -74,7 +74,7 @@ prova('una funzione sola in tutti e tre i posti: la scheda di Contatti del giorn
   assert.doesNotMatch(PO, /function moduloEsito|p5-esito/);
   assert.match(PD, /<div class="come-andata">Com'è andata\?<\/div>\$\{esitiTendinaHtml\(r, spento\)\}/);
   assert.match(PD, /return `\$\{modoContattoHtml\(r\.id\)\}\$\{tendinaEsitiHtml\(etichette, f => `data-contatto="\$\{esc\(r\.id\)\}" data-bottone="\$\{etichette\.indexOf\(f\)\}"`, \{ spento, etichetta \}\)\}`;/);   // nota 190: la tendina condivisa
-  assert.match(PD, /\$\{modoContattoHtml\(r\.id\)\}\n\s*<div class="bottoni due-righe">/);
+  assert.match(PD, /\$\{esitiCodaTendina\(r, ST\.offline \|\| guardoAltri\(\)\)\}/);   // nota 192: anche la vecchia carta della coda in tendina
   assert.match(PD, /collegaModoContatto\(app\);/);
   assert.doesNotMatch(PD + PO, /Com'è andata la telefonata|Telefonata · \$\{esc\(nome\)\}/);
   assert.match(IDX, /\.modo-contatto button\[aria-pressed="true"\]/);

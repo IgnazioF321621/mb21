@@ -24,7 +24,7 @@ function mondo({ guardo = false } = {}) {
   vm.createContext(ctx);
   vm.runInContext([riga(IDX, 'const CLASSI_CAT'), riga(IDX, "  'Referral'"), riga(IDX, 'function classeCat'), pezzo(IDX, 'function tendina5Html'), pezzo(IDX, 'function collegaTendine5'),
     PL.slice(PL.indexOf('const ICONE_TRATTO'), PL.indexOf('function disegnaLista')), pezzo(PL, 'function tendinaCategoriaHtml'),
-    pezzo(PD, 'const COSA_FA_ESITO'), pezzo(PD, 'function bottoniPer'), pezzo(PD, 'const SIMBOLO_DI_PERSONA'), pezzo(PD, 'function collegaModoContatto'), pezzo(PD, 'function esitiCodaTendina'), pezzo(PD, 'function tendinaEsitiHtml'), pezzo(PD, 'function esitiTendinaHtml'), pezzo(PD, 'const CATEGORIE_CATALOGO'),
+    pezzo(PD, 'const COSA_FA_ESITO'), pezzo(PD, 'function bottoniPer'), pezzo(PD, 'const SIMBOLO_DI_PERSONA'), pezzo(PD, 'function collegaModoContatto'), pezzo(PD, 'function esitiCodaTendina'), pezzo(IDX, '// Nota Pagine 192 (Ignazio 11/11: «la versione'), pezzo(PD, 'function esitiTendinaHtml'), pezzo(PD, 'const CATEGORIE_CATALOGO'),
     pezzo(PD, 'function cardCatalogo'), pezzo(PD, 'function collegaCarteCoda')].join('\n').replace('const CLASSI_CAT', 'var CLASSI_CAT')
     + ';this.card = cardCatalogo; this.collega = collegaCarteCoda;', ctx);
   return { ctx, app, tocchi };

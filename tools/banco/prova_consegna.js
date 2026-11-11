@@ -23,7 +23,7 @@ function banco({ vendita, modulo } = {}) {
     disegnaScheda: () => {},
   };
   vm.createContext(ctx);
-  vm.runInContext(pezzo(idx, 'function bottoniEsiti') + pezzo(idx, 'function tendina5Html') + pezzo(idx, 'function bloccoEsiti') + pezzo(idx, 'async function consegnaDaCarta') + pezzo(ven, 'async function segnaOrdineFatto')
+  vm.runInContext(pezzo(idx, 'function tendina5Html') + pezzo(idx, 'function collegaTendine5') + pezzo(idx, '// Nota Pagine 192 (Ignazio 11/11: «la versione') + pezzo(idx, 'function bloccoEsiti') + pezzo(idx, 'async function consegnaDaCarta') + pezzo(ven, 'async function segnaOrdineFatto')
     + ';this.bloccoEsiti = bloccoEsiti; this.consegnaDaCarta = consegnaDaCarta;', ctx);
   return { ctx, scritte, avvisi, dopo: async () => { ridisegni++; }, ridisegni: () => ridisegni };
 }
@@ -31,7 +31,7 @@ function banco({ vendita, modulo } = {}) {
 prova('la carta «Consegna» ha due scelte sole; fatta, niente; le altre azioni come prima', () => {
   const { ctx } = banco();
   const h = ctx.bloccoEsiti(consegna, 'Cliente');
-  assert.match(h, /La consegna/); assert.match(h, /data-consegna="fatta">\[consegna\] Ordine fatto/); assert.doesNotMatch(h, /Consegnato/); assert.match(h, /data-consegna="sposta">\[orario\] Sposta la consegna/);
+  assert.match(h, /Com'è andata la consegna\?/); assert.match(h, /data-consegna="fatta"><span>\[consegna\] Ordine fatto/);   // nota 192: nella tendina assert.doesNotMatch(h, /Consegnato/); assert.match(h, /data-consegna="sposta"><span>\[orario\] Sposta la consegna/); assert.match(h, /<div class="tnd5"><button type="button" class="sel5" data-tnd5><small>Scegli<\/small>/);
   assert.doesNotMatch(h, /telefonata|data-esito/);
   assert.equal(ctx.bloccoEsiti({ ...consegna, completata: true }, 'Cliente'), '');
   assert.match(ctx.bloccoEsiti({ ...consegna, modalita: 'Telefonata', note: 'Riordino · Filtro' }, 'Cliente'), /data-esito/);   // la telefonata di riordino non cambia

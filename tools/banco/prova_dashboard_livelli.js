@@ -93,8 +93,10 @@ prova('La persona: la stessa scheda per tutti, col motivo in alto; il motivo cam
   assert.match(h, /<span class="lv-chip">Riordino<\/span>[\s\S]*?<div class="sotto">Nutrilite · Daily<\/div>/);
   assert.doesNotMatch(h, />Appuntamento<\/button>/);
   assert.ok(h.indexOf('Non risponde') < h.indexOf('Telefono spento') && h.indexOf('Telefono spento') < h.indexOf('Nessun ordine'));
-  assert.match(h, /data-riordino-esito="No Interesse"[^>]*>Nessun ordine<\/button>/);
-  assert.match(h, /<div class="coppia"><button data-riordino-spento="r1">Telefono spento<\/button><button class="no" data-riordino-esito="No Interesse"[^>]*>Nessun ordine<\/button><\/div>/);   // T7b: sulla stessa riga
+  assert.match(h, /data-riordino-esito="No Interesse"[^>]*><span>Nessun ordine<\/span><\/button>/);
+  // nota 192 (Ignazio 11/11: gli esiti nella tendina a discesa): le stesse voci, nello stesso ordine, dentro «Com'è andata?» + tendina (prima T7b: una fila di tasti)
+  assert.match(h, /<div class="come-andata">Com'è andata\?<\/div>\s*<div class="tnd5"><button type="button" class="sel5" data-tnd5><small>Scegli l'esito<\/small>/);
+  assert.match(h, /<button type="button" data-riordino-spento="r1"><span>Telefono spento<\/span><\/button><button type="button" class="no" data-riordino-esito="No Interesse"[^>]*><span>Nessun ordine<\/span><\/button><\/div><\/div>/);
   assert.match(P.stile, /\.bottoni \.coppia \{ flex: 1 1 100%; display: flex; gap: 8px; \}/);   // «Nessun ordine» salva «No Interesse»: il cliente torna, l'app chiede tra quanti giorni
 });
 

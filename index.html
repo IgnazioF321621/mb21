@@ -3729,13 +3729,6 @@ async function copiaTesto(testo, detto, campo, aiuto, nota) {
 const daChiudere = MB21Agenda.daChiudere;
 const FATTO_APERTO = new Set();   // Follow Up con «Fatto» toccato, in attesa del risultato (solo a video)
 // Azione già chiusa: il blocco resta chiuso (si vede solo l'esito nella riga) e si apre con «Cambia esito ›» (Ignazio 17/09)
-// I bottoni di un gruppo di esiti, uguali in Agenda, scheda e foglio «Modifica» (cantiere 39): prima i buoni,
-// poi, su una riga loro, quelli non andati (MB21Agenda.esitiInDueRighe). `attr`: data-esito o data-v; `classe`: quella del bottone scelto.
-function bottoniEsiti(bottoni, attuale, attr, classe) {
-  return MB21Agenda.esitiInDueRighe(bottoni).map(riga => riga.map(f =>
-    `<button ${attr}="${esc(f)}" class="esito-btn ${(typeof COSA_FA_ESITO !== 'undefined' && COSA_FA_ESITO[f] && COSA_FA_ESITO[f].classe) || ''} ${attuale === f ? classe : ''}">${esc(MB21Agenda.nomePasso(f))}</button>`).join('')).map((riga, n) =>
-    `<div class="${n === 0 ? 'buoni' : 'nonandati'}">${riga}</div>`).join('');   // due righe come la coda (Ignazio 24/09: variante A)
-}
 // Nota Pagine 116 (Ignazio 28/10, «ok così», disegno docs/prototipi/schizzo_esiti_tendina_116.png): gli esiti e Modifica · Sposta · Elimina come le
 // tendine della scheda nuova (sel5 + tendina5, note 105-107): chiusa dice cosa c'è dentro, un tocco la apre verso il basso. Dentro ci sono gli stessi
 // bottoni di prima con i loro data-…, quindi gli stessi tocchi. `attr`: attributi della lista (gli esiti ci tengono data-azione e data-passo).
@@ -3745,6 +3738,17 @@ function tendina5Html(etichetta, voci, attr = '', aperta = false) {
 }
 function collegaTendine5(el) {
   el.querySelectorAll('[data-tnd5]').forEach(b => { b.onclick = () => b.parentElement.classList.toggle('aperta'); });
+}
+// Nota Pagine 192 (Ignazio 11/11: «la versione degli esiti e non solo deve essere nella forma "tendina a discesa"»): ogni esito di ogni tipo, in ogni posto,
+// nella tendina con «Com'è andata?»; i passi restano quelli di sempre (PM e Follow Up: prima «È avvenuto?», poi il risultato). Titolo ed etichetta: qui
+const titoloEsito = passo => (passo === 'avvenuto' || passo === 'cambia-avvenuto' ? 'È avvenuto?' : 'Com\'è andata?');
+const etichettaEsito = (attuale, passo) => (attuale ? `<b>${esc(MB21Agenda.nomePasso(attuale))}</b>` : passo === 'avvenuto' || passo === 'cambia-avvenuto' ? '<small>Scegli</small>' : '<small>Scegli l\'esito</small>');
+// La tendina degli esiti (tendina5Html) con gli stessi bottoni ovunque: `attr(f)` = gli attributi del bottone di quell'esito (data-… di chi raccoglie il tocco)
+function tendinaEsitiHtml(etichette, attr, { spento = false, etichetta = '<small>Scegli</small>', attuale = null, extra = '', aperta = false } = {}) {
+  return tendina5Html(etichetta, MB21Agenda.esitiInDueRighe(etichette).flat().map(f => {
+    const classe = [(typeof COSA_FA_ESITO !== 'undefined' && COSA_FA_ESITO[f] && COSA_FA_ESITO[f].classe) || '', attuale === f ? 'scelto' : ''].filter(Boolean).join(' ');
+    return `<button type="button"${classe ? ` class="${classe}"` : ''} ${attr(f)}${spento ? ' disabled' : ''}><span>${esc(MB21Agenda.nomePasso(f))}</span>${attuale === f ? '<b>✓</b>' : ''}</button>`;
+  }).join(''), extra, aperta);
 }
 // «Cosa avete fatto?» (note Azioni 031-032): l'elenco che si apre verso il basso, uguale in MB Plan, nella scheda e nel foglio «Modifica».
 // `inc` = MB21Agenda.vociIncontro; `bottone`: con «Fatto»/«Salva» suo (MB Plan e scheda) o senza (Modifica, che ha il suo «Salva»).
@@ -3805,13 +3809,14 @@ function collegaElenco(box, a, poi = () => {}) {
 }
 function bloccoEsiti(a, categoria, aperto = false) {
   // la carta «Consegna» (nota Pagine 051): due scelte sole, quelle della vendita; fatta la consegna non c'è più niente da toccare
-  if (MB21Agenda.eConsegna(a)) return a.completata ? '' : `<div class="blocco-esiti" data-blocco="${esc(a.id)}"><div class="come-andata">La consegna</div>
-    <div class="ag-scelte"><button type="button" data-consegna="fatta">${ic('consegna')} Ordine fatto</button><button type="button" data-consegna="sposta">${ic('orario')} Sposta la consegna</button></div></div>`;
+  // nota 192: le due scelte nella tendina a discesa, come gli altri esiti
+  if (MB21Agenda.eConsegna(a)) return a.completata ? '' : `<div class="blocco-esiti" data-blocco="${esc(a.id)}"><div class="come-andata">Com'è andata la consegna?</div>
+    ${tendina5Html('<small>Scegli</small>', `<button type="button" data-consegna="fatta"><span>${ic('consegna')} Ordine fatto</span></button><button type="button" data-consegna="sposta"><span>${ic('orario')} Sposta la consegna</span></button>`)}</div>`;
   // Un appuntamento da chiudere (nota Azioni 031, Ignazio 19/10/2026): «Cosa avete fatto?» è un elenco che si apre verso il basso con le voci
   // del suo tipo (prima quelle previste quando si è fissato), da spuntare anche più d'una, e in fondo «Altro» con una frase scritta a mano
   // Già chiuso e «Cambia esito ›» toccato (nota Azioni 032): lo stesso elenco, aperto, con spuntato quello che era stato segnato e «Salva»
   const inc = MB21Agenda.vociIncontro(a, categoria, aperto);
-  if (inc) return `<div class="blocco-esiti" data-blocco="${esc(a.id)}"><div class="come-andata">${esc(inc.titolo)}</div>${elencoEsitoHtml(a, inc, true)}</div>`;
+  if (inc) return `<div class="blocco-esiti" data-blocco="${esc(a.id)}"><div class="come-andata">${esc(titoloEsito('risultato'))}</div>${elencoEsitoHtml(a, inc, true)}</div>`;   // nota 192: «Com'è andata?» per tutti
   const gruppi = MB21Agenda.passiEsito(a, categoria, FATTO_APERTO.has(a.id));
   if (!gruppi) return '';
   const chiusa = gruppi.every(p => p.passo.startsWith('cambia'));
@@ -3824,10 +3829,10 @@ function bloccoEsiti(a, categoria, aperto = false) {
   }
   const dentro = chiusa && !aperto
     ? `<button class="link" data-apri-esiti style="padding:4px 0;font-size:13px">Cambia esito ›</button>`
-    : gruppi.map(p => `<div class="come-andata">${esc(p.titolo)}</div>
-    ${tendina5Html(p.attuale ? `<b>${esc(MB21Agenda.nomePasso(p.attuale))}</b>` : '<small>Scegli</small>',   // nota 116: prima una fila di tasti (bottoniEsiti)
-      MB21Agenda.esitiInDueRighe(p.bottoni).flat().map(f => `<button type="button" data-esito="${esc(f)}" class="${p.attuale === f ? 'scelto' : ''}"><span>${esc(MB21Agenda.nomePasso(f))}</span>${p.attuale === f ? '<b>✓</b>' : ''}</button>`).join(''),
-      `data-azione="${esc(a.id)}" data-passo="${p.passo}"`, p.passo === 'risultato' && !p.attuale)}`).join('');   // nota 144: dopo «Fatto» il risultato è già aperto
+    // nota 116: prima una fila di tasti; nota 192: «Com'è andata?» (o «È avvenuto?») e la stessa tendina degli esiti di ogni altro posto (tendinaEsitiHtml)
+    : gruppi.map(p => `<div class="come-andata">${esc(titoloEsito(p.passo))}</div>
+    ${tendinaEsitiHtml(p.bottoni, f => `data-esito="${esc(f)}"`, { etichetta: etichettaEsito(p.attuale, p.passo), attuale: p.attuale,
+      extra: `data-azione="${esc(a.id)}" data-passo="${p.passo}"`, aperta: p.passo === 'risultato' && !p.attuale })}`).join('');   // nota 144: dopo «Fatto» il risultato è già aperto
   return `<div class="blocco-esiti" data-blocco="${esc(a.id)}">${dentro}</div>`;
 }
 // Stato scritto accanto all'azione
@@ -5079,11 +5084,13 @@ async function foglioAzione(id, opz = {}) {
       if (dallaCoda) $('fa-scelta-titolo').textContent = st.esito === 'Richiamare' ? 'Da richiamare il' : A.ESITI_CON_GIORNO.includes(st.esito) ? 'Appuntamento il' : 'Giorno scelto';
       return;
     }
-    $('fa-esito-titolo').textContent = gruppi.length === 1 ? gruppi[0].titolo : '';
+    // nota 192: «È avvenuto?» / «Com'è andata?» e la tendina degli esiti (tendinaEsitiHtml), come in scheda e Agenda; prima file di tasti (bottoniEsiti)
+    $('fa-esito-titolo').textContent = gruppi.length === 1 ? titoloEsito(gruppi[0].passo) : '';
     $('fa-esito-nota').textContent = gruppi.some(g => g.passo === 'risultato') ? (st.esito ? `${st.esito}: fatto, risultato da dare` : 'Fatto: scegli il risultato') : '';
-    $('fa-esiti').innerHTML = gruppi.map((g, i) => `${gruppi.length > 1 ? `<div class="come-andata" style="border:0;margin-top:${i ? 8 : 0}px;padding:0">${esc(g.titolo)}</div>` : ''}
-      <div class="ag-scelte" data-passo="${g.passo}">${bottoniEsiti(g.bottoni, g.attuale, 'data-v', 'scelto')}</div>`).join('');
-    $('fa-esiti').querySelectorAll('button').forEach(b => b.onclick = () => {
+    $('fa-esiti').innerHTML = gruppi.map((g, i) => `${gruppi.length > 1 ? `<div class="come-andata" style="border:0;margin-top:${i ? 8 : 0}px;padding:0">${esc(titoloEsito(g.passo))}</div>` : ''}
+      ${tendinaEsitiHtml(g.bottoni, f => `data-v="${esc(f)}"`, { etichetta: etichettaEsito(g.attuale, g.passo), attuale: g.attuale, extra: `data-passo="${g.passo}"` })}`).join('');
+    collegaTendine5($('fa-esiti'));
+    $('fa-esiti').querySelectorAll('[data-v]').forEach(b => b.onclick = () => {
       const x = b.dataset.v, fase = A.fattoDi(a.tipo_azione);
       if (x === 'Fatto') { st.esito = fase; st.fattoAperto = !fase; }
       else { st.esito = x; st.fattoAperto = false; }

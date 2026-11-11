@@ -21,7 +21,7 @@ prova('Il blocco a elenco (nota Azioni 031): «Cosa avete fatto?» si apre verso
   vm.createContext(ctx);
   vm.runInContext(pezzo('const daChiudere = MB21Agenda.daChiudere;', '// Stato scritto accanto all\'azione') + ';this.bloccoEsiti = bloccoEsiti', ctx);
   const h = ctx.bloccoEsiti(incontro, 'Partner');
-  assert.match(h, /Com'è andato l'incontro\?/);
+  assert.match(h, /Com'è andata\?/);
   assert.match(h, /data-il-apri aria-expanded="false"><span><b>Cosa avete fatto\?<\/b>/);
   assert.match(h, /data-il-voci hidden/);                                                   // chiuso finché non si tocca
   const voci = [...h.matchAll(/value="([^"]+)"><span>([^<]+)<\/span>(<small>previsto<\/small>)?/g)].map(m => [m[1], m[2], !!m[3]]);
@@ -137,7 +137,7 @@ prova('Il foglio «Modifica» (nota Azioni 032, Ignazio 19/10: «mettilo anche i
     accountDaEsito: async () => false, allineaRigaCoda: async () => {}, aggiornaRiga: async () => {}, passoInCache() {}, mostraToast: (t, an) => { toastTesto = t; toastAnnulla = an; },
     chiediConferma: async () => false, sceltaContatto: async () => null, apriContattoDa() {}, dataLunga: x => x };
   vm.createContext(ctx);
-  vm.runInContext(pezzo('// «Cosa avete fatto?» (note Azioni 031-032)', 'function bloccoEsiti(') + pezzo('function bottoniEsiti(', 'function elencoEsitoHtml(')
+  vm.runInContext(pezzo('// «Cosa avete fatto?» (note Azioni 031-032)', 'function bloccoEsiti(') + pezzo('function tendina5Html(', '// «Cosa avete fatto?» (note Azioni 031-032)')
     + pezzo('// I passi dell\'incontro dal foglio «Modifica»', 'async function chiudiAppuntamento') + pezzo('async function foglioAzione(', '// Scelta di un contatto tra i propri')
     + ';this.foglioAzione = foglioAzione', ctx);
   let ridisegni = 0;

@@ -746,7 +746,7 @@ prova('Nota 144: dalla scheda un PM del 2021 «Fatto» (esito Presentazione, ris
   assert.match(fs.readFileSync(path.join(__dirname, '../../pagina-agenda.js'), 'utf8'), /if \(agg && A\.esitoDaDare\(agg, FATTO_APERTO\.has\(e\.id\)\)\) foglioEvento/);
   // il risultato dopo «Fatto» parte già aperto (stessa tendina in Agenda e scheda)
   const idx = fs.readFileSync(path.join(__dirname, '../../index.html'), 'utf8');
-  assert.match(idx, /`data-azione="\$\{esc\(a\.id\)\}" data-passo="\$\{p\.passo\}"`, p\.passo === 'risultato' && !p\.attuale\)/);
+  assert.match(idx, /extra: `data-azione="\$\{esc\(a\.id\)\}" data-passo="\$\{p\.passo\}"`, aperta: p\.passo === 'risultato' && !p\.attuale \}\)/);   // nota 192: tendinaEsitiHtml
   assert.match(idx, /return `<div class="tnd5\$\{aperta \? ' aperta' : ''\}">/);
 });
 

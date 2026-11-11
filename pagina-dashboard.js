@@ -242,13 +242,6 @@ async function modoPrimaDiChiudere(a) {
   a.modalita = m; delete MODO_CONTATTO[a.id];
   return true;
 }
-// La tendina degli esiti (tendina5Html) con gli stessi bottoni ovunque: `attr(f)` = gli attributi del bottone di quell'esito (data-… di chi raccoglie il tocco)
-function tendinaEsitiHtml(etichette, attr, { spento = false, etichetta = '<small>Scegli</small>', attuale = null, extra = '', aperta = false } = {}) {
-  return tendina5Html(etichetta, MB21Agenda.esitiInDueRighe(etichette).flat().map(f => {
-    const classe = [(typeof COSA_FA_ESITO !== 'undefined' && COSA_FA_ESITO[f] && COSA_FA_ESITO[f].classe) || '', attuale === f ? 'scelto' : ''].filter(Boolean).join(' ');
-    return `<button type="button"${classe ? ` class="${classe}"` : ''} ${attr(f)}${spento ? ' disabled' : ''}><span>${esc(MB21Agenda.nomePasso(f))}</span>${attuale === f ? '<b>✓</b>' : ''}</button>`;
-  }).join(''), extra, aperta);
-}
 function collegaModoContatto(dove) {
   const tasti = [...dove.querySelectorAll('.modo-contatto button[data-modo]')];
   tasti.forEach(b => {
@@ -257,17 +250,6 @@ function collegaModoContatto(dove) {
       tasti.filter(x => x.dataset.modoDi === b.dataset.modoDi).forEach(x => x.setAttribute('aria-pressed', String(x.dataset.modo === b.dataset.modo)));
     };
   });
-}
-
-// I bottoni di una riga della coda (e dei Dare Seguito scaduti): sopra gli esiti buoni, sotto quelli non andati, come in «Com'è andata?»
-// (MB21Agenda.esitiInDueRighe). `data-bottone` resta la posizione in bottoniPer: è quella che legge chi raccoglie il tocco.
-function bottoniCodaHtml(r, spento) {
-  const tutti = bottoniPer(r.categoria);
-  return MB21Agenda.esitiInDueRighe(tutti.map(b => b.etichetta)).map((riga, n) =>
-    `<div class="${n === 0 ? 'buoni' : 'nonandati'}">${riga.map(f => {
-      const i = tutti.findIndex(b => b.etichetta === f);
-      return `<button class="${tutti[i].classe || ''}" data-contatto="${esc(r.id)}" data-bottone="${i}" ${spento ? 'disabled' : ''}>${esc(f)}</button>`;
-    }).join('')}</div>`).join('');
 }
 
 // Nota Pagine 161 (Ignazio 01/11, «ok» sulla foto catalogo_161.png): gli stessi esiti nella tendina «Scegli ▾» (tendina5Html, nota 116), per la card
@@ -305,7 +287,6 @@ function cardContatto(r, dareSeguito) {
     return `<div class="card compatta ${classeCat(r.categoria)}" id="card-${esc(r.id)}">${testa}</div>`;
   }
   const luogo = [r.citta, r.fascia_eta].filter(Boolean).join(' · ');
-  const bottoni = bottoniCodaHtml(r, ST.offline || guardoAltri());
   return `
     <div class="card compatta aperta ${classeCat(r.categoria)}" id="card-${esc(r.id)}">
       ${testa}
@@ -315,8 +296,7 @@ function cardContatto(r, dareSeguito) {
         ${r.professione ? `<div class="prof">${esc(r.professione)}</div>` : ''}
         ${luogo ? `<div class="luogo">${esc(luogo)}</div>` : ''}
         ${contattaHtml(r.telefono)}
-        ${modoContattoHtml(r.id)}
-        <div class="bottoni due-righe">${bottoni}</div>
+        ${esitiCodaTendina(r, ST.offline || guardoAltri())}
         <button class="link" data-scheda="${esc(r.id)}">${ic('persona')} Apri contatto</button>
       </div>
     </div>`;
@@ -1800,11 +1780,12 @@ function riordiniHtml(solo) {
     return `<div class="card compatta aperta conferma riordino" data-riordino="${esc(a.id)}">${strip}${testa}
       <div class="corpo">
         ${contattaHtml(a.contatti && a.contatti.telefono)}
-        <div class="bottoni">
-          ${fasi.filter(f => !MB21Agenda.ESITI_NON_ANDATI.includes(f) && f !== 'Appuntamento').map(f => `<button class="${f === 'Ordine' ? 'appuntamento' : ''}" data-riordino-esito="${esc(f)}" ${spento}>${esc(f)}</button>`).join('')}
-          <button data-riordino-nr="${esc(a.id)}">Non risponde</button>
-          <div class="coppia"><button data-riordino-spento="${esc(a.id)}">Telefono spento</button>${fasi.includes('No Interesse') ? `<button class="no" data-riordino-esito="No Interesse" ${spento}>Nessun ordine</button>` : ''}</div>
-        </div>
+        <div class="come-andata">Com'è andata?</div>
+        ${tendina5Html('<small>Scegli l\'esito</small>', [   // nota 192: le stesse voci di prima, nello stesso ordine, nella tendina a discesa
+          ...fasi.filter(f => !MB21Agenda.ESITI_NON_ANDATI.includes(f) && f !== 'Appuntamento').map(f => `<button type="button"${f === 'Ordine' ? ' class="appuntamento"' : ''} data-riordino-esito="${esc(f)}" ${spento}><span>${esc(f)}</span></button>`),
+          `<button type="button" data-riordino-nr="${esc(a.id)}"><span>Non risponde</span></button>`,
+          `<button type="button" data-riordino-spento="${esc(a.id)}"><span>Telefono spento</span></button>`,
+          fasi.includes('No Interesse') ? `<button type="button" class="no" data-riordino-esito="No Interesse" ${spento}><span>Nessun ordine</span></button>` : ''].join(''))}
         <button class="link" data-scheda="${esc(a.contatto_id)}">${ic('persona')} Apri contatto</button>
       </div></div>`;
   }).join('');
@@ -1813,6 +1794,7 @@ function riordiniHtml(solo) {
 // Gli esiti passano da `chiudiAppuntamento`, come in Agenda (stessa strada di `collegaEsiti`, passo unico)
 function collegaRiordini() {
   const dopo = async () => { await caricaRiordini(ST.oggi); disegnaOggi(); };
+  collegaTendine5(app);   // nota 192
   app.querySelectorAll('[data-riordino]').forEach(el => {
     const a = RIO.righe.find(x => x.id === el.dataset.riordino);
     if (!a) return;

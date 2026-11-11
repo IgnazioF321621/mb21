@@ -23,7 +23,7 @@ function mondo(idx = IDX, conNuove = true) {
   vm.createContext(ctx);
   const pezzi = [pezzo(PD, 'const COSA_FA_ESITO'), pezzo(idx, 'function tendina5Html'), pezzo(idx, 'function collegaTendine5'), pezzo(idx, 'function elencoEsitoHtml'),
     'const FATTO_APERTO = new Set();', pezzo(idx, 'function bloccoEsiti'), pezzo(idx, 'function collegaEsiti')];
-  if (conNuove) pezzi.unshift(pezzo(PD, 'const SIMBOLO_DI_PERSONA'), pezzo(PD, 'function collegaModoContatto'), riga(PD, 'const conModoContatto'), pezzo(PD, 'async function modoPrimaDiChiudere'), pezzo(PD, 'function tendinaEsitiHtml'));
+  if (conNuove) pezzi.unshift(pezzo(PD, 'const SIMBOLO_DI_PERSONA'), pezzo(PD, 'function collegaModoContatto'), riga(PD, 'const conModoContatto'), pezzo(PD, 'async function modoPrimaDiChiudere'), pezzo(IDX, '// Nota Pagine 192 (Ignazio 11/11: «la versione'));
   vm.runInContext(pezzi.join('\n') + ';this.blocco = bloccoEsiti; this.collega = collegaEsiti;' + (conNuove ? 'this.MODO = MODO_CONTATTO; this.primaDi = modoPrimaDiChiudere;' : ''), ctx);
   return ctx;
 }
@@ -57,7 +57,7 @@ prova('già chiusa: resta «Cambia esito ›»; aperta, la stessa forma con l\'e
   assert.match(h, /data-passo="cambia"/); assert.match(h, /<b>Relazione<\/b><em>▾<\/em>/); assert.match(h, /class="scelto" data-esito="Relazione"><span>Relazione<\/span><b>✓<\/b>/);
 });
 
-prova('PM, appuntamenti, Follow Up, consegne, richiami dalla coda e Presenza: identici a prima', () => {
+prova('PM, appuntamenti, Follow Up, consegne, consulenze e richiami dalla coda: stessi passi e stesse voci di prima; dalla nota 192 nella tendina con «È avvenuto?» / «Com\'è andata?»', () => {
   const W = mondo(), P = mondo(IDX_PRIMA, false);
   const casi = [
     [{ id: 'p1', tipo_azione: 'Piano Marketing', modalita: 'PM 1a1', completata: false, esito: null }, 'Prospect'],
@@ -68,7 +68,15 @@ prova('PM, appuntamenti, Follow Up, consegne, richiami dalla coda e Presenza: id
     [{ id: 'p7', tipo_azione: 'Contatto', modalita: 'Telefonata', completata: true, esito: 'Richiamare', data_scelta: '2026-11-10T15:00:00Z' }, 'Prospect'],
     [{ id: 'p8', tipo_azione: 'Consulenza PRD', modalita: 'Consulenza', completata: false, esito: null }, 'Cliente'],
   ];
-  for (const [a, cat] of casi) for (const aperto of [false, true]) assert.equal(W.blocco(a, cat, aperto), P.blocco(a, cat, aperto), `${a.tipo_azione} ${a.modalita} ${aperto}`);
+  const voci = h => [...h.matchAll(/data-(?:esito|consegna|passo|il-[a-z]+)="([^"]*)"|data-apri-esiti|value="([^"]*)"/g)].map(m => m[0]);
+  for (const [a, cat] of casi) for (const aperto of [false, true]) {
+    const nuovo = W.blocco(a, cat, aperto), prima = P.blocco(a, cat, aperto), chi = `${a.tipo_azione} ${a.modalita} ${aperto}`;
+    assert.deepEqual(voci(nuovo), voci(prima), chi);   // stessi passi, stesse voci, stesso ordine
+    assert.doesNotMatch(nuovo, /esito-btn|class="buoni"|<div class="ag-scelte"><button/, chi);   // niente file di tasti
+    for (const t of nuovo.matchAll(/<div class="come-andata">([^<]*)<\/div>/g)) assert.ok(/^(È avvenuto\?|Com(?:'|&#39;)è andata( la consegna)?\?|Cosa avete fatto\?|Com(?:'|&#39;)è andato l(?:'|&#39;)incontro\?)$/.test(t[1]), `${chi}: ${t[1]}`);
+  }
+  assert.match(W.blocco(casi[0][0], 'Prospect'), /<div class="come-andata">È avvenuto\?<\/div>/);
+  assert.match(W.blocco({ ...casi[0][0], esito: 'Presentazione', completata: true }, 'Prospect', true), /<div class="come-andata">Com(?:'|&#39;)è andata\?<\/div>/);
 });
 
 prova('nota 191: un Contatto «di persona» (Presenza, non consegna) ha la stessa forma, con 🗣️ Di persona acceso', () => {
