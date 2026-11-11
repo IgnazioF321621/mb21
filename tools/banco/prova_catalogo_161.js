@@ -24,7 +24,7 @@ function mondo({ guardo = false } = {}) {
   vm.createContext(ctx);
   vm.runInContext([riga(IDX, 'const CLASSI_CAT'), riga(IDX, "  'Referral'"), riga(IDX, 'function classeCat'), pezzo(IDX, 'function tendina5Html'), pezzo(IDX, 'function collegaTendine5'),
     PL.slice(PL.indexOf('const ICONE_TRATTO'), PL.indexOf('function disegnaLista')), pezzo(PL, 'function tendinaCategoriaHtml'),
-    pezzo(PD, 'const COSA_FA_ESITO'), pezzo(PD, 'function bottoniPer'), pezzo(PD, 'const SIMBOLO_DI_PERSONA'), pezzo(PD, 'function collegaModoContatto'), pezzo(PD, 'function esitiCodaTendina'), pezzo(IDX, '// Nota Pagine 192 (Ignazio 11/11: «la versione'), pezzo(PD, 'function esitiTendinaHtml'), pezzo(PD, 'const CATEGORIE_CATALOGO'),
+    pezzo(PD, 'const COSA_FA_ESITO'), pezzo(PD, 'function bottoniPer'), PD.slice(PD.indexOf('const SIMBOLO_DI_PERSONA'), PD.indexOf('// Il tocco su un modo')), pezzo(PD, 'function collegaModoContatto'), pezzo(PD, 'function esitiCodaTendina'), pezzo(IDX, '// Nota Pagine 192 (Ignazio 11/11: «la versione'), pezzo(PD, 'function esitiTendinaHtml'), pezzo(PD, 'const CATEGORIE_CATALOGO'),
     pezzo(PD, 'function cardCatalogo'), pezzo(PD, 'function collegaCarteCoda')].join('\n').replace('const CLASSI_CAT', 'var CLASSI_CAT')
     + ';this.card = cardCatalogo; this.collega = collegaCarteCoda;', ctx);
   return { ctx, app, tocchi };
@@ -51,7 +51,7 @@ prova('i 4 tasti per contattare stanno nella fascia della tinta (grigia senza ca
 prova('dopo Prospect: gli esiti nella tendina «Scegli», stessi indici di bottoniPer, No Interesse in rosso', () => {
   const { ctx } = mondo();
   const h = ctx.card({ ...persona, categoria: 'Prospect' });
-  assert.match(h, /<div class="come-andata">Com'è andata\?<\/div><div class="modo-contatto" role="group" aria-label="Come l'hai contattato"><button type="button" data-modo="Telefonata" data-modo-di="c1" aria-pressed="true"><span class="mc-ic" aria-hidden="true">📞<\/span><span>Telefonata<\/span><\/button><button type="button" data-modo="Messaggio" data-modo-di="c1" aria-pressed="false"><span class="mc-ic" aria-hidden="true">💬<\/span><span>Messaggio<\/span><\/button><button type="button" data-modo="Presenza" data-modo-di="c1" aria-pressed="false"><span class="mc-ic" aria-hidden="true">🗣️<\/span><span>Di persona<\/span><\/button><\/div>/);   // nota 191: anche 🗣️ Di persona   // nota 187
+  assert.match(h, /<div class="come-andata">Com'è andata\?<\/div><div class="modo-contatto" aria-label="Come l'hai contattato"><div class="tnd5"><button type="button" class="sel5" data-tnd5><b>📞 Telefonata<\/b><em>▾<\/em><\/button><div class="ag-scelte tendina5" ><button type="button" data-modo="Telefonata" data-modo-di="c1" class="scelto"><span>📞 Telefonata<\/span><b>✓<\/b><\/button><button type="button" data-modo="Messaggio" data-modo-di="c1"><span>💬 Messaggio<\/span><\/button><button type="button" data-modo="Presenza" data-modo-di="c1"><span>🗣️ Di persona<\/span><\/button><\/div><\/div><\/div>/);   // nota 192: il modo a tendina
   const tutti = ctx.bottoniPer('Prospect');
   assert.equal((h.match(/data-contatto="c1"/g) || []).length, tutti.length);
   tutti.forEach((b, i) => assert.ok(h.includes(`data-contatto="c1" data-bottone="${i}"><span>${b.etichetta}</span>`), b.etichetta));

@@ -21,29 +21,29 @@ function mondo() {
     chiediData: async () => '2026-11-05T09:00:00Z', salvaCache() {}, disegnaOggi() {}, segnaAzione() {}, dataBreve: d => d, chiediRientro: async () => null, OGGI_V5: false, LV: {},
     chiediRiflessione: (a, e) => riflessioni.push([a.modalita, e]), tracciaDiApertura: (_, __, f) => f() };
   vm.createContext(ctx);
-  vm.runInContext([pezzo(PD, 'const COSA_FA_ESITO'), pezzo(PD, 'function bottoniPer'), pezzo(PD, 'const SIMBOLO_DI_PERSONA'), pezzo(PD, 'function collegaModoContatto'),
+  vm.runInContext([pezzo(PD, 'const COSA_FA_ESITO'), pezzo(PD, 'function bottoniPer'), pezzo(IDX, 'function tendina5Html'), PD.slice(PD.indexOf('const SIMBOLO_DI_PERSONA'), PD.indexOf('// Il tocco su un modo')), pezzo(PD, 'function collegaModoContatto'),
     pezzo(PD, 'async function toccaBottone'), pezzo(PD, 'function registraEsito'), 'this.MODO = MODO_CONTATTO; this.html = modoContattoHtml; this.collega = collegaModoContatto; this.tocca = toccaBottone;'].join('\n'), ctx);
   return ctx;
 }
 // un finto contenitore con i tasti veri dell'HTML (data-modo, data-modo-di, aria-pressed)
 function contenitore(html) {
-  const tasti = [...html.matchAll(/<button type="button" data-modo="(\w+)" data-modo-di="(\w+)" aria-pressed="(\w+)">/g)].map(m => {
-    const t = { dataset: { modo: m[1], modoDi: m[2] }, attr: { 'aria-pressed': m[3] } };
+  const tasti = [...html.matchAll(/<button type="button" data-modo="(\w+)" data-modo-di="(\w+)"/g)].map(m => {
+    const t = { dataset: { modo: m[1], modoDi: m[2] }, attr: {} };
     t.setAttribute = (k, v) => { t.attr[k] = v; };
     return t;
   });
   return { tasti, querySelectorAll: () => tasti };
 }
 
-prova('i due tasti: 📞 Telefonata già scelto, 💬 Messaggio spento; il tocco accende quello toccato e spegne l\'altro', () => {
+prova('il modo a tendina (nota 192, prima tasti): 📞 Telefonata già scelto, dentro anche 💬 Messaggio e 🗣️ Di persona; il tocco lo ricorda', () => {
   const W = mondo();
   const h = W.html('c1');
-  assert.equal(h, '<div class="modo-contatto" role="group" aria-label="Come l&#39;hai contattato"><button type="button" data-modo="Telefonata" data-modo-di="c1" aria-pressed="true"><span class="mc-ic" aria-hidden="true">📞</span><span>Telefonata</span></button><button type="button" data-modo="Messaggio" data-modo-di="c1" aria-pressed="false"><span class="mc-ic" aria-hidden="true">💬</span><span>Messaggio</span></button><button type="button" data-modo="Presenza" data-modo-di="c1" aria-pressed="false"><span class="mc-ic" aria-hidden="true">🗣️</span><span>Di persona</span></button></div>'.replace('l&#39;hai', "l'hai"));
+  assert.match(h, /^<div class="modo-contatto" aria-label="Come l'hai contattato"><div class="tnd5"><button type="button" class="sel5" data-tnd5><b>📞 Telefonata<\/b><em>▾<\/em><\/button>/);
+  assert.deepEqual([...h.matchAll(/data-modo="(\w+)" data-modo-di="c1"( class="scelto")?/g)].map(m => [m[1], !!m[2]]), [['Telefonata', true], ['Messaggio', false], ['Presenza', false]]);
   const d = contenitore(h); W.collega(d);
   d.tasti[1].onclick();
   assert.equal(W.MODO.c1, 'Messaggio');
-  assert.deepEqual(d.tasti.map(t => t.attr['aria-pressed']), ['false', 'true', 'false']);
-  assert.match(W.html('c1'), /data-modo="Messaggio" data-modo-di="c1" aria-pressed="true"/);   // ridisegnando resta la scelta
+  assert.match(W.html('c1'), /<b>💬 Messaggio<\/b>[\s\S]*data-modo="Messaggio" data-modo-di="c1" class="scelto"/);   // ridisegnando resta la scelta
   d.tasti[0].onclick();
   assert.equal(W.MODO.c1, 'Telefonata');
 });
@@ -64,7 +64,7 @@ prova('scelto 💬 Messaggio, l\'esito si salva come Messaggio (anche nella chat
   assert.equal(W.rpc[0][1].p_modalita, 'Messaggio');
   assert.deepEqual(JSON.parse(JSON.stringify(W.riflessioni)), [['Messaggio', 'Relazione']]);
   assert.equal(W.MODO.c1, undefined);
-  assert.match(W.html('c1'), /data-modo="Telefonata" data-modo-di="c1" aria-pressed="true"/);
+  assert.match(W.html('c1'), /data-modo="Telefonata" data-modo-di="c1" class="scelto"/);
 });
 
 prova('una funzione sola in tutti e tre i posti: la scheda di Contatti del giorno (nota 188, senza secondo foglio), la coda e «Da catalogare»; nessuna «telefonata» nelle scritte', () => {
@@ -77,7 +77,7 @@ prova('una funzione sola in tutti e tre i posti: la scheda di Contatti del giorn
   assert.match(PD, /\$\{esitiCodaTendina\(r, ST\.offline \|\| guardoAltri\(\)\)\}/);   // nota 192: anche la vecchia carta della coda in tendina
   assert.match(PD, /collegaModoContatto\(app\);/);
   assert.doesNotMatch(PD + PO, /Com'è andata la telefonata|Telefonata · \$\{esc\(nome\)\}/);
-  assert.match(IDX, /\.modo-contatto button\[aria-pressed="true"\]/);
+  assert.match(IDX, /\.modo-contatto \{ margin: 0 0 8px; \} \.modo-contatto \.tnd5 \{ margin-bottom: 0; \}/);   // nota 192: il modo a tendina
 });
 
 (async () => {

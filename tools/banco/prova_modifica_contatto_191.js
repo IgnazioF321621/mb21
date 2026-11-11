@@ -24,7 +24,7 @@ async function apri(az, opz = {}) {
     accountDaEsito: async () => false, allineaRigaCoda: async () => {}, aggiornaRiga: async () => {}, passoInCache() {}, mostraToast() {},
     chiediConferma: async () => false, sceltaContatto: async () => null, apriContattoDa() {}, dataLunga: x => x, nuovoAppuntamento: () => { throw new Error('non per un contatto'); } };
   vm.createContext(ctx);
-  vm.runInContext([pezzo(PD, 'const COSA_FA_ESITO'), pezzo(PD, 'const SIMBOLO_DI_PERSONA'), pezzo(IDX, '// Nota Pagine 192 (Ignazio 11/11: «la versione'), pezzo(IDX, 'function tendina5Html'), pezzo(IDX, 'function collegaTendine5'),
+  vm.runInContext([pezzo(PD, 'const COSA_FA_ESITO'), PD.slice(PD.indexOf('const SIMBOLO_DI_PERSONA'), PD.indexOf('// Il tocco su un modo')), pezzo(IDX, '// Nota Pagine 192 (Ignazio 11/11: «la versione'), pezzo(IDX, 'function tendina5Html'), pezzo(IDX, 'function collegaTendine5'),
     tra(IDX, '// «Cosa avete fatto?» (note Azioni 031-032)', 'function bloccoEsiti('),
     tra(IDX, '// I passi dell\'incontro dal foglio «Modifica»', 'async function chiudiAppuntamento'), tra(IDX, 'async function foglioAzione(', '// Scelta di un contatto tra i propri'),
     'this.foglioAzione = foglioAzione;'].join('\n'), ctx);
@@ -38,18 +38,20 @@ const tel = o => ({ id: 't1', contatto_id: 'c1', user_id: 'u1', portato_da: null
 prova('il Modifica di una telefonata: «Com\'è andata?», i tasti del modo nello stile nuovo (acceso quello dell\'azione) e la tendina con l\'esito di adesso ✓; niente più fila di tasti', async () => {
   const { v } = await apri(tel());
   const h = v.innerHTML;
-  assert.match(h, /<label>Com'è andata\?<\/label><div class="modo-contatto" role="group" aria-label="Come l'hai contattato" id="fa-sottotipi"><button type="button" data-v="Telefonata"[^>]*><span class="mc-ic" aria-hidden="true">📞<\/span><span>Telefonata<\/span><\/button><button type="button" data-v="Messaggio"[^>]*><span class="mc-ic" aria-hidden="true">💬<\/span><span>Messaggio<\/span><\/button><button type="button" data-v="Presenza"[^>]*><span class="mc-ic" aria-hidden="true">🗣️<\/span><span>Di persona<\/span><\/button>/);
+  assert.match(h, /<label>Com'è andata\?<\/label><div id="fa-sottotipi"><div class="modo-contatto" aria-label="Come l'hai contattato"><div class="tnd5"><button type="button" class="sel5" data-tnd5><b>📞 Telefonata<\/b>/);   // nota 192: il modo a tendina
+  assert.deepEqual([...v.querySelector('#fa-sottotipi').innerHTML.matchAll(/data-v="(\w+)"/g)].map(m => m[1]), ['Telefonata', 'Messaggio', 'Presenza']);
   const esiti = v.querySelector('#fa-esiti').innerHTML;
   assert.match(esiti, /<div class="tnd5"><button type="button" class="sel5" data-tnd5><b>No Interesse<\/b><em>▾<\/em><\/button><div class="ag-scelte tendina5" data-passo="cambia">/);
   assert.match(esiti, /class="no scelto" data-v="No Interesse"><span>No Interesse<\/span><b>✓<\/b>/);
   assert.doesNotMatch(esiti, /esito-btn|class="buoni"|nonandati/);
-  assert.equal(v.querySelector('[data-v="Telefonata"]').getAttribute('aria-pressed'), 'true');
+  assert.match(v.querySelector('#fa-sottotipi').innerHTML, /data-v="Telefonata" class="scelto"><span>📞 Telefonata<\/span><b>✓<\/b>/);
   assert.equal(v.querySelector('#fa-esito-titolo').style.display, 'none');   // niente «Esito» sopra la tendina: il titolo è «Com'è andata?»
 });
 
 prova('scelgo 💬 Messaggio e «Relazione», Salva: modifica_azione con modalità ed esito nuovi, come prima', async () => {
   const { v, chiamate } = await apri(tel());
-  v.querySelector('[data-v="Messaggio"]').onclick();
+  v.querySelector('#fa-sottotipi [data-v="Messaggio"]').onclick();
+  assert.match(v.querySelector('#fa-sottotipi').innerHTML, /<b>💬 Messaggio<\/b>/);
   v.querySelector('#fa-esiti [data-v="Relazione"]').onclick();
   assert.match(v.querySelector('#fa-esiti').innerHTML, /<b>Relazione<\/b><em>▾/);
   await v.querySelector('#fa-si').onclick();
@@ -62,7 +64,7 @@ prova('una telefonata ancora da fare: «Scegli l\'esito»; gli appuntamenti non 
   const { v } = await apri(tel({ esito: null, completata: false }));
   assert.match(v.querySelector('#fa-esiti').innerHTML, /<small>Scegli l'esito<\/small>/);
   assert.match(IDX, /if \(a\.tipo_azione !== 'Contatto' && !opz\.soloEsito && typeof nuovoAppuntamento === 'function'\) return nuovoAppuntamento/);
-  assert.match(IDX, /const contatto = a\.tipo_azione === 'Contatto' && typeof tendinaEsitiHtml === 'function' && typeof tastoModo === 'function';/);
+  assert.match(IDX, /const contatto = a\.tipo_azione === 'Contatto' && typeof tendinaEsitiHtml === 'function' && typeof tendinaModoHtml === 'function';/);
 });
 
 prova('nota 192: il Modifica di un PM (correzione dell\'esito): «È avvenuto?» e «Com\'è andata?» con le tendine, gli stessi passi; Salva come prima', async () => {

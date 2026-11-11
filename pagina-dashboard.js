@@ -218,21 +218,29 @@ const SIMBOLO_DI_PERSONA = '🗣️';   // scelta di Ignazio 11/11 («C»)
 const MODI_CONTATTO = [['Telefonata', '📞', 'Telefonata'], ['Messaggio', '💬', 'Messaggio'], ['Presenza', SIMBOLO_DI_PERSONA, 'Di persona']];
 const modoDa = x => MODI_CONTATTO.find(m => m[0] === x) || [x, '', x];
 const nomeModo = x => modoDa(x).slice(1).filter(Boolean).join(' ');   // «📞 Telefonata»
-// il dentro del tasto: il simbolo sopra, la parola sotto (tre tasti stanno anche sull'iPhone più stretto, tutti uguali)
-const tastoModo = x => { const [, s, t] = modoDa(x); return `${s ? `<span class="mc-ic" aria-hidden="true">${s}</span>` : ''}<span>${esc(t)}</span>`; };
+// Nota Pagine 192 (Ignazio 11/11: «A.. ma sempre a tendina che scende verso il basso»): il modo si sceglie con una tendina a discesa (la stessa tendina5Html
+// degli esiti), già scritto «📞 Telefonata»; dentro 📞 Telefonata · 💬 Messaggio · 🗣️ Di persona. Una funzione sola per Contatti del giorno, coda,
+// «Da catalogare» e foglio Modifica («Tipo di contatto»). Dove il modo è già scelto e scritto nella card non c'è (scheda, Agenda, «Telefonata · scelta»).
+// `attr(k)`: gli attributi della voce (data-modo… qui, data-v nel Modifica)
+function tendinaModoHtml(voci, attuale, attr) {
+  return `<div class="modo-contatto" aria-label="Come l'hai contattato">${tendina5Html(`<b>${esc(nomeModo(attuale))}</b>`, voci.map(k =>
+    `<button type="button" ${attr(k)}${k === attuale ? ' class="scelto"' : ''}><span>${esc(nomeModo(k))}</span>${k === attuale ? '<b>✓</b>' : ''}</button>`).join(''))}</div>`;
+}
 const MODO_CONTATTO = {};
-// `base` (nota 190): il modo già scritto nella telefonata fissata (azioni.modalita), acceso finché non se ne tocca un altro
+// `base` (nota 190): il modo già scritto (azioni.modalita), scelto finché non se ne tocca un altro
 const modoDi = (id, base = 'Telefonata') => MODO_CONTATTO[id] || base || 'Telefonata';
 function modoContattoHtml(id, base = 'Telefonata') {
-  return `<div class="modo-contatto" role="group" aria-label="Come l'hai contattato">${MODI_CONTATTO.map(([k]) =>
-    `<button type="button" data-modo="${k}" data-modo-di="${esc(id)}" aria-pressed="${modoDi(id, base) === k}">${tastoModo(k)}</button>`).join('')}</div>`;
+  return tendinaModoHtml(MODI_CONTATTO.map(m => m[0]), modoDi(id, base), k => `data-modo="${k}" data-modo-di="${esc(id)}"`);
 }
+// Il tocco su un modo: si ricorda (MODO_CONTATTO) e la tendina si richiude mostrando il modo scelto
 function collegaModoContatto(dove) {
-  const tasti = [...dove.querySelectorAll('.modo-contatto button[data-modo]')];
-  tasti.forEach(b => {
+  dove.querySelectorAll('.modo-contatto [data-modo]').forEach(b => {
     b.onclick = () => {
       MODO_CONTATTO[b.dataset.modoDi] = b.dataset.modo;
-      tasti.filter(x => x.dataset.modoDi === b.dataset.modoDi).forEach(x => x.setAttribute('aria-pressed', String(x.dataset.modo === b.dataset.modo)));
+      const box = b.closest && b.closest('.modo-contatto'), padre = box && box.parentElement;
+      if (!padre) return;
+      box.outerHTML = modoContattoHtml(b.dataset.modoDi);
+      collegaTendine5(padre); collegaModoContatto(padre);
     };
   });
 }
