@@ -4404,13 +4404,15 @@ async function nuovoAppuntamento(opz = {}) {
   };
   // nota 105: com'era salvato (condivisione, passi, portato da, durata) e le altre persone dello stesso incontro (stessa ora, stesso tipo; una lettura)
   if (m) {
-    Object.assign(st, { condividi: m.condiviso_con ? 'persona' : '', condivisoAMano: true, suCosa: m.su_cosa || [], portato: m.portato || null, altra: !!st.durata && !A.DURATE.some(d => d[0] === st.durata) });
+    const mandatoAnche = !!m.condiviso_con && typeof puoMandareAnche === 'function' && puoMandareAnche(m);   // nota 194: già mandato all'altro della linea
+    st.mandaAnche = mandatoAnche ? '1' : '0'; st.mandaAncheDiPrima = st.mandaAnche;
+    Object.assign(st, { condividi: m.condiviso_con && !mandatoAnche ? 'persona' : '', condivisoAMano: true, suCosa: m.su_cosa || [], portato: m.portato || null, altra: !!st.durata && !A.DURATE.some(d => d[0] === st.durata) });
     const { data: insieme } = await dbq('stesso incontro', supa.from('azioni').select('id, contatto_id, categoria, tipo_azione, modalita, esito, contatti(nome, categoria)')
       .eq('user_id', m.user_id).eq('inizio', m.inizio).eq('tipo_azione', m.tipo_azione).neq('id', m.id));
     st.altri = (Array.isArray(insieme) ? insieme : []).filter(x => A.stessoIncontro(x, m) && x.contatto_id !== m.contatto_id)   // nota 120: mai la stessa persona due volte
       .map(x => ({ id: x.contatto_id, nome: (x.contatti || {}).nome || '—', categoria: (x.contatti || {}).categoria || x.categoria, azione: x.id, esito: x.esito }));
     st.giaInsieme = st.altri.map(x => x.azione);
-    if (m.condiviso_con) USA_APP_SI.add(m.contatto_id);   // nota 107: già condiviso nell'app, quindi la usa
+    if (m.condiviso_con && !mandatoAnche) USA_APP_SI.add(m.contatto_id);   // nota 107: già condiviso nell'app, quindi la usa
   }
   const serata = () => st.condividi === 'team' || st.condividi === 'linea';
   // Nota Pagine 129 (Ignazio 28/10/2026: «c'è qualcosa nel flow che non funziona»; scelta A «prima il tipo»): quando la persona è già data (scheda,
@@ -4547,6 +4549,13 @@ async function nuovoAppuntamento(opz = {}) {
       }
       if (!soloGiorno) h += `<div id="na-avviso">${avvisoOre()}</div>`;
       h += '</div>';
+      // nota 194 (Ignazio 17/11): con un prospect o un cliente, «Manda anche a [l'altro della linea]» (Sì/No: due voci, a tasti), così lo trova nella sua Agenda
+      if (!soloContatto && st.contatto && typeof puoMandareAnche === 'function' && puoMandareAnche({ contatto_id: st.contatto.id, tipo_azione: st.tipo, categoria: st.categoria, contatti: { categoria: st.categoria } })
+        && !(typeof guardoAltri === 'function' && guardoAltri())) {
+        if (!ALTRO_LINEA.letto) altroInLinea().then(x => { if (x && velo.isConnected !== false) disegna(); });
+        const altro = ALTRO_LINEA.v;
+        if (altro) h += `<div class="riquadro mc-g"><div class="campo"><label>Manda anche a ${esc(altro.nome)} <small>lo trova nella sua Agenda e ti dice se partecipa</small></label>${scelte('mandaAnche', ['0', '1'], st.mandaAnche || '0', ['No', 'Sì'])}</div></div>`;
+      }
       // 4 · Altro · facoltativo: chiuso, con scritto cosa c'è dentro; i valori restano anche chiuso (campi)
       leggiAvvio(() => disegna());
       const passi = passiOfferti();
@@ -4872,9 +4881,12 @@ async function nuovoAppuntamento(opz = {}) {
         const modo = comeDi(p);
         if (!p.azione) continue;
         if (modo === 'app') { if (p.azione !== m.id || !m.condiviso_con) await dbq('condividi azione', supa.rpc('condividi_azione', { p_azione: p.azione, p_con: true, p_punti: PUNTI_CONDIVISI && st.puntiCond })); continue; }
-        if (p.azione === m.id && m.condiviso_con) await dbq('condividi azione', supa.rpc('condividi_azione', { p_azione: m.id, p_con: false, p_punti: false }));
+        if (p.azione === m.id && m.condiviso_con && st.mandaAncheDiPrima !== '1') await dbq('condividi azione', supa.rpc('condividi_azione', { p_azione: m.id, p_con: false, p_punti: false }));   // nota 194: «Manda anche a» si cambia qui sotto
         if (modo) messaggi.push({ ...riga, ...resto, id: p.azione, contatto_id: p.id, contatti: { nome: p.nome, categoria: p.categoria, telefono: telDi(p) }, come: modo });
       }
+      // nota 194: «Manda anche a» cambiato nel modulo
+      if (typeof ALTRO_LINEA !== 'undefined' && ALTRO_LINEA.v && (st.mandaAnche || '0') !== (st.mandaAncheDiPrima || '0') && (st.mandaAnche !== '1' || puoMandareAnche({ contatto_id: v.contatto_id, tipo_azione: v.tipo_azione, categoria: v.categoria, contatti: { categoria: v.categoria } })))
+        await dbq('manda anche', supa.rpc('condividi_azione_con', { p_azione: m.id, p_utente: st.mandaAnche === '1' ? ALTRO_LINEA.v.id : null }));
       if (messaggi.length && typeof foglioCondividi === 'function') setTimeout(() => foglioCondividi(messaggi, [...(st.cosa5 || [])]), 300);
       chiudi({ id: m.id, ids: [m.id, ...restano.map(x => x.azione), ...nuoviIds], inizio });
       if (v.contatto_id === m.contatto_id) await allineaRigaCoda(m, m.inizio, inizio);   // la riga «PM Fissato» dalla coda segue l'appuntamento spostato (nota 035)
@@ -4948,6 +4960,12 @@ async function nuovoAppuntamento(opz = {}) {
           if (esito === 'ok') ok.push(p.nome); else if (esito === 'non_usa_app') fuori.push(p.nome); else ko = true;
         }
         condiviso = (ok.length ? ` · condiviso con ${nomiInFila(ok)}` : '') + (fuori.length ? ` · ${nomiInFila(fuori)} ${fuori.length === 1 ? 'non usa' : 'non usano'} ancora l'app: non condiviso` : '') + (ko ? ' · non condiviso: riprova dal foglio' : '');
+      }
+      // nota 194: «Manda anche a [l'altro della linea]» sul primo appuntamento salvato (una persona sola per appuntamento)
+      const mandaAncheOk = () => typeof ALTRO_LINEA !== 'undefined' && !!ALTRO_LINEA.v && puoMandareAnche({ contatto_id: v.contatto_id, tipo_azione: v.tipo_azione, categoria: v.categoria, contatti: { categoria: v.categoria } });
+      if (st.mandaAnche === '1' && ids[0] && mandaAncheOk()) {
+        const r = await dbq('manda anche', supa.rpc('condividi_azione_con', { p_azione: ids[0], p_utente: ALTRO_LINEA.v.id }));
+        condiviso += r.data && r.data.esito === 'ok' ? ` · mandato anche a ${ALTRO_LINEA.v.nome}` : ` · non mandato a ${ALTRO_LINEA.v.nome}: riprova dal foglio`;
       }
       // lo spazio riempito è diventato questo appuntamento: si toglie (con «Annulla» torna com'era)
       const usato = st.spazio;

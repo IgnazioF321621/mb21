@@ -1936,7 +1936,7 @@ function collegaCondividi(el, e, preset) {
   const posto = el.querySelector(`[data-condividi="${e.id}"]`);
   if (!posto) return;
   const A = MB21Agenda, tel = numeroDaChiamare(e.contatti && e.contatti.telefono), partner = A.puoCondividereAzione(e);
-  if (e.condiviso_con) USA_APP_SI.add(e.contatto_id);   // già condiviso nell'app: la usa
+  if (e.condiviso_con && A.puoCondividereAzione(e)) USA_APP_SI.add(e.contatto_id);   // già condiviso nell'app: la usa (nota 194: con un prospect o un cliente è «Manda anche a»)
   const voci = [['dove', 'Dove', !!(e.link || e.luogo)], ['note', 'Note', !!e.note], ['punti', 'Punti da trattare', !!(e.punti || []).length]].filter(v => v[2]);
   const st = { cosa: preset && preset.cosa ? new Set(preset.cosa) : new Set(voci.filter(v => v[0] !== 'punti').map(v => v[0])), come: (preset && preset.come) || null, aperta: null, risposte: null, di: undefined };
   let app = partner && USA_APP_SI.has(e.contatto_id);
@@ -1970,6 +1970,42 @@ function collegaCondividi(el, e, preset) {
       else apriTelegramCon(tel, testo);
     };
     if (partner) legaCondivisioneAzione(posto, e, disegna, st);   // condiviso o tolto: si ridisegna il riquadro (la lista dell'Agenda la aggiorna «localmente»)
+  };
+  disegna();
+}
+
+// ── Nota Pagine 194 (feedback di Ignazio 17/11: «deve poter spuntare … anche da mettere nel mio calendario e quindi da poter essere accettato da me»;
+// «l'app la usiamo solo io e [la partner]»): un appuntamento con un prospect o un cliente (che non può riceverlo: condividi_azione è solo per un Partner con l'app)
+// si manda anche all'altro utente con l'app della stessa linea, sponsor o sponsorizzato diretto (funzioni nuove altro_in_linea e condividi_azione_con).
+// Stesso campo condiviso_con: chi riceve lo trova in Agenda e nel calendario e risponde «Partecipi?». Una persona sola per appuntamento. Una lettura per sessione.
+const ALTRO_LINEA = { letto: null, v: null };
+function altroInLinea() {
+  if (!ALTRO_LINEA.letto) ALTRO_LINEA.letto = Promise.resolve(dbq('altro in linea', supa.rpc('altro_in_linea')))
+    .then(r => { ALTRO_LINEA.v = (r && !r.error && Array.isArray(r.data) && r.data[0]) || null; return ALTRO_LINEA.v; }, () => null);
+  return ALTRO_LINEA.letto;
+}
+const puoMandareAnche = e => !!e && !!e.contatto_id && e.tipo_azione !== 'Contatto' && !e.data_scelta && !MB21Agenda.puoCondividereAzione(e);
+async function collegaMandaAnche(el, e) {
+  const posto = el.querySelector(`[data-anche="${e.id}"]`);
+  if (!posto || !puoMandareAnche(e) || (typeof guardoAltri === 'function' && guardoAltri())) return;
+  const altro = await altroInLinea();
+  if (!altro || (e.condiviso_con && e.condiviso_con !== altro.id)) { posto.innerHTML = ''; return; }
+  const nome = esc(altro.nome);
+  const disegna = () => {
+    const mandato = e.condiviso_con === altro.id;
+    posto.innerHTML = `<div class="riquadro mc-g manda5 cd"><b>${mandato ? `Mandato anche a ${nome}` : `Manda anche a ${nome}`}</b>
+      ${mandato ? `<div class="cd-risposte" data-cd-risposte>…</div><div class="pt-comandi"><button type="button" class="link" data-anche="togli">Non mandarlo più</button></div>`
+        : `<p class="na5-aiuto" style="margin:4px 0 8px">Lo trova nella sua Agenda e nel suo calendario e ti dice se partecipa.</p><button type="button" class="primario" data-anche="manda">${ic('condividi')} Manda a ${nome}</button>`}</div>`;
+    posto.querySelectorAll('button[data-anche]').forEach(b => { b.onclick = () => manda(b.getAttribute('data-anche') === 'manda'); });
+    if (mandato) mostraRisposte(posto, 'azione', e.id, e);
+  };
+  const manda = async si => {
+    const { data, error } = await dbq('manda anche', supa.rpc('condividi_azione_con', { p_azione: e.id, p_utente: si ? altro.id : null }));
+    if (error || !data || data.esito !== 'ok') return mostraToast(data && data.esito === 'gia_condiviso' ? 'È già condiviso con un\'altra persona' : 'Non salvato: controlla la connessione e riprova.');
+    const campi = { condiviso_con: si ? altro.id : null, punti_condivisi: false };
+    Object.assign(e, campi); const o = (AG.azioni || []).find(x => x.id === e.id); if (o && o !== e) Object.assign(o, campi);
+    disegna();
+    mostraToast(si ? `Mandato a ${altro.nome}: lo trova nella sua Agenda` : `Non più mandato a ${altro.nome}`);
   };
   disegna();
 }
@@ -2136,7 +2172,7 @@ function extraEvento(e) {
       ${richiamo ? `<div class="note-ev">Dalla coda: ${esc(e.esito || '')}</div>`
         : fasi.length ? bloccoEsiti(e, e.contatti ? e.contatti.categoria : null)
         : `<div class="note-ev">Nessun esito previsto per ${esc(e.categoria ? MB21Lista.nomeCategoria(e.categoria) : 'questa categoria')} · ${esc(e.tipo_azione)}</div>`}
-      ${richiamo ? '' : `<div data-condividi="${esc(e.id)}"></div>`}
+      ${richiamo ? '' : `<div data-condividi="${esc(e.id)}"></div><div data-anche="${esc(e.id)}"></div>`}
       ${comandiTendina([
         ...(MB21Agenda.eConsegna(e) ? [] /* nota 051 (Ignazio 12/10): la consegna si sposta solo con «Sposta la consegna», che cambia anche la vendita */
           /* nota 105 (Ignazio 27/10): pochi comandi, Modifica per primo (dentro si aggiungono le persone e si cambia tutto) */
@@ -2258,6 +2294,7 @@ function collegaComandiEvento(el, e, dopo, ridisegna) {
   collegaEsiti(el, e, { nome: e.contatti ? e.contatti.nome : '', categoria: e.contatti ? e.contatti.categoria : e.categoria }, dopo);
   collegaPunti(el, e, 'azioni', ridisegna || disegnaAgenda);
   collegaCondividi(el, e);   // nota 107: un riquadro solo «Condividi con [nome]»
+  collegaMandaAnche(el, e);   // nota 194: «Manda anche a [l'altro della linea]», per un appuntamento con un prospect o un cliente
   el.querySelectorAll('[data-cmd]').forEach(b => {
     b.onclick = () => {
       const chiudiFoglio = () => { const v = b.closest('.velo'); if (v) v.remove(); };
