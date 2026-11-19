@@ -92,7 +92,7 @@ prova('095/098/148: le letture in più — appuntamenti e Contatti di oggi (poch
   Object.assign(W.ctx, { supa: { from: q, rpc }, dbq: (_, p) => p, CAMPI_AZIONE: '*', ST: { ...W.ctx.ST, utente: { id: 'io' } } });
   await W.ctx.carica(OGGI);
   // nota 148, pezzo 4: tolto il riquadro Agenda, niente più spazi e impegni ricevuti
-  assert.deepEqual(chieste.map(x => x[0]).sort(), ['azioni', 'azioni', 'azioni_conti', 'training_carte', 'training_carte', 'training_giorni']);   // nota 147: anche le carte risposte oggi (solo il numero); nota 148: i contatti della settimana
+  assert.deepEqual(chieste.map(x => x[0]).sort(), ['azioni', 'azioni', 'azioni_conti', 'rpc:impegni_ricevuti', 'training_carte', 'training_carte', 'training_giorni']);   // nota 195: tornano gli impegni ricevuti di oggi (per Appuntamenti e l'icona)   // nota 147: anche le carte risposte oggi (solo il numero); nota 148: i contatti della settimana
   assert.ok(chieste.filter(x => x[0] === 'training_carte').every(([, p]) => p.some(x => x[0] === 'select' && x[2] && x[2].head)));
   assert.ok(chieste.some(([t, p]) => t === 'training_carte' && p.some(x => x[0] === 'gte' && x[1] === 'risposta_il')));
   assert.ok(chieste.every(([, p]) => !p.some(x => x[0] === 'limit') || p.find(x => x[0] === 'limit')[1] <= 30));
@@ -576,6 +576,10 @@ prova('147: «La tua giornata» in cima a Oggi — tre anelli e il conto a parol
   // «Richiamare» di oggi e le telefonate fissate: 5 della coda + 3 = «4 su 8», non più «su 5»
   W.ctx.elencoDiOggi = () => ({ gruppi: [], fatti: 4, totale: 8 }); W.ctx.disegna();
   assert.match(testo(W.app.innerHTML), /CONTATTI 4 su 8 APPUNTAMENTI/);
+  // nota 195 (Ignazio 19/11, «A»): gli impegni ricevuti di oggi (con «Partecipo» o senza risposta) contano negli Appuntamenti; fatto = l'ora è finita
+  W.ctx.O5.ricevutiOggi = [{ inizio: '2000-01-01T08:00:00Z', fine: '2000-01-01T09:00:00Z' }, { inizio: '2999-01-01T08:00:00Z', fine: '2999-01-01T09:00:00Z' }];
+  W.ctx.disegna(); assert.match(testo(W.app.innerHTML), /APPUNTAMENTI 2 su 4/);   // 1 su 2 propri + 1 su 2 ricevuti
+  W.ctx.O5.ricevutiOggi = [];
   assert.match(PO, /const c = ST\.risultato \? elencoDiOggi\(\) : null;/);
   assert.doesNotMatch(PO, /totC|Math\.min\(st\.fatti_oggi/);
   W.ctx.ST.risultato = null; W.ctx.disegna(); assert.match(testo(W.app.innerHTML), /CONTATTI Leggo i contatti…/);

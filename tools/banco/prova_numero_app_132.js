@@ -84,7 +84,8 @@ prova('Gli appuntamenti di un altro giorno non contano; senza la lettura di Oggi
 
 prova('Dove si aggiorna: quando Oggi si disegna, quando si rilegge (caricaOggiV5), al ritorno in primo piano; uscendo si toglie', () => {
   assert.match(PD, /function disegnaOggi\(\) \{\n  aggiornaNumeroApp\(\);/);
-  assert.match(PO, /const aperti = app1\.error \? null : \(app1\.data \|\| \[\]\)\.filter\(x => !x\.esito && x\.inizio && A\.partiRoma\(x\.inizio\)\.giorno === oggi\)\.map\(x => \(\{ id: x\.id, inizio: x\.inizio \}\)\);/);
+  assert.match(PO, /const aperti = app1\.error \? null : \[\.\.\.\(app1\.data \|\| \[\]\)\.filter\(x => !x\.esito && x\.inizio && A\.partiRoma\(x\.inizio\)\.giorno === oggi\)\.map\(x => \(\{ id: x\.id, inizio: x\.inizio \}\)\),\n\s*\.\.\.ricevutiOggi\.map\(r => \(\{ id: 'ricevuto-' \+ r\.origine \+ '-' \+ r\.id, inizio: r\.inizio \}\)\)\];/);   // nota 195: anche i ricevuti con «Partecipo» o senza risposta
+  assert.match(PO, /A\.ricevutiDelGiorno\(ric\.data, oggi\)\.filter\(r => r\.risposta !== 'non_ci_sono'\)/);
   assert.match(PO, /if \(typeof aggiornaNumeroApp === 'function'\) aggiornaNumeroApp\(\);\n\}/);
   assert.match(PD, /else \{ aggiornaNumeroApp\(\); if \(ST\.utente && ST\.tab === 'oggi'\) mostraRiquadroObiettivi\(\); \}/);
   assert.match(IDX, /SIGNED_OUT'\) \{ if \(typeof togliNumeroApp === 'function'\) togliNumeroApp\(\);/);

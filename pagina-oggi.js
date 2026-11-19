@@ -19,7 +19,8 @@ async function caricaOggiV5(oggi) {
   const A = MB21Agenda, io = visto().id, da = A.isoDaRoma(oggi, '00:00'), a = A.isoDaRoma(A.spostaGiorno(oggi, 1), '00:00');
   // Gli appuntamenti e i Contatti di oggi (per «La tua giornata», i «Richiamare» di oggi e il numero sull'icona). Nota Pagine 148, pezzo 4: tolto il
   // riquadro Agenda, niente più spazi, impegni ricevuti e domani (servivano solo a lui: 2 letture in meno a ogni apertura)
-  const [app1, cont, trn, sett] = await Promise.all([
+  const mio = typeof ST !== 'undefined' && ST.utente && io === ST.utente.id;   // nota 195: gli impegni ricevuti sono di chi è entrato
+  const [app1, cont, trn, sett, ric] = await Promise.all([
     // gli appuntamenti di oggi (anche quelli già chiusi, come in Agenda)
     dbq('Oggi: appuntamenti', supa.from('azioni').select(CAMPI_AZIONE).eq('user_id', io).neq('tipo_azione', 'Contatto')
       .gte('inizio', da).lt('inizio', a).order('inizio').limit(30)),
@@ -30,7 +31,11 @@ async function caricaOggiV5(oggi) {
     // nota Pagine 148 (Ignazio 29/10, «A»): i contatti fatti negli ultimi 7 giorni, con la regola del Check (vista azioni_conti: con esito, senza Partner);
     // solo il giorno di ogni riga, per «La tua settimana»
     dbq('Oggi: contatti della settimana', supa.from('azioni_conti').select('giorno').eq('user_id', io).eq('contatti', 1).gte('giorno', A.spostaGiorno(oggi, -6)).lte('giorno', oggi)),
+    // nota 195 (Ignazio 19/11, «A»): gli impegni ricevuti di oggi, per «La tua giornata» e il numero sull'icona (una lettura piccola; solo i propri)
+    mio ? dbq('Oggi: impegni ricevuti', supa.rpc('impegni_ricevuti', { p_da: da, p_a: a })) : null,
   ]);
+  // contano con «Partecipo» o ancora senza risposta; con «Non posso» no (la stessa regola di ricevutiComeEventi, nota 049)
+  const ricevutiOggi = ric && !ric.error && Array.isArray(ric.data) ? A.ricevutiDelGiorno(ric.data, oggi).filter(r => r.risposta !== 'non_ci_sono') : [];
   let richiami = null;
   if (!cont.error) {
     // nota 098: i «Richiamare» con il giorno di oggi (la data scelta dalla coda): vanno in cima ai Contatti del giorno (richiamiDiOggi, pagina-dashboard.js)
@@ -39,17 +44,26 @@ async function caricaOggiV5(oggi) {
   }
   // nota 132/133: gli appuntamenti di oggi ancora senza esito ({ id, inizio }), per il numero sull'icona dell'app (dalla stessa lettura, niente richieste
   // in più); quelli già iniziati li toglie il conto (MB21Dashboard.numeroApp), così l'ora che passa li fa uscire anche senza rileggere
-  const aperti = app1.error ? null : (app1.data || []).filter(x => !x.esito && x.inizio && A.partiRoma(x.inizio).giorno === oggi).map(x => ({ id: x.id, inizio: x.inizio }));
+  const aperti = app1.error ? null : [...(app1.data || []).filter(x => !x.esito && x.inizio && A.partiRoma(x.inizio).giorno === oggi).map(x => ({ id: x.id, inizio: x.inizio })),
+    ...ricevutiOggi.map(r => ({ id: 'ricevuto-' + r.origine + '-' + r.id, inizio: r.inizio }))];   // nota 195: sull'icona anche i ricevuti, finché non cominciano
   // nota Pagine 147 (Ignazio 29/10, «A»): gli appuntamenti veri di oggi per «La tua giornata», dalla stessa lettura; un incontro con più persone vale 1
   // (MB21Agenda.incontri, come in Agenda); fatto = chiuso con l'esito, per tutti (un PM «Fatto» col risultato ancora da dare non è chiuso, esitoDaDare);
-  // il totale tiene anche quelli passati da chiudere. Serate e impegni ricevuti non contano (non hanno esito).
+  // il totale tiene anche quelli passati da chiudere. Le serate no; gli impegni ricevuti sì, dalla nota 195 (O5.ricevutiOggi, fatti quando l'ora è passata: appuntamentiDiOggi).
   const fattoAperto = id => typeof FATTO_APERTO !== 'undefined' && FATTO_APERTO.has(id);
   const incontriOggi = app1.error ? null : A.incontri(A.eventiDelGiorno(A.azioniAgenda(app1.data || []), oggi));
   const appuntamenti = incontriOggi && { totale: incontriOggi.length,
     fatti: incontriOggi.filter(e => (e._persone || [e]).every(p => !!p.esito && !A.esitoDaDare(p, fattoAperto(p.id)))).length };
   const settimana = sett.error ? null : contattiSettimana((sett.data || []).map(r => r.giorno), oggi);
-  Object.assign(O5, { di: io, giorno: oggi, richiami, training: trn, aperti, appuntamenti, settimana });
+  Object.assign(O5, { di: io, giorno: oggi, richiami, training: trn, aperti, appuntamenti, settimana, ricevutiOggi });
   if (typeof aggiornaNumeroApp === 'function') aggiornaNumeroApp();
+}
+// Nota 195 (Ignazio 19/11, «A»): gli appuntamenti di «La tua giornata» = i propri (O5.appuntamenti) + gli impegni ricevuti di oggi con «Partecipo» o senza risposta;
+// un ricevuto è «fatto» quando la sua ora è finita (non ha un esito). Si conta adesso, così passa da solo a «fatto» con l'ora
+function appuntamentiDiOggi() {
+  const ap = O5.appuntamenti;
+  if (!ap) return null;
+  const ric = O5.ricevutiOggi || [], adesso = Date.now();
+  return { totale: ap.totale + ric.length, fatti: ap.fatti + ric.filter(r => Date.parse(r.fine || r.inizio) <= adesso).length };
 }
 // Il ripasso di oggi senza scaricare i mazzi: quante carte tornano oggi (`prossima` passata) e i giorni di fila. null se non si legge.
 async function caricaTrainingOggi(oggi) {
@@ -85,7 +99,7 @@ const GIORNATA_ANELLI = [58, 40, 22];
 // Ripasso (carte risposte oggi su risposte + ancora da ripassare, nota 147 «A»: anche le nuove). Un dato non ancora letto: «Leggo…»
 function o5Giornata() {
   const st = ST.stato || {}, mio = O5.di === visto().id && O5.giorno === ST.oggi;
-  const ap = mio ? O5.appuntamenti : null, t = mio ? O5.training : null, trnOk = typeof TRAINING_VISIBILE === 'undefined' || TRAINING_VISIBILE;
+  const ap = mio ? appuntamentiDiOggi() : null, t = mio ? O5.training : null, trnOk = typeof TRAINING_VISIBILE === 'undefined' || TRAINING_VISIBILE;
   // nota Pagine 189 (Ignazio 06/11: «uniformare tutto ciò che riguarda il calcolo dei contatti nel giorno in tutte le variabili»): lo stesso conto di
   // Contatti del giorno, della tessera «Chi sento oggi?», del numero sull'icona e dell'Agenda (elencoDiOggi: coda, «Richiamare» di oggi, telefonate fissate,
   // conferme, riordini, Dare Seguito). Prima qui «x su 5»: il numero del giorno, senza Richiamare né telefonate fissate
