@@ -673,7 +673,7 @@ function disegnaAgenda() {
   const A = MB21Agenda, oggi = MB21Coda.oggiRoma();
   const eventi = A.incontri(A.eventiDelGiorno(AG.azioni, AG.giorno));   // nota 109: un incontro con più persone, una riga
   const opz = { mioId: vediTutti() ? null : visto().id, admin: eAdmin() };   // con «Tutti» il nome del partner su ogni riga
-  const punti = A.puntiGiorni(AG.azioni, AG.settimana);
+  const punti = A.puntiGiorni(conRicevuti(AG.azioni, AG.ricevuti), AG.settimana);   // nota 195: anche i ricevuti
   const conCose = giorniConCose(AG.cose, oggi);
   if (AG.vista === 'mese') return disegnaMese();
   if (AG.vista === 'settimana') return disegnaSettimana();
@@ -740,7 +740,7 @@ function disegnaMese() {
   const opz = { mioId: vediTutti() ? null : visto().id, admin: eAdmin() };
   const mese0 = AG.giorno.slice(0, 8) + '01', inizio = A.settimana(mese0)[0];
   const giorni = Array.from({ length: 42 }, (_, i) => A.spostaGiorno(inizio, i)).filter((g, i) => i < 35 || g.slice(0, 7) === mese0.slice(0, 7));
-  const punti = A.puntiGiorni(AG.azioni, giorni, 4);
+  const punti = A.puntiGiorni(conRicevuti(AG.azioni, AG.ricevuti), giorni, 4);   // nota 195: anche i ricevuti
   const cose = A.coseDelMese(AG.cose, mese0, oggi.slice(0, 8) + '01');
   const conCose = giorniConCose(AG.cose, oggi);
   const nomeMese = g => A.titoloMese(g).split(' ')[0].toLowerCase();
@@ -753,10 +753,13 @@ function disegnaMese() {
       ${giorni.map(g => {
         const p = punti[g] || { punti: [], tanti: false };
         const ev = A.incontri(A.eventiDelGiorno(AG.azioni, g));   // nota 109
+        // nota 195: nelle righe del giorno anche gli impegni ricevuti, in ordine di ora con gli appuntamenti
+        const righeMese = [...ev.map(e => ({ t: Date.parse(e.quando || e.inizio), h: `${esc(A.orario(e).split('–')[0])} ${esc(A.riga(e, opz).titolo.split(' · ').pop())}` })),
+          ...ricevutiDelGiornoMB(g).map(r => ({ t: Date.parse(r.inizio), h: `${esc(A.orario(r).split('–')[0])} ${esc(A.titoloRicevuto(r))}` }))].sort((x, y) => x.t - y.t);
         return `<button class="mm-g${g.slice(0, 7) !== mese0.slice(0, 7) ? ' altro' : ''}${g === oggi ? ' oggi' : ''}${g === AG.giorno ? ' scelto' : ''}" data-giorno="${g}">
           <span class="mm-n">${Number(g.slice(8))}${anelloCose(conCose, g)}</span>
           <span class="ag-punti">${p.punti.map(c => `<i class="${classeCat(c)}"></i>`).join('')}${p.tanti ? `<i class="tanti ${classeCat(null)}"></i>` : ''}</span>
-          ${ev.slice(0, 2).map(e => `<span class="mm-e">${esc(A.orario(e).split('–')[0])} ${esc(A.riga(e, opz).titolo.split(' · ').pop())}</span>`).join('')}${ev.length > 2 ? `<span class="mm-e">+${ev.length - 2}</span>` : ''}
+          ${righeMese.slice(0, 2).map(x => `<span class="mm-e">${x.h}</span>`).join('')}${righeMese.length > 2 ? `<span class="mm-e">+${righeMese.length - 2}</span>` : ''}
         </button>`;
       }).join('')}</div>
     <div class="ag-foglio">${elencoDaFareHtml(senzaLinguette() ? 'Da fare' : 'Da fare questo mese', cose, 'mese', g => `da ${nomeMese(g)}`)}
@@ -813,6 +816,9 @@ async function caricaIntervallo(da, a) {
   const visti = new Map();
   for (const x of [...perInizio, ...perScelta]) visti.set(x.id, x);
   AG.lunghe = [...visti.values()].filter(x => !A.eRichiamo(x));   // nota 098: i «Richiamare» non sono impegni dell'Agenda (stanno nei Contatti del giorno)
+  // nota 195: gli impegni ricevuti dell'anno, per i pallini (una lettura, solo quando si apre l'Anno; mai con «Tutti»)
+  AG.ricevutiAnno = [];
+  if (!vediTutti()) { const rc = await dbq('impegni ricevuti dell\'anno', supa.rpc('impegni_ricevuti', { p_da: isoDa, p_a: isoA })); if (!rc.error && Array.isArray(rc.data)) AG.ricevutiAnno = rc.data; }
   // le cose da fare aperte dell'intervallo, per il cerchietto verde dei mesi piccoli (23/09)
   AG.coseLunghe = [];
   if (!vediTutti()) {
@@ -839,7 +845,7 @@ function meseMiniHtml(mese0, oggi, punti, conCose) {
 function mesiMiniHtml(mesi, oggi) {
   const A = MB21Agenda;
   const giorni = mesi.flatMap(m => Array.from({ length: 31 }, (_, i) => A.spostaGiorno(m, i)).filter(g => g.slice(0, 7) === m.slice(0, 7)));
-  const punti = A.puntiGiorni(AG.lunghe || [], giorni, 3);
+  const punti = A.puntiGiorni(conRicevuti(AG.lunghe, AG.ricevutiAnno), giorni, 3);   // nota 195: anche i ricevuti dell'anno
   const conCose = giorniConCose([...(AG.cose || []), ...(AG.coseLunghe || [])], oggi);
   return `<div class="mn-mesi">${mesi.map(m => meseMiniHtml(m, oggi, punti, conCose)).join('')}</div>`;
 }
@@ -981,7 +987,9 @@ const apriIlGiorno = g => { AG.vista = 'giorno'; AG.aperta = null; AG.portato = 
 // il nome del giorno in cima alla colonna apre il giorno (nota 183, la stessa regola del numero nel Mese e nell'Anno)
 function collegaGrigliaSettimana(radice, prima) {
   const A = MB21Agenda;
-  radice.querySelectorAll('.ag-sev').forEach(b => {
+  // nota 195: un impegno ricevuto apre il suo foglio («Partecipi?»), come nel Giorno
+  radice.querySelectorAll('.ag-sev[data-ricevuto]').forEach(b => { b.onclick = ev => { ev.stopPropagation(); const r = ricevutoDaChiave(b.dataset.ricevuto); if (r) { prima(); foglioRicevuto(r); } }; });
+  radice.querySelectorAll('.ag-sev:not([data-ricevuto])').forEach(b => {
     b.onclick = async ev => {
       ev.stopPropagation(); prima();
       const g = b.dataset.giorno || b.dataset.vai, id = b.dataset.evento;
@@ -1381,7 +1389,7 @@ function meseHtml(giorno, oggi) {
   const A = MB21Agenda;
   const primo = giorno.slice(0, 8) + '01';
   const inizio = A.settimana(primo)[0];
-  const punti = A.puntiGiorni(AG.azioni, Array.from({ length: 42 }, (_, i) => A.spostaGiorno(inizio, i)), 3);   // i pallini come nella striscia (22/09)
+  const punti = A.puntiGiorni(conRicevuti(AG.azioni, AG.ricevuti), Array.from({ length: 42 }, (_, i) => A.spostaGiorno(inizio, i)), 3);   // i pallini come nella striscia (22/09); nota 195: anche i ricevuti
   const conCose = giorniConCose(AG.cose, oggi);
   let h = `<div class="mb-mese"><div class="mb-mese-testa"><button class="freccia" data-mese="-1" aria-label="Mese prima">‹</button><b>${esc(A.titoloMese(giorno))}</b><button class="freccia" data-mese="1" aria-label="Mese dopo">›</button></div>
     <div class="mb-mese-griglia">${A.GIORNI_SETTIMANA.map(g => `<small>${g}</small>`).join('')}`;
@@ -1574,10 +1582,13 @@ function grigliaSettimana(opz) {
   // di margine, e almeno otto ore. Con pochi appuntamenti, 8→24 sarebbe un lenzuolo quasi vuoto (Ignazio 21/09).
   // gli spazi da riempire (27/09): tratteggiati sopra la griglia; contano anche per decidere quali ore mostrare
   const spaziSett = AG.settimana.map(g => spaziDelGiorno(g).map(x => { const o = MB21Spazi.orario(x); return { x, cima: A.inMinuti(o.ora), alta: o.durata }; }));
-  const tutti = [...giorni.flatMap(x => x.d.blocchi), ...spaziSett.flat()];
+  // nota 195: gli impegni ricevuti (la stessa regola del Giorno, ricevutiDelGiornoMB) come blocchi pieni con «da [nome]»; contano anche per le ore da mostrare
+  const ricSett = AG.settimana.map(g => ricevutiDelGiornoMB(g).map(r => { const cima = A.inMinuti(A.partiRoma(r.inizio).ora);
+    const dura = r.fine ? Math.round((Date.parse(r.fine) - Date.parse(r.inizio)) / 60000) : 60; return { r, cima, alta: Math.max(15, Math.min(1440 - cima, dura || 60)) }; }));
+  const tutti = [...giorni.flatMap(x => x.d.blocchi), ...spaziSett.flat(), ...ricSett.flat()];
   const { da, a } = A.oreUtili(tutti);
   const y = m => Math.round((m - da) / 60 * ALT_ORA_SETT);
-  const quanti = giorni.reduce((n, x) => n + x.d.blocchi.length, 0) + spaziSett.flat().length;
+  const quanti = giorni.reduce((n, x) => n + x.d.blocchi.length, 0) + spaziSett.flat().length + ricSett.flat().length;
   let h = `<div class="ag-sett-testa">${giorni.map(({ g, d }, i) =>
     `<button type="button" class="${g === oggi ? 'oggi' : ''} ${g === AG.giorno ? 'scelto' : ''}" data-testa-giorno="${g}" aria-label="Apri il giorno ${Number(g.slice(8))}">${A.GIORNI[i]}<b>${Number(g.slice(8))}</b></button>`).join('')}</div>`;   // nota 183: il nome del giorno apre il giorno
   h += `<div class="ag-griglia sett"><div class="ag-ore" data-da="${da}" data-alt="${ALT_ORA_SETT}" style="height:${y(a)}px">`;
@@ -1600,6 +1611,8 @@ function grigliaSettimana(opz) {
     // («da riempire» per gli spazi dei PM); con un blocco basso, tutto su una riga. `testoSev` è la regola sola per appuntamenti e spazi.
     for (const b of spaziSett[i]) h += `<button class="ag-sev ag-spazio" data-vai="${g}" style="--tinta:${coloreSpazio(b.x.tipo)};top:${y(b.cima)}px;height:${Math.max(11, y(b.cima + b.alta) - y(b.cima) - 2)}px;left:calc(${sinG}% + 1px);width:calc(${larga}% - 2px)"
       aria-label="${MB21Spazi.orario(b.x).ora} ${esc(MB21Spazi.titolo(b.x))}${MB21Spazi.daRiempire(b.x.tipo) ? ' da riempire' : ''}">${testoSev(MB21Spazi.TIPI[b.x.tipo].corto, MB21Spazi.daRiempire(b.x.tipo) ? 'da riempire' : MB21Spazi.pulisciNome(b.x.nome) || '', y(b.cima + b.alta) - y(b.cima) - 2)}</button>`;
+    for (const b of ricSett[i]) h += `<button class="ag-sev ag-ricevuto${b.r.risposta === 'non_ci_sono' ? ' noci' : ''}" data-ricevuto="${esc(A.chiaveRicevuto(b.r))}" style="top:${y(b.cima)}px;height:${Math.max(11, y(b.cima + b.alta) - y(b.cima) - 2)}px;left:calc(${sinG}% + 1px);width:calc(${larga}% - 2px)"
+      aria-label="${esc(A.orario(b.r))} ${esc(A.titoloRicevuto(b.r))}">${testoSev(b.r.titolo, 'da ' + String(b.r.da_nome || '—').split(' ')[0], Math.max(11, y(b.cima + b.alta) - y(b.cima) - 2))}</button>`;   // nota 195
     for (const chi of gruppi.values()) {
       const cima = Math.min(...chi.map(b => b.cima)), giu = Math.max(...chi.map(b => b.cima + b.alta));
       const alto = Math.max(11, y(giu) - y(cima) - 2);
@@ -1632,7 +1645,9 @@ function grigliaSettimana(opz) {
     for (const x of spaziSett.flat()) perTipo[x.x.tipo] = (perTipo[x.x.tipo] || 0) + 1;
     const spaziConto = Object.entries(perTipo).map(([t, n]) => ({ quanti: n, colore: coloreSpazio(t),
       nome: MB21Spazi.daRiempire(t) ? `${MB21Spazi.TIPI[t].corto} da riempire` : n === 1 ? MB21Spazi.TIPI[t].nome : MB21Spazi.TIPI[t].plurale }));   // «1 PM da riempire», accanto a «5 PM»
-    h += `<div class="ag-conto">${[...conto, ...spaziConto].map(c => `<span style="--tinta:${c.colore}"><i></i>${c.quanti} ${esc(c.nome)}</span>`).join('')}</div>`;
+    const nRic = ricSett.flat().length;   // nota 195: anche gli impegni ricevuti, «1 ricevuto»
+    const ricConto = nRic ? [{ quanti: nRic, colore: '#5b6b8c', nome: nRic === 1 ? 'ricevuto' : 'ricevuti' }] : [];
+    h += `<div class="ag-conto">${[...conto, ...spaziConto, ...ricConto].map(c => `<span style="--tinta:${c.colore}"><i></i>${c.quanti} ${esc(c.nome)}</span>`).join('')}</div>`;
   }
   return h;
 }
@@ -1781,6 +1796,11 @@ function collegaPunti(el, ogg, tabella, ridisegna) {
 // chiamata e, se condivisi, i punti; risponde «Partecipo / Non posso» (tabella `impegni_risposte`). All'apertura dell'app un pop-up
 // «Hai un nuovo appuntamento» per quelli non ancora visti. Niente avvisi push: l'avviso lo dà il suo calendario (funzione `calendario`).
 const ricevutiDelGiornoMB = g => (vediTutti() ? [] : MB21Agenda.ricevutiDelGiorno(AG.ricevuti, g));
+// Nota Pagine 195 (feedback di Ignazio 18/11: «gli appuntamenti inviati da [la partner] a cui partecipo nell'agenda giorno compaiono, in visione settimana no,
+// verifica in tutte le sezioni»): la regola sola è quella del Giorno, ricevutiDelGiornoMB (tutti gli impegni ricevuti del giorno, qualunque risposta; «Non posso»
+// più chiaro). Per i pallini (striscia, Mese, mesi piccoli, Anno) gli stessi impegni diventano finte azioni della categoria «Ricevuto», col loro colore.
+const ricevutiPerPunti = lista => (vediTutti() ? [] : (lista || []).map(r => ({ id: 'ricevuto-' + r.origine + '-' + r.id, tipo_azione: 'Ricevuto', inizio: r.inizio, categoria: 'Ricevuto', _ricevuto: r })));
+const conRicevuti = (azioni, ricevuti) => [...(azioni || []), ...ricevutiPerPunti(ricevuti)];
 const giornoOraRicevuto = r => `${dataLunga(MB21Agenda.partiRoma(r.inizio).giorno)} · ${MB21Agenda.orario(r)}`;
 // la riga nella card degli impegni e nell'elenco della settimana: pallino pieno grigio-blu, «da Ignazio» sotto, la risposta se c'è
 function rigaRicevutoHtml(r) {

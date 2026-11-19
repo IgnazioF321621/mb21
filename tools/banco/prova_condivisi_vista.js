@@ -34,6 +34,29 @@ prova('Chi riceve: l\'impegno sta tra gli impegni del giorno («da Ignazio · nu
   P.modo.tutti = false;
 });
 
+prova('Nota 195 (Ignazio 18/11: «nell\'agenda giorno compaiono, in visione settimana no, verifica in tutte le sezioni»): la griglia della Settimana, il Mese e i pallini con la stessa regola del Giorno; «Non posso» più chiaro; il tocco apre il foglio', async () => {
+  pulisci();
+  P.AG.ricevuti = [ricevuto({ risposta: 'ci_sono' })];
+  let h = P.vista('settimana');
+  assert.match(h, /<button class="ag-sev ag-ricevuto" data-ricevuto="azione:a-ric" style="top:[^"]+"\s*aria-label="17:00–18:00 PM 1a1 · da Ignazio"><span><b>PM 1a1<\/b><\/span><span>da Ignazio<\/span><\/button>/);   // la griglia a sette colonne
+  assert.match(h, /<span style="--tinta:#5b6b8c"><i><\/i>1 ricevuto<\/span>/);   // e nel conto sotto la griglia
+  P.AG.ricevuti = [ricevuto({ risposta: 'non_ci_sono' })];
+  assert.match(P.vista('settimana'), /class="ag-sev ag-ricevuto noci" data-ricevuto="azione:a-ric"/);
+  const libero = { inizio: P.A.isoDaRoma('2026-09-24', '10:00'), fine: P.A.isoDaRoma('2026-09-24', '11:00') };   // un giorno con pochi impegni
+  P.AG.ricevuti = [ricevuto(libero)];
+  P.AG.vista = 'mese'; P.disegnaAgenda();
+  h = P.app.innerHTML;
+  const cella = h.slice(h.indexOf('data-giorno="2026-09-24"'), h.indexOf('data-giorno="2026-09-25"'));
+  assert.match(cella, /<span class="ag-punti"><i class="cat-ricevuto"><\/i>/);   // il pallino, col colore dei ricevuti
+  assert.match(cella, /<span class="mm-e">10:00 PM 1a1 · da Ignazio<\/span>/);   // la riga nel giorno del Mese
+  P.modo.tutti = true; P.AG.vista = 'mese'; P.disegnaAgenda(); assert.doesNotMatch(P.app.innerHTML, /cat-ricevuto|PM 1a1 · da Ignazio/); P.modo.tutti = false;
+  const pa = require('node:fs').readFileSync(require('node:path').join(__dirname, '../../pagina-agenda.js'), 'utf8');
+  assert.match(pa, /radice\.querySelectorAll\('\.ag-sev\[data-ricevuto\]'\)\.forEach\(b => \{ b\.onclick = ev => \{ ev\.stopPropagation\(\); const r = ricevutoDaChiave\(b\.dataset\.ricevuto\); if \(r\) \{ prima\(\); foglioRicevuto\(r\); \} \}; \}\);/);
+  assert.match(pa, /const punti = A\.puntiGiorni\(conRicevuti\(AG\.lunghe, AG\.ricevutiAnno\), giorni, 3\);/);   // l'Anno
+  assert.match(pa, /AG\.ricevutiAnno = rc\.data/);
+  P.AG.vista = 'giorno';
+});
+
 prova('Il foglio dell\'impegno ricevuto: «Entra nella chiamata», i punti in sola lettura, «Partecipo / Non posso»; aprirlo lo segna visto, rispondere salva la risposta', async () => {
   pulisci();
   const r = ricevuto();

@@ -1582,6 +1582,9 @@
      nella Timeline un blocco pieno, non tratteggiato e non trascinabile; «non ci sono» li spegne. Il riquadro «Condividi» di chi organizza sta sotto i punti. */
   .ag-imp.ric-imp i, .ss-riga.ss-ricevuto i { background: var(--az-appuntamento, #5b6b8c); }
   .ag-imp.ric-imp.noci span, .ag-ev.ag-ricevuto.noci { opacity: .55; }
+  .cat-ricevuto { --cat: #5b6b8c; --cat-tinta: color-mix(in srgb, #5b6b8c 14%, var(--superficie)); --cat-scuro: #3d4a63; }   /* nota 195: lo stesso blu-grigio dei ricevuti */
+  .ag-sev.ag-ricevuto { border: 1.5px solid #5b6b8c; background: color-mix(in srgb, #5b6b8c 14%, var(--superficie)); color: var(--testo); }   /* nota 195: nella Settimana */
+  .ag-sev.ag-ricevuto.noci { opacity: .55; }
   .ag-ev.ag-ricevuto { border: 1.5px solid var(--az-appuntamento, #5b6b8c); background: color-mix(in srgb, var(--az-appuntamento, #5b6b8c) 12%, var(--superficie)); color: var(--testo); text-align: left; padding: 4px 8px; border-radius: 8px; position: absolute; overflow: hidden; }
   .ag-ev.ag-ricevuto b { display: block; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .ag-ev.ag-ricevuto small { display: block; font-size: 11px; color: var(--testo-soft); }
@@ -3109,7 +3112,7 @@ function centesimi(testo) {
   return m ? `${esc(m[1])}<span class="cent"><i>,</i>${esc(m[2])}</span>` : esc(testo);
 }
 const CLASSI_CAT = { 'Prospect': 'cat-prospect', 'Cliente': 'cat-cliente', 'Partner': 'cat-partner', 'Ex Partner/Cliente': 'cat-ex',
-  'Referral': 'cat-ex', 'Unlinked': 'cat-unlinked', 'Archiviato': 'cat-archiviato' };
+  'Referral': 'cat-ex', 'Unlinked': 'cat-unlinked', 'Archiviato': 'cat-archiviato', 'Ricevuto': 'cat-ricevuto' };   // nota 195: i pallini degli impegni ricevuti
 function classeCat(categoria) { return CLASSI_CAT[categoria] || 'cat-nessuna'; }   // la classe che tinge card e righe del colore della categoria
 function iniziali(nome) { const p = String(nome || '').trim().split(/\s+/).filter(Boolean); return ((p[0] || '?')[0] + (p[1] ? p[1][0] : '')).toUpperCase(); }
 const CHIAVE_CACHE = 'mb21_coda';
