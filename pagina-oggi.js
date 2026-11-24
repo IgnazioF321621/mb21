@@ -467,23 +467,24 @@ function disegnaPersonaV5() {
   const fatto = !dato && (tipo === 'coda' || tipo === 'ds') && LV.restaSu && LV.restaSu.id === id ? LV.restaSu : null;
   if (fatto) dato = fatto;
   if (!dato) return disegnaPersonaLV();   // l'esito è stato dato o la persona non c'è più: la strada di adesso (spunta e ritorno all'elenco)
-  const nome = (dato.contatti && dato.contatti.nome) || dato.nome || '', cat = catDi(dato), colore = COLORE_CAT_V5(cat);
+  const nome = (dato.contatti && dato.contatti.nome) || dato.nome || '', cat = catDi(dato);
   LV.nomePersona = nome;
   const e = elencoDiOggi(), conto = e.totale && !fatto ? `${Math.min(e.fatti + 1, e.totale)} di ${e.totale}` : '';   // «3 di 5»: la freccia accanto dice già «Contatti del giorno»
   const chiContatto = tipo === 'coda' || tipo === 'ds' ? id : dato.contatto_id || null;
+  const inattivo5 = !!chiContatto && typeof eInattivoVista === 'function' && eInattivoVista({ id: chiContatto, categoria: cat });   // nota 196: «Partner ⏸ Inattivo», col colore del Partner
+  const colore = COLORE_CAT_V5(inattivo5 ? 'Partner' : cat);
   const telefonata = tipo === 'coda' || tipo === 'ds';
   if (telefonata) {
     ST.aperta = id;
     const luogo = [dato.citta, dato.fascia_eta].filter(Boolean).join(' · ');
     const spento = ST.offline || guardoAltri();
-    corpo = `<div class="card compatta aperta p5-card ${classeCat(cat)}" id="card-${esc(id)}"><div class="corpo">
+    corpo = `<div class="card compatta aperta p5-card ${classeCat(inattivo5 ? 'Partner' : cat)}" id="card-${esc(id)}"><div class="corpo">
       <div class="p5-blocco"><b>Com'è andata?</b>${fatto ? `<span class="p5-dato">${ic('fatto')} ${esc(fatto.esito)}</span>`
         : esitiTendinaHtml({ id, categoria: cat }, spento, '<small>Scegli l\'esito</small>')}</div>
       ${ricordoHtml(id, nome)}${preparaChiamataHtml(id)}
       ${dato.professione ? `<div class="prof">${esc(dato.professione)}</div>` : ''}${luogo ? `<div class="luogo">${esc(luogo)}</div>` : ''}
       <button class="link" data-scheda="${esc(id)}">${ic('persona')} Apri contatto</button></div></div>`;
   }
-  const inattivo5 = !!chiContatto && typeof eInattivoVista === 'function' && eInattivoVista({ id: chiContatto, categoria: cat });   // nota 196: «Partner ⏸ Inattivo»
   const sotto = [cat ? (inattivo5 ? 'Partner ⏸ Inattivo' : cat) : 'Senza categoria', sottoOggi({ motivo: tipo, dato })].filter(Boolean).join(' · ');
   app.innerHTML = `<div class="v5-testa" style="--zc:${colore}">${testataV5({ sinistra: `<button class="v5-indietro" id="lv-indietro">‹ ${LV.daClienti ? 'Clienti' : 'Contatti del giorno'}</button>`,
       chi: `<div class="p5-chi"><span class="p5-sigla" style="color:${colore}">${esc(iniziali(nome))}</span><div><b>${esc(nome)}${segnoCoach(chiContatto, nome)}</b><small>${esc(sotto)}</small></div></div>`,

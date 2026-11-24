@@ -980,7 +980,7 @@ function disegnaDati(c, extra) {
     ${valore('cat', c.categoria ? ((typeof eInattivoVista === 'function' && eInattivoVista(c)) ? 'Partner · ⏸ Inattivo' : L.nomeCategoria(c.categoria)) : '', c.categoria ? `<i class="mc-pallino ${classeCat((typeof eInattivoVista === 'function' && eInattivoVista(c)) ? 'Partner' : c.categoria)}"></i>` : '')}${scrivi('cat')}</div>`;
   const compleanno = `<div class="dt-campo" id="dt-comp"><small>Compleanno</small>${!extra ? '<span class="dt-carico">Carico…</span>' : `${valore('comp', MB21Rubrica.compleannoScritto(extra.compleanno))}${scrivi('comp')}`}</div>`;   // nota 174: «12/3/2000» o «12 marzo»
   const account = c.categoria === 'Cliente' ? `<div class="dt-campo dt-pieno" id="dt-account"><small>Cliente con account</small><span class="dt-carico">Carico…</span></div>` : '';
-  const html = `<div id="dati-riquadro"><div class="riquadro dt ${classeCat(c.categoria)}">
+  const html = `<div id="dati-riquadro"><div class="riquadro dt ${classeCat(typeof eInattivoVista === 'function' && eInattivoVista(c) ? 'Partner' : c.categoria)}">
       ${testo('nome', 'Nominativo', c.nome, { pieno: true })}
       ${testo('telefono', 'Telefono', c.telefono ? `${tel.prefisso} ${tel.numero}` : '', { tipo: 'tel' })}
       ${categoria}
