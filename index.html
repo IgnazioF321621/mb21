@@ -1583,6 +1583,7 @@
   .ag-imp.ric-imp i, .ss-riga.ss-ricevuto i { background: var(--az-appuntamento, #5b6b8c); }
   .ag-imp.ric-imp.noci span, .ag-ev.ag-ricevuto.noci { opacity: .55; }
   .pill-inattivo { display: inline-block; margin-left: 6px; padding: 2px 9px; border-radius: 999px; background: #EEF0F4; color: #5b6b8c; font-size: 12px; font-weight: 700; letter-spacing: 0; text-transform: none; vertical-align: middle; }   /* nota 196 */
+  .cn-segni .pill-inattivo { margin-left: 0; }   /* nota 197: sulla card della Lista sta all'inizio della riga delle targhette */
   .mp-inattivo { margin-top: 8px; display: inline-flex; align-items: center; gap: 6px; border: 1.5px solid var(--linea); background: var(--superficie); border-radius: 999px; padding: 6px 14px; font: inherit; font-size: 14px; font-weight: 700; color: var(--testo); cursor: pointer; }
   .mp-inattivo.fatto { background: #EEF0F4; color: #5b6b8c; border-color: #C9CED8; }
   .mp-inattivo-aiuto { font-size: 12.5px; color: var(--testo-soft); margin-top: 4px; }
@@ -3136,6 +3137,8 @@ const eInattivoVista = c => MB21Lista.eInattivo(c, SCHEDE_CON_CODICE.ids);
 const nomeCategoriaVista = c => MB21Lista.nomeCategoriaDi(c, SCHEDE_CON_CODICE.ids);
 const classeCatVista = c => classeCat(eInattivoVista(c) ? 'Partner' : c && c.categoria);
 const pillolaInattivo = c => (eInattivoVista(c) ? '<span class="pill-inattivo">⏸ Inattivo</span>' : '');
+// Nota 197: la categoria scritta accanto a un nome negli elenchi da scegliere (scelta dalla lista, Cerca nella lista della scheda, Da completare)
+const nomeCategoriaElenco = (c, senza = 'Senza categoria') => (!c || !c.categoria ? senza : eInattivoVista(c) ? 'Partner · ⏸ Inattivo' : MB21Lista.nomeCategoria(c.categoria));
 function iniziali(nome) { const p = String(nome || '').trim().split(/\s+/).filter(Boolean); return ((p[0] || '?')[0] + (p[1] ? p[1][0] : '')).toUpperCase(); }
 const CHIAVE_CACHE = 'mb21_coda';
 
@@ -5305,6 +5308,7 @@ async function creaSchedeNuove(persone, utenteId) {
 async function sceltaContatto(titolo, testo = '', escludi = [], motivo = 'è già il contatto') {
   let elenco;
   try { elenco = await leggiContattiMiei(); } catch (e) { mostraToast('Contatti non caricati: riprova.'); return null; }
+  await leggiSchedeConCodice();   // nota 197: il partner inattivo si legge «Partner · ⏸ Inattivo» (la lettura della 196, una per sessione)
   return new Promise(risolvi => {
     const velo = document.createElement('div');
     velo.className = 'velo';
@@ -5327,7 +5331,7 @@ async function sceltaContatto(titolo, testo = '', escludi = [], motivo = 'è gi�
       const uguale = trovati.some(c => MB21Lista.piega(c.nome) === MB21Lista.piega(t));
       velo.querySelector('#sc-elenco').innerHTML = trovati.map(c => escludi.includes(c.id)
           ? `<button disabled>${esc(c.nome)} <small style="color:var(--grigio)">· ${esc(motivo)}</small></button>`
-          : `<button data-id="${esc(c.id)}">${esc(c.nome)} <small style="color:var(--grigio)">· ${esc([c.categoria ? MB21Lista.nomeCategoria(c.categoria) : 'Senza categoria', MB21Lista.segnoOmonimi(c, trovati)].filter(Boolean).join(' · '))}</small></button>`).join('')   // nota 156: stesso nome → cosa le distingue
+          : `<button data-id="${esc(c.id)}">${esc(c.nome)} <small style="color:var(--grigio)">· ${esc([nomeCategoriaElenco(c), MB21Lista.segnoOmonimi(c, trovati)].filter(Boolean).join(' · '))}</small></button>`).join('')   // nota 156: stesso nome → cosa le distingue
         + (t && !uguale ? `<button data-nuovo="1">${ic('piu')} Non c'è: aggiungi «${esc(t)}» come Prospect</button>` : '');
       velo.querySelectorAll('[data-id]').forEach(b => b.onclick = () => chiudi(elenco.find(c => c.id === b.dataset.id)));
       const n = velo.querySelector('[data-nuovo]');

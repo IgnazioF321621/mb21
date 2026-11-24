@@ -394,7 +394,8 @@ async function sceglieLegame(chiave, prima) {
   if (chiave !== 'persona') return { tipo: chiave, nome: (MB21Agenda.LEGAMI.find(x => x[0] === chiave) || [])[1] };
   const x = await sceltaContatto('A chi si riferisce', '');
   if (!x) return prima;
-  if (!['Prospect', 'Partner', 'Cliente'].includes(x.categoria)) { mostraToast('Si collega solo a un Prospect, Partner o Cliente'); return prima; }
+  // nota 197: il partner segnato inattivo (nota 196) si collega come un Partner
+  if (!['Prospect', 'Partner', 'Cliente'].includes(x.categoria) && !(typeof eInattivoVista === 'function' && eInattivoVista(x))) { mostraToast('Si collega solo a un Prospect, Partner o Cliente'); return prima; }
   return { tipo: 'persona', nome: x.nome, contatto_id: x.id, categoria: x.categoria };
 }
 // La pastiglia piccola sulla riga di una cosa: il nome della persona o Team / LdS / Network 21 / Amway; senza tipo niente (P8: prima «Da collegare»)

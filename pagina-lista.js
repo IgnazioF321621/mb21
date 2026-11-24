@@ -39,6 +39,9 @@ const COLONNE_LISTA = 'id, user_id, nome, professione, fascia_eta, citta, telefo
   + 'partner, ultima_area, ultima_modalita, ultimo_tipo, ultima_fase, ultima_il, account_cliente_dal, da_rubrica';
 // nota 196: «Partner ⏸ Inattivo» (eInattivoVista, index.html); dove la funzione non c'è (prove a pezzi) la categoria resta quella scritta
 const inattivoQui = c => typeof eInattivoVista === 'function' && eInattivoVista(c);
+// nota 197: gli id delle schede con il codice Amway, per i filtri «Partner» ed «Ex» (MB21Lista.FILTRI); senza la lettura, i filtri di prima
+const nomeCatQui = (c, senza = 'Senza categoria') => (typeof nomeCategoriaElenco === 'function' ? nomeCategoriaElenco(c, senza) : (c && c.categoria ? MB21Lista.nomeCategoria(c.categoria) : senza));
+const codiciQui = () => (typeof SCHEDE_CON_CODICE !== 'undefined' ? SCHEDE_CON_CODICE.ids : null);
 async function leggiListaPagine(utenti) {   // `utenti` (L8b, solo per l'Admin): di chi leggere i nomi
   if (typeof leggiSchedeConCodice === 'function') leggiSchedeConCodice();   // nota 196: chi è «Partner ⏸ Inattivo» (una lettura per sessione)
   const pagina = k => { const q = supa.from('contatti_lista').select(COLONNE_LISTA); return dbq('lettura lista', (utenti ? q.in('user_id', utenti) : q).order('id').range(k * 1000, k * 1000 + 999)); };
@@ -177,6 +180,7 @@ async function apriLista() {
     segnaApp();
     await caricaCatalogo();   // «Da catalogare» del partner visto (nota 019): se c'è già, non rilegge niente
     await caricaCompleta();   // «Da completare» (nota Fondamenta 016): chi è senza sesso, una lettura piccola
+    if (typeof leggiSchedeConCodice === 'function') await leggiSchedeConCodice();   // nota 197: il partner inattivo nel filtro «Partner» (la lettura della 196, una per sessione)
   } catch (e) {
     // L7 (Ignazio 23/10): sotto l'avviso il bottone «Riprova», che rifà la lettura (prima si toccava di nuovo il tab)
     app.innerHTML = `<h1>Lista Nomi</h1><div class="avviso">Non riesco a caricare i nomi. Controlla la connessione e riprova.</div>
@@ -224,7 +228,7 @@ function contattaHtml(telefono, soloScrivere) {
 function disegnaLista() {
   if (LS.filtro === 'all') LS.filtro = 'lista';   // dal cantiere 15 «All» = Partner Select «Tutti»
   const f = MB21Lista.FILTRI[LS.filtro];
-  const conti = MB21Lista.contaFiltri(LS.righe, { utenteId: utentiLista(), admin: eAdmin() });
+  const conti = MB21Lista.contaFiltri(LS.righe, { utenteId: utentiLista(), admin: eAdmin(), codici: codiciQui() });
   const quanti = (k) => `<span>${conti[k].toLocaleString('it-IT')}</span>`;
   const chip = (k) => `<button data-filtro="${k}" class="${LS.filtro === k ? 'scelto' : ''}">${MB21Lista.FILTRI[k].etichetta} ${quanti(k)}</button>`;
   const altriScelto = f.altri ? `Altri: ${f.etichetta} ${quanti(LS.filtro)} ▾` : 'Altri ▾';
@@ -304,7 +308,7 @@ function disegnaDaCompletare() {
     document.getElementById('indietro').onclick = () => { window.scrollTo(0, 0); disegnaLista(); };
     return;
   }
-  const chi = [r.professione, r.citta, r.categoria ? MB21Lista.nomeCategoria(r.categoria) : ''].filter(Boolean).join(' · ');
+  const chi = [r.professione, r.citta, nomeCatQui(r, '')].filter(Boolean).join(' · ');
   const scelte = d.campo === 'sesso'
     ? `<div class="bottoni">${MB21Lista.SESSI.map(([v, t]) => `<button data-valore="${v}">${esc(t)}</button>`).join('')}</div>`
     : `<div class="bottoni">${MB21Lista.cittaFrequenti(LS.righe, r.user_id).map(c => `<button data-valore="${esc(c)}">${esc(c)}</button>`).join('')}</div>
@@ -348,7 +352,7 @@ async function salvaCompleta(r, campo, valore) {
 }
 
 // I nomi che la Lista mostra adesso (filtro, ricerca, ordine): l'elenco e, dalla nota 158, la barretta «‹ Precedente · Successivo ›» della scheda
-const nomiDellElenco = () => MB21Lista.filtraContatti(LS.righe, { filtro: LS.filtro, testo: LS.testo, utenteId: utentiLista(), admin: eAdmin(), oggi: MB21Coda.oggiRoma(), ordine: LS.ordine });
+const nomiDellElenco = () => MB21Lista.filtraContatti(LS.righe, { filtro: LS.filtro, testo: LS.testo, utenteId: utentiLista(), admin: eAdmin(), oggi: MB21Coda.oggiRoma(), ordine: LS.ordine, codici: codiciQui() });
 function disegnaElenco() {
   const trovati = nomiDellElenco();
   const elenco = document.getElementById('elenco');
@@ -470,9 +474,11 @@ function cardNome(r) {
   // «nuovo» e le targhette hanno una riga loro, sotto la professione (scelta «B» tra due prove, tools/design/confronto_card.html):
   // nome, frase e professione si leggono per intero; la card di chi ha le targhette è un po' più alta.
   // «archiviato» (nota 012): la card si riconosce anche quando esce in fondo a una ricerca dalla Lista; dal menu «…» c'è «Ripristina»
-  const segni = (r.categoria === 'Archiviato' ? '<span class="badge arch">archiviato</span>' : '') + nuovoBadge(r) + targheCard(r);
+  // nota 197: il partner inattivo (nota 196) ha il colore del Partner e la pillola «⏸ Inattivo», come nella sua scheda
+  const inattivo = typeof inattivoQui === 'function' && inattivoQui(r);
+  const segni = (r.categoria === 'Archiviato' ? '<span class="badge arch">archiviato</span>' : '') + (inattivo ? '<span class="pill-inattivo">⏸ Inattivo</span>' : '') + nuovoBadge(r) + targheCard(r);
   return `
-    <div class="cn ${classeCat(r.categoria)} ${LS.esporta && sceltoEsporta(r.id) ? 'spuntata' : ''}" data-id="${esc(r.id)}">
+    <div class="cn ${classeCat(inattivo ? 'Partner' : r.categoria)} ${LS.esporta && sceltoEsporta(r.id) ? 'spuntata' : ''}" data-id="${esc(r.id)}">
       ${LS.esporta ? `<span class="cn-spunta" aria-hidden="true">${ic('fatto')}</span>` : `<span class="cn-pastiglia">${esc(iniziali(r.nome))}</span>`}
       <div class="dentro">
         <div class="nome">${esc(r.nome)}${diChiCard(r)}</div>
@@ -511,7 +517,7 @@ function sceltaDa(titolo, voci, sopra) {
 }
 
 async function scegliAltri() {
-  const conti = MB21Lista.contaFiltri(LS.righe, { utenteId: utentiLista(), admin: eAdmin() });
+  const conti = MB21Lista.contaFiltri(LS.righe, { utenteId: utentiLista(), admin: eAdmin(), codici: codiciQui() });
   // Lista Nomi L1 (Ignazio 23/10): sotto «Non collegato» la riga piccola che spiega, come nel modulo.
   // L5: via «Senza categoria»: per i nomi senza categoria la strada è una sola, «Da catalogare» in cima alla Lista
   const v = await sceltaDa('Altri', ['ex', 'unlinked', 'archiviati'].map(k => ({ etichetta: `${MB21Lista.FILTRI[k].etichetta} · ${conti[k].toLocaleString('it-IT')}`, k,
@@ -1803,7 +1809,7 @@ function scegliScheda(opz) {
       if (!righe) { elenco.innerHTML = '<div class="sotto">Carico i nomi…</div>'; await pronti; if (input.value.trim() !== testo) return; }
       const data = MB21Lista.cercaNomi(righe, { testo, utenteId: opz.userId, max: 15 }).filter(r => r.id !== opz.escludi);
       elenco.innerHTML = data.length
-        ? data.map(r => `<button data-id="${esc(r.id)}"><b>${esc(r.nome)}</b> <small>${esc([r.categoria ? MB21Lista.nomeCategoria(r.categoria) : 'Senza categoria', MB21Lista.segnoOmonimi(r, data)].filter(Boolean).join(' · '))}</small></button>`).join('')   // nota 156
+        ? data.map(r => `<button data-id="${esc(r.id)}"><b>${esc(r.nome)}</b> <small>${esc([nomeCatQui(r), MB21Lista.segnoOmonimi(r, data)].filter(Boolean).join(' · '))}</small></button>`).join('')   // nota 156
         : '<div class="sotto">Nessun nome trovato</div>';
       elenco.querySelectorAll('[data-id]').forEach(b => b.onclick = () => chiudi(data.find(r => r.id === b.dataset.id)));
     };

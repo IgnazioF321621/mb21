@@ -8,6 +8,7 @@ const leggi = f => fs.readFileSync(path.join(__dirname, '../..', f), 'utf8');
 const PL = leggi('pagina-lista.js'), IDX = leggi('index.html');
 // una funzione intera di pagina-lista.js (dalla riga che la apre alla graffa a inizio riga)
 const NUMERO = (PL.match(/^const numeroDaChiamare = .*$/m) || [''])[0];   // L3: la regola del numero, usata da cardNome
+const CODICI_QUI = (PL.match(/^const codiciQui = .*$/m) || [''])[0] + '\n';   // nota 197: gli id delle schede con il codice, per i filtri (nel banco: niente lettura)
 const pezzo = (src, inizio) => { const da = src.indexOf(inizio); assert.ok(da >= 0, inizio); return src.slice(da, src.indexOf('\n}\n', da) + 3); };
 const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 const uguale = (a, b) => assert.equal(JSON.stringify(a), JSON.stringify(b));   // valori nati dentro vm (altro «mondo»): si confrontano scritti
@@ -28,7 +29,7 @@ prova('L1: la prima pillola si chiama «Tutti», «Ex» ha le parole del modulo;
 prova('L1: in «Altri ▾» sotto «Non collegato» la riga piccola «conosciuto/a, nessun recapito»', async () => {
   let voci = null;
   const ctx = { MB21Lista: L, LS: { righe: [{ id: 'a', user_id: 'io', nome: 'Persona A', categoria: 'Unlinked' }, { id: 'b', user_id: 'io', nome: 'Persona B', categoria: 'Ex Partner/Cliente' }] },
-    utentiLista: () => 'io', eAdmin: () => false, sceltaDa: async (t, v) => { voci = v; return null; }, disegnaLista() {}, BLOCCO: 40 };
+    utentiLista: () => 'io', eAdmin: () => false, codiciQui: () => null, sceltaDa: async (t, v) => { voci = v; return null; }, disegnaLista() {}, BLOCCO: 40 };
   vm.createContext(ctx); vm.runInContext(pezzo(PL, 'async function scegliAltri') + ';this.altri = scegliAltri;', ctx);
   await ctx.altri();
   uguale(voci.map(v => [v.etichetta, v.nota]), [['Ex Partner/Cliente · 1', null], ['Non collegato · 1', 'conosciuto/a, nessun recapito'], ['Archiviati · 0', null]]);   // L5: via «Senza categoria»
@@ -63,8 +64,8 @@ prova('L1: sulla card solo la professione (l\'area resta nella scheda)', () => {
 });
 
 prova('L1: «Non collegato» al posto di «Unlinked» nei tre elenchi (Scegli dalla tua lista, Cerca nella lista, In coda dell\'Agenda)', () => {
-  assert.match(IDX, /<small style="color:var\(--grigio\)">· \$\{esc\(\[c\.categoria \? MB21Lista\.nomeCategoria\(c\.categoria\) : 'Senza categoria', /);   // nota 156: poi segnoOmonimi
-  assert.match(PL, /<b>\$\{esc\(r\.nome\)\}<\/b> <small>\$\{esc\(\[r\.categoria \? MB21Lista\.nomeCategoria\(r\.categoria\) : 'Senza categoria', /);
+  assert.match(IDX, /<small style="color:var\(--grigio\)">· \$\{esc\(\[nomeCategoriaElenco\(c\), /);   // nota 156: poi segnoOmonimi (nota 197: la categoria con il partner inattivo)
+  assert.match(PL, /<b>\$\{esc\(r\.nome\)\}<\/b> <small>\$\{esc\(\[nomeCatQui\(r\), /);
   assert.match(leggi('pagina-agenda.js'), /<span>\$\{esc\(c\.nome\)\}<small>\$\{esc\(c\.categoria \? MB21Lista\.nomeCategoria\(c\.categoria\) : ''\)\}<\/small><\/span>/);
   assert.doesNotMatch(IDX + PL, /esc\([rc]\.categoria \|\| 'Senza categoria'\)/);
 });
@@ -102,7 +103,7 @@ prova('L1: Cerca senza risultati → «+ Aggiungi «testo» alla Lista» apre il
     LS: { righe: [{ id: 'a', user_id: 'io', nome: 'Persona A', categoria: 'Prospect' }], filtro: 'lista', ordine: 'az', lettera: null, esporta: null, testo: 'Mario Bianchi ', mostrate: 40 },
     utentiLista: () => 'io', eAdmin: () => false, soloGuardo: () => ctx.guardo, barraEsporta() {}, apriModulo: (c, poi) => moduli.push([c, poi]),
     document: { getElementById: id => pagina.querySelector('#' + id) } };
-  vm.createContext(ctx); vm.runInContext(pezzo(PL, 'const nomiDellElenco') + ';this.disegna = disegnaElenco;', ctx);
+  vm.createContext(ctx); vm.runInContext(CODICI_QUI + pezzo(PL, 'const nomiDellElenco') + ';this.disegna = disegnaElenco;', ctx);
   ctx.disegna();
   const h = pagina.querySelector('#elenco').innerHTML;
   assert.match(h, /Nessun nome trovato\.<button class="link ls-aggiungi-cercato" id="aggiungi-cercato">\[piu\] Aggiungi «Mario Bianchi» alla Lista<\/button>/);
@@ -128,7 +129,7 @@ prova('L2: via le lettere A-Z — «Ordina» ha solo gli ordini, niente pastigli
     utentiLista: () => 'io', eAdmin: () => ctx.admin, soloGuardo: () => false, barraEsporta() {}, cardNome: r => `<div class="cn" data-id="${r.id}"></div>`,
     sceltaDa: async (t, v) => { voci = v; return v.find(x => x.k === 'mai') || null; }, IntersectionObserver: class { observe() {} disconnect() {} },
     document: { getElementById: id => pagina.querySelector('#' + id) } };
-  vm.createContext(ctx); vm.runInContext(pezzo(PL, 'const nomiDellElenco') + ';this.disegna = disegnaElenco;', ctx);
+  vm.createContext(ctx); vm.runInContext(CODICI_QUI + pezzo(PL, 'const nomiDellElenco') + ';this.disegna = disegnaElenco;', ctx);
   ctx.disegna();
   let h = pagina.querySelector('#elenco').innerHTML;
   assert.match(h, /<span>1 nome · <button class="link ls-aggiorna" id="ls-aggiorna">Aggiorna i nomi<\/button><\/span>\s*<span><button id="ordina">Ordina: A-Z ▾<\/button><\/span>/);   // un partner: niente «Scarica nomi e numeri» (L7: «Aggiorna i nomi» accanto al conto)
@@ -601,7 +602,7 @@ prova('156: due schede con lo stesso nome nella ricerca → accanto il telefono 
 prova('L9: «Cerca nella lista» (coppia, Mappa) cerca nella copia della Lista con la stessa regola: niente lettura a ogni tasto, gli eliminati non ci sono', async () => {
   const fogli = [];
   const righe = [{ id: 'a', user_id: 'io', nome: 'Persona Alfa', professione: 'idraulico', categoria: 'Prospect' }, { id: 'b', user_id: 'io', nome: 'Persona Beta', professione: 'idraulico', categoria: 'Unlinked' }];
-  const ctx = { esc, ic: n => `[${n}]`, MB21Lista: L, nomiDellaLista: async () => righe, supa: { from: () => { throw new Error('niente database'); } }, setTimeout: () => 0,
+  const ctx = { esc, ic: n => `[${n}]`, MB21Lista: L, nomeCatQui: c => (c.categoria ? L.nomeCategoria(c.categoria) : 'Senza categoria'), nomiDellaLista: async () => righe, supa: { from: () => { throw new Error('niente database'); } }, setTimeout: () => 0,
     document: { createElement: () => { const n = new Nodo(); fogli.push(n); return n; }, body: { appendChild() {} } } };
   vm.createContext(ctx); vm.runInContext(pezzo(PL, 'function scegliScheda') + ';this.scegli = scegliScheda;', ctx);
   ctx.scegli({ titolo: 'Coppia con', userId: 'io', escludi: 'a' });

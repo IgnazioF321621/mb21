@@ -50,9 +50,11 @@
     all:      { etichetta: 'All', soloAdmin: true, tutti: true, prova: r => r.categoria !== 'Archiviato' },
     lista:    { etichetta: 'Tutti', prova: r => r.categoria !== 'Archiviato' },
     prospect: { etichetta: 'Prospect', prova: r => r.categoria === 'Prospect' },
-    partner:  { etichetta: 'Partner', prova: r => r.categoria === 'Partner' },
+    // Nota Pagine 197 (Ignazio 24/11: «se io lo cerco tra i partner, non c'è»): il partner segnato inattivo (eInattivo, nota 196) sta tra i Partner e non tra gli Ex.
+    // `codici`: il Set degli id delle schede con il codice Amway (le righe della Lista non lo portano con sé)
+    partner:  { etichetta: 'Partner', prova: (r, codici) => r.categoria === 'Partner' || eInattivo(r, codici) },
     clienti:  { etichetta: 'Clienti', prova: r => r.categoria === 'Cliente' },
-    ex:       { etichetta: 'Ex Partner/Cliente', altri: true, prova: r => r.categoria === 'Ex Partner/Cliente' },
+    ex:       { etichetta: 'Ex Partner/Cliente', altri: true, prova: (r, codici) => r.categoria === 'Ex Partner/Cliente' && !eInattivo(r, codici) },
     unlinked: { etichetta: 'Non collegato', altri: true, prova: r => r.categoria === 'Unlinked' },
     archiviati: { etichetta: 'Archiviati', altri: true, prova: r => r.categoria === 'Archiviato' },
     senza:    { etichetta: 'Senza categoria', altri: true, prova: r => !r.categoria },
@@ -94,13 +96,13 @@
   // Con un testo in «Cerca», «Lista» e «All» trovano anche gli archiviati, in fondo (nota Pagine 012, Ignazio 05/10/2026: chi non trovava
   // un nome messo da parte lo inseriva di nuovo). Senza testo gli archiviati restano fuori, come prima.
   const eArchiviato = r => r.categoria === 'Archiviato';
-  function filtraContatti(righe, { filtro = 'lista', testo = '', utenteId, admin = false, oggi, ordine = 'az' } = {}) {
+  function filtraContatti(righe, { filtro = 'lista', testo = '', utenteId, admin = false, oggi, ordine = 'az', codici } = {}) {
     const f = FILTRI[filtro] || FILTRI.lista;
     const tutti = f.tutti && admin;
     const ancheArchiviati = !!piega(testo) && (f === FILTRI.lista || f === FILTRI.all);
     const dopo = confrontoPer(ordine, oggi);
     return righe
-      .filter(r => (tutti || diChi(r, utenteId)) && (f.prova(r) || (ancheArchiviati && eArchiviato(r))) && corrisponde(r, testo))
+      .filter(r => (tutti || diChi(r, utenteId)) && (f.prova(r, codici) || (ancheArchiviati && eArchiviato(r))) && corrisponde(r, testo))
       .sort((a, b) => ((eArchiviato(a) ? 1 : 0) - (eArchiviato(b) ? 1 : 0)) || dopo(a, b));
   }
 
@@ -199,9 +201,9 @@
 
   // Numeri dentro le pillole dei filtri (cantiere 30): quanti nomi ha ogni filtro, senza il testo di Cerca.
   // Stessa regola di `filtraContatti` (un numero, una fonte sola): «Lista» conta senza gli Archiviati.
-  function contaFiltri(righe, { utenteId, admin = false } = {}) {
+  function contaFiltri(righe, { utenteId, admin = false, codici } = {}) {
     const conti = {};
-    Object.keys(FILTRI).forEach(k => { conti[k] = filtraContatti(righe, { filtro: k, utenteId, admin }).length; });
+    Object.keys(FILTRI).forEach(k => { conti[k] = filtraContatti(righe, { filtro: k, utenteId, admin, codici }).length; });
     return conti;
   }
 
