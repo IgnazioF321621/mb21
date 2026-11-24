@@ -90,6 +90,7 @@ function altriCodaHtml() {
   return `<button class="primario" id="altri-coda">Carica altri ${ALTRI_CODA}</button>`;
 }
 async function caricaOggi() {
+  if (typeof leggiSchedeConCodice === 'function') leggiSchedeConCodice();   // nota 196: chi è «Partner ⏸ Inattivo» (una lettura per sessione)
   const oggi = MB21Coda.oggiRoma();
   if (dashFresca(oggi)) return disegnaOggi();
   app.innerHTML = `${testataDashboard()}<div class="sotto">${esc(dataEstesa(oggi))}</div><div class="vuoto">Carico la coda…</div>`;

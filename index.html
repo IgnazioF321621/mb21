@@ -1582,6 +1582,10 @@
      nella Timeline un blocco pieno, non tratteggiato e non trascinabile; «non ci sono» li spegne. Il riquadro «Condividi» di chi organizza sta sotto i punti. */
   .ag-imp.ric-imp i, .ss-riga.ss-ricevuto i { background: var(--az-appuntamento, #5b6b8c); }
   .ag-imp.ric-imp.noci span, .ag-ev.ag-ricevuto.noci { opacity: .55; }
+  .pill-inattivo { display: inline-block; margin-left: 6px; padding: 2px 9px; border-radius: 999px; background: #EEF0F4; color: #5b6b8c; font-size: 12px; font-weight: 700; letter-spacing: 0; text-transform: none; vertical-align: middle; }   /* nota 196 */
+  .mp-inattivo { margin-top: 8px; display: inline-flex; align-items: center; gap: 6px; border: 1.5px solid var(--linea); background: var(--superficie); border-radius: 999px; padding: 6px 14px; font: inherit; font-size: 14px; font-weight: 700; color: var(--testo); cursor: pointer; }
+  .mp-inattivo.fatto { background: #EEF0F4; color: #5b6b8c; border-color: #C9CED8; }
+  .mp-inattivo-aiuto { font-size: 12.5px; color: var(--testo-soft); margin-top: 4px; }
   .cat-ricevuto { --cat: #5b6b8c; --cat-tinta: color-mix(in srgb, #5b6b8c 14%, var(--superficie)); --cat-scuro: #3d4a63; }   /* nota 195: lo stesso blu-grigio dei ricevuti */
   .ag-sev.ag-ricevuto { border: 1.5px solid #5b6b8c; background: color-mix(in srgb, #5b6b8c 14%, var(--superficie)); color: var(--testo); }   /* nota 195: nella Settimana */
   .ag-sev.ag-ricevuto.noci { opacity: .55; }
@@ -3114,6 +3118,24 @@ function centesimi(testo) {
 const CLASSI_CAT = { 'Prospect': 'cat-prospect', 'Cliente': 'cat-cliente', 'Partner': 'cat-partner', 'Ex Partner/Cliente': 'cat-ex',
   'Referral': 'cat-ex', 'Unlinked': 'cat-unlinked', 'Archiviato': 'cat-archiviato', 'Ricevuto': 'cat-ricevuto' };   // nota 195: i pallini degli impegni ricevuti
 function classeCat(categoria) { return CLASSI_CAT[categoria] || 'cat-nessuna'; }   // la classe che tinge card e righe del colore della categoria
+// Nota Pagine 196: i partner segnati inattivi (Ex Partner/Cliente con il codice Amway) si leggono «Partner» con la pillola «⏸ Inattivo», con il colore del Partner.
+// Le schede con il codice si leggono una volta per sessione (leggiCodiciSchede, la lettura che c'era già), per chi si guarda.
+const SCHEDE_CON_CODICE = { di: null, letto: null, ids: new Set(), righe: [] };
+function leggiSchedeConCodice(utenteId) {
+  const di = utenteId || (typeof visto === 'function' && visto() ? visto().id : null);
+  if (!di) return Promise.resolve(SCHEDE_CON_CODICE);
+  if (SCHEDE_CON_CODICE.di === di && SCHEDE_CON_CODICE.letto) return SCHEDE_CON_CODICE.letto;
+  SCHEDE_CON_CODICE.di = di;
+  SCHEDE_CON_CODICE.letto = Promise.resolve(leggiCodiciSchede(di)).then(r => {
+    if (r && !r.error && Array.isArray(r.data)) Object.assign(SCHEDE_CON_CODICE, { ids: new Set(r.data.map(x => x.id)), righe: r.data });
+    return SCHEDE_CON_CODICE;
+  }, () => SCHEDE_CON_CODICE);
+  return SCHEDE_CON_CODICE.letto;
+}
+const eInattivoVista = c => MB21Lista.eInattivo(c, SCHEDE_CON_CODICE.ids);
+const nomeCategoriaVista = c => MB21Lista.nomeCategoriaDi(c, SCHEDE_CON_CODICE.ids);
+const classeCatVista = c => classeCat(eInattivoVista(c) ? 'Partner' : c && c.categoria);
+const pillolaInattivo = c => (eInattivoVista(c) ? '<span class="pill-inattivo">⏸ Inattivo</span>' : '');
 function iniziali(nome) { const p = String(nome || '').trim().split(/\s+/).filter(Boolean); return ((p[0] || '?')[0] + (p[1] ? p[1][0] : '')).toUpperCase(); }
 const CHIAVE_CACHE = 'mb21_coda';
 

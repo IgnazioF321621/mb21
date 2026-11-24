@@ -225,6 +225,7 @@ function mappaCaricata(volumi = MP.volumi) {
 }
 
 function disegnaMappa() {
+  if (mappaV5() && MP.filtro === 'inattivo' && typeof leggiSchedeConCodice === 'function') leggiCatSchedeMappa();   // nota 196
   const M = MB21Mappa;
   if (MP.completa) return disegnaCompleta();
   const cime = radiceVista(M.albero(MP.squadra || [], MP.volumi || []));
@@ -288,6 +289,7 @@ function disegnaMappa() {
           ${giuHtml(M.sottoDi(r))}
           ${v5 ? segniGruppoV5(MP.segni && MP.segni.gruppo[r.id], r) : segniGruppoHtml(MP.segni && MP.segni.gruppo[r.id])}
           ${v5 && MP.filtro === 'avvio' && !r.spento ? avvioRigaV5(avvii.get(r.id)) : ''}
+          ${v5 && MP.filtro === 'inattivo' && !r.spento ? inattivoRigaV5(r) : ''}
           ${r.alLivelloSuccessivo ? `<div class="mp-manca">mancano <b>${num(r.alLivelloSuccessivo)}</b> ${M.bonusSuccessivo(r.bonus) ? `per il ${M.bonusSuccessivo(r.bonus)}%` : 'per il livello successivo'}</div>` : ''}
         </div>
         <button class="mp-completa" data-mpcompleta="${esc(r.id)}" aria-label="Apri la scheda di ${esc(r.nome)}">›</button></div>`;
@@ -295,6 +297,44 @@ function disegnaMappa() {
   }
   app.innerHTML = html + versione();
   collegaMappa();
+}
+
+// Nota Pagine 196 (Ignazio 24/11: «quando clicco su "fermi" mi compare il tasto per far comparire inattivo nella scheda personale e quindi i contatti valgono…»;
+// «rimane Partner ma ha in più la pillola inattivo»): nel filtro «fermi», sotto ogni persona con la scheda nella lista di chi si guarda, «⏸ Segna inattivo».
+// Il tocco la mette in «Ex Partner/Cliente» (con il codice resta riconoscibile: a vista «Partner ⏸ Inattivo», MB21Lista.eInattivo), così i contatti con lui
+// contano e hanno gli esiti di un contatto; le regole dei conteggi non cambiano. Toccato di nuovo torna «Partner». La categoria delle schede: leggiSchedeConCodice.
+function inattivoRigaV5(r) {
+  const sc = schedaMappa(r);
+  if (!sc || !MP.catSchede || (typeof soloGuardo === 'function' && soloGuardo())) return '';
+  const cat = MP.catSchede.get(sc.id);
+  if (cat === 'Partner') return `<button type="button" class="mp-inattivo" data-mpinattivo="${esc(sc.id)}" data-cat="Ex Partner/Cliente">⏸ Segna inattivo</button>
+    <div class="mp-inattivo-aiuto">I contatti con lui contano, con gli esiti di un contatto (Relazione, PM fissato…)</div>`;
+  if (cat === 'Ex Partner/Cliente') return `<button type="button" class="mp-inattivo fatto" data-mpinattivo="${esc(sc.id)}" data-cat="Partner">⏸ Inattivo ✓</button>
+    <div class="mp-inattivo-aiuto">Tocca di nuovo per rimetterlo Partner</div>`;
+  return '';
+}
+function leggiCatSchedeMappa() {
+  const di = visto().id;
+  if (MP.catDi === di) return;
+  MP.catDi = di; MP.catSchede = null;
+  leggiSchedeConCodice(di).then(s => {
+    if (MP.catDi !== di) return;
+    MP.catSchede = new Map((s.righe || []).map(x => [x.id, x.categoria]));
+    if (ST.tab === 'mappa' && !MP.completa && MP.filtro === 'inattivo') disegnaMappa();
+  });
+}
+async function segnaInattivo(id, nuova) {
+  const prima = MP.catSchede.get(id);
+  const scrivi = async cat => {
+    const { error } = await dbq('partner inattivo', supa.from('contatti').update({ categoria: cat, aggiornato_il: new Date().toISOString() }).eq('id', id));
+    if (error) { mostraToast('Non salvato: controlla la connessione e riprova.'); return false; }
+    MP.catSchede.set(id, cat);
+    const riga = (SCHEDE_CON_CODICE.righe || []).find(x => x.id === id); if (riga) riga.categoria = cat;
+    if (typeof aggiornaRiga === 'function') aggiornaRiga(id);   // la Lista e la scheda la sanno subito
+    if (ST.tab === 'mappa') disegnaMappa();
+    return true;
+  };
+  if (await scrivi(nuova)) mostraToast(nuova === 'Partner' ? 'Rimesso Partner' : 'Segnato inattivo: i contatti con lui contano', () => scrivi(prima));
 }
 
 // «👁️ Visione completa» di un partner: storico dei 13 mesi e grafico (decisione C del 16/09)
@@ -529,6 +569,7 @@ function radiceVista(cime) {
 }
 
 function collegaMappa() {
+  app.querySelectorAll('[data-mpinattivo]').forEach(b => { b.onclick = () => segnaInattivo(b.dataset.mpinattivo, b.dataset.cat); });   // nota 196
   collegaPartnerSelect();
   const su = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; };   // v5: «‹ Oggi» e il feedback della testata
   su('v5-indietro', () => { ST.tab = 'oggi'; LS.ritorno = null; vaiAlPrimoLivello(); mostraTab(); window.scrollTo(0, 0); });

@@ -744,8 +744,13 @@
   const NOMI_CATEGORIA = { 'Unlinked': 'Non collegato' };
   const SPIEGA_CATEGORIA = { 'Unlinked': 'Conosciuto/a, nessun recapito' };
   const nomeCategoria = c => NOMI_CATEGORIA[c] || c;
+  // Nota Pagine 196 (Ignazio 24/11: «rimane Partner ma ha in più la pillola inattivo»): un partner fermo segnato inattivo dalla Mappa è una scheda «Ex Partner/Cliente»
+  // con il codice Amway (così i contatti con lui contano, regole dei conteggi intatte); a vista si legge «Partner» con la pillola «⏸ Inattivo». `codici`: un Set di id
+  // delle schede che hanno il codice (quando la riga non lo porta con sé)
+  const eInattivo = (c, codici) => !!c && c.categoria === 'Ex Partner/Cliente' && !!(c.codice_amway || (codici && codici.has(c.id)));
+  const nomeCategoriaDi = (c, codici) => (!c || !c.categoria ? '' : eInattivo(c, codici) ? 'Partner' : nomeCategoria(c.categoria));
 
-  const api = { cepPerCodice, importo, rigaPrezzo, QUOTA_PROVVIGIONE, IVA, contiVendita, contiStimati, scontoCalcolato, scontoAMano, NOMI_CATEGORIA, SPIEGA_CATEGORIA, nomeCategoria, CATEGORIE, FASCE_ETA, AREE, QUALI_PRODOTTI, interesseDa, areaDa, testoInteresse, PREFISSI, PASSI_ONBOARDING, AVVIO_DA_INCONTRO, passoAvvioDa, situazioneAvvio, FILTRI, GIORNI_NEW, eNuovo, piega, corrisponde, filtraContatti,
+  const api = { cepPerCodice, importo, rigaPrezzo, QUOTA_PROVVIGIONE, IVA, contiVendita, contiStimati, scontoCalcolato, scontoAMano, NOMI_CATEGORIA, SPIEGA_CATEGORIA, nomeCategoria, eInattivo, nomeCategoriaDi, CATEGORIE, FASCE_ETA, AREE, QUALI_PRODOTTI, interesseDa, areaDa, testoInteresse, PREFISSI, PASSI_ONBOARDING, AVVIO_DA_INCONTRO, passoAvvioDa, situazioneAvvio, FILTRI, GIORNI_NEW, eNuovo, piega, corrisponde, filtraContatti,
     contaFiltri, cercaNomi, segnoOmonimi, viciniInLista, vociScritte, cittaSuggerite, linkTelegram, linkTelegramCondividi, linkWhatsApp, compieOggi, azioniENote, MESI_RIORDINO, riordinoFra, mesiFra, modoRiordino, propostaRiordino, sezioneIniziale, giorniFermo, SENZA_PARLARE, fraseCard, ORDINI, componiTelefono, separaTelefono, trovaDoppioni, archiviatiUguali, contatoreOnboarding, prossimoPasso, entratoDa, partnerDaAvviare, partnerInPausa, proposteAvvio, pausaLunga, PASSI_SPENTI, postiBiglietto, postoSuo, momento, meseEvento, etichettaEvento, eventoAttivo, eventoDaMostrare, eventiLiberi, controllaPeriodoCep, targheSegni, targhePerContatto, fineMese, fineMesePrecedente, dataUscitaCep, cepDaTogliere, cepDaAccendere, descrizioneCep, data, DATI_PERSONA, SESSI, LAVORI, nomeScelta, daCompletare, cittaFrequenti, cittaConProvincia, BRAND, coloreBrand, brandComprati, haVendite, daConsegnare, daConfermare, GIORNI_CONSEGNA_LONTANA, consegnaLontana, totaliVendite, momentoNelMese, momentiVendita, pagataSulSito, provvigioniMese, scontiMese, MESI_ANNO, provvigioniAnno, prossimoRiordino, rigaVendita, rigaFattore, numeroFattore, numero };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Lista = api;

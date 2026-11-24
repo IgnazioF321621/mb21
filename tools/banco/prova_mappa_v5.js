@@ -156,4 +156,37 @@ prova('Nota 186: sotto la ricerca «Mappa caricata il … alle …», dall\'ora 
   assert.doesNotMatch(V.app.innerHTML, /mp-caricata/);   // senza la data, nessuna riga
 });
 
+prova('Nota 196: nel filtro «fermi» «⏸ Segna inattivo» sotto chi ha la scheda; il tocco la mette Ex Partner/Cliente (con Annulla) e diventa «⏸ Inattivo ✓»; ritoccato torna Partner', async () => {
+  const W = mondo(), scritte = [], toast = [];
+  Object.assign(W.ctx, { soloGuardo: () => false, SCHEDE_CON_CODICE: { righe: [] }, aggiornaRiga: () => {},
+    leggiSchedeConCodice: () => Promise.resolve({ righe: [{ id: 'sB', categoria: 'Partner' }, { id: 'sA', categoria: 'Partner' }] }),
+    dbq: (_, p) => p, mostraToast: (t, an) => toast.push([t, an]),
+    supa: { from: t => ({ update: v => ({ eq: (k, id) => { scritte.push([t, v.categoria, id]); return Promise.resolve({ error: null }); } }) }) } });
+  W.ctx.MP.filtro = 'inattivo'; W.ctx.disegna(); await new Promise(r => setTimeout(r, 0));
+  let h = W.app.innerHTML;
+  assert.match(h, /<button type="button" class="mp-inattivo" data-mpinattivo="sB" data-cat="Ex Partner\/Cliente">⏸ Segna inattivo<\/button>/);
+  assert.match(h, /I contatti con lui contano, con gli esiti di un contatto/);
+  assert.doesNotMatch(h, /data-mpinattivo="sA"/);   // solo nei fermi (A ha 30 VP)
+  W.app.clic('[data-mpinattivo="sB"]'); await new Promise(r => setTimeout(r, 0));
+  assert.deepEqual(JSON.parse(JSON.stringify(scritte)), [['contatti', 'Ex Partner/Cliente', 'sB']]);
+  assert.equal(toast[0][0], 'Segnato inattivo: i contatti con lui contano');
+  h = W.app.innerHTML;
+  assert.match(h, /class="mp-inattivo fatto" data-mpinattivo="sB" data-cat="Partner">⏸ Inattivo ✓<\/button>/);
+  await toast[0][1]();   // Annulla
+  assert.deepEqual(JSON.parse(JSON.stringify(scritte.at(-1))), ['contatti', 'Partner', 'sB']);
+  const altri = mondo(); altri.ctx.MP.filtro = 'attivo'; altri.ctx.disegna(); assert.doesNotMatch(altri.app.innerHTML, /mp-inattivo/);   // negli altri filtri no
+});
+
+prova('Nota 196: «Partner ⏸ Inattivo» = Ex Partner/Cliente con il codice Amway (lista.js); senza codice resta Ex Partner/Cliente', () => {
+  assert.equal(L.eInattivo({ id: 'x', categoria: 'Ex Partner/Cliente', codice_amway: '123' }), true);
+  assert.equal(L.eInattivo({ id: 'x', categoria: 'Ex Partner/Cliente' }, new Set(['x'])), true);
+  assert.equal(L.eInattivo({ id: 'y', categoria: 'Ex Partner/Cliente' }, new Set(['x'])), false);
+  assert.equal(L.eInattivo({ id: 'x', categoria: 'Partner', codice_amway: '123' }), false);
+  assert.equal(L.nomeCategoriaDi({ id: 'x', categoria: 'Ex Partner/Cliente', codice_amway: '1' }), 'Partner');
+  assert.equal(L.nomeCategoriaDi({ id: 'y', categoria: 'Ex Partner/Cliente' }), 'Ex Partner/Cliente');
+  const PLs = leggi('pagina-lista.js'), POs = leggi('pagina-oggi.js');
+  assert.match(PLs, /\$\{inattivoQui\(c\) \? '<span class="pill-inattivo">⏸ Inattivo<\/span>' : ''\}/);   // la testata della scheda
+  assert.match(POs, /\[cat \? \(inattivo5 \? 'Partner ⏸ Inattivo' : cat\)/);   // la scheda della persona in Oggi
+});
+
 console.log(`\n${ok} prove superate`);

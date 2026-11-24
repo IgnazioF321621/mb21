@@ -483,7 +483,8 @@ function disegnaPersonaV5() {
       ${dato.professione ? `<div class="prof">${esc(dato.professione)}</div>` : ''}${luogo ? `<div class="luogo">${esc(luogo)}</div>` : ''}
       <button class="link" data-scheda="${esc(id)}">${ic('persona')} Apri contatto</button></div></div>`;
   }
-  const sotto = [cat || 'Senza categoria', sottoOggi({ motivo: tipo, dato })].filter(Boolean).join(' · ');
+  const inattivo5 = !!chiContatto && typeof eInattivoVista === 'function' && eInattivoVista({ id: chiContatto, categoria: cat });   // nota 196: «Partner ⏸ Inattivo»
+  const sotto = [cat ? (inattivo5 ? 'Partner ⏸ Inattivo' : cat) : 'Senza categoria', sottoOggi({ motivo: tipo, dato })].filter(Boolean).join(' · ');
   app.innerHTML = `<div class="v5-testa" style="--zc:${colore}">${testataV5({ sinistra: `<button class="v5-indietro" id="lv-indietro">‹ ${LV.daClienti ? 'Clienti' : 'Contatti del giorno'}</button>`,
       chi: `<div class="p5-chi"><span class="p5-sigla" style="color:${colore}">${esc(iniziali(nome))}</span><div><b>${esc(nome)}${segnoCoach(chiContatto, nome)}</b><small>${esc(sotto)}</small></div></div>`,
       comandi: conto && !LV.daClienti ? `<span class="v5-conto">${esc(conto)}</span>` : '' })}

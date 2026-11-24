@@ -37,7 +37,10 @@ async function utentiLettura() {
 const COLONNE_LISTA = 'id, user_id, nome, professione, fascia_eta, citta, telefono, categoria, area, brand, referral_di, note, rientro_il, glide_id, creato_il, aggiornato_il, in_coda_dal, categoria_prec, '
   + 'onb_amway, onb_ordine, onb_n21, onb_sogno, onb_starter_pack, onb_lista_start, onb_role_play, onb_contatti, onb_pack_ds, onb_bbs, onb_wes, onb_cep, onb_primo_pm, onb_primo_abo, '
   + 'partner, ultima_area, ultima_modalita, ultimo_tipo, ultima_fase, ultima_il, account_cliente_dal, da_rubrica';
+// nota 196: «Partner ⏸ Inattivo» (eInattivoVista, index.html); dove la funzione non c'è (prove a pezzi) la categoria resta quella scritta
+const inattivoQui = c => typeof eInattivoVista === 'function' && eInattivoVista(c);
 async function leggiListaPagine(utenti) {   // `utenti` (L8b, solo per l'Admin): di chi leggere i nomi
+  if (typeof leggiSchedeConCodice === 'function') leggiSchedeConCodice();   // nota 196: chi è «Partner ⏸ Inattivo» (una lettura per sessione)
   const pagina = k => { const q = supa.from('contatti_lista').select(COLONNE_LISTA); return dbq('lettura lista', (utenti ? q.in('user_id', utenti) : q).order('id').range(k * 1000, k * 1000 + 999)); };
   const prima = await pagina(0);
   if (prima.error) throw prima.error;
@@ -724,12 +727,12 @@ function disegnaScheda() {
   const c = LS.contatto;
   app.innerHTML = `
     ${rigaSuHtml(`<button class="indietro" id="indietro">‹ ${LS.ritorno === 'oggi' ? 'Oggi' : LS.ritorno === 'mappa' ? 'Mappa' : LS.ritorno === 'catalogo' ? 'Da catalogare' : LS.ritorno === 'check' ? 'Check' : LS.ritorno === 'agenda' ? 'Agenda' : LS.ritorno === 'vendite' ? 'Vendite' : LS.ritorno ? 'Report' : 'Lista Nomi'}</button>`)}
-    <div class="testata ${classeCat(c.categoria)}">
+    <div class="testata ${classeCat(inattivoQui(c) ? 'Partner' : c.categoria)}">
       <div class="corpo">
         <div class="alto">
           <span class="ts-pastiglia">${esc(iniziali(c.nome))}</span>
           <div class="ts-chi">
-            <div class="cat">${esc(c.categoria ? MB21Lista.nomeCategoria(c.categoria) : 'Senza categoria')}</div>
+            <div class="cat">${esc(c.categoria ? (inattivoQui(c) ? 'Partner' : MB21Lista.nomeCategoria(c.categoria)) : 'Senza categoria')}${inattivoQui(c) ? '<span class="pill-inattivo">⏸ Inattivo</span>' : ''}</div>
             <h1>${esc(c.nome)}${nuovoBadge(c)}<span class="sv-targhe" id="sv-targhe">${targaAppHtml(c.app)}${targaAccountHtml(c.categoria, accountDellaScheda(c))}${segniInAlto(c.categoria, null) ? targheHtml(null) : ''}</span></h1>
             <div class="sotto" style="margin:0">${esc(c.telefono || '')}</div>
           </div>
@@ -974,7 +977,7 @@ function disegnaDati(c, extra) {
   const codice = extra && extra.codice_amway;
   // la categoria: le pastiglie col colore di ognuna; «Nuova azione» senza categoria (S5c) la apre già, con l'avviso
   const categoria = `<div class="dt-campo${LS.dopoCategoria ? ' dt-pieno' : ''}" id="dt-cat"><small>Categoria</small>${LS.dopoCategoria ? '<div class="avviso" style="margin:4px 0 8px">Per segnare un\'azione serve la categoria: sceglila qui.</div>' : ''}
-    ${valore('cat', c.categoria ? L.nomeCategoria(c.categoria) : '', c.categoria ? `<i class="mc-pallino ${classeCat(c.categoria)}"></i>` : '')}${scrivi('cat')}</div>`;
+    ${valore('cat', c.categoria ? ((typeof eInattivoVista === 'function' && eInattivoVista(c)) ? 'Partner · ⏸ Inattivo' : L.nomeCategoria(c.categoria)) : '', c.categoria ? `<i class="mc-pallino ${classeCat((typeof eInattivoVista === 'function' && eInattivoVista(c)) ? 'Partner' : c.categoria)}"></i>` : '')}${scrivi('cat')}</div>`;
   const compleanno = `<div class="dt-campo" id="dt-comp"><small>Compleanno</small>${!extra ? '<span class="dt-carico">Carico…</span>' : `${valore('comp', MB21Rubrica.compleannoScritto(extra.compleanno))}${scrivi('comp')}`}</div>`;   // nota 174: «12/3/2000» o «12 marzo»
   const account = c.categoria === 'Cliente' ? `<div class="dt-campo dt-pieno" id="dt-account"><small>Cliente con account</small><span class="dt-carico">Carico…</span></div>` : '';
   const html = `<div id="dati-riquadro"><div class="riquadro dt ${classeCat(c.categoria)}">
