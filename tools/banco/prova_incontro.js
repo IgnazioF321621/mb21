@@ -187,6 +187,7 @@ prova('Chiudere con più passi: una chiamata sola al database (esito, spunte in 
   ctx.tracciaDiApertura = async (c, k, poi) => (poi ? poi() : null);
   ctx.MB21Sharing = { proponeTraccia: () => false }; ctx.chiediRientro = async () => null; ctx.chiediData = async () => null; ctx.proponiTracciaDopo = async () => false;
   ctx.fermoScaduto = () => false;   // abbonamento scaduto (nota Pagine 050): la sua prova è in prova_condivisi_vista.js
+  ctx.notaDopoEsito = async () => false;   // nota 198: il foglietto della nota si salta (la sua prova: prova_nota_esito_198.js)
   ctx.accountDaEsito = async () => false;   // «Ordina da solo» (V4 Vendite): qui non c'entra, la sua prova è in prova_lista.js
   vm.createContext(ctx);
   vm.runInContext(pezzo('async function scriviFraseEsito', '// Il momento dopo l\'esito (la chat del coach)') + ';this.chiudiAppuntamento = chiudiAppuntamento', ctx);
@@ -303,6 +304,7 @@ prova('Azione di più di 7 giorni fa (chi importa lo storico): nessuna domanda d
   ctx.chiediRientro = async () => { log.push(['rientro']); return '2026-10-22'; }; ctx.dataBreve = g => g;
   ctx.MB21Sharing = { proponeTraccia: () => true };
   ctx.fermoScaduto = () => false;   // abbonamento scaduto (nota Pagine 050): la sua prova è in prova_condivisi_vista.js
+  ctx.notaDopoEsito = async () => false;   // nota 198: il foglietto della nota si salta (la sua prova: prova_nota_esito_198.js)
   ctx.accountDaEsito = async () => false;   // «Ordina da solo» (V4 Vendite): qui non c'entra, la sua prova è in prova_lista.js
   vm.createContext(ctx);
   vm.runInContext(pezzo('async function scriviFraseEsito', '// Il momento dopo l\'esito (la chat del coach)') + ';this.chiudiAppuntamento = chiudiAppuntamento', ctx);

@@ -234,6 +234,7 @@
   // Un appuntamento (tabella `azioni`) o una serata Team/LdS/OPEN (`spazi`) ha `punti`: righe spuntabili [{ t, fatto }], e `link`: l'indirizzo
   // della chiamata online. Qui solo le regole; il disegno è in pagina-agenda.js (puntiHtml). Un punto non trattato può passare al «Da fare».
   const MAX_PUNTO = 200, MAX_PUNTI = 30, MAX_LINK = 500;
+  const MAX_NOTA = 200;   // nota Pagine 198 (Ignazio 26/11, «aumentiamo a 200 caratteri»): il campo Note di un'azione (modulo, Modifica, foglietto dopo l'esito); prima 100
   const puntiDi = x => (Array.isArray(x && x.punti) ? x.punti : []).filter(r => r && typeof r.t === 'string' && r.t.trim()).map(r => ({ t: r.t, fatto: !!r.fatto }));
   function aggiungiPunto(punti, testo) { const t = testoCosa(testo, MAX_PUNTO); if (!t || punti.length >= MAX_PUNTI) return null; return [...punti, { t, fatto: false }]; }
   // dal modulo «nuovo appuntamento»: una riga per punto, senza quelle vuote; null se non c'è niente da salvare
@@ -988,7 +989,7 @@
     ORA_DA, ORA_A, PASSO_MIN, MINIMO_VISTA, DURATA_CONTATTO, DURATA_NORMALE, durataPredefinita, avvisoFissato, inMinuti, daMinuti, alQuarto,
     fascia, disposizioneGiorno, estremiGriglia, oreUtili, puntiGiorni, contaPerTipo, tipoCorto, ORDINE_TIPI, sovrapposti, stessoIncontro, incontri, fasceLibere, oreProposte,
     AVVENUTO, RISULTATI, daChiudere, passiEsito, passiIncontro, vociIncontro, esitoDaVoci, ESITO_ALTRO, NON_AVVENUTI_INCONTRO, passiFatti, esitoDaiPassi, senzaApp, ramoDellaLinea, parteDi, schedeDelCodice, stessoCodiceDi, frontaleDi, personeConApp, domandaEsito, dopoTelefonata, fattoDi, esitoDaDare, ESITI_CHIUSURA, GIORNI_CHIUSURA, GIORNI_RELAZIONE, GIORNI_NO_RISPOSTA, GIORNI_TELEFONO_SPENTO, GIORNI_STORICO, nelPassato, chiudeRelazione, giorniRisentire, proponeVendita, ICONE_TIPO, controllaGiorno,
-    coseDelGiorno, LEGAMI, legameDi, campiLegame, coseDelMese, coseDellaScala, senzaPeriodo, numeroSettimana, meseAccanto, mesiTra, giorniTra, testoCosa, testoTroppoLungo, MAX_COSA, MAX_VOCE, daMBPlan, MAX_PUNTO, MAX_PUNTI, MAX_LINK, puntiDi, aggiungiPunto, puntiDaRighe, spuntaPunto, togliPunto, contoPunti, linkChiamata, legamePunti, conPunti, MAX_LUOGO, doveDa, testoDove, linkMappa,
+    coseDelGiorno, LEGAMI, legameDi, campiLegame, coseDelMese, coseDellaScala, senzaPeriodo, numeroSettimana, meseAccanto, mesiTra, giorniTra, testoCosa, testoTroppoLungo, MAX_COSA, MAX_VOCE, daMBPlan, MAX_PUNTO, MAX_PUNTI, MAX_LINK, MAX_NOTA, puntiDi, aggiungiPunto, puntiDaRighe, spuntaPunto, togliPunto, contoPunti, linkChiamata, legamePunti, conPunti, MAX_LUOGO, doveDa, testoDove, linkMappa,
     RISPOSTE, nomeRisposta, nomeRispostaDiLui, CONDIVISIONI_SPAZIO, SDS_DEL_TEAM, FRASE_OSPITI, conOspiti, eConsegna, aggiungiOspite, ospitiPerChiOrganizza, chiaveRicevuto, ricevutiDelGiorno, ricevutiComeEventi, titoloRicevuto, eRichiamo, azioniAgenda, passatoSenzaEsito, programmaDelGiorno, ricevutiNuovi, contoRisposte, nomiPerRisposta, puoCondividereAzione, puoCondividereSpazio, RIPETIZIONI, ripetizioniPer, prossimaRipetizione, SCALE, inizioScala, GIORNI_SETTIMANA, giornoSettimana };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Agenda = api;

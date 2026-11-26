@@ -1040,6 +1040,8 @@ async function toccaBottone(id, indice, modalita = modoDi(id)) {
   }
   if (appuntamento) esito.appuntamento_id = appuntamento.id;
   delete MODO_CONTATTO[id];   // nota 187: salvato, la prossima volta si riparte da Telefonata
+  // nota 198: «Vuoi aggiungere una nota?» sull'azione appena scritta (l'Annulla la toglie tutta, nota compresa)
+  if (typeof notaDopoEsito === 'function') await notaDopoEsito({ id: esito.azione_id, note: null, tipo_azione: 'Contatto' }, appuntamento ? 'appuntamento fissato' : bottone.etichetta, pos.contatto.nome);
   // «Ordina da solo» (V4 Vendite, 22/10): il cliente è segnato «Ha un account cliente»; se non parte, l'esito resta e lo si dice
   if (bottone.account) await accountDaEsito(esito.azione_id, null, bottone.etichetta);   // la stessa funzione di Agenda, scheda e «Cambia esito»
   // Consulenza Prodotti fissata: il contatto esce dalla coda e lo segue l'appuntamento, come per PM Fissato e Appuntamento: dal 04/10 lo fa

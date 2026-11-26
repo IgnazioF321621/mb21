@@ -3946,6 +3946,7 @@ async function cambiaEsito(a, esito, dopo, testo) {
     p_azione: a.id, p_contatto: a.contatto_id, p_portato_da: a.portato_da || null, p_modalita: a.modalita || null, p_esito: esito || null,
     p_inizio: a.inizio, p_fine: a.fine || null, p_ospite: a.ospite || null, p_note: a.note || null }));
   if (error) return mostraToast('Non salvato: controlla la connessione e riprova.');
+  if (testo !== 'Fatto') await notaDopoEsito({ ...a }, esito, a.contatti && a.contatti.nome);   // nota 198 (l'Annulla rimette anche le note di prima)
   await accountDaEsito(a.id, a.esito, esito);   // «Ordina da solo» anche da «Cambia esito»: segna l'account cliente (V4)
   await dopo();
   mostraToast(`Esito: ${testo || esito}${prima.rientro_cambiato ? ' · coda aggiornata' : ''}`, async () => {
@@ -4001,6 +4002,36 @@ async function accountDaEsito(azioneId, prima, dopo) {
     return true;
   }
   return false;
+}
+// Nota Pagine 198 (Ignazio 26/11: «quando scelgo l'esito, mi compaia anche "Passare a scrivere la nota"»; grafica approvata, «aumentiamo a 200 caratteri»):
+// appena salvato un esito, il foglietto «Vuoi aggiungere una nota?» (Salva / Salta, o un tocco fuori). Uno solo per scheda, Agenda, Oggi e Contatti del giorno.
+// Restituisce il testo scritto (senza spazi in più) o null.
+function chiediNotaEsito(esito, nome) {
+  return new Promise(risolvi => {
+    const velo = document.createElement('div');
+    velo.className = 'velo';
+    velo.style.zIndex = 30;
+    velo.innerHTML = `<div class="foglio"><h3>Vuoi aggiungere una nota?</h3><p>${esc(['Esito: ' + esito, nome].filter(Boolean).join(' · '))}</p>
+      <div class="campo"><label>Note</label><textarea id="ne-testo" rows="3" maxlength="${MB21Agenda.MAX_NOTA}" placeholder="Cosa ti ha detto, cosa ricordare"></textarea></div>
+      <button class="primario" id="ne-salva">Salva</button><button class="link" id="ne-salta">Salta</button></div>`;
+    document.body.appendChild(velo);
+    const fine = v => { velo.remove(); risolvi(v); };
+    velo.onclick = ev => { if (ev.target === velo) fine(null); };
+    velo.querySelector('#ne-salta').onclick = () => fine(null);
+    velo.querySelector('#ne-salva').onclick = () => fine(velo.querySelector('#ne-testo').value.trim() || null);
+  });
+}
+// La nota del foglietto in fondo alle note dell'azione `e` ({ id, note, tipo_azione }): true se scritta. Niente foglietto se si guarda soltanto
+// e per il «Fatto» che porta al risultato (il foglietto viene con il risultato).
+async function notaDopoEsito(e, esito, nome) {
+  if (soloGuardo() || !esito || esito === MB21Agenda.fattoDi(e.tipo_azione)) return false;
+  const testo = await chiediNotaEsito(esito, nome);
+  if (!testo) return false;
+  const nuova = (e.note ? e.note + '\n' : '') + testo;
+  const { error } = await dbq('nota dell\'esito', supa.from('azioni').update({ note: nuova }).eq('id', e.id));
+  if (error) { mostraToast('Esito salvato, ma la nota non è stata salvata: la puoi aggiungere da Modifica.'); return false; }
+  e.note = nuova;
+  return true;
 }
 // La frase di «Altro» in fondo alle note dell'appuntamento (nota Azioni 031): true se scritta. Stessa funzione per chiudere e per cambiare.
 async function scriviFraseEsito(e, frase) {
@@ -4080,7 +4111,8 @@ async function chiudiAppuntamento(e, esito, opz = {}) {
   const passiAvvio = (chiusura.avvio || []).map(col => ({ col, nome: MB21Lista.PASSI_ONBOARDING.find(p => p[0] === col)[1] }));   // quelli che non erano già spuntati
   // «Altro» con la sua frase (nota Azioni 031): la frase va in fondo alle note dell'appuntamento (si legge in MB Plan e nella scheda); l'Annulla rimette le note di prima
   const notaPrima = e.note || null;
-  const notaScritta = await scriviFraseEsito(e, opz.nota);
+  const fraseScritta = await scriviFraseEsito(e, opz.nota);
+  const notaScritta = (await notaDopoEsito(e, esito, e.contatti && e.contatti.nome)) || fraseScritta;   // nota 198: l'Annulla rimette le note di prima
   for (const p of passiAvvio) passoInCache(e.contatto_id, p.col, true);
   // «Ordina da solo» (V4 Vendite, 22/10): la telefonata di riordino è chiusa (esce dai Riordini da sentire) e il cliente è segnato «Ha un account
   // cliente». Nessuna vendita registrata da sola, nessuna domanda dopo 7 giorni. Se il segno non parte, l'esito resta e lo si dice
@@ -4128,6 +4160,7 @@ async function chiudiAppuntamento(e, esito, opz = {}) {
       const { error: e2 } = await annullaChiusura(!storico);
       if (e2) return mostraToast('Annullamento non riuscito: riprova.');
       let parziale = false;
+      if (notaScritta) parziale = !!(await dbq('togli nota dell\'esito', supa.from('azioni').update({ note: notaPrima }).eq('id', e.id))).error;   // nota 198
       if (creato) parziale = !!(await dbq('annulla prossimo', supa.from('azioni').delete().eq('id', creato.id))).error;
       if (dopo.cosa === 'giorno' && !storico) parziale = !!(await dbq('togli richiamo', supa.from('azioni').update({ data_scelta: null }).eq('id', e.id))).error || parziale;
       await ridisegna();
@@ -4602,7 +4635,7 @@ async function nuovoAppuntamento(opz = {}) {
             ${passi.length ? `<button type="button" class="na-selettore" id="na-passi"><span>${scelti.length ? esc(scelti.join(' · ')) : 'Scegli i passi dell\'incontro'}</span><b>▾</b></button>` : ''}
             <textarea id="na-punti" rows="3" placeholder="Scrivi un punto per riga">${esc(campi.punti)}</textarea></div>`;
         }
-        h += `<div class="campo"><label>Note</label><input id="na-note" maxlength="100" placeholder="Scrivi qualcosa da ricordare" value="${esc(campi.note)}"></div>`;
+        h += `<div class="campo"><label>Note</label><input id="na-note" maxlength="${A.MAX_NOTA}" placeholder="Scrivi qualcosa da ricordare" value="${esc(campi.note)}"></div>`;
         h += `<div class="campo"><label>Portato da</label><div class="fa-persona"><span>${st.portato ? esc(st.portato.nome) : '<span style="color:var(--grigio)">nessuno</span>'}</span>
           ${st.portato ? '<button class="link" id="na-togli-portato" aria-label="Togli">' + ic('chiudi') + '</button>' : '<button class="link" id="na-portato">＋ Scegli</button>'}</div></div>`;
         // «Condividi con» (nota 107): per ogni persona «Come»; per i messaggi «Cosa aggiungo?» (più di una, resta aperta); i punti nell'app solo con PUNTI_CONDIVISI
@@ -4697,7 +4730,7 @@ async function nuovoAppuntamento(opz = {}) {
         }
         if (!serata()) h += `<div class="campo"><label>Portato da</label><div class="fa-persona"><span>${st.portato ? esc(st.portato.nome) : '<span style="color:var(--grigio)">nessuno</span>'}</span>
           ${st.portato ? '<button class="link" id="na-togli-portato" aria-label="Togli">' + ic('chiudi') + '</button>' : '<button class="link" id="na-portato">＋ Scegli</button>'}</div></div>`;
-        if (!serata()) h += `<div class="campo"><label>Note</label><input id="na-note" maxlength="100" placeholder="Scrivi qualcosa da ricordare" value="${esc(campi.note)}"></div>`;
+        if (!serata()) h += `<div class="campo"><label>Note</label><input id="na-note" maxlength="${A.MAX_NOTA}" placeholder="Scrivi qualcosa da ricordare" value="${esc(campi.note)}"></div>`;
         // il link della chiamata e i punti da trattare (nota 026): non per la telefonata in coda; i punti si vedono spuntabili nell'appuntamento.
         // Un riquadro solo (Ignazio 05/10: «Su cosa lavorate?» e «Punti da trattare» si cozzavano): in alto i passi dell'incontro con un Partner
         // (cantiere 48, si salvano in `su_cosa` per il coach e il Report), toccati diventano righe dei punti; sotto le righe libere, una per riga.
@@ -5077,7 +5110,7 @@ async function foglioAzione(id, opz = {}) {
     ${dallaCoda ? `<div class="campo"><label id="fa-scelta-titolo"></label><div class="ag-due-campi"><input type="date" id="fa-scelta-giorno" value="${scelta.giorno}"><input type="time" id="fa-scelta-ora" value="${scelta.ora}"></div><div class="sotto" style="margin:4px 0 0">È il giorno in cui lo vedi in Agenda.</div></div>` : ''}
     ${duraOra ? `<div class="campo"><label>Finisce alle</label><input type="time" id="fa-fine" value="${A.daMinuti(Math.min(1440, A.inMinuti(ora) + duraOra))}"></div>` : ''}
     <div id="fa-avviso"></div>
-    <div class="campo"><label>Note</label><textarea id="fa-note" rows="2" maxlength="${Math.max(100, (a.note || '').length)}">${esc(a.note || '')}</textarea></div>
+    <div class="campo"><label>Note</label><textarea id="fa-note" rows="2" maxlength="${Math.max(A.MAX_NOTA, (a.note || '').length)}">${esc(a.note || '')}</textarea></div>
     </div>
     <div class="errore" id="fa-errore"></div>
     <div class="mc-fondo">${opz.ritorno ? '<button class="link" id="fa-contatto">' + ic('persona') + ' Apri contatto</button>' : '<button class="link" id="fa-no">Annulla</button>'}
