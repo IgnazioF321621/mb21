@@ -79,6 +79,20 @@ prova('Niente foglietto per chi guarda soltanto e per il «Fatto» che porta al 
   assert.equal(await b.ctx.nota({ id: 'az1', tipo_azione: 'Piano Marketing' }, fase), false); assert.equal(b.veli.length, 0);
 });
 
+prova('Nota 199: niente foglietto senza un dialogo («Telefono spento», «No Risposta»); sì con gli altri, «No Interesse» compreso (una regola sola)', async () => {
+  assert.equal(JSON.stringify(A.ESITI_SENZA_DIALOGO), JSON.stringify(['Telefono spento', 'No Risposta']));
+  for (const x of ['Telefono spento', 'No Risposta']) {
+    assert.equal(A.conDialogo(x), false);
+    const a = ambiente(); assert.equal(await a.ctx.nota({ id: 'az1', tipo_azione: 'Contatto' }, x, 'Persona Finta'), false); assert.equal(a.veli.length, 0); assert.equal(a.scritte.length, 0);
+  }
+  for (const x of ['No Interesse', 'Richiamare', 'Interessato', 'appuntamento fissato']) {
+    assert.equal(A.conDialogo(x), true, x);
+    const a = ambiente(); const p = a.ctx.nota({ id: 'az1', tipo_azione: 'Contatto' }, x);
+    await tocca(a, v => v.clic('#ne-salta')); await p; assert.equal(a.veli.length, 1, x);
+  }
+  assert.equal(A.ESITI_NON_ANDATI.includes('No Interesse'), true);   // la riga degli esiti «non andati» resta com'era
+});
+
 prova('Agganciato in tutti i posti dove si sceglie l\'esito, con l\'Annulla che toglie anche la nota', () => {
   const chiudi = pezzo(IDX, 'async function chiudiAppuntamento');   // scheda (azioni), Agenda, persona in Oggi, telefonate scelte
   assert.match(chiudi, /const notaScritta = \(await notaDopoEsito\(e, esito, e\.contatti && e\.contatti\.nome\)\) \|\| fraseScritta;/);

@@ -4021,10 +4021,10 @@ function chiediNotaEsito(esito, nome) {
     velo.querySelector('#ne-salva').onclick = () => fine(velo.querySelector('#ne-testo').value.trim() || null);
   });
 }
-// La nota del foglietto in fondo alle note dell'azione `e` ({ id, note, tipo_azione }): true se scritta. Niente foglietto se si guarda soltanto
-// e per il «Fatto» che porta al risultato (il foglietto viene con il risultato).
+// La nota del foglietto in fondo alle note dell'azione `e` ({ id, note, tipo_azione }): true se scritta. Niente foglietto se si guarda soltanto,
+// per il «Fatto» che porta al risultato (il foglietto viene con il risultato) e, nota 199, senza un dialogo («Telefono spento», «No Risposta»: MB21Agenda.conDialogo).
 async function notaDopoEsito(e, esito, nome) {
-  if (soloGuardo() || !esito || esito === MB21Agenda.fattoDi(e.tipo_azione)) return false;
+  if (soloGuardo() || !MB21Agenda.conDialogo(esito) || esito === MB21Agenda.fattoDi(e.tipo_azione)) return false;
   const testo = await chiediNotaEsito(esito, nome);
   if (!testo) return false;
   const nuova = (e.note ? e.note + '\n' : '') + testo;

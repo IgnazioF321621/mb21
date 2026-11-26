@@ -59,6 +59,10 @@
   // Esiti di una telefonata non andata: a video stanno sotto quelli buoni, su una riga loro (index.html → bottoniEsiti).
   // PM e Follow Up no (Ignazio 21/09): lì i risultati sono quattro, in fila dal migliore al peggiore, vedi RISULTATI.
   const ESITI_NON_ANDATI = ['Telefono spento', 'No Interesse', 'No Risposta'];
+  // Nota Pagine 199 (Ignazio 26/11: «non ha senso quando il telefono è spento o la persona non ha risposto… quando c'è un dialogo»): gli esiti senza
+  // un dialogo, dopo i quali non si chiede la nota (chiediNotaEsito, nota 198). «No Interesse» no: lì si è parlato
+  const ESITI_SENZA_DIALOGO = ['Telefono spento', 'No Risposta'];
+  const conDialogo = esito => !!esito && !ESITI_SENZA_DIALOGO.includes(esito);
   const esitiInDueRighe = bottoni => [bottoni.filter(x => !ESITI_NON_ANDATI.includes(x)), bottoni.filter(x => ESITI_NON_ANDATI.includes(x))].filter(g => g.length);
   // Esiti dati dalla coda che portano con sé un giorno scelto (`data_scelta`): con gli altri il giorno non serve più
   const ESITI_CON_GIORNO = ['Richiamare', 'PM Fissato', 'Appuntamento'];
@@ -983,7 +987,7 @@
       .map(x => daMinuti(x.m));
   }
 
-  const api = { ESITI_NON_ANDATI, esitiInDueRighe, ESITI_CON_GIORNO, fineSlittata, SOTTOTIPI, TIPI, CATEGORIE, DURATE, COLORI, GIORNI, tipiPer, sottotipiPer, fasiPer, suCosaPer, passiSuggeriti, passiAmmessi, TUTTI_I_PASSI, PASSI_RIPRESA, nomePasso, NOMI_PASSO, conOspite, sceltePerModifica, ETICHETTE_SOTTOTIPO, etichettaSottotipo,
+  const api = { ESITI_NON_ANDATI, ESITI_SENZA_DIALOGO, conDialogo, esitiInDueRighe, ESITI_CON_GIORNO, fineSlittata, SOTTOTIPI, TIPI, CATEGORIE, DURATE, COLORI, GIORNI, tipiPer, sottotipiPer, fasiPer, suCosaPer, passiSuggeriti, passiAmmessi, TUTTI_I_PASSI, PASSI_RIPRESA, nomePasso, NOMI_PASSO, conOspite, sceltePerModifica, ETICHETTE_SOTTOTIPO, etichettaSottotipo,
     partiRoma, isoDaRoma, spostaGiorno, settimana, titoloMese, eventiDelGiorno, riga, orario,
     oraProposta, passatiSenzaEsito, validaAppuntamento, tipoDaCoda, senzaDoppioniCoda, ORE_CONFERMA, confermeDaFare, testoConferma, rispostaValida, confermeConRisposte, quandoBreve, risposteNuove, riordiniDaSentire, INIZIO_RIORDINI_GLIDE, ESITO_ATTESA_ORDINE,
     ORA_DA, ORA_A, PASSO_MIN, MINIMO_VISTA, DURATA_CONTATTO, DURATA_NORMALE, durataPredefinita, avvisoFissato, inMinuti, daMinuti, alQuarto,
