@@ -192,8 +192,21 @@ async function apriLista() {
     const id = LS.apriContatto; LS.apriContatto = null;
     if (LS.righe.find(x => x.id === id)) return apriScheda(id);
   }
+  // nota Pagine 200 (Ignazio 27/11: «se mi sposto in altre pagine e poi ritorno in lista, mi deve ritrovare la scheda aperta… e non partire dalla A»):
+  // la scheda aperta dalla Lista e lasciata per un'altra pagina si riapre, con la barretta e il punto dell'elenco di allora (filtro, ricerca e ordine
+  // restano in LS). Toccando «Lista» stando sulla scheda, invece, come «‹ Lista Nomi»: l'elenco al punto di quel nome. Se il nome non c'è più, si
+  // parte normalmente. Solo in memoria: chiusa e riaperta l'app, si riparte dall'elenco.
+  const u = LS.ultimaScheda, chiudi = LS.chiudiScheda;
+  LS.chiudiScheda = false;
+  if (u && LS.righe.some(x => x.id === u.id)) {
+    LS.giro = u.giro; LS.scrollLista = u.scroll; LS.mostrate = Math.max(LS.mostrate, u.mostrate || BLOCCO);
+    if (!chiudi) return apriScheda(u.id, { giro: true });
+    disegnaLista(); return window.scrollTo(0, u.scroll || 0);
+  }
   disegnaLista();
 }
+// nota 200: la scheda che si vede adesso è quella aperta dalla Lista (il tab «Lista» allora la chiude, index.html)
+const schedaRicordataAperta = () => ST.tab === 'lista' && !!LS.contatto && !LS.ritorno && !!LS.ultimaScheda && LS.ultimaScheda.id === LS.contatto.id;
 
 // Nomi di chi è scelto nel Partner Select (un partner o l'elenco di «Tutti»)
 const utentiLista = () => (vediTutti() ? idVisti() : visto().id);
@@ -226,6 +239,7 @@ function contattaHtml(telefono, soloScrivere) {
 }
 
 function disegnaLista() {
+  LS.ultimaScheda = null;   // nota 200: si vede l'elenco, nessuna scheda da ritrovare
   if (LS.filtro === 'all') LS.filtro = 'lista';   // dal cantiere 15 «All» = Partner Select «Tutti»
   const f = MB21Lista.FILTRI[LS.filtro];
   const conti = MB21Lista.contaFiltri(LS.righe, { utenteId: utentiLista(), admin: eAdmin(), codici: codiciQui() });
@@ -623,6 +637,8 @@ function apriScheda(id, { daLista = false, giro = false } = {}) {
     LS.scrollLista = ST.tab === 'lista' && !LS.ritorno ? window.scrollY : 0;   // per tornare al punto della Lista da cui si è aperta
     LS.giro = daLista ? nomiDellElenco().map(r => r.id) : null;   // nota 158: l'elenco di quel momento, nello stesso ordine
   }
+  // nota 200: la scheda aperta dalla Lista (anche con la barretta) si ricorda, con il punto dell'elenco, per ritrovarla tornando in Lista
+  if (ST.tab === 'lista' && !LS.ritorno) LS.ultimaScheda = { id, scroll: LS.scrollLista, giro: LS.giro, mostrate: LS.mostrate };
   window.scrollTo(0, 0);
   disegnaScheda();
 }

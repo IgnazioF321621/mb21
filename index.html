@@ -3517,7 +3517,7 @@ async function scegliPartner() {
   const nuovo = v.id === ST.utente.id ? null : v.id;
   if (nuovo === PS.scelto) return;
   PS.scelto = nuovo;
-  CK.giorni = null; SL.chi = null; SL.segniAl = undefined; RP.azioni = null; RP.vista = 'report'; LS.contatto = null; LS.ritorno = null; ST.aperta = null;
+  CK.giorni = null; SL.chi = null; SL.segniAl = undefined; RP.azioni = null; RP.vista = 'report'; LS.contatto = null; LS.ritorno = null; LS.ultimaScheda = null; ST.aperta = null;
   ST.catalogo = null; ST.catalogoDi = null; ST.vistaCatalogo = false;   // nota Pagine 019: «Da catalogare» della Lista mostrava i nomi del partner di prima
   MP.schede = null; MP.targhe = null; MP.aperti = new Set(); MP.cerca = ''; MP.completa = null;
   window.scrollTo(0, 0);
@@ -3608,6 +3608,7 @@ function mostraTab() {
   nav.querySelectorAll('button').forEach(b => {
     b.onclick = () => {
       if (b.dataset.tab === 'agenda' && typeof AG !== 'undefined') AG.giorno = null;   // il tab «MB Plan» apre su oggi (Ignazio 04/10, nota 021)
+      if (b.dataset.tab === 'lista' && typeof schedaRicordataAperta === 'function' && schedaRicordataAperta()) LS.chiudiScheda = true;   // nota 200
       eseguiDopoScheda(); ST.tab = b.dataset.tab; LS.ritorno = null; if (ST.tab === 'report') RP.vista = 'report'; if (ST.tab === 'admin') AD.sezione = null; if (ST.tab === 'oggi') vaiAlPrimoLivello(); mostraTab();
     };
   });
