@@ -335,6 +335,11 @@
   // mb21_vendita_agenda: Contatto · Presenza, nota «Consegna · prodotto») non è una telefonata: niente «Com'è andato il contatto?»,
   // solo «Ordine fatto» (lo stesso tasto della vendita, V1 22/10; prima «Consegnato») e «Sposta la consegna» (cambia vendite.consegna; il promemoria lo segue da solo).
   const eConsegna = a => !!a && a.tipo_azione === 'Contatto' && a.modalita === 'Presenza' && /^Consegna · /.test(a.note || '');
+  // Trascinare un appuntamento nella griglia (modello Woday, fase 1, 28/11/2026): si trascina solo quello che il suo foglio permette di spostare con «Sposta»
+  // (stessa regola di extraEvento): niente consegne (nota 051: si spostano con «Sposta la consegna»), niente richiami dalla coda già chiusi (lì c'è «Fissa
+  // appuntamento»), niente impegni ricevuti, cose da fare o spazi (hanno regole loro). Il salvataggio è quello del «Sposta» (eseguiSposta, index.html).
+  const siTrascina = a => !!a && !!a.id && !!a.inizio && !a._ricevuto && !a._cosa && !a._spazio && !eConsegna(a)
+    && !(a.tipo_azione === 'Contatto' && !!a.data_scelta && a.esito !== 'Richiamare');
   const OSPITE_MAX = 60, OSPITI_MAX = 30;
   // un nome in più nell'elenco: spazi puliti, niente vuoti né doppioni (maiuscole a parte), al massimo 30
   function aggiungiOspite(ospiti, nome) {
@@ -995,6 +1000,7 @@
     AVVENUTO, RISULTATI, daChiudere, passiEsito, passiIncontro, vociIncontro, esitoDaVoci, ESITO_ALTRO, NON_AVVENUTI_INCONTRO, passiFatti, esitoDaiPassi, senzaApp, ramoDellaLinea, parteDi, schedeDelCodice, stessoCodiceDi, frontaleDi, personeConApp, domandaEsito, dopoTelefonata, fattoDi, esitoDaDare, ESITI_CHIUSURA, GIORNI_CHIUSURA, GIORNI_RELAZIONE, GIORNI_NO_RISPOSTA, GIORNI_TELEFONO_SPENTO, GIORNI_STORICO, nelPassato, chiudeRelazione, giorniRisentire, proponeVendita, ICONE_TIPO, controllaGiorno,
     coseDelGiorno, LEGAMI, legameDi, campiLegame, coseDelMese, coseDellaScala, senzaPeriodo, numeroSettimana, meseAccanto, mesiTra, giorniTra, testoCosa, testoTroppoLungo, MAX_COSA, MAX_VOCE, daMBPlan, MAX_PUNTO, MAX_PUNTI, MAX_LINK, MAX_NOTA, puntiDi, aggiungiPunto, puntiDaRighe, spuntaPunto, togliPunto, contoPunti, linkChiamata, legamePunti, conPunti, MAX_LUOGO, doveDa, testoDove, linkMappa,
     RISPOSTE, nomeRisposta, nomeRispostaDiLui, CONDIVISIONI_SPAZIO, SDS_DEL_TEAM, FRASE_OSPITI, conOspiti, eConsegna, aggiungiOspite, ospitiPerChiOrganizza, chiaveRicevuto, ricevutiDelGiorno, ricevutiComeEventi, titoloRicevuto, eRichiamo, azioniAgenda, passatoSenzaEsito, programmaDelGiorno, ricevutiNuovi, contoRisposte, nomiPerRisposta, puoCondividereAzione, puoCondividereSpazio, RIPETIZIONI, ripetizioniPer, prossimaRipetizione, SCALE, inizioScala, GIORNI_SETTIMANA, giornoSettimana };
+  api.siTrascina = siTrascina;   // Woday fase 1 (28/11/2026)
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Agenda = api;
 })(this);

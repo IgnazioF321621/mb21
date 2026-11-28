@@ -1514,6 +1514,8 @@
   body.sto-trascinando, body.sto-trascinando * { cursor: grabbing !important; user-select: none; }
   .ag-ev.ag-cosa { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
   .ag-ev.ag-cosa.trascina { z-index: 6; box-shadow: 0 6px 18px rgba(16,21,31,.22); border-style: solid; }
+  .ag-ore .ag-ev[data-evento], .ag-ore .ag-sev[data-evento] { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }   /* Woday fase 1: gli appuntamenti si trascinano */
+  .ag-ev[data-evento].trascina, .ag-sev[data-evento].trascina { z-index: 6; box-shadow: 0 6px 18px rgba(16,21,31,.22); }
   .ag-foglio .cosa button { border: 0; background: none; font-family: inherit; color: var(--testo); padding: 0; margin: 0; text-align: left; }
   .ag-foglio .cosa .spunta { flex: none; width: 24px; height: 24px; margin: 9px 0; border-radius: 50%; border: 2px solid #4fb3a9; display: inline-flex; align-items: center; justify-content: center; color: #4fb3a9; }
   .ag-foglio .cosa .spunta svg.ic { width: 24px; height: 24px; }
@@ -4327,9 +4329,23 @@ function spostaAppuntamento(e, dopo) {
     if (!g || !o) return;
     if (A.controllaGiorno(g)) return mostraToast(A.controllaGiorno(g));
     if (durata0 && !durataOra()) return mostraToast('L\'ora di fine deve venire dopo quella di inizio.');
-    const nuovaData = A.isoDaRoma(g, o);
     const durata = durataOra() || durata0;
     velo.remove();
+    return eseguiSposta(e, g, o, durata, dopo);
+  };
+}
+// Il salvataggio dello spostamento, uguale per il foglio «Sposta» e per il trascinamento nella griglia (Woday, fase 1, 28/11/2026):
+// una regola sola (stessa schermata, stesso codice ovunque). `e` = l'appuntamento (anche un incontro con `_persone`), `g` e `o` = giorno e ora
+// nuovi (Roma), `durata` = minuti (0 = senza fine), `dopo(g)` ridisegna chi l'ha chiamato. Il codice qui sotto è quello che stava dentro il «Sposta», identico.
+async function eseguiSposta(e, g, o, durata, dopo) {
+  const A = MB21Agenda;
+  const dallaCoda = e.tipo_azione === 'Contatto' && !!e.data_scelta;
+  const { giorno } = A.partiRoma(dallaCoda ? e.data_scelta : e.inizio);
+  const gruppo = e._persone && e._persone.length > 1 ? e._persone : [e], aperte = gruppo.filter(x => !x.esito);
+  const tutte = aperte.length && aperte.length < gruppo.length ? aperte : gruppo, ids = tutte.map(x => x.id);
+  dopo = dopo || (async gg => { AG.aperta = e.id; await apriAgenda(gg); });
+  {
+    const nuovaData = A.isoDaRoma(g, o);
     if (dallaCoda) {   // richiamo dalla coda: con il giorno si sposta anche il rientro in coda (modifica_azione, come il foglio «Modifica»)
       const { data: prima, error } = await dbq('sposta richiamo', supa.rpc('modifica_azione', {
         p_azione: e.id, p_contatto: e.contatto_id, p_portato_da: e.portato_da || null, p_modalita: e.modalita || null, p_esito: e.esito || null,
@@ -4365,7 +4381,7 @@ function spostaAppuntamento(e, dopo) {
       await dopo(giorno);
       if (eAnnulla) return false;
     }, () => spostaAppuntamento(e, dopo));
-  };
+  }
 }
 
 // Elimina un'azione (Agenda e scheda contatto, stesso codice; `dopo()` ridisegna chi l'ha aperto). Avviso con Annulla che la rimette.

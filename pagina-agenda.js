@@ -1057,19 +1057,49 @@ const TR = { riga: null, attr: null, avviato: false, timer: null, x0: 0, y0: 0, 
 // modello (tutti i giorni). Gli appuntamenti veri non si trascinano.
 function bloccoDa(ev) {
   if (typeof ST === 'undefined' || ST.tab !== 'agenda') return null;
+  const ap = ev.target.closest && ev.target.closest('.ag-ore .ag-ev[data-evento], .ag-ore .ag-sev[data-evento]');
+  if (ap) return bloccoAppuntamento(ap);
   const el = ev.target.closest && ev.target.closest('.ag-ore .ag-ev.ag-cosa[data-cosa-blocco]');
   if (!el) return null;
   const ore = el.closest('.ag-ore');
   return { el, ore, top0: parseFloat(el.style.top) || 0, alt: Number(ore.dataset.alt) || ALT_ORA, da: Number(ore.dataset.da) || 0 };
 }
+// Modello Woday, fase 1 (Ignazio 28/11/2026): anche gli appuntamenti si trascinano, nel Giorno su e giù e nella Settimana anche da un giorno all'altro,
+// con lo stesso gesto delle cose da fare (dito fermo 450 ms; Mac: premi e trascina) e a scatti di 15 minuti. Si trascina solo quello che il foglio
+// permette di spostare (MB21Agenda.siTrascina) e si salva con la stessa funzione del «Sposta» (eseguiSposta): conferma da rifare, riga della coda che segue,
+// avviso a chi lo riceve se è condiviso, «Annulla». Un blocco che raccoglie più impegni nella Settimana («molti») non si trascina: si apre il giorno.
+const eventoDaBlocco = (id, g) => MB21Agenda.incontri(MB21Agenda.eventiDelGiorno(AG.azioni, g)).find(x => x.id === id);
+const durataDi = e => (e.tipo_azione === 'Contatto' && e.data_scelta) || !e.fine || !(Date.parse(e.fine) > Date.parse(e.inizio)) ? 0 : Math.round((Date.parse(e.fine) - Date.parse(e.inizio)) / 60000);
+function bloccoAppuntamento(el) {
+  const sett = el.classList.contains('ag-sev'), g = sett ? el.dataset.giorno : AG.giorno;
+  const e = g && eventoDaBlocco(el.dataset.evento, g);
+  if (!MB21Agenda.siTrascina(e)) return null;
+  const ore = el.closest('.ag-ore');
+  return { el, ore, e, sett, giorno: g, top0: parseFloat(el.style.top) || 0, alt: Number(ore.dataset.alt) || ALT_ORA, da: Number(ore.dataset.da) || 0 };
+}
+async function finePosaAppuntamento(b, velo) {
+  const A = MB21Agenda, e = b.e, ora = A.daMinuti(b.min), g = b.giorno;
+  const prima = A.partiRoma(e.tipo_azione === 'Contatto' && e.data_scelta ? e.data_scelta : e.inizio);
+  if (g === prima.giorno && ora === prima.ora) return ridisegnaDopoBlocco(velo);   // lasciato dov'era
+  if (A.controllaGiorno(g)) { mostraToast(A.controllaGiorno(g)); return ridisegnaDopoBlocco(velo); }
+  if (velo) velo.remove();
+  AG.aperta = null;
+  // si resta nella vista e nel giorno guardati (nella Settimana si vede il blocco nella colonna nuova); «Annulla» ridisegna lo stesso
+  return eseguiSposta(e, g, ora, durataDi(e), async () => { await apriAgenda(AG.giorno); });
+}
 function minutiBlocco(b, top) { return b.da + Math.round(top / b.alt * 60 / 15) * 15; }
-function muoviBlocco(y) {
+function muoviBlocco(y, x) {
   const b = TR.blocco, A = MB21Agenda;
+  if (b.sett && x != null) {   // la colonna sotto il dito dice il giorno (le colonne sono 7, larghe uguali)
+    const r = b.ore.getBoundingClientRect(), col = Math.max(0, Math.min(6, Math.floor((x - r.left) / r.width * 7)));
+    if (AG.settimana[col]) { b.giorno = AG.settimana[col]; b.el.style.left = `calc(${col * 100 / 7}% + 1px)`; }
+  }
   const alto = parseFloat(b.el.style.height) || 20, max = (parseFloat(b.ore.style.height) || 0) - alto;
   const m = Math.max(b.da, minutiBlocco(b, Math.min(Math.max(0, b.top0 + (y - TR.y0)), Math.max(0, max))));
   b.min = m;
   b.el.style.top = Math.round((m - b.da) / 60 * b.alt) + 'px';
   const eti = b.el.querySelector('small') || b.el.querySelector('b');
+  if (!eti) return;   // un blocco bassissimo della Settimana non ha scritte
   if (!b.testo0) b.testo0 = eti.textContent;
   eti.textContent = A.daMinuti(m) + (eti.tagName === 'B' ? ' · ' + b.testo0 : '');
 }
@@ -1082,6 +1112,7 @@ async function fineBlocco() {
   b.el.classList.remove('trascina');
   const A = MB21Agenda, id = b.el.dataset.cosaBlocco, velo = b.el.closest('.velo');
   if (b.min == null) return;
+  if (b.e) return finePosaAppuntamento(b, velo);
   const ora = A.daMinuti(b.min);
   if (id.startsWith('spazio-')) {   // uno spazio da riempire: si sposta e basta (27/09)
     const x = (AG.spazi || []).find(y => y.id === id.slice(7));
@@ -1173,7 +1204,7 @@ if (typeof document !== 'undefined' && document.addEventListener) {
       const t = ev.touches[0];
       if (!TR.avviato) { if (Math.abs(t.clientX - TR.x0) > 8 || Math.abs(t.clientY - TR.y0) > 8) { clearTimeout(TR.timer); TR.blocco = null; } return; }
       ev.preventDefault();
-      return muoviBlocco(t.clientY);
+      return muoviBlocco(t.clientY, t.clientX);
     }
     if (!TR.riga) return;
     const t = ev.touches[0];
@@ -1194,9 +1225,9 @@ if (typeof document !== 'undefined' && document.addEventListener) {
   document.addEventListener('mousemove', ev => {
     if (TR.blocco) {
       if (ev.buttons === 0) return fineBlocco();
-      if (!TR.avviato) { if (Math.abs(ev.clientY - TR.y0) < 6) return; TR.avviato = true; TR.blocco.el.classList.add('trascina'); document.body.classList.add('sto-trascinando'); }
+      if (!TR.avviato) { if (Math.abs(ev.clientY - TR.y0) < 6 && !(TR.blocco.sett && Math.abs(ev.clientX - TR.x0) >= 6)) return; TR.avviato = true; TR.blocco.el.classList.add('trascina'); document.body.classList.add('sto-trascinando'); }
       ev.preventDefault();
-      return muoviBlocco(ev.clientY);
+      return muoviBlocco(ev.clientY, ev.clientX);
     }
     if (!TR.riga) return;
     if (ev.buttons === 0) { if (TR.avviato) fineTrascina(); else TR.riga = null; return; }   // il tasto è già stato lasciato

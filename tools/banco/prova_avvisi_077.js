@@ -52,7 +52,7 @@ function mondo(extra = {}) {
     supa: { from: () => { const q = new Proxy({}, { get: () => () => q }); return q; }, functions: { invoke: (nome, o) => { chiamate.push([nome, o.body]); return Promise.resolve({ data: null, error: null }); } } },
     ...extra };
   vm.createContext(ctx);
-  vm.runInContext(pezzo(IDX, 'function spostaAppuntamento') + 'this.sposta = spostaAppuntamento;', ctx);
+  vm.runInContext(pezzo(IDX, 'function spostaAppuntamento') + pezzo(IDX, 'async function eseguiSposta') + 'this.sposta = spostaAppuntamento;', ctx);   // dal 28/11 il salvataggio sta in eseguiSposta (lo usa anche il trascinamento)
   const sposta = async e => {
     ctx.sposta(e, async () => {});
     const v = fogli.at(-1);
