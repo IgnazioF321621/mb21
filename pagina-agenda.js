@@ -1299,6 +1299,8 @@ const TR = { riga: null, attr: null, avviato: false, timer: null, x0: 0, y0: 0, 
 // modello (tutti i giorni). Gli appuntamenti veri non si trascinano.
 function bloccoDa(ev) {
   if (typeof ST === 'undefined' || ST.tab !== 'agenda') return null;
+  const sp = ev.target.closest && ev.target.closest('.ag-ore .ag-sev.ag-spazio[data-spazio-id]');
+  if (sp) return bloccoSpazio(sp);
   const ap = ev.target.closest && ev.target.closest('.ag-ore .ag-ev[data-evento], .ag-ore .ag-sev[data-evento]');
   if (ap) return bloccoAppuntamento(ap);
   const el = ev.target.closest && ev.target.closest('.ag-ore .ag-ev.ag-cosa[data-cosa-blocco]');
@@ -1318,6 +1320,29 @@ function bloccoAppuntamento(el) {
   if (!MB21Agenda.siTrascina(e)) return null;
   const ore = el.closest('.ag-ore');
   return { el, ore, e, sett, giorno: g, top0: parseFloat(el.style.top) || 0, alt: Number(ore.dataset.alt) || ALT_ORA, da: Number(ore.dataset.da) || 0 };
+}
+// Ignazio 28/11/2026 (dopo la prova della fase 3): anche gli spazi della settimana (PM, Telefonate, SdS/OPEN, serate di squadra: quelli tratteggiati,
+// senza una persona sola) si trascinano nei Giorni e nella Settimana, di ora e di giorno, con lo stesso gesto degli appuntamenti. Si salva come
+// «Cambia giorno e ora» di foglioSpazio (solo `inizio`, la durata resta), con «Annulla». Gli impegni ricevuti da altri restano fermi (sono di chi li ha fatti).
+function bloccoSpazio(el) {
+  if (vediTutti() || (typeof soloGuardo === 'function' && soloGuardo())) return null;
+  const x = (AG.spazi || []).find(y => y.id === el.dataset.spazioId), ore = el.closest('.ag-ore');
+  if (!x || !ore) return null;
+  return { el, ore, spazio: x, sett: true, giorno: el.dataset.vai || MB21Spazi.orario(x).giorno, top0: parseFloat(el.style.top) || 0, alt: Number(ore.dataset.alt) || ALT_ORA, da: Number(ore.dataset.da) || 0 };
+}
+async function finePosaSpazio(b, velo) {
+  const A = MB21Agenda, S = MB21Spazi, x = b.spazio, ora = A.daMinuti(b.min), g = b.giorno, o = S.orario(x);
+  if (g === o.giorno && ora === o.ora) return ridisegnaDopoBlocco(velo);   // lasciato dov'era
+  const prima = x.inizio, inizio = A.isoDaRoma(g, ora);
+  const { error } = await dbq('sposta spazio', supa.from('spazi').update({ inizio }).eq('id', x.id));
+  if (error) { mostraToast('Non spostato: controlla la connessione e riprova.'); return ridisegnaDopoBlocco(velo); }
+  x.inizio = inizio;
+  ridisegnaDopoBlocco(velo);
+  mostraToast(`${S.titolo(x)}: ${giornoBreve(g).toLowerCase()} alle ${ora}`, async () => {
+    const { error: e2 } = await dbqAvvisa('annulla sposta spazio', supa.from('spazi').update({ inizio: prima }).eq('id', x.id), 'Annullamento non riuscito: controlla la connessione e riprova.');
+    if (!e2) x.inizio = prima;
+    disegnaAgenda();
+  });
 }
 async function finePosaAppuntamento(b, velo) {
   const A = MB21Agenda, e = b.e, ora = A.daMinuti(b.min), g = b.giorno;
@@ -1356,6 +1381,7 @@ async function fineBlocco() {
   b.el.classList.remove('trascina');
   const A = MB21Agenda, id = b.el.dataset.cosaBlocco, velo = b.el.closest('.velo');
   if (b.min == null) return;
+  if (b.spazio) return finePosaSpazio(b, velo);
   if (b.e) return finePosaAppuntamento(b, velo);
   const ora = A.daMinuti(b.min);
   if (id.startsWith('spazio-')) {   // uno spazio da riempire: si sposta e basta (27/09)

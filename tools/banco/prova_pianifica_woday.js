@@ -127,4 +127,12 @@ prova('Coda: chi ha una telefonata fissata per un giorno che deve venire non tor
   assert.doesNotMatch(funzione(PD, 'async function caricaScelte'), /\.lt\('inizio'/);
 });
 
+prova('Gli spazi della griglia si trascinano di ora e di giorno (non con «Tutti»), e si salva solo l\'inizio con «Annulla»', () => {
+  assert.match(PAG, /closest\('\.ag-ore \.ag-sev\.ag-spazio\[data-spazio-id\]'\);\s*if \(sp\) return bloccoSpazio\(sp\);/);
+  const b = funzione(PAG, 'function bloccoSpazio'), f = funzione(PAG, 'async function finePosaSpazio');
+  assert.match(b, /if \(vediTutti\(\)/); assert.match(b, /sett: true/);
+  assert.match(f, /supa\.from\('spazi'\)\.update\(\{ inizio \}\)/); assert.match(f, /update\(\{ inizio: prima \}\)/);
+  assert.match(PAG, /if \(b\.spazio\) return finePosaSpazio\(b, velo\);/);
+});
+
 console.log(`\n${ok} prove superate`);

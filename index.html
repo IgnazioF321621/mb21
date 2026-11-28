@@ -1515,6 +1515,8 @@
   .ag-ev.ag-cosa { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
   .ag-ev.ag-cosa.trascina { z-index: 6; box-shadow: 0 6px 18px rgba(16,21,31,.22); border-style: solid; }
   .ag-ore .ag-ev[data-evento], .ag-ore .ag-sev[data-evento] { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }   /* Woday fase 1: gli appuntamenti si trascinano */
+  .ag-ore .ag-sev.ag-spazio[data-spazio-id] { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }   /* gli spazi si trascinano (28/11/2026) */
+  .ag-sev.ag-spazio.trascina { z-index: 6; box-shadow: 0 6px 18px rgba(16,21,31,.22); }
   .ag-ev[data-evento].trascina, .ag-sev[data-evento].trascina { z-index: 6; box-shadow: 0 6px 18px rgba(16,21,31,.22); }
   .ag-foglio .cosa button { border: 0; background: none; font-family: inherit; color: var(--testo); padding: 0; margin: 0; text-align: left; }
   .ag-foglio .cosa .spunta { flex: none; width: 24px; height: 24px; margin: 9px 0; border-radius: 50%; border: 2px solid #4fb3a9; display: inline-flex; align-items: center; justify-content: center; color: #4fb3a9; }
