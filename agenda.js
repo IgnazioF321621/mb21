@@ -1001,6 +1001,21 @@
     coseDelGiorno, LEGAMI, legameDi, campiLegame, coseDelMese, coseDellaScala, senzaPeriodo, numeroSettimana, meseAccanto, mesiTra, giorniTra, testoCosa, testoTroppoLungo, MAX_COSA, MAX_VOCE, daMBPlan, MAX_PUNTO, MAX_PUNTI, MAX_LINK, MAX_NOTA, puntiDi, aggiungiPunto, puntiDaRighe, spuntaPunto, togliPunto, contoPunti, linkChiamata, legamePunti, conPunti, MAX_LUOGO, doveDa, testoDove, linkMappa,
     RISPOSTE, nomeRisposta, nomeRispostaDiLui, CONDIVISIONI_SPAZIO, SDS_DEL_TEAM, FRASE_OSPITI, conOspiti, eConsegna, aggiungiOspite, ospitiPerChiOrganizza, chiaveRicevuto, ricevutiDelGiorno, ricevutiComeEventi, titoloRicevuto, eRichiamo, azioniAgenda, passatoSenzaEsito, programmaDelGiorno, ricevutiNuovi, contoRisposte, nomiPerRisposta, puoCondividereAzione, puoCondividereSpazio, RIPETIZIONI, ripetizioniPer, prossimaRipetizione, SCALE, inizioScala, GIORNI_SETTIMANA, giornoSettimana };
   api.siTrascina = siTrascina;   // Woday fase 1 (28/11/2026)
+  // Modello Woday, fase 3 (Ignazio 28/11/2026): «Pianifica la settimana», le persone da mettere in agenda. Dalle righe della vista contatti_coda
+  // (lette da oggi − 14 a oggi + 6, solo chi è già stato sentito): fuori le categorie fuori coda (come coda.js), chi ha un riordino programmato e chi ha
+  // già un orario da oggi in poi (`occupati`: id dei contatti). «Scaduti» = rientro negli ultimi 14 giorni (prima i Dare Seguito, poi i più recenti):
+  // quelli più vecchi li ripropone la coda di «Chi sento oggi?». «Prossimi» = rientro da oggi ai 6 giorni dopo. Una regola sola per la colonna e per Oggi.
+  api.PIANIFICA_INDIETRO = 14; api.PIANIFICA_AVANTI = 6;
+  api.daPianificare = function daPianificare(righe, oggi, occupati) {
+    const occ = new Set(occupati || []), da = spostaGiorno(oggi, -api.PIANIFICA_INDIETRO), a = spostaGiorno(oggi, api.PIANIFICA_AVANTI);
+    const fuori = ['Unlinked', 'Ex Partner/Cliente', 'Archiviato'], ds = r => (['Dare Seguito', 'Ulteriore Follow Up'].includes(r.ultima_fase) ? 0 : 1);
+    const nome = (x, y) => String(x.nome || '').localeCompare(String(y.nome || ''), 'it');
+    const buone = (righe || []).filter(r => r && r.contattato && r.rientro_il && r.rientro_il >= da && r.rientro_il <= a && r.categoria && !fuori.includes(r.categoria)
+      && !r.riordino_programmato && !occ.has(r.id));
+    const scaduti = buone.filter(r => r.rientro_il < oggi).sort((x, y) => ds(x) - ds(y) || (x.rientro_il < y.rientro_il ? 1 : x.rientro_il > y.rientro_il ? -1 : 0) || nome(x, y));
+    const prossimi = buone.filter(r => r.rientro_il >= oggi).sort((x, y) => (x.rientro_il < y.rientro_il ? -1 : x.rientro_il > y.rientro_il ? 1 : 0) || nome(x, y));
+    return { scaduti, prossimi, totale: scaduti.length + prossimi.length };
+  };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Agenda = api;
 })(this);

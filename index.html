@@ -2776,11 +2776,54 @@
   .a5-crono { max-height: 60vh; overflow-y: auto; border-radius: 12px; }
   .a5-crono .ag-griglia { box-shadow: none; padding-left: 0; }
   /* Modello Woday, fase 2: 2 · 3 · 4 · 5 giorni, sotto il titolo; con meno colonne i blocchi hanno più spazio per i nomi */
+  /* Modello Woday, fase 3: «Pianifica la settimana» — la colonna accanto alla griglia (o il tasto che apre il foglio) */
+  .gg-riga { display: flex; align-items: center; gap: 8px; margin: 4px 0 10px; }
+  .gg-riga .gg-quanti { margin: 0 0 0 auto; }
+  .a5-modo-riga .pn-tasto { margin-right: auto; }
+  .pn-tasto { display: inline-flex; align-items: center; gap: 6px; border: 0; background: var(--z-agenda); color: #fff; font: inherit; font-size: 13px; font-weight: 700; border-radius: 10px; padding: 0 12px; min-height: 36px; cursor: pointer; }
+  .pn-tasto svg.ic { width: 16px; height: 16px; }
+  .pn-tasto b:not(:empty) { background: #fff; color: var(--z-agenda); border-radius: 9px; min-width: 20px; padding: 0 6px; font-size: 12px; line-height: 20px; text-align: center; }
+  .pn-lay { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 12px; align-items: start; }
+  .pn-lay .a5-crono { margin-bottom: 12px; }
+  .pn-col { background: var(--superficie); border-radius: 16px; padding: 14px 10px 10px; max-height: 65vh; overflow-y: auto; box-shadow: 0 1px 2px rgba(16,21,31,.05); }
+  .pn-testa h2 { margin: 0 4px; font-size: 17px; letter-spacing: -.2px; } .pn-testa p { margin: 2px 4px 10px; font-size: 12px; color: var(--testo-tenue); }
+  .pn-passi { display: flex; gap: 3px; background: #F1F4F9; border-radius: 10px; padding: 3px; margin: 0 2px 6px; }
+  .pn-passi > * { flex: 1; text-align: center; font: inherit; font-size: 12.5px; font-weight: 700; padding: 7px 0; border-radius: 8px; border: 0; background: none; color: var(--testo-soft); cursor: pointer; }
+  .pn-passi b { background: #fff; color: var(--testo); box-shadow: 0 1px 2px rgba(0,0,0,.08); cursor: default; }
+  .pn-grp { display: flex; justify-content: space-between; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .5px; color: var(--testo-tenue); margin: 12px 4px 6px; }
+  .pn-grp.rosso { color: #D92D20; }
+  .pn-card { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; border: 1px solid transparent; font: inherit; color: var(--testo); padding: 8px 10px; border-radius: 12px; background: var(--superficie-2); margin-bottom: 6px; cursor: pointer;
+    -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+  .pn-lay .pn-card[data-pn-persona], .pn-lay .pn-card[data-pn-cosa] { cursor: grab; }
+  .pn-card .pn-t { flex: 1; min-width: 0; } .pn-card .pn-t b { display: block; font-size: 13.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .pn-card .pn-t small { font-size: 11.5px; color: var(--testo-tenue); }
+  .pn-card em { font-style: normal; color: var(--testo-tenue); } .pn-card .pn-man { color: #C4CAD4; letter-spacing: -2px; }
+  .pn-av { width: 30px; height: 30px; flex: none; border-radius: 50%; display: grid; place-items: center; font-style: normal; font-size: 12px; font-weight: 800; color: #fff; background: var(--cat); }
+  .pn-cosa { background: #FFF8EC; } .pn-av.pn-spunta { background: #fff; border: 2px dashed #E8890C; color: #E8890C; }
+  .pn-spazio { border-left: 4px solid var(--tinta); background: color-mix(in srgb, var(--tinta) 8%, #fff); }
+  .pn-card.presa { opacity: .35; border: 1px dashed #B9C2D0; background: #fff; }
+  .pn-resto, .pn-vuoto, .pn-attesa { font-size: 12px; color: var(--testo-tenue); margin: 2px 6px 8px; }
+  .pn-fantasma { position: fixed; z-index: 1000; pointer-events: none; margin: 0; flex-wrap: wrap; background: #fff; border: 1px solid var(--bordo); box-shadow: 0 12px 28px rgba(16,21,31,.22); transform: rotate(-2deg); }
+  .pn-fantasma .pn-dove { flex-basis: 100%; font-size: 12px; font-weight: 700; color: var(--z-agenda); padding-left: 40px; }
+  .pn-fantasma .pn-dove:empty { display: none; }
+  .ag-sev.pn-bersaglio { outline: 2.5px solid var(--z-agenda); outline-offset: 1px; z-index: 5; }
+  .ag-sev.ag-cosa-sev { background: var(--superficie); border: 1.5px dashed #E8890C; color: #7A4504; }
+  /* fase 3 Woday, la veste dei Giorni (solo .gg-crono: la Settimana resta com'era): blocchi più morbidi e ariosi, spazi a righe, testata del giorno più grande */
+  .gg-crono .ag-sev { border-radius: 9px; padding: 4px 6px; font-size: 11.5px; line-height: 1.25; }
+  .gg-crono .ag-sev .bar { width: 3px; }
+  .gg-crono .ag-sev.ag-spazio { background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--tinta) 11%, var(--superficie)) 0 6px, var(--superficie) 6px 12px); }
+  .gg-crono .ag-sev.ag-cosa-sev { background: repeating-linear-gradient(135deg, #FFF4E5 0 6px, var(--superficie) 6px 12px); }
+  .gg-crono .ag-sett-testa > * { font-size: 11px; letter-spacing: .5px; }
+  .gg-crono .ag-sett-testa > * b { font-size: 19px; }
+  .gg-crono .ag-sett-testa > .scelto b { width: 30px; height: 30px; line-height: 30px; font-size: 15px; background: var(--z-agenda); }
+  .gg-crono .ag-lin { border-top-color: #EEF1F5; }
+  .pn-foglio .pn-elenco { max-height: 60vh; overflow-y: auto; }
+  .o5-pianifica { grid-column: 1 / -1; display: flex; align-items: center; gap: 12px; width: 100%; border: 0; text-align: left; font: inherit; color: var(--testo); background: var(--superficie); border-radius: 16px; padding: 12px 14px; margin: 0 0 12px; cursor: pointer; }
+  .o5-pianifica > svg.ic { width: 34px; height: 34px; padding: 7px; box-sizing: border-box; border-radius: 50%; background: var(--z-agenda); color: #fff; flex: none; }
+  .o5-pianifica span { flex: 1; } .o5-pianifica b { display: block; font-size: 15px; } .o5-pianifica small { color: var(--testo-tenue); font-size: 13px; } .o5-pianifica em { font-style: normal; color: var(--testo-tenue); font-size: 20px; }
   .gg-quanti { display: flex; gap: 2px; background: #E6F0FB; border-radius: 10px; padding: 2px; width: max-content; margin: 4px 0 10px auto; }
   .gg-quanti button { border: 0; background: none; font: inherit; font-size: 13px; font-weight: 700; color: var(--z-agenda); border-radius: 8px; min-width: 40px; min-height: 32px; cursor: pointer; }
   .gg-quanti button.scelto { background: var(--z-agenda); color: #fff; }
   .ag-griglia.sett.pochi .ag-sev { font-size: 11.5px; }
-  .gg-crono .ag-sett-testa > * b { font-size: 15px; }
   .a5-modo-riga { display: flex; justify-content: flex-end; margin: 4px 0 10px; }
   .a5-crono.s5 { background: var(--superficie); max-height: 65vh; margin-bottom: 12px; }
   .a5-gr .ag-foglio { padding: 0 0 4px; }
@@ -2944,6 +2987,7 @@
   @media (min-width: 700px) {
     html.v5 body { overflow-x: clip; }
     html.v5 main { max-width: 760px; }
+    html.v5 main:has(.pn-lay) { max-width: none; }   /* fase 3 Woday: iPad verticale con la colonna «Pianifica» */
     html.v5 nav { left: calc(50% - 260px); right: calc(50% - 260px); }
     html.v5 .v5-testa { margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); padding-left: calc(50vw - 50% + 16px); padding-right: calc(50vw - 50% + 16px); }
     html.v5 .o5-riquadri { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: start; }
@@ -2963,6 +3007,8 @@
   }
   @media (min-width: 1000px) {
     html.v5 main:has(.o5), html.v5 main:has(.o5-tessere), html.v5 main:has(.ss-giorni), html.v5 main:has(.mm-griglia) { max-width: 1120px; }
+    html.v5 main:has(.pn-lay) { max-width: 1280px; }   /* fase 3 Woday: colonna «Pianifica» + griglia */
+    html.v5 .pn-lay { grid-template-columns: 280px minmax(0, 1fr); }
     html.v5 .o5-riquadri { grid-template-columns: repeat(6, minmax(0, 1fr)); }   /* sei parti: Contatti e Agenda metà riga ciascuno, le altre un terzo */
     html.v5 .o5-riquadri > .o5-contatti, html.v5 .o5-riquadri > .o5-agenda { grid-column: span 3; }
     html.v5 .o5-coppia > .o5-r, html.v5 .o5-coppia.uno > .o5-r { grid-column: span 2; }

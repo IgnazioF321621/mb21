@@ -947,12 +947,13 @@ function disegnaSettimana() {
   const periodo = lun.slice(5, 7) === dom.slice(5, 7) ? `${Number(lun.slice(8))}–${Number(dom.slice(8))} ${nomeMese(dom)}` : `${Number(lun.slice(8))} ${nomeMese(lun)} – ${Number(dom.slice(8))} ${nomeMese(dom)}`;
   const cose = A.coseDellaScala(AG.cose, 'settimana', lun, A.inizioScala('settimana', oggi));
   const tre = largo();
+  const colonnaSett = senzaLinguette() && modoProgramma() === 'timeline' && pianificaInColonna(7);   // fase 3 Woday
   let html = `${testaScala(!AG.settimana.includes(oggi))}
     <div class="mm-testa sc-settimana"><button class="freccia" id="ag-prima" aria-label="Settimana prima">‹</button><h1 class="ag-titolo sc-titolo">${ic('scala-settimana')}<button class="ag-mese mm-titolo">${senzaLinguette() ? esc(periodoBreve(lun, dom)) : `Settimana ${A.numeroSettimana(lun)} · ${esc(periodo)}`} ▾<input type="date" id="ag-scegli" value="${AG.giorno}"></button></h1><button class="freccia" id="ag-dopo" aria-label="Settimana dopo">›</button></div>
     ${partnerSelectAgenda()}
-    ${senzaLinguette() ? `<div class="a5-modo-riga">${interruttoreProgramma(modoProgramma())}</div>` : ''}
+    ${senzaLinguette() ? `<div class="a5-modo-riga">${colonnaSett ? '' : pianificaTastoHtml()}${interruttoreProgramma(modoProgramma())}</div>` : ''}
     ${richiamiAgenda(oggi)}
-    ${senzaLinguette() && modoProgramma() === 'timeline' ? `<div class="a5-crono s5">${grigliaSettimana(opz)}</div>` : giorniSettimanaHtml(opz, oggi)}
+    ${senzaLinguette() && modoProgramma() === 'timeline' ? pianificaLayout(colonnaSett, `<div class="a5-crono s5">${grigliaSettimana(opz)}</div>`) : giorniSettimanaHtml(opz, oggi)}
     <div class="ag-foglio">${scalaSopraHtml('mese', oggi)}${elencoDaFareHtml(senzaLinguette() ? 'Da fare' : 'Da fare questa settimana', cose, 'settimana', g => `da sett. ${A.numeroSettimana(g)}`)}
     </div>`;
   const griglia = `<div class="mb-crono ss-destra"><div class="mb-crono-titolo">${ic('agenda')} La settimana a orario</div>${grigliaSettimana(opz)}</div>`;
@@ -964,6 +965,7 @@ function disegnaSettimana() {
   collegaCose(oggi);
   if (tre) { collegaMenuAgenda(app, () => {}); collegaGrigliaSettimana(app, () => {}); }
   if (app.querySelector('.a5-crono')) { collegaGrigliaSettimana(app, () => {}); portaCronoV5(); }   // v5: la Timeline della settimana nella pagina, stessi tocchi
+  if (senzaLinguette()) montaPianifica(AG.settimana, colonnaSett);   // fase 3 Woday: la colonna o il tasto «Pianifica»
   const sx = document.getElementById('mb-ling-sx'); if (sx) sx.onclick = menuAgenda;
   const dx = document.getElementById('mb-ling-dx');
   if (dx) dx.onclick = () => {
@@ -985,19 +987,222 @@ function disegnaGiorni() {
   const A = MB21Agenda, oggi = MB21Coda.oggiRoma(), n = quantiGiorni();
   const giorni = Array.from({ length: n }, (_, i) => A.spostaGiorno(AG.giorno, i));
   const opz = { mioId: vediTutti() ? null : visto().id, admin: eAdmin() };
+  const colonna = pianificaInColonna(n);   // fase 3: la colonna «Pianifica la settimana» accanto alla griglia (iPad orizzontale e Mac; iPad verticale con 2 giorni)
   const html = `${testaScala(!giorni.includes(oggi))}
     <div class="mm-testa sc-giorni"><button class="freccia" id="sc-prima" aria-label="${n} giorni prima">‹</button><h1 class="ag-titolo sc-titolo">${ic('scala-settimana')}<button class="ag-mese mm-titolo">${esc(periodoBreve(giorni[0], giorni[n - 1]))} ▾<input type="date" id="ag-scegli" value="${AG.giorno}"></button></h1><button class="freccia" id="sc-dopo" aria-label="${n} giorni dopo">›</button></div>
     ${partnerSelectAgenda()}
-    <div class="gg-quanti" role="group" aria-label="Quanti giorni vedere">${[2, 3, 4, 5].map(k => `<button data-quanti="${k}"${k === n ? ' class="scelto" aria-pressed="true"' : ' aria-pressed="false"'}>${k}</button>`).join('')}</div>
+    <div class="gg-riga">${colonna ? '' : pianificaTastoHtml()}<div class="gg-quanti" role="group" aria-label="Quanti giorni vedere">${[2, 3, 4, 5].map(k => `<button data-quanti="${k}"${k === n ? ' class="scelto" aria-pressed="true"' : ' aria-pressed="false"'}>${k}</button>`).join('')}</div></div>
     ${richiamiAgenda(oggi)}
-    <div class="a5-crono s5 gg-crono">${grigliaSettimana(opz, giorni)}</div>`;
+    ${pianificaLayout(colonna, `<div class="a5-crono s5 gg-crono">${grigliaSettimana({ ...opz, cose: true }, giorni)}</div>`)}`;
   montaScala(html, A.spostaGiorno(AG.giorno, -n), A.spostaGiorno(AG.giorno, n));
   collegaGrigliaSettimana(app, () => {});
   portaCronoV5();
+  montaPianifica(giorni, colonna);
   app.querySelectorAll('[data-quanti]').forEach(b => { b.onclick = () => {
     try { localStorage.setItem(CHIAVE_GIORNI, b.dataset.quanti); } catch (e) {}
     disegnaGiorni();
   }; });
+}
+// ── Modello Woday, fase 3 (Ignazio 28/11/2026, «ok, proviamo così»): «Pianifica la settimana», un metodo solo per programmare e pianificare ──
+// Due passi: «1 · Spazi» è «Programmare la settimana» di sempre (preparaSettimana: PM, Consulenze, serate, Telefonate); «2 · Persone» è nuovo: chi ha il
+// rientro scaduto da poco o nei prossimi giorni (MB21Agenda.daPianificare, la stessa regola del riquadro in Oggi), le cose da fare senza ora dei giorni
+// guardati e gli spazi ancora vuoti. Dove sta: in colonna accanto alla griglia (Giorni e Settimana a orario) sull'iPad in orizzontale e sul Mac (≥ 1000 px)
+// e sull'iPad in verticale con 2 giorni; altrove (iPhone, iPad verticale con più giorni) un tasto «Pianifica · N» apre lo stesso elenco in un foglio.
+// In colonna una persona o una cosa si trascina sulla griglia (dito fermo 450 ms; Mac: premi e trascina); dappertutto un tocco su un nome chiede «Dove lo
+// metti?». Una persona lasciata su uno spazio da riempire fa «Metti un nome» (o «Aggiungi persone» sulle Telefonate); su un'ora libera apre il modulo
+// dell'appuntamento con il nome, il giorno e l'ora già messi: si sceglie lì se è una telefonata, un PM… e si salva con le regole di sempre. Una cosa da
+// fare lasciata su un'ora prende quel giorno e quell'ora («Annulla» la rimette senza ora). «Chi sento oggi?» non cambia: lì si fa, qui si decide quando.
+const PN = { chiave: null, letta: 0, dati: null, attesa: null, tocco: null, dopo: 0 };
+const PN_FRESCA_MS = 15 * 60000;
+const pnScritta = () => (typeof SCRITTURE !== 'undefined' ? SCRITTURE.ultima : 0);   // l'ultima scrittura (index.html): dopo, si rilegge
+function pianificaInColonna(n) {
+  if (typeof window === 'undefined' || !window.matchMedia || vediTutti()) return false;
+  return window.matchMedia('(min-width: 1000px)').matches || (n <= 2 && window.matchMedia('(min-width: 700px)').matches);
+}
+// le persone da pianificare: due letture piccole (la coda da oggi − 14 a oggi + 6, chi ha già un orario), tenute 15 minuti finché non c'è una scrittura
+async function leggiDaPianificare() {
+  if (vediTutti()) return null;
+  const A = MB21Agenda, oggi = MB21Coda.oggiRoma(), chiave = `${visto().id}|${oggi}`;
+  if (PN.dati && PN.chiave === chiave && PN.letta > pnScritta() && Date.now() - PN.letta < PN_FRESCA_MS) return PN.dati;
+  if (PN.attesa && PN.attesa.chiave === chiave) return PN.attesa.p;
+  const p = (async () => {
+    const r = await dbq('da pianificare', supa.from('contatti_coda').select('id, nome, categoria, rientro_il, ultima_fase, contattato, riordino_programmato').eq('user_id', visto().id)
+      .eq('contattato', true).gte('rientro_il', A.spostaGiorno(oggi, -A.PIANIFICA_INDIETRO)).lte('rientro_il', A.spostaGiorno(oggi, A.PIANIFICA_AVANTI)).order('rientro_il').limit(300));
+    if (!r || r.error) return null;
+    const ids = r.data.map(x => x.id), da = A.isoDaRoma(oggi, '00:00');
+    let occupati = [];
+    if (ids.length) {
+      const o = await dbq('già in agenda', supa.from('azioni').select('contatto_id').in('contatto_id', ids).eq('completata', false).or(`inizio.gte."${da}",data_scelta.gte."${da}"`).limit(1000));
+      if (o && !o.error) occupati = o.data.map(x => x.contatto_id);
+    }
+    PN.dati = { ...A.daPianificare(r.data, oggi, occupati), oggi }; PN.chiave = chiave; PN.letta = Date.now();
+    return PN.dati;
+  })();
+  PN.attesa = { chiave, p };
+  try { return await p; } finally { if (PN.attesa && PN.attesa.p === p) PN.attesa = null; }
+}
+const pnCoseSenzaOra = giorni => { const oggi = MB21Coda.oggiRoma();
+  return giorni.filter(g => g >= oggi).flatMap(g => MB21Agenda.coseDelGiorno(AG.cose, g, oggi).filter(c => !c.ora && !c.fatto_il && c.id).map(c => ({ ...c, perGiorno: g }))); };
+const pnSpaziVuoti = () => { const S = MB21Spazi, adesso = new Date().toISOString();
+  return (AG.spazi || []).filter(x => (S.daRiempire(x.tipo) || S.PERSONE_DOPO[x.tipo]) && x.inizio >= adesso && AG.settimana.includes(S.orario(x).giorno))
+    .sort((x, y) => (x.inizio < y.inizio ? -1 : 1)); };
+const pnQuanti = (d, giorni) => (d ? d.totale : 0) + pnCoseSenzaOra(giorni).length;
+function pianificaTastoHtml() { return vediTutti() ? '' : `<button class="pn-tasto" id="pn-apri">${ic('scala-settimana')}<span>Pianifica</span><b id="pn-quanti"></b></button>`; }
+const pianificaLayout = (colonna, griglia) => (colonna ? `<div class="pn-lay"><aside class="pn-col" aria-label="Pianifica la settimana"><div class="pn-attesa">Leggo chi c'è da pianificare…</div></aside><div class="pn-griglia">${griglia}</div></div>` : griglia);
+function pianificaHtml(d, giorni, inFoglio) {
+  const A = MB21Agenda, S = MB21Spazi, oggi = MB21Coda.oggiRoma(), mese = g => A.titoloMese(g).slice(0, 3).toLowerCase();
+  const quando = g => (g === oggi ? 'rientro oggi' : g < oggi ? `rientro ${Number(g.slice(8))} ${mese(g)}` : `rientro ${giornoBreve(g).toLowerCase()}`);
+  const persona = r => `<button type="button" class="pn-card" data-pn-persona="${esc(r.id)}"><i class="pn-av ${classeCat(r.categoria)}">${esc(iniziali(r.nome))}</i><span class="pn-t"><b>${esc(r.nome || '—')}</b><small>${esc(MB21Lista.nomeCategoria(r.categoria))} · ${esc(quando(r.rientro_il))}</small></span>${inFoglio ? '<em>›</em>' : '<em class="pn-man" aria-hidden="true">⋮⋮</em>'}</button>`;
+  const MAX = 8, gruppo = (tit, n, righe, classe = '', resto = '') => (n ? `<div class="pn-grp ${classe}"><span>${esc(tit)}</span><span>${n}</span></div>${righe}${resto}` : '');
+  const cose = pnCoseSenzaOra(giorni), spazi = pnSpaziVuoti();
+  const corpo = !d ? '<div class="pn-attesa">Non riesco a leggere chi c\'è da pianificare: riprova tra poco.</div>'
+    : gruppo('Rientro scaduto', d.scaduti.length, d.scaduti.slice(0, MAX).map(persona).join(''), 'rosso', d.scaduti.length > MAX ? `<p class="pn-resto">E altri ${d.scaduti.length - MAX}: li ripropone anche «Chi sento oggi?»</p>` : '')
+    + gruppo('Rientro nei prossimi giorni', d.prossimi.length, d.prossimi.map(persona).join(''))
+    + gruppo('Cose da fare senza ora', cose.length, cose.map(c => `<button type="button" class="pn-card pn-cosa" data-pn-cosa="${esc(c.id)}"><i class="pn-av pn-spunta" aria-hidden="true">✓</i><span class="pn-t"><b>${esc(c.testo)}</b><small>${esc(c.perGiorno === oggi ? 'oggi' : giornoBreve(c.perGiorno).toLowerCase())}</small></span>${inFoglio ? '<em>›</em>' : '<em class="pn-man" aria-hidden="true">⋮⋮</em>'}</button>`).join(''))
+    + gruppo('Spazi ancora vuoti', spazi.length, spazi.map(x => { const o = S.orario(x); return `<button type="button" class="pn-card pn-spazio" data-pn-spazio="${esc(x.id)}" style="--tinta:${coloreSpazio(x.tipo)}"><span class="pn-t"><b>${esc(S.TIPI[x.tipo].corto)} · ${esc(giornoBreve(o.giorno).toLowerCase())} alle ${esc(o.ora)}</b><small>${S.daRiempire(x.tipo) ? 'da riempire' : 'aggiungi persone'}</small></span><em>›</em></button>`; }).join(''));
+  const vuoto = d && !d.totale && !cose.length && !spazi.length ? '<p class="pn-vuoto">Niente da pianificare: la settimana è a posto.</p>' : '';
+  return `<div class="pn-testa"><h2>Pianifica la settimana</h2><p>${inFoglio ? 'Tocca un nome e scegli dove metterlo' : 'Trascina sull\'agenda, o tocca un nome'}</p></div>
+    <div class="pn-passi" role="group" aria-label="Passi"><button type="button" data-pn-spazi>1 · Spazi</button><b>2 · Persone</b></div>
+    <div class="pn-elenco">${corpo}${vuoto}</div>`;
+}
+// disegna la colonna (o il numero sul tasto) quando arrivano i dati; i tocchi sono gli stessi in colonna e nel foglio
+function montaPianifica(giorni, colonna) {
+  if (vediTutti()) return;
+  const disegnata = AG.giorno, vista = AG.vista;
+  const metti = d => {
+    if (AG.giorno !== disegnata || AG.vista !== vista) return;   // nel frattempo si è cambiato giorno o vista
+    const col = app.querySelector('.pn-col'), n = app.querySelector('#pn-quanti');
+    if (col) { col.innerHTML = pianificaHtml(d, giorni, false); collegaPianifica(col, giorni, () => {}); }
+    if (n) n.textContent = d ? String(pnQuanti(d, giorni) || '') : '';
+  };
+  const apri = app.querySelector('#pn-apri');
+  if (apri) apri.onclick = async () => foglioPianifica(giorni, await leggiDaPianificare());
+  const fresca = PN.dati && PN.chiave === `${visto().id}|${MB21Coda.oggiRoma()}` && PN.letta > pnScritta() ? PN.dati : null;
+  if (fresca) metti(fresca); else leggiDaPianificare().then(metti, () => metti(null));
+  if (AG.apriPianifica) { AG.apriPianifica = false; if (!colonna && apri) apri.click(); }   // da Oggi, «N da pianificare»
+}
+function foglioPianifica(giorni, d) {
+  const velo = document.createElement('div');
+  velo.className = 'velo';
+  velo.innerHTML = `<div class="foglio alto pn-foglio"><div class="testa-foglio"><span></span><button id="pn-x" aria-label="Chiudi">${ic('chiudi')}</button></div>${pianificaHtml(d, giorni, true)}</div>`;
+  document.body.appendChild(velo);
+  const chiudi = () => velo.remove();
+  velo.onclick = ev => { if (ev.target === velo) chiudi(); };
+  velo.querySelector('#pn-x').onclick = chiudi;
+  collegaPianifica(velo, giorni, chiudi);
+}
+const pnPersona = id => { const d = PN.dati; return d ? [...d.scaduti, ...d.prossimi].find(r => r.id === id) : null; };
+const pnCosa = id => (AG.cose || []).find(c => c.id === id);
+function collegaPianifica(radice, giorni, chiudi) {
+  const oggi = MB21Coda.oggiRoma(), su = (sel, fn) => radice.querySelectorAll(sel).forEach(b => { b.onclick = ev => { if (Date.now() - PN.dopo < 500) return; fn(b, ev); }; });
+  su('[data-pn-spazi]', () => { chiudi(); preparaSettimana(); });
+  su('[data-pn-persona]', b => { const r = pnPersona(b.dataset.pnPersona); if (r) { chiudi(); dovePersona(r); } });
+  su('[data-pn-cosa]', b => { const c = pnCosa(b.dataset.pnCosa); if (c) { chiudi(); foglioCosa(c, oggi); } });
+  su('[data-pn-spazio]', b => { chiudi(); foglioSpazio(b.dataset.pnSpazio); });
+}
+// «Dove lo metti?»: gli spazi ancora vuoti della settimana, un giorno e un'ora a scelta, la scheda
+async function dovePersona(r) {
+  const S = MB21Spazi, spazi = pnSpaziVuoti(), contatto = { id: r.id, nome: r.nome, categoria: r.categoria };
+  const k = await foglioStrade(`Dove metti ${r.nome || '—'}?`, `${MB21Lista.nomeCategoria(r.categoria)} · rientro ${Number(r.rientro_il.slice(8))}/${r.rientro_il.slice(5, 7)}`, [
+    ...spazi.map(x => { const o = S.orario(x); return { k: 's:' + x.id, icona: 'scala-settimana', tinta: coloreSpazio(x.tipo), titolo: `${S.TIPI[x.tipo].nome} · ${giornoBreve(o.giorno)} alle ${o.ora}`, sotto: S.daRiempire(x.tipo) ? 'Lo spazio è da riempire: diventa il suo appuntamento' : 'Si aggiunge alla sessione di telefonate' }; }),
+    { k: 'ora', icona: 'orario', tinta: 'var(--z-agenda)', titolo: 'Scegli giorno e ora', sotto: 'Telefonata, Piano Marketing, Appuntamento… con il nome già messo' },
+    { k: 'scheda', icona: 'persona', tinta: 'var(--testo-soft)', titolo: 'Apri la scheda', sotto: 'Per vedere le ultime volte prima di decidere' }]);
+  if (!k) return;
+  if (k === 'scheda') return apriContattoDa(r.id, 'agenda');
+  if (k === 'ora') return nuovoAppuntamento({ giorno: AG.giorno < MB21Coda.oggiRoma() ? MB21Coda.oggiRoma() : AG.giorno, contatto });
+  const x = (AG.spazi || []).find(s => 's:' + s.id === k);
+  if (x) mettiNelloSpazio(x, contatto);
+}
+// lo stesso di «Metti un nome» / «Aggiungi persone» del foglio dello spazio (foglioSpazio), con la persona già scelta
+function mettiNelloSpazio(x, contatto) {
+  const S = MB21Spazi, o = S.orario(x), dopo = S.PERSONE_DOPO[x.tipo];
+  if (dopo) return nuovoAppuntamento({ giorno: o.giorno, ora: o.ora, tipo: dopo.tipo, modalita: dopo.modalita, durata: o.durata, spazio: x, contatto, titolo: S.nome(x.tipo), sottotitolo: `${dataLunga(o.giorno)} alle ${o.ora}: con chi la fai?` });
+  return nuovoAppuntamento({ giorno: o.giorno, ora: o.ora, tipo: x.tipo, durata: o.durata, spazio: x, contatto, titolo: S.nome(x.tipo), sottotitolo: `${dataLunga(o.giorno)} alle ${o.ora}` });
+}
+// dove cade il dito: lo spazio sotto (solo per una persona) o il giorno e l'ora della griglia, al quarto d'ora
+function pnBersaglio(x, y, persona) {
+  const el = document.elementFromPoint(x, y), ore = el && el.closest && el.closest('.ag-ore[data-giorni]');
+  if (!ore) return null;
+  const A = MB21Agenda, sp = persona && el.closest('[data-spazio-id]'), x0 = sp && (AG.spazi || []).find(s => s.id === sp.dataset.spazioId);
+  if (x0 && (MB21Spazi.daRiempire(x0.tipo) || MB21Spazi.PERSONE_DOPO[x0.tipo])) { const o = MB21Spazi.orario(x0); return { spazio: x0, el: sp, giorno: o.giorno, ora: o.ora }; }
+  const cols = ore.dataset.giorni.split(','), r = ore.getBoundingClientRect(), col = Math.max(0, Math.min(cols.length - 1, Math.floor((x - r.left) / r.width * cols.length)));
+  const min = A.alQuarto(Number(ore.dataset.da) + (y - r.top) / Number(ore.dataset.alt || ALT_ORA_SETT) * 60);
+  return { giorno: cols[col], ora: A.daMinuti(Math.max(0, Math.min(1425, min))) };
+}
+function pnInizia(card, x, y) {
+  const persona = !!card.dataset.pnPersona;
+  const f = card.cloneNode(true);
+  f.classList.add('pn-fantasma'); f.removeAttribute('data-pn-persona'); f.removeAttribute('data-pn-cosa');
+  f.insertAdjacentHTML('beforeend', '<small class="pn-dove"></small>');
+  document.body.appendChild(f);
+  card.classList.add('presa');
+  document.body.classList.add('sto-trascinando');
+  Object.assign(PN.tocco, { avviato: true, fantasma: f, persona, larga: card.offsetWidth });
+  f.style.width = Math.min(240, card.offsetWidth) + 'px';
+  pnMuovi(x, y);
+}
+function pnMuovi(x, y) {
+  const t = PN.tocco, f = t.fantasma;
+  f.style.left = (x - 30) + 'px'; f.style.top = (y - 22) + 'px';
+  if (t.acceso) t.acceso.classList.remove('pn-bersaglio');
+  const b = t.bersaglio = pnBersaglio(x, y, t.persona);
+  t.acceso = b && b.el ? b.el : null;
+  if (t.acceso) t.acceso.classList.add('pn-bersaglio');
+  f.querySelector('.pn-dove').textContent = b ? `→ ${b.spazio ? MB21Spazi.TIPI[b.spazio.tipo].corto + ' ' : ''}${giornoBreve(b.giorno).toLowerCase()} alle ${b.ora}` : '';
+}
+async function pnLascia() {
+  const t = PN.tocco; PN.tocco = null;
+  if (!t) return;
+  clearTimeout(t.timer);
+  if (!t.avviato) return;
+  PN.dopo = Date.now();
+  t.fantasma.remove(); t.card.classList.remove('presa'); if (t.acceso) t.acceso.classList.remove('pn-bersaglio');
+  document.body.classList.remove('sto-trascinando');
+  const b = t.bersaglio, A = MB21Agenda;
+  if (!b) return;
+  if (A.controllaGiorno(b.giorno)) return mostraToast(A.controllaGiorno(b.giorno));
+  if (b.giorno < MB21Coda.oggiRoma()) return mostraToast('Questo giorno è già passato');
+  if (t.persona) {
+    const r = pnPersona(t.card.dataset.pnPersona);
+    if (!r) return;
+    const contatto = { id: r.id, nome: r.nome, categoria: r.categoria };
+    return b.spazio ? mettiNelloSpazio(b.spazio, contatto) : nuovoAppuntamento({ giorno: b.giorno, ora: b.ora, contatto });
+  }
+  const c = pnCosa(t.card.dataset.pnCosa);
+  if (!c) return;
+  const prima = { giorno: c.giorno, ora: c.ora || null };
+  const { error } = await dbq('cosa da fare', supa.from('cose_da_fare').update({ giorno: b.giorno, ora: b.ora }).eq('id', c.id));
+  if (error) return mostraToast('Non salvato: riprova.');
+  await apriAgenda(AG.giorno);
+  mostraToast(`«${c.testo}»: ${giornoBreve(b.giorno).toLowerCase()} alle ${b.ora}`, async () => {
+    await dbqAvvisa('annulla ora', supa.from('cose_da_fare').update(prima).eq('id', c.id), 'Non annullato: controlla la connessione e riprova.');
+    await apriAgenda(AG.giorno);
+  });
+}
+// i gesti: solo dalle carte della colonna (nel foglio dell'iPhone si tocca e basta)
+if (typeof document !== 'undefined' && document.addEventListener) {
+  const carta = ev => (typeof ST !== 'undefined' && ST.tab === 'agenda' && ev.target.closest ? ev.target.closest('.pn-lay .pn-card[data-pn-persona], .pn-lay .pn-card[data-pn-cosa]') : null);
+  document.addEventListener('touchstart', ev => {
+    const card = carta(ev); if (!card || ev.touches.length > 1) return;
+    const t = ev.touches[0];
+    PN.tocco = { card, x0: t.clientX, y0: t.clientY, avviato: false, timer: setTimeout(() => { if (PN.tocco && PN.tocco.card === card) pnInizia(card, PN.tocco.x, PN.tocco.y); }, 450), x: t.clientX, y: t.clientY };
+  }, { passive: true });
+  document.addEventListener('touchmove', ev => {
+    const p = PN.tocco; if (!p) return;
+    const t = ev.touches[0]; p.x = t.clientX; p.y = t.clientY;
+    if (!p.avviato) { if (Math.abs(t.clientX - p.x0) > 8 || Math.abs(t.clientY - p.y0) > 8) { clearTimeout(p.timer); PN.tocco = null; } return; }   // scorre la colonna
+    ev.preventDefault();
+    pnMuovi(t.clientX, t.clientY);
+  }, { passive: false });
+  document.addEventListener('touchend', () => { if (PN.tocco) pnLascia(); });
+  document.addEventListener('touchcancel', () => { const p = PN.tocco; if (p && p.avviato) { p.bersaglio = null; } if (p) pnLascia(); });
+  document.addEventListener('mousedown', ev => { if (ev.button !== 0 || (PN.tocco && !PN.tocco.mouse)) return; const card = carta(ev); if (!card) return; PN.tocco = { card, x0: ev.clientX, y0: ev.clientY, avviato: false, mouse: true }; ev.preventDefault(); });
+  document.addEventListener('mousemove', ev => {
+    const p = PN.tocco; if (!p || !p.mouse) return;
+    if (!p.avviato) { if (Math.abs(ev.clientX - p.x0) + Math.abs(ev.clientY - p.y0) > 6) pnInizia(p.card, ev.clientX, ev.clientY); return; }
+    pnMuovi(ev.clientX, ev.clientY);
+  });
+  document.addEventListener('mouseup', () => { const p = PN.tocco; if (p && p.mouse) pnLascia(); });
 }
 // Nota Pagine 185 (Ignazio 04/11: «cliccando sul giorno due volte, si va alla pagina del giorno specifico»): un tocco solo fa quello di prima,
 // due tocchi vicini aprono il giorno. Il tocco solo aspetta DOPPIO_MS per sapere se ne arriva un secondo (così il foglio non si apre al primo dei due);
@@ -1647,7 +1852,10 @@ function grigliaSettimana(opz, colonne = AG.settimana) {   // colonne: i giorni 
   // nota 195: gli impegni ricevuti (la stessa regola del Giorno, ricevutiDelGiornoMB) come blocchi pieni con «da [nome]»; contano anche per le ore da mostrare
   const ricSett = colonne.map(g => ricevutiDelGiornoMB(g).map(r => { const cima = A.inMinuti(A.partiRoma(r.inizio).ora);
     const dura = r.fine ? Math.round((Date.parse(r.fine) - Date.parse(r.inizio)) / 60000) : 60; return { r, cima, alta: Math.max(15, Math.min(1440 - cima, dura || 60)) }; }));
-  const tutti = [...giorni.flatMap(x => x.d.blocchi), ...spaziSett.flat(), ...ricSett.flat()];
+  // fase 3 Woday: nella vista Giorni anche le cose da fare con l'ora (tratteggiate, come nella Timeline del Giorno); la Settimana resta com'era
+  const coseSett = colonne.map(g => (opz && opz.cose ? MB21Agenda.coseDelGiorno(AG.cose, g, oggi).filter(c => c.ora && !c.fatto_il)
+    .map(c => { const cima = A.inMinuti(String(c.ora).slice(0, 5)); return { c, cima, alta: Math.max(15, Math.min(1440 - cima, Number(c.durata) || 30)) }; }) : []));
+  const tutti = [...giorni.flatMap(x => x.d.blocchi), ...spaziSett.flat(), ...ricSett.flat(), ...coseSett.flat()];
   const { da, a } = A.oreUtili(tutti);
   const y = m => Math.round((m - da) / 60 * ALT_ORA_SETT);
   const quanti = giorni.reduce((n, x) => n + x.d.blocchi.length, 0) + spaziSett.flat().length + ricSett.flat().length;
@@ -1671,8 +1879,10 @@ function grigliaSettimana(opz, colonne = AG.settimana) {   // colonne: i giorni 
     // Nota Pagine 170 (Ignazio 01/11: gli spazi erano vuoti e i PM dicevano solo il nome; «nel calendario Apple sono tutte perfette»): ogni blocco dice cos'è,
     // in breve per la colonna stretta: il tipo in grassetto («PM», «LdS», «SdS/OPEN») e sotto i nomi (solo il primo nome di ognuno) o il nome della serata
     // («da riempire» per gli spazi dei PM); con un blocco basso, tutto su una riga. `testoSev` è la regola sola per appuntamenti e spazi.
-    for (const b of spaziSett[i]) h += `<button class="ag-sev ag-spazio" data-vai="${g}" style="--tinta:${coloreSpazio(b.x.tipo)};top:${y(b.cima)}px;height:${Math.max(11, y(b.cima + b.alta) - y(b.cima) - 2)}px;left:calc(${sinG}% + 1px);width:calc(${larga}% - 2px)"
+    for (const b of spaziSett[i]) h += `<button class="ag-sev ag-spazio" data-vai="${g}" data-spazio-id="${esc(b.x.id)}" style="--tinta:${coloreSpazio(b.x.tipo)};top:${y(b.cima)}px;height:${Math.max(11, y(b.cima + b.alta) - y(b.cima) - 2)}px;left:calc(${sinG}% + 1px);width:calc(${larga}% - 2px)"
       aria-label="${MB21Spazi.orario(b.x).ora} ${esc(MB21Spazi.titolo(b.x))}${MB21Spazi.daRiempire(b.x.tipo) ? ' da riempire' : ''}">${testoSev(MB21Spazi.TIPI[b.x.tipo].corto, MB21Spazi.daRiempire(b.x.tipo) ? 'da riempire' : MB21Spazi.pulisciNome(b.x.nome) || '', y(b.cima + b.alta) - y(b.cima) - 2)}</button>`;
+    for (const b of coseSett[i]) h += `<button class="ag-sev ag-cosa-sev${b.c.fatto_il ? ' fatta' : ''}" data-vai="${g}" style="top:${y(b.cima)}px;height:${Math.max(11, y(b.cima + b.alta) - y(b.cima) - 2)}px;left:calc(${sinG}% + 1px);width:calc(${larga}% - 2px)"
+      aria-label="${esc(String(b.c.ora).slice(0, 5))} ${esc(b.c.testo)}">${testoSev(String(b.c.ora).slice(0, 5), b.c.testo, Math.max(11, y(b.cima + b.alta) - y(b.cima) - 2))}</button>`;   // fase 3
     for (const b of ricSett[i]) h += `<button class="ag-sev ag-ricevuto${b.r.risposta === 'non_ci_sono' ? ' noci' : ''}" data-ricevuto="${esc(A.chiaveRicevuto(b.r))}" style="top:${y(b.cima)}px;height:${Math.max(11, y(b.cima + b.alta) - y(b.cima) - 2)}px;left:calc(${sinG}% + 1px);width:calc(${larga}% - 2px)"
       aria-label="${esc(A.orario(b.r))} ${esc(A.titoloRicevuto(b.r))}">${testoSev(b.r.titolo, 'da ' + String(b.r.da_nome || '—').split(' ')[0], Math.max(11, y(b.cima + b.alta) - y(b.cima) - 2))}</button>`;   // nota 195
     for (const chi of gruppi.values()) {

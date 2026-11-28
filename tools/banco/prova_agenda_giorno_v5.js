@@ -117,7 +117,7 @@ prova('La lente nella testata apre la ricerca di sempre in un foglio; il «+» o
 prova('Settimana: in testa lo stesso interruttore Elenco · Timeline; Elenco = la Settimana di sempre, Timeline = le 7 colonne con le ore; tocchi veri', () => {
   mem.clear(); AG.vista = 'settimana'; V.disegnaAgenda();
   let h = V.app.innerHTML;
-  assert.match(h, /class="a5-modo-riga"><div class="a5-modo"[\s\S]*?data-a5-modo="elenco" class="scelto"/);
+  assert.match(h, /class="a5-modo-riga">(?:<button class="pn-tasto"[\s\S]*?<\/button>)?<div class="a5-modo"[\s\S]*?data-a5-modo="elenco" class="scelto"/);
   assert.match(h, /class="ss-giorni"/);
   assert.doesNotMatch(h, /class="ag-griglia sett"/);
   assert.match(h, /<span>Da fare<\/span>/);

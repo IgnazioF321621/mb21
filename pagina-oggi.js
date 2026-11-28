@@ -333,7 +333,7 @@ function disegnaOggiV5() {
   let html = `<div class="o5${sera ? ' sera' : ''}">
     <div class="o5-righe">${testataV5({ chiaro: true, sinistra: `<span class="o5-data">${esc(dataEstesa(ST.oggi).toUpperCase() + ora)}</span>`, titolo: 'Oggi', comandi: chipPartnerSelect() + cerchiettoProfilo() })}</div>
     ${dashboardTesta(true)}${ST.offline ? `<div class="avviso">Sei offline: è la coda salvata. Solo lettura.${percheHtml('offline')}</div>` : ''}${rigaTelefonoHtml()}
-    <div class="o5-riquadri">${sera ? o5Sera(fattoGiorno) : ''}${vediTutti() ? '' : o5Giornata() + o5SettimanaHtml(O5.di === visto().id && O5.giorno === ST.oggi ? O5.settimana : null) + o5Ritmo() + o5Segni() + o5TraguardiHtml(traguardiOggi(percorsoDash())) + o5Linee()}${nuovoInAvvio() ? o5Traguardo() : ''}</div></div>`;
+    <div class="o5-riquadri">${sera ? o5Sera(fattoGiorno) : ''}${vediTutti() ? '' : o5Giornata() + '<div class="o5-pianifica-posto"></div>' + o5SettimanaHtml(O5.di === visto().id && O5.giorno === ST.oggi ? O5.settimana : null) + o5Ritmo() + o5Segni() + o5TraguardiHtml(traguardiOggi(percorsoDash())) + o5Linee()}${nuovoInAvvio() ? o5Traguardo() : ''}</div></div>`;
   // nota Pagine 148 (Ignazio 29/10, via Regia: «lo facciamo spuntare direttamente come prima cosa in alto a quell'ora»): dalle ORA_CHECK (20) «Com'è andata
   // oggi?» sta in cima, sopra «La tua giornata», anche a Check scritto («Check di oggi ✓»); prima delle 20 non c'è.
   // nota Pagine 148, pezzo 4 (Ignazio 29/10, via Regia): via i riquadri di prima (Contatti, Agenda, Training, Traguardo, Clienti, Mappa); restano i
@@ -342,6 +342,20 @@ function disegnaOggiV5() {
   app.innerHTML = html + versione();
   document.getElementById('o5-feedback').onclick = () => foglioSegnala();
   app.querySelectorAll('[data-o5]').forEach(b => b.onclick = () => o5Vai(b.dataset.o5));
+  o5Pianifica();
+}
+// Modello Woday, fase 3 (Ignazio 28/11/2026): sotto «La tua giornata» una riga «Pianifica la settimana · N da mettere in agenda» (le persone della colonna
+// «Pianifica la settimana» di MB Plan, la stessa regola: leggiDaPianificare, pagina-agenda.js); il tocco apre l'Agenda nella vista Giorni con l'elenco.
+// Arriva dopo, senza rifare la pagina; con 0 non si mostra.
+function o5Pianifica() {
+  const posto = app.querySelector('.o5-pianifica-posto');
+  if (!posto || typeof leggiDaPianificare !== 'function') return;
+  const chi = visto().id;
+  leggiDaPianificare().then(d => {
+    if (!d || !d.totale || visto().id !== chi || !document.body.contains(posto)) return;
+    posto.outerHTML = `<button class="o5-pianifica" data-o5="pianifica">${ic('scala-settimana')}<span><b>Pianifica la settimana</b><small>${d.totale === 1 ? '1 persona da mettere in agenda' : `${d.totale} persone da mettere in agenda`}</small></span><em>›</em></button>`;
+    const b = app.querySelector('.o5-pianifica'); if (b) b.onclick = () => o5Vai('pianifica');
+  }, () => {});
 }
 function o5Vai(go) {
   const tab = t => { ST.tab = t; LS.ritorno = null; mostraTab(); window.scrollTo(0, 0); };
@@ -351,6 +365,11 @@ function o5Vai(go) {
   }
   if (go === 'sera') return vaiLV('ckgiorno', { ckData: null });   // nota 098: «Il mio giorno» è la scheda Giorno del Check
   if (go === 'agenda') { if (typeof AG !== 'undefined') AG.giorno = null; return tab('agenda'); }
+  if (go === 'pianifica') {   // fase 3 Woday: l'Agenda nella vista Giorni, con la colonna o il foglio «Pianifica la settimana»
+    try { localStorage.setItem('mb21-agenda-vista', 'giorni'); } catch (e) {}
+    if (typeof AG !== 'undefined') { AG.giorno = null; AG.vista = 'giorni'; AG.apriPianifica = true; }
+    return tab('agenda');
+  }
   if (go === 'training') { if (typeof TRN !== 'undefined' && O5.training && O5.training.daRipassare) TRN.dopo = 'ripasso'; return tab('training'); }
   if (go === 'avvio') { AVV.mioAperto = true; return vaiLV('avvio'); }
   if (go.startsWith('gradino:')) return vaiLV('gradino', { gradino: go.slice(8) });
