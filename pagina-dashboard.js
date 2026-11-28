@@ -117,7 +117,7 @@ async function caricaOggi() {
     // nota Pagine 098 (Ignazio 26/10, «A»): chi ha un «Richiamare» per oggi (la lettura dei Contatti di oggi di caricaOggiV5, la stessa dell'Agenda) ed è
     // ancora da sentire entra in cima, IN PIÙ ai posti della coda; quello già sentito oggi (non è più tra i candidati) non toglie un posto alla coda
     const rich = richiamiDiOggi(candidati, stato.contatti_al_giorno === 0);
-    risultato = MB21Coda.calcolaCoda(MB21Coda.senzaScelte(rich.resto, SCE.righe), oggi, posti + rich.fatti + (altro ? 0 : altriCoda(oggi)), stato.contatti_al_giorno === 0);   // 0 = in pausa; nota 182: + «Carica altri 5»
+    risultato = MB21Coda.calcolaCoda(MB21Coda.senzaScelte(rich.resto, [...SCE.righe, ...(SCE.piuAvanti || [])]), oggi, posti + rich.fatti + (altro ? 0 : altriCoda(oggi)), stato.contatti_al_giorno === 0);   // 0 = in pausa; nota 182: + «Carica altri 5»
     risultato.ancora = risultato.candidati > risultato.coda.length;   // nota 182: ci sono altre persone da sentire oltre a quelle della coda di oggi
     risultato.coda = [...rich.daSentire, ...risultato.coda];
     if (!altro && risultato.nuoviInCoda.length) {
@@ -1353,17 +1353,20 @@ async function annullaAppuntamentoDash(c) {
 // in Agenda; senza (`senza_ora`) solo qui. La scheda è una sola: è la riga di `azioni`, e l'esito la chiude con `chiudiAppuntamento` come dall'Agenda
 // (stesso foglio dopo la telefonata, stessa chat del coach, stesso Annulla). Chi ha una telefonata aperta qui non entra nella coda automatica.
 // Il conto del giorno (`stato_oggi`) conta anche queste, fatte oggi: «5 di 5 ✓ e 3 in più» (MB21Coda.contoGiorno), mai «3 di 10».
-const SCE = { righe: [] };
+const SCE = { righe: [], piuAvanti: [] };
 async function caricaScelte(oggi) {
   try {
-    if (vediTutti()) { SCE.righe = []; return; }
+    if (vediTutti()) { SCE.righe = []; SCE.piuAvanti = []; return; }
     const { data, error } = await letta('scelte', 'telefonate scelte a mano', () => supa.from('azioni').select(CAMPI_AZIONE).in('user_id', idVisti())
       .eq('tipo_azione', 'Contatto').eq('scelta_a_mano', true).eq('completata', false).is('esito', null)
-      .lt('inizio', MB21Agenda.isoDaRoma(MB21Agenda.spostaGiorno(oggi, 1), '00:00')).order('inizio'));
+      .order('inizio').limit(500));
     if (error) throw error;
     SCE.righe = MB21Coda.telefonateScelte(data, oggi);
+    // Ignazio 28/11/2026 (fase 3 Woday): chi ha già una telefonata fissata per un giorno che deve venire non torna in coda prima di quel giorno
+    // (era un rientro scaduto: «Chi sento oggi?» lo riproponeva oggi). Quel giorno entra dalle scelte, come sempre.
+    SCE.piuAvanti = MB21Coda.scelteFuture(data, oggi);
   } catch (e) {
-    SCE.righe = [];
+    SCE.righe = []; SCE.piuAvanti = [];
   }
 }
 // la riga sotto il nome: «Alle 10:30» · «Senza orario» · «… · era per ieri» se è rimasta aperta

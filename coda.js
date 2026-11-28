@@ -119,6 +119,11 @@
       .sort((a, b) => a.inizio.localeCompare(b.inizio));
   }
 
+  // Le telefonate scelte a mano aperte per un giorno che deve venire (Ignazio 28/11/2026): chi le ha non torna in coda prima di quel giorno
+  function scelteFuture(azioni, oggi) {
+    return (azioni || []).filter(a => a.tipo_azione === 'Contatto' && a.scelta_a_mano && !a.completata && !a.esito && a.inizio && oggiRoma(new Date(a.inizio)) > oggi);
+  }
+
   // Chi ha una telefonata scelta a mano aperta non entra anche nella coda automatica (né nei Dare Seguito scaduti): una scheda sola per persona
   function senzaScelte(righe, scelte) {
     const presi = new Set((scelte || []).map(a => a.contatto_id));
@@ -155,7 +160,7 @@
 
   const api = { calcolaCoda, daCatalogare, QUOTA_CATALOGO, oggiRoma, CAPIENZA, QUOTA_RIENTRI, FASI_DARE_SEGUITO, CATEGORIE_ESCLUSE,
     adesso, giorniTra, GIORNI_SALTA, giornoDopo, giornoRinvio, testoRinvio,
-    telefonateScelte, senzaScelte, contoGiorno };
+    telefonateScelte, scelteFuture, senzaScelte, contoGiorno };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else radice.MB21Coda = api;
 })(this);

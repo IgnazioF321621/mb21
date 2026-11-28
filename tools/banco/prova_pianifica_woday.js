@@ -105,4 +105,26 @@ prova('Oggi: sotto «La tua giornata» la riga «Pianifica la settimana» (stess
   assert.match(IDX, /html\.v5 main:has\(\.pn-lay\) \{ max-width: none; \}/);
 });
 
+prova('Telefonata senza orario: si vede in cima al suo giorno (Giorno, Giorni, Settimana); le chiuse, con l\'ora o di altri giorni no', () => {
+  const t = (id, g, extra) => ({ id, tipo_azione: 'Contatto', modalita: 'Telefonata', scelta_a_mano: true, senza_ora: true, completata: false, esito: null, inizio: A.isoDaRoma(g, '00:00'), contatti: { nome: 'Nome ' + id }, ...extra });
+  const righe = [t('si', '2026-11-30'), t('b', '2026-11-30', { contatti: { nome: 'Anna' } }), t('fatta', '2026-11-30', { completata: true }), t('ora', '2026-11-30', { senza_ora: false }), t('altro', '2026-12-01')];
+  assert.deepEqual(A.senzaOraDelGiorno(righe, '2026-11-30').map(x => x.id), ['b', 'si']);
+  assert.equal(A.azioniAgenda(righe).some(x => x.id === 'si'), false);   // nella griglia a orario resta fuori, come prima
+  assert.match(PAG, /const senzaOra = colonne\.map\(g => A\.senzaOraDelGiorno\(AG\.senzaOra, g\)\)/);
+  assert.match(PAG, /html \+= senzaOraGiornoHtml\(\);/);
+  assert.match(PAG, /\.ag-so\[data-so\]'\)\.forEach\(b => \{ b\.onclick = ev => \{ ev\.stopPropagation\(\); prima\(\); foglioAzione\(b\.dataset\.so/);
+});
+
+prova('Coda: chi ha una telefonata fissata per un giorno che deve venire non torna in «Chi sento oggi?» prima di quel giorno', () => {
+  const C = require('../../coda.js'), PD = leggi('pagina-dashboard.js');
+  const sc = (id, chi, g, extra) => ({ id, contatto_id: chi, tipo_azione: 'Contatto', scelta_a_mano: true, completata: false, esito: null, inizio: A.isoDaRoma(g, '00:00'), ...extra });
+  const az = [sc('x1', 'giulia', '2026-11-30'), sc('x2', 'oggi', OGGI), sc('x3', 'chiusa', '2026-12-01', { esito: 'Fatto' })];
+  assert.deepEqual(C.scelteFuture(az, OGGI).map(a => a.contatto_id), ['giulia']);
+  assert.deepEqual(C.telefonateScelte(az, OGGI).map(a => a.contatto_id), ['oggi']);   // in «Chi sento oggi?» come sempre solo quelle fino a oggi
+  const coda = [{ id: 'giulia' }, { id: 'oggi' }, { id: 'altro' }];
+  assert.deepEqual(C.senzaScelte(coda, [...C.telefonateScelte(az, OGGI), ...C.scelteFuture(az, OGGI)]).map(r => r.id), ['altro']);
+  assert.match(PD, /MB21Coda\.senzaScelte\(rich\.resto, \[\.\.\.SCE\.righe, \.\.\.\(SCE\.piuAvanti \|\| \[\]\)\]\)/);
+  assert.doesNotMatch(funzione(PD, 'async function caricaScelte'), /\.lt\('inizio'/);
+});
+
 console.log(`\n${ok} prove superate`);

@@ -117,6 +117,7 @@ async function caricaAgendaLetture() {
   for (const r of [app1, ric, pas, tel, cd]) if (r && r.error) throw r.error;
   // una telefonata scelta a mano senza orario (nota 012) sta solo in coda, in Dashboard: in Agenda entra quando ha un'ora o quando è fatta (allora l'ora è quella)
   AG.azioni = MB21Agenda.azioniAgenda([...app1.data, ...ric.data]);   // la stessa regola del riquadro AGENDA di Oggi (nota 098)
+  AG.senzaOra = ric.data.filter(a => a.senza_ora && a.scelta_a_mano && !a.completata);   // Ignazio 28/11/2026: si vedono in cima al loro giorno (Giorni, Settimana)
   AG.passati = pas.data;
   // il promemoria «Ti eri detto…» (cantiere 42) per gli impegni ancora da fare e i richiami dalla coda: si legge insieme al resto
   const ricordi = caricaRicordi([...AG.azioni, ...AG.passati].filter(e => !e.esito || (e.tipo_azione === 'Contatto' && e.data_scelta)).map(e => e.contatto_id));
@@ -176,6 +177,13 @@ function richiamiAgenda(oggi) {
   if (!voci.length) return '';
   return `<div class="ag-rich">${voci.map(([id, tinta, icona, testo]) =>
     `<button id="${id}" class="${tinta}">${ic(icona)}<span>${testo}</span></button>`).join('')}</div>`;
+}
+
+// Ignazio 28/11/2026: nel Giorno, sotto le pillole, le telefonate scelte a mano senza orario di quel giorno (le stesse che Giorni e Settimana mettono
+// in cima alla colonna); il tocco apre la telefonata, con «Metti un orario»
+function senzaOraGiornoHtml() {
+  const l = MB21Agenda.senzaOraDelGiorno(AG.senzaOra, AG.giorno);
+  return l.length ? `<div class="ag-so-giorno">${l.map(a => `<button type="button" class="ag-so" data-so="${esc(a.id)}"><i aria-hidden="true">✆</i><span>${esc((a.contatti && a.contatti.nome) || 'Telefonata')} · senza orario</span></button>`).join('')}</div>` : '';
 }
 
 // ── Compie gli anni (Lista Nomi L10, Ignazio 23/10): nell'Agenda di oggi, sotto «Chi sento oggi?», chi compie gli anni con i bottoni per scrivere
@@ -703,6 +711,7 @@ function disegnaAgenda() {
     <h1 class="ag-titolo sc-giorno sc-titolo">${ic('scala-giorno')}<button class="ag-mese ag-titolo-giorno">${esc(titoloG)} ▾<input type="date" id="ag-scegli" value="${AG.giorno}"></button></h1>
     ${partnerSelectAgenda()}`;
   html += richiamiAgenda(oggi) + compleanniHtml(oggi);   // L10: chi compie gli anni oggi
+  html += senzaOraGiornoHtml();   // Ignazio 28/11/2026: le telefonate senza orario del giorno
   const tre = largo();   // l'Agenda a tre colonne (schermo largo); la Settimana è già uscita sopra (disegnaSettimana)
   if (giornoV5()) html += giornoV5Html(eventi, opz, oggi);   // v5 (nota 098): i quattro gruppi; la Timeline è nel gruppo «In programma», niente cassetto
   else {
@@ -1234,6 +1243,7 @@ function collegaGrigliaSettimana(radice, prima) {
   });
   // nota 183 (Ignazio 04/11: «la stessa possibilità deve essere data nella schermata settimana»): il vuoto di una colonna apre il foglio del «+» con quel
   // giorno e l'ora toccata, al quarto d'ora, come nella Timeline del giorno (prima apriva il giorno)
+  radice.querySelectorAll('.ag-so[data-so]').forEach(b => { b.onclick = ev => { ev.stopPropagation(); prima(); foglioAzione(b.dataset.so, { ritorno: null, dopo: () => apriAgenda() }); }; });   // la telefonata senza orario: «Metti un orario»
   radice.querySelectorAll('[data-testa-giorno]').forEach(b => { b.onclick = () => { prima(); AG.vista = 'giorno'; AG.portato = null; AG.aperta = null; apriAgenda(b.dataset.testaGiorno); }; });
   radice.querySelectorAll('.ag-colonna[data-vai]').forEach(b => {
     toccoODoppio(b, ev => {
@@ -1861,6 +1871,10 @@ function grigliaSettimana(opz, colonne = AG.settimana) {   // colonne: i giorni 
   const quanti = giorni.reduce((n, x) => n + x.d.blocchi.length, 0) + spaziSett.flat().length + ricSett.flat().length;
   let h = `<div class="ag-sett-testa">${giorni.map(({ g, d }, i) =>
     `<button type="button" class="${g === oggi ? 'oggi' : ''} ${g === AG.giorno ? 'scelto' : ''}" data-testa-giorno="${g}" aria-label="Apri il giorno ${Number(g.slice(8))}">${lettera(g)}<b>${Number(g.slice(8))}</b></button>`).join('')}</div>`;   // nota 183: il nome del giorno apre il giorno
+  // Ignazio 28/11/2026: le telefonate senza orario del giorno, in cima alla colonna (come le giornate intere): nella griglia non hanno un posto
+  const senzaOra = colonne.map(g => A.senzaOraDelGiorno(AG.senzaOra, g));
+  if (senzaOra.some(x => x.length)) h += `<div class="ag-sett-so">${senzaOra.map(l => `<div>${l.map(a => { const n = (a.contatti && a.contatti.nome) || 'Telefonata';
+    return `<button type="button" class="ag-so" data-so="${esc(a.id)}" title="Telefonata senza orario · ${esc(n)}"><i aria-hidden="true">✆</i><span>${esc(nCol > 5 ? n.split(' ')[0] : n)}</span></button>`; }).join('')}</div>`).join('')}</div>`;
   h += `<div class="ag-griglia sett${nCol < 7 ? ' pochi' : ''}"><div class="ag-ore" data-da="${da}" data-alt="${ALT_ORA_SETT}" data-giorni="${colonne.join(',')}" style="height:${y(a)}px">`;
   for (let m = da; m <= a; m += 60) {
     h += `<div class="ag-lin" style="top:${y(m)}px"><b>${m === 1440 ? '24' : m / 60}</b></div>`;
@@ -2626,6 +2640,7 @@ function collegaAgenda(eventi) {
   su('ag-chi-sento', () => { ST.tab = 'oggi'; ST.vaiA = 'oggi'; mostraTab(); });   // P2: dritto all'elenco unico «Chi sento oggi?»
   app.querySelectorAll('[data-compleanno]').forEach(b => { b.onclick = () => apriContattoDa(b.dataset.compleanno, 'agenda'); });   // L10: il nome apre la scheda
   su('ag-in-coda', codaDelGiorno);
+  app.querySelectorAll('.ag-so-giorno .ag-so[data-so]').forEach(b => { b.onclick = () => foglioAzione(b.dataset.so, { ritorno: null, dopo: () => apriAgenda() }); });   // Ignazio 28/11/2026
   const scegli = document.getElementById('ag-scegli');
   if (scegli) scegli.onchange = () => { if (scegli.value) apriAgenda(scegli.value); };
   // P4: sul computer (Arc, Chrome) il clic sul campo data invisibile non apre il calendario: lo si apre a mano; sul telefono la ruota si apre da sé

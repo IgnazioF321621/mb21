@@ -1971,6 +1971,13 @@
   .ag-sett-testa button { border: 0; background: none; padding: 0 0 3px; font-family: inherit; cursor: pointer; }   /* nota 183: il nome del giorno apre il giorno */
   .ag-sett-testa > * b { display: block; font-size: 14px; color: var(--testo); letter-spacing: 0; }
   .ag-sett-testa > .oggi b { color: var(--accento); }
+  .ag-sett-so { display: flex; margin: 0 0 4px 30px; gap: 2px; }   /* Ignazio 28/11/2026: le telefonate senza orario in cima al giorno */
+  .ag-sett-so > div { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .ag-so { display: flex; align-items: center; gap: 4px; min-width: 0; border: 1px dashed var(--z-lista, #2E9E3E); background: color-mix(in srgb, var(--z-lista, #2E9E3E) 10%, transparent); color: var(--testo); border-radius: 8px; padding: 4px 6px; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; text-align: left; }
+  .ag-so-giorno { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 10px; }
+  .ag-so-giorno .ag-so { font-size: 14px; padding: 7px 10px; }
+  .ag-so i { font-style: normal; color: var(--z-lista, #2E9E3E); flex: none; }
+  .ag-so span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .ag-sett-testa > .scelto b { background: var(--accento); color: #fff; border-radius: 50%; width: 22px; height: 22px; line-height: 22px; margin: 0 auto; }
   .ag-griglia.sett { padding: 8px 6px 10px 0; }
   .ag-griglia.sett .ag-ore { margin-left: 30px; }

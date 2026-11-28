@@ -1005,6 +1005,10 @@
   // (lette da oggi − 14 a oggi + 6, solo chi è già stato sentito): fuori le categorie fuori coda (come coda.js), chi ha un riordino programmato e chi ha
   // già un orario da oggi in poi (`occupati`: id dei contatti). «Scaduti» = rientro negli ultimi 14 giorni (prima i Dare Seguito, poi i più recenti):
   // quelli più vecchi li ripropone la coda di «Chi sento oggi?». «Prossimi» = rientro da oggi ai 6 giorni dopo. Una regola sola per la colonna e per Oggi.
+  // Le telefonate scelte a mano senza orario (nota 012) restano fuori dalla griglia (non hanno un'ora) ma si vedono in cima al loro giorno, in
+  // Giorni e Settimana (Ignazio 28/11/2026: «la persona scompare dalla vista dell'agenda»). Il tocco apre la telefonata («Metti un orario»).
+  api.senzaOraDelGiorno = (righe, g) => (righe || []).filter(a => a.tipo_azione === 'Contatto' && a.scelta_a_mano && a.senza_ora && !a.completata && !a.esito
+    && a.inizio && partiRoma(a.inizio).giorno === g).sort((x, y) => String((x.contatti && x.contatti.nome) || '').localeCompare(String((y.contatti && y.contatti.nome) || ''), 'it'));
   api.PIANIFICA_INDIETRO = 14; api.PIANIFICA_AVANTI = 6;
   api.daPianificare = function daPianificare(righe, oggi, occupati) {
     const occ = new Set(occupati || []), da = spostaGiorno(oggi, -api.PIANIFICA_INDIETRO), a = spostaGiorno(oggi, api.PIANIFICA_AVANTI);
