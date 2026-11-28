@@ -4466,6 +4466,8 @@ async function nuovoAppuntamento(opz = {}) {
   };
   // nota 105: com'era salvato (condivisione, passi, portato da, durata) e le altre persone dello stesso incontro (stessa ora, stesso tipo; una lettura)
   if (m) {
+    // nota 201: con un Partner prima si legge se usa l'app (condiviso nell'app con lui) o no (mandato all'altro utente)
+    if (m.condiviso_con && typeof usaLApp === 'function' && A.puoCondividereAzione(m)) await usaLApp(m.contatto_id);
     const mandatoAnche = !!m.condiviso_con && typeof puoMandareAnche === 'function' && puoMandareAnche(m);   // nota 194: già mandato all'altro della linea
     st.mandaAnche = mandatoAnche ? '1' : '0'; st.mandaAncheDiPrima = st.mandaAnche;
     Object.assign(st, { condividi: m.condiviso_con && !mandatoAnche ? 'persona' : '', condivisoAMano: true, suCosa: m.su_cosa || [], portato: m.portato || null, altra: !!st.durata && !A.DURATE.some(d => d[0] === st.durata) });
@@ -4611,7 +4613,7 @@ async function nuovoAppuntamento(opz = {}) {
       }
       if (!soloGiorno) h += `<div id="na-avviso">${avvisoOre()}</div>`;
       h += '</div>';
-      // nota 194 (Ignazio 17/11): con un prospect o un cliente, «Manda anche a [l'altro della linea]» (Sì/No: due voci, a tasti), così lo trova nella sua Agenda
+      // nota 194 (Ignazio 17/11): «Manda anche a [l'altro della linea]»; dalla nota 201 con qualsiasi persona (non con chi usa l'app: lì «Condividi con») (Sì/No: due voci, a tasti), così lo trova nella sua Agenda
       if (!soloContatto && st.contatto && typeof puoMandareAnche === 'function' && puoMandareAnche({ contatto_id: st.contatto.id, tipo_azione: st.tipo, categoria: st.categoria, contatti: { categoria: st.categoria } })
         && !(typeof guardoAltri === 'function' && guardoAltri())) {
         if (!ALTRO_LINEA.letto) altroInLinea().then(x => { if (x && velo.isConnected !== false) disegna(); });

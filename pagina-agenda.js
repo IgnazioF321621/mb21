@@ -1957,7 +1957,8 @@ function collegaCondividi(el, e, preset) {
   const posto = el.querySelector(`[data-condividi="${e.id}"]`);
   if (!posto) return;
   const A = MB21Agenda, tel = numeroDaChiamare(e.contatti && e.contatti.telefono), partner = A.puoCondividereAzione(e);
-  if (e.condiviso_con && A.puoCondividereAzione(e)) USA_APP_SI.add(e.contatto_id);   // già condiviso nell'app: la usa (nota 194: con un prospect o un cliente è «Manda anche a»)
+  // nota 201: un appuntamento con un Partner condiviso non vuol dire più che il Partner usa l'app (può essere «Manda anche a» l'altro utente): lo dice
+  // solo utente_del_contatto (usaLApp, una lettura per persona e per sessione)
   const voci = [['dove', 'Dove', !!(e.link || e.luogo)], ['note', 'Note', !!e.note], ['punti', 'Punti da trattare', !!(e.punti || []).length]].filter(v => v[2]);
   const st = { cosa: preset && preset.cosa ? new Set(preset.cosa) : new Set(voci.filter(v => v[0] !== 'punti').map(v => v[0])), come: (preset && preset.come) || null, aperta: null, risposte: null, di: undefined };
   let app = partner && USA_APP_SI.has(e.contatto_id);
@@ -2005,12 +2006,15 @@ function altroInLinea() {
     .then(r => { ALTRO_LINEA.v = (r && !r.error && Array.isArray(r.data) && r.data[0]) || null; return ALTRO_LINEA.v; }, () => null);
   return ALTRO_LINEA.letto;
 }
-const puoMandareAnche = e => !!e && !!e.contatto_id && e.tipo_azione !== 'Contatto' && !e.data_scelta && !MB21Agenda.puoCondividereAzione(e);
+// Nota Pagine 201 (Ignazio 28/11: «la possibilità di condividere con [la partner] qualsiasi tipologia di appuntamento con qualsiasi tipo di persona»): anche
+// con un Partner. Non quando la persona dell'appuntamento usa l'app (con due soli utenti è l'altro stesso): lì c'è già «Condividi con» nell'app, niente doppione.
+const puoMandareAnche = e => !!e && !!e.contatto_id && e.tipo_azione !== 'Contatto' && !e.data_scelta && !(MB21Agenda.puoCondividereAzione(e) && USA_APP_SI.has(e.contatto_id));
 async function collegaMandaAnche(el, e) {
   const posto = el.querySelector(`[data-anche="${e.id}"]`);
   if (!posto || !puoMandareAnche(e) || (typeof guardoAltri === 'function' && guardoAltri())) return;
+  if (MB21Agenda.puoCondividereAzione(e)) await usaLApp(e.contatto_id);   // nota 201: un Partner con l'app ha «Condividi con» nell'app
   const altro = await altroInLinea();
-  if (!altro || (e.condiviso_con && e.condiviso_con !== altro.id)) { posto.innerHTML = ''; return; }
+  if (!altro || !puoMandareAnche(e) || (e.condiviso_con && e.condiviso_con !== altro.id)) { posto.innerHTML = ''; return; }
   const nome = esc(altro.nome);
   const disegna = () => {
     const mandato = e.condiviso_con === altro.id;
@@ -2315,7 +2319,7 @@ function collegaComandiEvento(el, e, dopo, ridisegna) {
   collegaEsiti(el, e, { nome: e.contatti ? e.contatti.nome : '', categoria: e.contatti ? e.contatti.categoria : e.categoria }, dopo);
   collegaPunti(el, e, 'azioni', ridisegna || disegnaAgenda);
   collegaCondividi(el, e);   // nota 107: un riquadro solo «Condividi con [nome]»
-  collegaMandaAnche(el, e);   // nota 194: «Manda anche a [l'altro della linea]», per un appuntamento con un prospect o un cliente
+  collegaMandaAnche(el, e);   // note 194 e 201: «Manda anche a [l'altro della linea]», per un appuntamento con qualsiasi persona
   el.querySelectorAll('[data-cmd]').forEach(b => {
     b.onclick = () => {
       const chiudiFoglio = () => { const v = b.closest('.velo'); if (v) v.remove(); };

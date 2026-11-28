@@ -18,7 +18,7 @@ function mondo({ altro = { id: 'u-altro', nome: 'Persona Altra' }, guardo = fals
   // un finto posto: tiene l'HTML e dà i bottoni con il loro data-anche
   const posto = { innerHTML: '', querySelectorAll: () => [...posto.innerHTML.matchAll(/<button type="button" (?:class="[^"]*" )?data-anche="(\w+)"/g)].map(m => { const b = { getAttribute: () => m[1] }; posto._b.push(b); return b; }), _b: [] };
   const el = { querySelector: () => posto };
-  const ctx = { esc, ic: n => `[${n}]`, MB21Agenda: A, AG: { azioni: [] }, guardoAltri: () => guardo, rpc, toast, posto, el, mostraToast: t => toast.push(t), mostraRisposte: async () => {}, Promise,
+  const ctx = { esc, ic: n => `[${n}]`, MB21Agenda: A, AG: { azioni: [] }, guardoAltri: () => guardo, rpc, toast, posto, el, mostraToast: t => toast.push(t), mostraRisposte: async () => {}, Promise, USA_APP_SI: new Set(), usaLApp: async () => false,
     dbq: (_, p) => p, supa: { rpc: (n, p) => { rpc.push([n, p]); return Promise.resolve(n === 'altro_in_linea' ? { data: altro ? [altro] : [], error: null } : { data: { esito: 'ok' }, error: null }); } } };
   vm.createContext(ctx);
   vm.runInContext(PA.slice(da, a) + ';this.collega = collegaMandaAnche; this.puo = puoMandareAnche; this.ALTRO = ALTRO_LINEA;', ctx);
@@ -27,11 +27,11 @@ function mondo({ altro = { id: 'u-altro', nome: 'Persona Altra' }, guardo = fals
 const pm = o => ({ id: 'a1', contatto_id: 'c1', tipo_azione: 'Piano Marketing', modalita: 'PM 1a1', categoria: 'Prospect', contatti: { nome: 'Persona Finta', categoria: 'Prospect' }, condiviso_con: null, ...o });
 const attendi = () => new Promise(r => setTimeout(r, 0));
 
-prova('chi può: un appuntamento con un prospect o un cliente sì; con un Partner (lì c\'è «Condividi con»), una telefonata o un richiamo dalla coda no', () => {
+prova('chi può: un appuntamento con un prospect, un cliente o (dalla nota 201) un Partner senza l\'app sì; una telefonata o un richiamo dalla coda no', () => {
   const W = mondo();
   assert.equal(W.puo(pm()), true);
   assert.equal(W.puo(pm({ categoria: 'Cliente', contatti: { categoria: 'Cliente' } })), true);
-  assert.equal(W.puo(pm({ categoria: 'Partner', contatti: { categoria: 'Partner' } })), false);
+  assert.equal(W.puo(pm({ categoria: 'Partner', contatti: { categoria: 'Partner' } })), true);   // nota 201 (prima no): le prove in prova_manda_anche_201.js
   assert.equal(W.puo(pm({ tipo_azione: 'Contatto', modalita: 'Telefonata' })), false);
   assert.equal(W.puo(pm({ data_scelta: '2026-11-18T10:00:00Z' })), false);
 });
@@ -56,9 +56,8 @@ prova('già mandato: «Non mandarlo più» chiama condividi_azione_con con p_ute
   assert.equal(e.condiviso_con, null);
 });
 
-prova('niente riquadro: nessun altro nella linea, un Partner, guardando un altro partner; l\'altro si legge una volta sola', async () => {
+prova('niente riquadro: nessun altro nella linea, guardando un altro partner; l\'altro si legge una volta sola', async () => {
   const N = mondo({ altro: null }); await N.collega(N.el, pm()); assert.equal(N.posto.innerHTML, '');
-  const P = mondo(); await P.collega(P.el, pm({ categoria: 'Partner', contatti: { categoria: 'Partner' } })); assert.equal(P.posto.innerHTML, '');
   const G = mondo({ guardo: true }); await G.collega(G.el, pm()); assert.equal(G.posto.innerHTML, '');
   const W = mondo(); await W.collega(W.el, pm()); await W.collega(W.el, pm({ id: 'a2' }));
   assert.equal(W.rpc.filter(r => r[0] === 'altro_in_linea').length, 1);
