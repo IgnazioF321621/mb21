@@ -1856,6 +1856,7 @@
   /* il colore di ogni scala (Ignazio 23/09): tondo pieno con l'icona bianca, velo sulla voce scelta, barra accanto al titolo */
   .sc-giorno { --sc: #1D9E75; --sc-tinta: #E1F5EE; --sc-scuro: #085041; }
   .sc-settimana { --sc: #2F6FE0; --sc-tinta: #E6F1FB; --sc-scuro: #0C447C; }
+  .sc-giorni { --sc: #0E8FA3; --sc-tinta: #E0F4F7; --sc-scuro: #08505B; }   /* Modello Woday, fase 2: la vista 2-5 Giorni */
   .sc-mese { --sc: #8E44D8; --sc-tinta: #F1E8FC; --sc-scuro: #4B1F7A; }
   .sc-anno { --sc: #E8890C; --sc-tinta: #FDF0DC; --sc-scuro: #7A4504; }
   .ag-lato button[data-scala] > svg.ic { width: 30px; height: 30px; padding: 6px; box-sizing: border-box; border-radius: 50%; background: var(--sc); color: #fff; }
@@ -2744,7 +2745,7 @@
   .v5-pillola { height: 34px; padding: 0 12px; border-radius: 17px; border: 0; background: rgba(255,255,255,.22); color: #fff; font: inherit; font-size: 14px; font-weight: 800; }
   .v5-piu { width: 42px; height: 42px; border-radius: 21px; border: 0; background: #fff; color: var(--zc); display: flex; align-items: center; justify-content: center; padding: 0; flex: none; }
   .v5-piu svg.ic { width: 24px; height: 24px; stroke-width: 2.6; }
-  .v5-scale { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); background: rgba(255,255,255,.2); border-radius: 12px; padding: 3px; }
+  .v5-scale { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); background: rgba(255,255,255,.2); border-radius: 12px; padding: 3px; }
   .v5-scale button { border: 0; background: none; color: #fff; font: inherit; font-size: 14px; font-weight: 700; padding: 6px 0; border-radius: 9px; }
   .v5-scale button.scelta { background: #fff; color: var(--zc); }
   .a5 .ag-settimana { margin: 0; background: none; box-shadow: none; padding: 0; }
@@ -2774,6 +2775,12 @@
   .a5-chiudere .ag-imp b { background: #FDEBDD; color: #A8380A; }
   .a5-crono { max-height: 60vh; overflow-y: auto; border-radius: 12px; }
   .a5-crono .ag-griglia { box-shadow: none; padding-left: 0; }
+  /* Modello Woday, fase 2: 2 · 3 · 4 · 5 giorni, sotto il titolo; con meno colonne i blocchi hanno più spazio per i nomi */
+  .gg-quanti { display: flex; gap: 2px; background: #E6F0FB; border-radius: 10px; padding: 2px; width: max-content; margin: 4px 0 10px auto; }
+  .gg-quanti button { border: 0; background: none; font: inherit; font-size: 13px; font-weight: 700; color: var(--z-agenda); border-radius: 8px; min-width: 40px; min-height: 32px; cursor: pointer; }
+  .gg-quanti button.scelto { background: var(--z-agenda); color: #fff; }
+  .ag-griglia.sett.pochi .ag-sev { font-size: 11.5px; }
+  .gg-crono .ag-sett-testa > * b { font-size: 15px; }
   .a5-modo-riga { display: flex; justify-content: flex-end; margin: 4px 0 10px; }
   .a5-crono.s5 { background: var(--superficie); max-height: 65vh; margin-bottom: 12px; }
   .a5-gr .ag-foglio { padding: 0 0 4px; }

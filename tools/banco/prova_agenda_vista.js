@@ -282,11 +282,11 @@ prova('P9 (Ignazio 23/10, «4 con anno»): quattro viste, Giorno · Settimana ·
   const src = fs.readFileSync(path.join(__dirname, '../../pagina-agenda.js'), 'utf8');
   // il menu: quattro scale, niente «Periodo WES» né «presto»
   const menu = V.menuAgendaHtml();
-  assert.deepEqual([...menu.matchAll(/<button data-scala="([a-z]+)"/g)].map(m => m[1]), ['giorno', 'settimana', 'mese', 'anno']);
+  assert.deepEqual([...menu.matchAll(/<button data-scala="([a-z]+)"/g)].map(m => m[1]), ['giorno', 'giorni', 'settimana', 'mese', 'anno']);   // + «Giorni» (modello Woday, fase 2, 28/11)
   assert.doesNotMatch(menu, /Periodo|periodo|presto/);
   // una vista «periodo» salvata prima sul telefono: si apre il Giorno (le altre restano come sono)
   const da = src.indexOf('const VISTE ='), fino = src.indexOf('function cambiaVista');
-  for (const [salvata, attesa] of [['periodo', 'giorno'], ['mese', 'mese'], ['anno', 'anno'], ['settimana', 'settimana'], [null, 'giorno']]) {
+  for (const [salvata, attesa] of [['periodo', 'giorno'], ['mese', 'mese'], ['anno', 'anno'], ['settimana', 'settimana'], ['giorni', 'giorni'], [null, 'giorno']]) {
     const ctx = { localStorage: { getItem: () => salvata, setItem() {} } };
     vm.createContext(ctx); vm.runInContext(src.slice(da, fino) + ';this.v = vistaSalvata();', ctx);
     assert.equal(ctx.v, attesa, String(salvata));

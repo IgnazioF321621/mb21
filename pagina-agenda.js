@@ -69,6 +69,7 @@ async function caricaAgendaLetture() {
   AG.settimana = A.settimana(AG.giorno);
   // si legge la settimana E la griglia del mese (6 settimane): servono i pallini del mese nella colonna destra (22/09)
   const griglia0 = A.settimana(AG.giorno.slice(0, 8) + '01')[0], griglia1 = A.spostaGiorno(griglia0, 42);
+  // Modello Woday, fase 2: la vista Giorni (fino a 4 giorni dopo AG.giorno) è già dentro la griglia del mese, che arriva sempre almeno al 5° giorno dopo la fine del mese
   const da = A.isoDaRoma(griglia0 < AG.settimana[0] ? griglia0 : AG.settimana[0], '00:00');
   const a = A.isoDaRoma(griglia1 > A.spostaGiorno(AG.settimana[6], 1) ? griglia1 : A.spostaGiorno(AG.settimana[6], 1), '00:00');
   const oggi = MB21Coda.oggiRoma(), adesso = new Date().toISOString();
@@ -138,12 +139,15 @@ async function caricaAgendaLetture() {
 // Dal cantiere 41 (pagina formato NotePlan) le viste sono due: «giorno» (il foglio del giorno, con la griglia a orario
 // nel cassetto «Timeline») e «settimana» (sette colonne). «orario» ed «elenco» salvati prima valgono come «giorno».
 // Agenda P9 (Ignazio 23/10, «4 con anno»): quattro viste. Una vista «periodo» salvata prima sul telefono non c'è più: si apre il Giorno.
-const VISTE = ['giorno', 'settimana', 'mese', 'anno'];
+const VISTE = ['giorno', 'giorni', 'settimana', 'mese', 'anno'];
 const CHIAVE_VISTA = 'mb21-agenda-vista';
 // Ogni scala ha la sua icona e il suo colore (Ignazio 23/09): Giorno verde · Settimana blu · Mese viola · Anno arancio
-const SCALE_MENU = [['giorno', 'Giorno', 'scala-giorno'], ['settimana', 'Settimana', 'scala-settimana'], ['mese', 'Mese', 'scala-mese'], ['anno', 'Anno', 'scala-anno']];
+const SCALE_MENU = [['giorno', 'Giorno', 'scala-giorno'], ['giorni', 'Giorni', 'scala-settimana'], ['settimana', 'Settimana', 'scala-settimana'], ['mese', 'Mese', 'scala-mese'], ['anno', 'Anno', 'scala-anno']];
 const ALT_ORA = 58;        // quanto è alta un'ora nella griglia del giorno (px)
 const ALT_ORA_SETT = 42;   // nella settimana: compressa, ma un impegno di mezz'ora resta leggibile
+// Modello Woday, fase 2 (Ignazio 28/11/2026): la vista «Giorni», da 2 a 5 giorni affiancati a orario; quanti si ricorda sul dispositivo (3 la prima volta)
+const CHIAVE_GIORNI = 'mb21-agenda-giorni';
+function quantiGiorni() { try { const n = Number(localStorage.getItem(CHIAVE_GIORNI)); if (n >= 2 && n <= 5) return n; } catch (e) {} return 3; }
 function vistaSalvata() {
   try { const v = localStorage.getItem(CHIAVE_VISTA); if (VISTE.includes(v)) return v; } catch (e) {}
   return 'giorno';
@@ -678,6 +682,7 @@ function disegnaAgenda() {
   const conCose = giorniConCose(AG.cose, oggi);
   if (AG.vista === 'mese') return disegnaMese();
   if (AG.vista === 'settimana') return disegnaSettimana();
+  if (AG.vista === 'giorni') return disegnaGiorni();
   if (AG.vista === 'anno') return disegnaAnno();
   // P4 (Ignazio 23/10): la data si scrive una volta sola. La prima riga è quella di tutte le viste (testaScala: «Oggi» se serve, «+»);
   // la scelta del giorno sta sul titolo «Oggi, ven 23 ott ▾» (stesso id ag-scegli, stessa ruota delle date). L'anno solo se non è quello di oggi.
@@ -972,6 +977,28 @@ function disegnaSettimana() {
   };
   app.querySelectorAll('.ss-g').forEach(b => { b.onclick = () => { AG.vista = 'giorno'; AG.aperta = null; AG.portato = null; apriAgenda(b.dataset.apri); }; });
 }
+// ── Modello Woday, fase 2 (Ignazio 28/11/2026): la vista GIORNI, da 2 a 5 giorni affiancati a orario a partire dal giorno scelto.
+// È la griglia della Settimana (grigliaSettimana) con meno colonne, quindi più larghe: stessi tocchi (blocco → impegno, vuoto → «+» a quell'ora,
+// nome del giorno → il giorno), stesso trascinamento degli appuntamenti anche da un giorno all'altro. Le frecce vanno avanti e indietro di N giorni;
+// 2 · 3 · 4 · 5 sotto il titolo cambia quanti giorni (si ricorda sul dispositivo).
+function disegnaGiorni() {
+  const A = MB21Agenda, oggi = MB21Coda.oggiRoma(), n = quantiGiorni();
+  const giorni = Array.from({ length: n }, (_, i) => A.spostaGiorno(AG.giorno, i));
+  const opz = { mioId: vediTutti() ? null : visto().id, admin: eAdmin() };
+  const html = `${testaScala(!giorni.includes(oggi))}
+    <div class="mm-testa sc-giorni"><button class="freccia" id="sc-prima" aria-label="${n} giorni prima">‹</button><h1 class="ag-titolo sc-titolo">${ic('scala-settimana')}<button class="ag-mese mm-titolo">${esc(periodoBreve(giorni[0], giorni[n - 1]))} ▾<input type="date" id="ag-scegli" value="${AG.giorno}"></button></h1><button class="freccia" id="sc-dopo" aria-label="${n} giorni dopo">›</button></div>
+    ${partnerSelectAgenda()}
+    <div class="gg-quanti" role="group" aria-label="Quanti giorni vedere">${[2, 3, 4, 5].map(k => `<button data-quanti="${k}"${k === n ? ' class="scelto" aria-pressed="true"' : ' aria-pressed="false"'}>${k}</button>`).join('')}</div>
+    ${richiamiAgenda(oggi)}
+    <div class="a5-crono s5 gg-crono">${grigliaSettimana(opz, giorni)}</div>`;
+  montaScala(html, A.spostaGiorno(AG.giorno, -n), A.spostaGiorno(AG.giorno, n));
+  collegaGrigliaSettimana(app, () => {});
+  portaCronoV5();
+  app.querySelectorAll('[data-quanti]').forEach(b => { b.onclick = () => {
+    try { localStorage.setItem(CHIAVE_GIORNI, b.dataset.quanti); } catch (e) {}
+    disegnaGiorni();
+  }; });
+}
 // Nota Pagine 185 (Ignazio 04/11: «cliccando sul giorno due volte, si va alla pagina del giorno specifico»): un tocco solo fa quello di prima,
 // due tocchi vicini aprono il giorno. Il tocco solo aspetta DOPPIO_MS per sapere se ne arriva un secondo (così il foglio non si apre al primo dei due);
 // vale per il dito (iPhone, iPad: `touch-action: manipulation` toglie lo zoom del doppio tocco) e per il clic del Mac. Una funzione sola per Settimana, Mese e Anno.
@@ -1090,9 +1117,11 @@ async function finePosaAppuntamento(b, velo) {
 function minutiBlocco(b, top) { return b.da + Math.round(top / b.alt * 60 / 15) * 15; }
 function muoviBlocco(y, x) {
   const b = TR.blocco, A = MB21Agenda;
-  if (b.sett && x != null) {   // la colonna sotto il dito dice il giorno (le colonne sono 7, larghe uguali)
-    const r = b.ore.getBoundingClientRect(), col = Math.max(0, Math.min(6, Math.floor((x - r.left) / r.width * 7)));
-    if (AG.settimana[col]) { b.giorno = AG.settimana[col]; b.el.style.left = `calc(${col * 100 / 7}% + 1px)`; }
+  if (b.sett && x != null) {   // la colonna sotto il dito dice il giorno (le colonne sono larghe uguali: 7 nella Settimana, 2-5 nei Giorni)
+    const cols = (b.ore.dataset.giorni || '').split(',').filter(Boolean), n = cols.length || 7;
+    const r = b.ore.getBoundingClientRect(), col = Math.max(0, Math.min(n - 1, Math.floor((x - r.left) / r.width * n)));
+    const g = cols.length ? cols[col] : AG.settimana[col];
+    if (g) { b.giorno = g; b.el.style.left = `calc(${col * 100 / n}% + 1px)`; }
   }
   const alto = parseFloat(b.el.style.height) || 20, max = (parseFloat(b.ore.style.height) || 0) - alto;
   const m = Math.max(b.da, minutiBlocco(b, Math.min(Math.max(0, b.top0 + (y - TR.y0)), Math.max(0, max))));
@@ -1607,28 +1636,29 @@ function grigliaGiorno(eventi, opz) {
 const testoSev = (tipo, chi, alto) => (alto < 14 ? '' : alto < 26 ? `<span><b>${esc(tipo)}</b>${chi ? ' ' + esc(chi) : ''}</span>`
   : `<span><b>${esc(tipo)}</b></span>${chi ? `<span>${esc(chi)}</span>` : ''}`);
 // ── La settimana intera: sette colonne, il colpo d'occhio su dove sei pieno e dove sei libero ──
-function grigliaSettimana(opz) {
-  const A = MB21Agenda, oggi = MB21Coda.oggiRoma();
-  const giorni = AG.settimana.map(g => ({ g, d: A.disposizioneGiorno(A.incontri(A.eventiDelGiorno(AG.azioni, g)), { minimoMinuti: 30, oraDa: 24, oraA: 0 }) }));   // nota 109
+function grigliaSettimana(opz, colonne = AG.settimana) {   // colonne: i giorni da mostrare (la Settimana: 7; la vista Giorni, fase 2 Woday: 2-5)
+  const A = MB21Agenda, oggi = MB21Coda.oggiRoma(), nCol = colonne.length;
+  const lettera = g => A.GIORNI[(new Date(g + 'T12:00:00Z').getUTCDay() + 6) % 7];
+  const giorni = colonne.map(g => ({ g, d: A.disposizioneGiorno(A.incontri(A.eventiDelGiorno(AG.azioni, g)), { minimoMinuti: 30, oraDa: 24, oraA: 0 }) }));   // nota 109
   // La settimana mostra solo le ore che servono: dalla prima all'ultima cosa della settimana, con mezz'ora
   // di margine, e almeno otto ore. Con pochi appuntamenti, 8→24 sarebbe un lenzuolo quasi vuoto (Ignazio 21/09).
   // gli spazi da riempire (27/09): tratteggiati sopra la griglia; contano anche per decidere quali ore mostrare
-  const spaziSett = AG.settimana.map(g => spaziDelGiorno(g).map(x => { const o = MB21Spazi.orario(x); return { x, cima: A.inMinuti(o.ora), alta: o.durata }; }));
+  const spaziSett = colonne.map(g => spaziDelGiorno(g).map(x => { const o = MB21Spazi.orario(x); return { x, cima: A.inMinuti(o.ora), alta: o.durata }; }));
   // nota 195: gli impegni ricevuti (la stessa regola del Giorno, ricevutiDelGiornoMB) come blocchi pieni con «da [nome]»; contano anche per le ore da mostrare
-  const ricSett = AG.settimana.map(g => ricevutiDelGiornoMB(g).map(r => { const cima = A.inMinuti(A.partiRoma(r.inizio).ora);
+  const ricSett = colonne.map(g => ricevutiDelGiornoMB(g).map(r => { const cima = A.inMinuti(A.partiRoma(r.inizio).ora);
     const dura = r.fine ? Math.round((Date.parse(r.fine) - Date.parse(r.inizio)) / 60000) : 60; return { r, cima, alta: Math.max(15, Math.min(1440 - cima, dura || 60)) }; }));
   const tutti = [...giorni.flatMap(x => x.d.blocchi), ...spaziSett.flat(), ...ricSett.flat()];
   const { da, a } = A.oreUtili(tutti);
   const y = m => Math.round((m - da) / 60 * ALT_ORA_SETT);
   const quanti = giorni.reduce((n, x) => n + x.d.blocchi.length, 0) + spaziSett.flat().length + ricSett.flat().length;
   let h = `<div class="ag-sett-testa">${giorni.map(({ g, d }, i) =>
-    `<button type="button" class="${g === oggi ? 'oggi' : ''} ${g === AG.giorno ? 'scelto' : ''}" data-testa-giorno="${g}" aria-label="Apri il giorno ${Number(g.slice(8))}">${A.GIORNI[i]}<b>${Number(g.slice(8))}</b></button>`).join('')}</div>`;   // nota 183: il nome del giorno apre il giorno
-  h += `<div class="ag-griglia sett"><div class="ag-ore" data-da="${da}" data-alt="${ALT_ORA_SETT}" style="height:${y(a)}px">`;
+    `<button type="button" class="${g === oggi ? 'oggi' : ''} ${g === AG.giorno ? 'scelto' : ''}" data-testa-giorno="${g}" aria-label="Apri il giorno ${Number(g.slice(8))}">${lettera(g)}<b>${Number(g.slice(8))}</b></button>`).join('')}</div>`;   // nota 183: il nome del giorno apre il giorno
+  h += `<div class="ag-griglia sett${nCol < 7 ? ' pochi' : ''}"><div class="ag-ore" data-da="${da}" data-alt="${ALT_ORA_SETT}" data-giorni="${colonne.join(',')}" style="height:${y(a)}px">`;
   for (let m = da; m <= a; m += 60) {
     h += `<div class="ag-lin" style="top:${y(m)}px"><b>${m === 1440 ? '24' : m / 60}</b></div>`;
   }
   giorni.forEach(({ g, d }, i) => {
-    const larga = 100 / 7, sinG = i * larga;
+    const larga = 100 / nCol, sinG = i * larga;
     h += `<button class="ag-colonna ag-libero${g === oggi ? ' oggi' : ''}${g === AG.giorno ? ' scelto' : ''}" data-vai="${g}" aria-label="Aggiungi qualcosa il giorno ${Number(g.slice(8))} a quest'ora" style="left:${sinG}%;width:${larga}%"></button>`;
     // i blocchi che si accavallano si uniscono in uno solo che dice quanti sono: nella colonna stretta
     // della settimana due nomi diventerebbero «G.» e «N.», che non si leggono (Ignazio 21/09)
@@ -1663,16 +1693,16 @@ function grigliaSettimana(opz) {
         aria-label="${esc(A.orario(e))} ${esc(A.riga(e, { mioId: null, admin: false }).titolo)}"><span class="bar"></span>${testoSev(A.tipoCorto(e.tipo_azione), (e._persone || [e]).map(p => ((p.contatti && p.contatti.nome) || '—').split(' ')[0]).join(', '), alto)}</button>`;
     }
   });
-  if (AG.settimana.includes(oggi)) {
+  if (colonne.includes(oggi)) {
     const ora = A.inMinuti(A.partiRoma(new Date().toISOString()).ora);
     if (ora >= da && ora <= a) h += `<div class="ag-adesso" style="top:${y(ora)}px"><i></i></div>`;
   }
   h += `</div></div>`;
-  if (!quanti) h += `<div class="ag-sett-vuoto">Settimana libera. Tocca un'ora per aggiungere qualcosa.</div>`;
+  if (!quanti) h += `<div class="ag-sett-vuoto">${nCol < 7 ? 'Giorni liberi' : 'Settimana libera'}. Tocca un'ora per aggiungere qualcosa.</div>`;
   else {
     // il riassunto della settimana: che lavoro c'è, non solo quando (qui il colore è quello del TIPO di lavoro)
     // nota 170: con gli incontri e gli spazi della settimana («1 SdS/OPEN · 2 Incontri LdS»), dopo gli appuntamenti; gli incontri con più persone una volta
-    const conto = A.contaPerTipo(A.incontri(AG.azioni), AG.settimana);
+    const conto = A.contaPerTipo(A.incontri(AG.azioni), colonne);
     const perTipo = {};
     for (const x of spaziSett.flat()) perTipo[x.x.tipo] = (perTipo[x.x.tipo] || 0) + 1;
     const spaziConto = Object.entries(perTipo).map(([t, n]) => ({ quanti: n, colore: coloreSpazio(t),

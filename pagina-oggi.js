@@ -512,7 +512,7 @@ function disegnaPersonaV5() {
 // della settimana (stessi tasti). I collegamenti nuovi li fa collegaAgenda (pagina-agenda.js).
 function testaAgendaV5(mostraOggi, dentro) {
   const mese = MB21Agenda.titoloMese(AG.giorno).toUpperCase(), vista = AG.vista || 'giorno';
-  const scale = [['giorno', 'Giorno'], ['settimana', 'Settimana'], ['mese', 'Mese'], ['anno', 'Anno']];
+  const scale = [['giorno', 'Giorno'], ['giorni', 'Giorni'], ['settimana', 'Settimana'], ['mese', 'Mese'], ['anno', 'Anno']];
   // nota 112 (Ignazio 28/10): «Agenda» con «Tu ▾», lente e «+» sulla stessa riga; poi le scale (con «Oggi» in fondo, nota 111), la striscia dei giorni e il mese
   return `<div class="v5-testa a5" style="--zc:var(--z-agenda)">${testataV5({ sinistra: '<button class="v5-indietro" id="v5-indietro">‹ Oggi</button>', titolo: 'Agenda',
       comandi: `${chipPartnerSelect()}<button class="v5-fb" id="ag-cerca" aria-label="Cerca nell'Agenda">${ic('cerca')}</button><button class="v5-piu" id="ag-nuovo" aria-label="Nuovo appuntamento">${ic('piu')}</button>` })}
